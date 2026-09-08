@@ -2026,6 +2026,65 @@ EmberwoodTests.add('npcs: flavor NPCs emit Name plus one of their lines', functi
     });
 });
 
+EmberwoodTests.add('npcs: every NPC_DEFS entry spawns at xy with a yellow name label', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        var world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        var counted = 0;
+        var expectedTotal = 0;
+        Object.keys(win.NPC_DEFS).forEach(function (zoneId) {
+            expectedTotal += (win.NPC_DEFS[zoneId] || []).length;
+        });
+        assert(expectedTotal >= 11, 'NPC_DEFS has the eleven named characters');
+
+        win.ZONE_LIST.forEach(function (zone) {
+            H.enterZone(win, zone.id);
+            world = H.world(win);
+            H.setAutoAttack(win, false);
+            var defs = win.NPC_DEFS[zone.id] || [];
+            assertEqual(world.npcs.getChildren().length, defs.length, zone.id + ' spawned NPC count');
+            defs.forEach(function (def) {
+                counted += 1;
+                var npc = H.findNpc(win, def.key);
+                assert(npc, def.name + ' spawned in ' + zone.id);
+                assertEqual(npc.npcDef.name, def.name, def.name + ' display name');
+                assertEqual(Math.round(npc.x), def.x, def.name + ' x');
+                assertEqual(Math.round(npc.y), def.y, def.name + ' y');
+                var label = npc.nameLabel;
+                assert(label, def.name + ' has a name label');
+                assertEqual(label.text, def.name, def.name + ' label text');
+                assertEqual(Math.round(label.x), def.x, def.name + ' label x');
+                assertEqual(Math.round(label.y), def.y - 14, def.name + ' label sits above sprite');
+                var color = String((label.style && (label.style.color || label.style.fill)) || '').toLowerCase();
+                assertEqual(color, '#ffe08a', def.name + ' yellow label');
+                assert(color !== '#ffb0a0', def.name + ' is not a salmon mob label');
+                assert(world.floatLabels.indexOf(label) !== -1, def.name + ' label is in floatLabels');
+                assert(label.active !== false && label.scene, def.name + ' label is live');
+                assert(!win.game.input.keyboard, 'Phaser keyboard off after ' + def.name);
+            });
+        });
+        assertEqual(counted, expectedTotal, 'every NPC_DEFS entry checked');
+
+        H.enterZone(win, 'haven');
+        world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('mobs: click a monster to target it', function (win, H) {
     H.enterZone(win, 'haven');
     H.setAutoAttack(win, false);
