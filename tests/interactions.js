@@ -2494,6 +2494,105 @@ EmberwoodTests.add('combat: walking within 24px of engageTarget begins a fight',
     });
 });
 
+EmberwoodTests.add('combat: auto-attack on engages nearest living mob within 20px after engageGrace', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, true);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        assertEqual(H.hero(win).autoAttack, true, 'auto-attack is on');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        var chickens = world.mobs.getChildren().filter(function (mob) {
+            return mob.aliveMob && mob.mobDef && mob.mobDef.type === 'Chicken';
+        });
+        assert(chickens.length >= 2, 'haven has two living chickens');
+        var near = chickens[0];
+        var far = chickens[1];
+        function parkChicken(mob, x, y) {
+            mob.setPosition(x, y);
+            mob.aliveMob = true;
+            if (mob.body) {
+                mob.body.setVelocity(0, 0);
+            }
+        }
+
+        parkChicken(near, 500, 80);
+        parkChicken(far, 520, 80);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.engageTarget = null;
+        world.talkTarget = null;
+        world.walkTarget = null;
+        world.encounterLock = false;
+
+        parkChicken(near, spawn.x + 20, spawn.y);
+        parkChicken(far, spawn.x + 40, spawn.y);
+        var at20 = win.Phaser.Math.Distance.Between(world.player.x, world.player.y, near.x, near.y);
+        assertEqual(at20, 20, 'fixture: nearest living chicken is exactly 20px');
+        world.engageGrace = world.time.now + 800;
+        assertEqual(world.tryAutoEngage(), false, 'engageGrace blocks auto-attack at 20px');
+        assertEqual(world.encounterLock, false, 'grace does not lock combat');
+
+        world.player.setPosition(spawn.x + 1, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        var duringGrace = win.Phaser.Math.Distance.Between(world.player.x, world.player.y, near.x, near.y);
+        assertEqual(duringGrace, 19, 'fixture: 19px during grace');
+        assertEqual(world.tryAutoEngage(), false, 'engageGrace blocks auto-attack even within 20px');
+        assert(!win.game.scene.isActive('BattleScene'), 'no BattleScene during grace');
+
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.engageGrace = 0;
+        assertEqual(world.tryAutoEngage(), false, 'exactly 20px is outside auto-attack range');
+        assertEqual(world.encounterLock, false, 'no lock at exactly 20px');
+
+        near.aliveMob = false;
+        near.setPosition(spawn.x + 10, spawn.y);
+        if (near.body) {
+            near.body.setVelocity(0, 0);
+        }
+        parkChicken(far, spawn.x + 40, spawn.y);
+        world.engageGrace = 0;
+        assertEqual(world.tryAutoEngage(), false, 'dead nearer mob is not engaged');
+        parkChicken(near, spawn.x + 10, spawn.y);
+        parkChicken(far, spawn.x + 19, spawn.y);
+        near.aliveMob = true;
+        var nearD = win.Phaser.Math.Distance.Between(world.player.x, world.player.y, near.x, near.y);
+        var farD = win.Phaser.Math.Distance.Between(world.player.x, world.player.y, far.x, far.y);
+        assertEqual(nearD, 10, 'fixture: nearer living chicken at 10px');
+        assertEqual(farD, 19, 'fixture: farther living chicken still within 20px');
+        world.engageGrace = 0;
+        world.engageTarget = null;
+        var started = world.tryAutoEngage();
+        assertEqual(started, true, 'auto-attack begins fight within 20px after grace');
+        assertEqual(world.encounterLock, true, 'encounterLock after auto-attack');
+        assert(world.lastFought === near, 'picks the nearest living mob, not the farther one');
+        var pending = win.game.registry.get('pendingEncounter');
+        assert(pending && pending.enemies && pending.enemies[0], 'pendingEncounter set');
+        assertEqual(pending.enemies[0].type, 'Chicken', 'pending foe is the nearest Chicken');
+
+        return H.waitUntil(function () {
+            return win.game.scene.isActive('BattleScene');
+        }, 1500, 'BattleScene after auto-attack').then(function () {
+            assertEqual(win.Hud.mode, 'battle', 'HUD switches to battle');
+            return H.forceFlee(win);
+        }).then(function () {
+            world = H.world(win);
+            H.setAutoAttack(win, true);
+            world.placePlayer(spawn.x, spawn.y);
+            world.player.body.setVelocity(0, 0);
+            assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+            assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        });
+    });
+});
+
 EmberwoodTests.add('combat: Attack auto-hits the only foe and winning loots', function (win, H) {
     H.enterZone(win, 'haven');
     H.setAutoAttack(win, false);

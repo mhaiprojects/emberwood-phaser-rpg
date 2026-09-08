@@ -115,7 +115,7 @@ Flat-file project manager for the 30-second loop. Emberwood is a Phaser 3.90.0 c
 
 - [done] Left-click a living mob sets `engageTarget`, walks in, and chats `You target the {Type}.` — Conclusion: From spawn (328,248) click Chicken (400,250): engageTarget + walkTarget/marker, chat You target the Chicken, vx=90 east (72px, no fight yet). Dead mob ignored. Phaser 3.90 keyboard off. Suite 39/39.
 - [done] Walking within 24px of `engageTarget` calls `beginFight` (camera shake, 260ms, `BattleScene`). — Conclusion: From spawn (328,248) click Chicken (400,250): no fight at exactly 24px; at 23px beginFight (shake 220ms, walk cleared, lock); BattleScene after ~260ms. Auto-attack off. Phaser 3.90 keyboard off. Suite case pass + Playwright.
-- [verify] Auto-attack **on** engages the nearest living mob within 20px after `engageGrace`. — Conclusion: —
+- [done] Auto-attack **on** engages the nearest living mob within 20px after `engageGrace`. — Conclusion: From spawn (328,248) auto-attack on: engageGrace blocks at 19px; exactly 20px does not fight; a dead mob at 10px is skipped; nearest living chicken at 10px (not 19px) begins BattleScene. Phaser 3.90 keyboard off. Dedicated case + Playwright; suite 80/80.
 - [verify] Auto-attack **off** does not engage unless the player clicked that mob. — Conclusion: —
 - [verify] `engageGrace` is ~800ms on zone enter and ~700ms after returning from battle. — Conclusion: —
 - [done] Attack on a single foe auto-selects index 0 and deals damage (variance −2..+2, min 1). — Conclusion: startBattle/autoSelectTarget pick index 0; takeDamage uses Between(-2,2) min 1. Playwright from spawn (328,248) drop=16; dedicated suite case pass. Phaser 3.90 keyboard off.
@@ -425,4 +425,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | playtest | 2026-09-08 | Background headless playtest; close owned browsers/servers/tabs | done — `tests/playwright-session.js`; no Glass/`open_resource` unless asked; `channel: chrome` removed from engage; AGENT.md cleanup rules |
 | 54 | 2026-09-08 | Player–NPC arcade collider is immovable and does not shove NPCs | done — spawn (328,248) Keys.js D/S into Rowan/Bram/Kett; NPCs stay put, player does not pass through; Phaser 3.90 keyboard off; dedicated case + Playwright |
 | 55 | 2026-09-08 | Talking never starts during battle or encounterLock | done — spawn (328,248) tryTalk/Space silent under lock and Hud.mode battle; unlocked post-quest line still speaks; Phaser 3.90 keyboard off; dedicated case + Playwright; suite 79/79 |
+| 56 | 2026-09-08 | Auto-attack on engages nearest living mob within 20px after engageGrace | done — spawn (328,248) grace blocks 19px; 20px no fight; nearest living 10px starts BattleScene; Phaser 3.90 keyboard off; dedicated case + Playwright; suite 80/80 |
 
