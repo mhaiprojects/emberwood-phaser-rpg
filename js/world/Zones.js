@@ -1,0 +1,143 @@
+var ZONE_LIST = [
+    { id: 'graves', name: 'Restless Graves', gx: -1, gy: -1, biome: 'grave', seed: 11 },
+    { id: 'northwood', name: 'Northwood', gx: 0, gy: -1, biome: 'forest', seed: 22 },
+    { id: 'highlands', name: 'Windrock Highlands', gx: 1, gy: -1, biome: 'hills', seed: 33 },
+    { id: 'westmead', name: 'Westmead', gx: -1, gy: 0, biome: 'plains', seed: 44 },
+    { id: 'haven', name: 'Emberhaven', gx: 0, gy: 0, biome: 'town', seed: 55 },
+    { id: 'millfields', name: 'Millfields', gx: 1, gy: 0, biome: 'farm', seed: 66 },
+    { id: 'darkmine', name: 'Darkmine', gx: -1, gy: 1, biome: 'mine', seed: 77 },
+    { id: 'southshore', name: 'Southshore', gx: 0, gy: 1, biome: 'shore', seed: 88 },
+    { id: 'mire', name: 'Mirefen', gx: 1, gy: 1, biome: 'swamp', seed: 99 }
+];
+
+var ZONES = {};
+ZONE_LIST.forEach(function (zone) {
+    ZONES[zone.id] = zone;
+});
+
+function zoneByGrid(gx, gy) {
+    for (var i = 0; i < ZONE_LIST.length; i++) {
+        if (ZONE_LIST[i].gx === gx && ZONE_LIST[i].gy === gy) {
+            return ZONE_LIST[i];
+        }
+    }
+    return null;
+}
+
+function zoneNeighbors(zone) {
+    return {
+        n: !!zoneByGrid(zone.gx, zone.gy - 1),
+        s: !!zoneByGrid(zone.gx, zone.gy + 1),
+        e: !!zoneByGrid(zone.gx + 1, zone.gy),
+        w: !!zoneByGrid(zone.gx - 1, zone.gy)
+    };
+}
+
+function neighborId(zone, dir) {
+    var dx = { n: 0, s: 0, e: 1, w: -1 }[dir];
+    var dy = { n: -1, s: 1, e: 0, w: 0 }[dir];
+    var next = zoneByGrid(zone.gx + dx, zone.gy + dy);
+    return next ? next.id : null;
+}
+
+var NPC_DEFS = {
+    haven: [
+        { key: 'guild', name: 'Guildmaster Bram', x: 210, y: 150, tint: 0xffffff, lines: ['Welcome to Emberhaven, adventurer.', 'Goblins from Northwood raid our stores.', 'Slay 5 goblins and return. The militia will pay.'] },
+        { key: 'banker', name: 'Banker Elise', x: 160, y: 130, tint: 0xffffff, lines: ['Your coin is safe with me.', 'Rest here if the roads were cruel.'] },
+        { key: 'guard', name: 'Guard Rowan', x: 252, y: 168, tint: 0xffffff, lines: ['Keep to the paths.', 'North is woods. East is farms. South is the sea.'] }
+    ],
+    northwood: [
+        { key: 'ranger', name: 'Ranger Kett', x: 240, y: 200, tint: 0xffffff, lines: ['Goblins nest in these trees.', 'Click a goblin to fight it, like the old days.'] }
+    ],
+    millfields: [
+        { key: 'farmer', name: 'Farmer Willa', x: 200, y: 180, tint: 0xffffff, lines: ['Cows got into the cabbages again.', 'The mill road runs back to Emberhaven.'] }
+    ],
+    southshore: [
+        { key: 'fisher', name: 'Fisher Ned', x: 220, y: 160, tint: 0xffffff, lines: ['Crabs pinch harder than they look.', 'Ships used to stop here. Not anymore.'] }
+    ],
+    westmead: [
+        { key: 'wanderer', name: 'Wanderer Sila', x: 180, y: 190, tint: 0xffffff, lines: ['Plains look empty until they are not.', 'Graves lie north-west. Do not linger.'] }
+    ],
+    graves: [
+        { key: 'ghost', name: 'Wisp', x: 200, y: 170, tint: 0xffffff, lines: ['The dead remember steel.', 'Turn back unless you seek bones.'] }
+    ],
+    darkmine: [
+        { key: 'miner', name: 'Miner Corb', x: 210, y: 200, tint: 0xffffff, lines: ['Bats took the lower shaft.', 'Ore waits for someone braver than me.'] }
+    ],
+    highlands: [
+        { key: 'hermit', name: 'Hermit Ola', x: 240, y: 160, tint: 0xffffff, lines: ['Drakes nest on the windrock.', 'Bring a stout shield.'] }
+    ],
+    mire: [
+        { key: 'witch', name: 'Fen Witch', x: 200, y: 180, tint: 0xffffff, lines: ['The fen drinks the lost.', 'I can stitch wounds... for a price.'] }
+    ]
+};
+
+var MOB_DEFS = {
+    haven: [
+        { type: 'Chicken', texture: 'mob-chicken', tint: 0xffffff, hp: 12, damage: 3, gold: 1, xp: 4, x: 400, y: 250 },
+        { type: 'Chicken', texture: 'mob-chicken', tint: 0xffffff, hp: 12, damage: 3, gold: 1, xp: 4, x: 420, y: 190 }
+    ],
+    northwood: [
+        { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, hp: 28, damage: 8, gold: 6, xp: 12, x: 160, y: 120 },
+        { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, hp: 28, damage: 8, gold: 6, xp: 12, x: 300, y: 140 },
+        { type: 'Goblin', texture: 'mob-goblin', tint: 0xbbffbb, hp: 30, damage: 9, gold: 7, xp: 12, x: 400, y: 260 },
+        { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, hp: 28, damage: 8, gold: 6, xp: 12, x: 220, y: 300 }
+    ],
+    highlands: [
+        { type: 'Drake', texture: 'mob-drake', tint: 0xffffff, hp: 48, damage: 13, gold: 18, xp: 28, x: 180, y: 160 },
+        { type: 'Drake', texture: 'mob-drake', tint: 0xffffff, hp: 52, damage: 14, gold: 20, xp: 30, x: 380, y: 220 }
+    ],
+    millfields: [
+        { type: 'Cow', texture: 'mob-cow', tint: 0xffffff, hp: 22, damage: 5, gold: 3, xp: 8, x: 150, y: 200 },
+        { type: 'Cow', texture: 'mob-cow', tint: 0xffffff, hp: 22, damage: 5, gold: 3, xp: 8, x: 300, y: 120 },
+        { type: 'Cow', texture: 'mob-cow', tint: 0xeeddcc, hp: 24, damage: 6, gold: 3, xp: 8, x: 400, y: 260 }
+    ],
+    mire: [
+        { type: 'Slime', texture: 'mob-slime', tint: 0xffffff, hp: 26, damage: 7, gold: 5, xp: 10, x: 160, y: 140 },
+        { type: 'Slime', texture: 'mob-slime', tint: 0x88ffaa, hp: 28, damage: 8, gold: 5, xp: 10, x: 320, y: 200 },
+        { type: 'Slime', texture: 'mob-slime', tint: 0xffffff, hp: 26, damage: 7, gold: 5, xp: 10, x: 420, y: 280 }
+    ],
+    southshore: [
+        { type: 'Crab', texture: 'mob-crab', tint: 0xffffff, hp: 24, damage: 7, gold: 4, xp: 9, x: 140, y: 180 },
+        { type: 'Crab', texture: 'mob-crab', tint: 0xffccaa, hp: 26, damage: 8, gold: 5, xp: 9, x: 280, y: 200 },
+        { type: 'Crab', texture: 'mob-crab', tint: 0xffffff, hp: 24, damage: 7, gold: 4, xp: 9, x: 400, y: 160 }
+    ],
+    darkmine: [
+        { type: 'Bat', texture: 'mob-bat', tint: 0xffffff, hp: 20, damage: 8, gold: 4, xp: 10, x: 150, y: 120 },
+        { type: 'Bat', texture: 'mob-bat', tint: 0xffffff, hp: 20, damage: 8, gold: 4, xp: 10, x: 260, y: 180 },
+        { type: 'Bat', texture: 'mob-bat', tint: 0xddbbff, hp: 22, damage: 9, gold: 5, xp: 11, x: 380, y: 240 },
+        { type: 'Bat', texture: 'mob-bat', tint: 0xffffff, hp: 20, damage: 8, gold: 4, xp: 10, x: 200, y: 300 }
+    ],
+    westmead: [
+        { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, hp: 26, damage: 7, gold: 5, xp: 11, x: 180, y: 140 },
+        { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, hp: 26, damage: 8, gold: 5, xp: 11, x: 340, y: 220 },
+        { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, hp: 28, damage: 8, gold: 6, xp: 12, x: 420, y: 280 }
+    ],
+    graves: [
+        { type: 'Skeleton', texture: 'mob-skeleton', tint: 0xffffff, hp: 34, damage: 10, gold: 8, xp: 16, x: 160, y: 150 },
+        { type: 'Skeleton', texture: 'mob-skeleton', tint: 0xffffff, hp: 36, damage: 11, gold: 9, xp: 16, x: 300, y: 210 },
+        { type: 'Skeleton', texture: 'mob-skeleton', tint: 0xeeeeff, hp: 34, damage: 10, gold: 8, xp: 16, x: 400, y: 120 }
+    ]
+};
+
+function defaultWorldSpawn() {
+    return tileCenter(20, 15);
+}
+
+function spawnPointForEntry(dir) {
+    var cx = (MAP_W / 2) * 16;
+    var cy = (MAP_H / 2) * 16;
+    if (dir === 'n') {
+        return { x: cx, y: (MAP_H - 3) * 16 };
+    }
+    if (dir === 's') {
+        return { x: cx, y: 3 * 16 };
+    }
+    if (dir === 'w') {
+        return { x: (MAP_W - 3) * 16, y: cy };
+    }
+    if (dir === 'e') {
+        return { x: 3 * 16, y: cy };
+    }
+    return defaultWorldSpawn();
+}

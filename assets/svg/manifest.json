@@ -1,0 +1,68 @@
+{
+  "mobs": [
+    "bat",
+    "chicken",
+    "cow",
+    "crab",
+    "drake",
+    "goblin",
+    "skeleton",
+    "slime"
+  ],
+  "npcs": [
+    "banker",
+    "farmer",
+    "fisher",
+    "ghost",
+    "guard",
+    "guild",
+    "hermit",
+    "miner",
+    "ranger",
+    "wanderer",
+    "witch"
+  ],
+  "items": [
+    "bones",
+    "bread",
+    "coins",
+    "shield",
+    "shrimp",
+    "sword"
+  ],
+  "ui": [
+    "accurate",
+    "aggressive",
+    "attack",
+    "combat",
+    "defensive",
+    "equip",
+    "flee",
+    "gold",
+    "heal",
+    "hp",
+    "inv",
+    "magic",
+    "minimap",
+    "prayer",
+    "quest",
+    "settings",
+    "skills",
+    "xp"
+  ],
+  "skills": [
+    "attack",
+    "cooking",
+    "crafting",
+    "defence",
+    "fishing",
+    "hitpoints",
+    "magic",
+    "mining",
+    "prayer",
+    "ranged",
+    "strength",
+    "woodcutting"
+  ],
+  "license": "Original Emberwood artwork. CC0-1.0."
+}

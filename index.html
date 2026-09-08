@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="assets/svg/ui/combat.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="css/style.css?v=loot3">
+</head>
+<body>
+    <div id="shell">
+        <div id="content"></div>
+        <aside id="side">
+            <div class="panel">
+                <h2>Minimap</h2>
+                <div id="minimap"></div>
+            </div>
+            <div class="panel">
+                <h2 id="hud-zone">Emberhaven</h2>
+                <div class="stat"><span><img class="pix" src="assets/svg/ui/combat.svg" alt=""> Combat</span><strong id="hud-level">1</strong></div>
+                <div class="stat"><span><img class="pix" src="assets/svg/skills/hitpoints.svg" alt=""> Hitpoints</span><strong id="hud-hp">100 / 100</strong></div>
+                <div class="hp-bar"><div id="hp-fill"></div></div>
+                <div class="stat"><span><img class="pix" src="assets/svg/ui/gold.svg" alt=""> Gold</span><strong id="hud-gold">0</strong></div>
+                <div class="stat"><span><img class="pix" src="assets/svg/ui/xp.svg" alt=""> XP</span><strong id="hud-xp">0</strong></div>
+            </div>
+            <div class="panel">
+                <h2>Task</h2>
+                <p id="hud-quest">Talk to Guildmaster Bram in Emberhaven.</p>
+            </div>
+            <div id="battle-panel" class="panel battle" hidden>
+                <h2>Combat</h2>
+                <p id="battle-message">A foe approaches.</p>
+                <div id="battle-enemies"></div>
+                <div id="battle-actions">
+                    <button type="button" data-action="attack"><img class="pix" src="assets/svg/ui/attack.svg" alt=""> Attack</button>
+                    <button type="button" data-action="heal"><img class="pix" src="assets/svg/ui/heal.svg" alt=""> Eat food</button>
+                    <button type="button" data-action="flee"><img class="pix" src="assets/svg/ui/flee.svg" alt=""> Run</button>
+                </div>
+                <button type="button" class="auto-attack-btn" data-auto-attack>Auto-attack: On</button>
+            </div>
+        </aside>
+        <div id="bottom">
+            <div id="chat-col" class="panel">
+                <h2>Chat</h2>
+                <div id="chat-log"></div>
+                <p class="hint">WASD or arrows to walk. Click ground, NPCs, or monsters. F1–F8 switch panels. Auto-attack and auto-pickup are in Combat and Settings. Loot drops on the ground — walk over it when auto-pickup is on, or click it. Click food in Inventory to eat.</p>
+            </div>
+            <div id="iface">
+                <div id="tab-panels">
+                    <div id="panel-combat" class="tab-panel">
+                        <h3>Combat</h3>
+                        <p>Accurate trains Attack, Aggressive trains Strength, Defensive trains Defence.</p>
+                        <div id="style-row">
+                            <button type="button" data-style="accurate"><img class="pix" src="assets/svg/ui/accurate.svg" alt=""> Accurate</button>
+                            <button type="button" data-style="aggressive"><img class="pix" src="assets/svg/ui/aggressive.svg" alt=""> Aggressive</button>
+                            <button type="button" data-style="defensive"><img class="pix" src="assets/svg/ui/defensive.svg" alt=""> Defensive</button>
+                        </div>
+                        <h3>Auto-attack</h3>
+                        <p>When on, walking into a nearby foe starts a fight, and Attack is chosen for you in combat.</p>
+                        <button type="button" class="auto-attack-btn" data-auto-attack title="When on, walking into a nearby foe starts a fight.">Auto-attack: On</button>
+                        <h3>Auto-pickup</h3>
+                        <p>When on, walking near a loot pile picks it up. When off, click the pile to take it.</p>
+                        <button type="button" class="auto-pickup-btn" data-auto-pickup title="When on, walking near a loot pile picks it up.">Auto-pickup: On</button>
+                    </div>
+                    <div id="panel-skills" class="tab-panel" hidden>
+                        <h3>Skills</h3>
+                        <div id="skills-list"></div>
+                    </div>
+                    <div id="panel-quest" class="tab-panel" hidden>
+                        <h3>Quest journal</h3>
+                        <p id="hud-quest-tab">Talk to Guildmaster Bram in Emberhaven.</p>
+                    </div>
+                    <div id="panel-inv" class="tab-panel" hidden>
+                        <h3>Inventory</h3>
+                        <div id="inv-grid"></div>
+                    </div>
+                    <div id="panel-equip" class="tab-panel" hidden>
+                        <h3>Worn equipment</h3>
+                        <div id="equip-grid"></div>
+                    </div>
+                    <div id="panel-prayer" class="tab-panel" hidden>
+                        <h3>Prayer</h3>
+                        <p>No prayers unlocked yet.</p>
+                    </div>
+                    <div id="panel-magic" class="tab-panel" hidden>
+                        <h3>Magic</h3>
+                        <p>Wind Strike is not learned yet.</p>
+                    </div>
+                    <div id="panel-settings" class="tab-panel" hidden>
+                        <h3>Settings</h3>
+                        <p>Move with WASD or arrow keys. Click to walk. Eat shrimp or bread from Inventory.</p>
+                        <h3>Auto-attack</h3>
+                        <p>Toggle automatic engagement of nearby monsters, like classic RuneScape.</p>
+                        <button type="button" class="auto-attack-btn" data-auto-attack title="When on, walking into a nearby foe starts a fight.">Auto-attack: On</button>
+                        <h3>Auto-pickup</h3>
+                        <p>When on, walking near a loot pile picks it up. When off, click the pile to take it. New games start with this on.</p>
+                        <button type="button" class="auto-pickup-btn" data-auto-pickup title="When on, walking near a loot pile picks it up.">Auto-pickup: On</button>
+                    </div>
+                </div>
+                <div id="tab-bar">
+                    <button type="button" data-tab="combat" title="Combat (F1)"><img class="pix" src="assets/svg/ui/combat.svg" alt=""> Combat</button>
+                    <button type="button" data-tab="skills" title="Skills (F2)"><img class="pix" src="assets/svg/ui/skills.svg" alt=""> Skills</button>
+                    <button type="button" data-tab="quest" title="Quests (F3)"><img class="pix" src="assets/svg/ui/quest.svg" alt=""> Quest</button>
+                    <button type="button" data-tab="inv" title="Inventory (F4)"><img class="pix" src="assets/svg/ui/inv.svg" alt=""> Inv</button>
+                    <button type="button" data-tab="equip" title="Equipment (F5)"><img class="pix" src="assets/svg/ui/equip.svg" alt=""> Worn</button>
+                    <button type="button" data-tab="prayer" title="Prayer (F6)"><img class="pix" src="assets/svg/ui/prayer.svg" alt=""> Pray</button>
+                    <button type="button" data-tab="magic" title="Magic (F7)"><img class="pix" src="assets/svg/ui/magic.svg" alt=""> Magic</button>
+                    <button type="button" data-tab="settings" title="Settings (F8)"><img class="pix" src="assets/svg/ui/settings.svg" alt=""> Set</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="title-overlay">
+        <div class="title-card">
+            <h1>EMBERWOOD</h1>
+            <p>A free-roam adventure in the style of classic RuneScape.</p>
+            <button type="button" id="btn-start">Click here to play</button>
+            <button type="button" id="btn-credits" class="ghost">Credits</button>
+            <p id="credit-text" hidden>Phaser 3 turn-based combat inspired by the GameDev Academy RPG series. World, NPCs, HUD, and SVG icons are original (CC0). No Zenva or commercial asset packs.</p>
+        </div>
+    </div>
+
+    <div id="dead-overlay" hidden>
+        <div class="title-card">
+            <h1>You are dead</h1>
+            <p id="dead-text">The world goes dark.</p>
+            <button type="button" id="btn-retry">Return to title</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
+    <script src="js/input/Keys.js?v=move4"></script>
+    <script src="js/data/Items.js?v=loot3"></script>
+    <script src="js/data/Scales.js?v=tile2"></script>
+    <script src="js/ui/Hud.js?v=loot3"></script>
+    <script src="js/world/MapGen.js?v=biome1"></script>
+    <script src="js/world/Pathfind.js?v=path1"></script>
+    <script src="js/world/Zones.js?v=tile1"></script>
+    <script src="js/sprites/Unit.js"></script>
+    <script src="js/sprites/PlayerCharacter.js"></script>
+    <script src="js/sprites/Enemy.js"></script>
+    <script src="js/ui/Menu.js"></script>
+    <script src="js/ui/Message.js"></script>
+    <script src="js/scenes/BootScene.js"></script>
+    <script src="js/scenes/TitleScene.js?v=move4"></script>
+    <script src="js/scenes/WorldScene.js?v=path1-loot3-idle1-adj12-1"></script>
+    <script src="js/scenes/BattleScene.js"></script>
+    <script src="js/scenes/UIScene.js"></script>
+    <script src="js/scenes/GameOverScene.js"></script>
+    <script src="js/main.js?v=move4"></script>
+</body>
+</html>

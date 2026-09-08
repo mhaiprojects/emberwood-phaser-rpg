@@ -1,0 +1,858 @@
+var WorldScene = new Phaser.Class({
+    Extends: Phaser.Scene,
+
+    initialize: function WorldScene() {
+        Phaser.Scene.call(this, { key: 'WorldScene' });
+    },
+
+    create: function () {
+        Keys.init();
+        this.zoneId = this.registry.get('zone') || 'haven';
+        this.walkTarget = null;
+        this.walkPath = null;
+        this.pathCheckAt = 0;
+        this.tileGrid = null;
+        this.engageTarget = null;
+        this.talkTarget = null;
+        this.exitLock = false;
+        this.encounterLock = false;
+        this.engageGrace = 0;
+        this.lastFought = null;
+        this.lastFacing = 'down';
+        this.groundLoot = [];
+
+        this.marker = this.add.rectangle(0, 0, 6, 6, 0xf8ff38).setVisible(false).setDepth(8);
+        this.pathGfx = this.add.graphics();
+        this.pathGfx.setDepth(4);
+        this.pathGfx.setVisible(false);
+        this.npcs = this.physics.add.group({ immovable: true });
+        this.mobs = this.physics.add.group();
+        this.floatLabels = [];
+
+        var spawn0 = defaultWorldSpawn();
+        this.player = this.physics.add.sprite(spawn0.x, spawn0.y, 'player', 0);
+        this.player.setScale(PLAYER_WORLD_SCALE);
+        applyPlayerWorldBody(this.player);
+        this.player.setDepth(6);
+        this.physics.add.collider(this.player, this.npcs);
+
+        this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
+        this.cameras.main.roundPixels = true;
+
+        this.input.on('pointerdown', this.onClick, this);
+        this.sys.events.off('wake', this.wake, this);
+        this.sys.events.on('wake', this.wake, this);
+
+        this.enterZone(this.zoneId, null);
+        this.refreshHud();
+        this.engageGrace = this.time.now + 800;
+        Hud.log('You arrive in Emberhaven. WASD or arrows to walk, or click the ground.');
+        Hud.log('Open Inventory (F4) for food. The Guildmaster by the courtyard has work.');
+    },
+
+    moveFlags: function () {
+        if (window.Hud && Hud.mode !== 'world') {
+            return { left: false, right: false, up: false, down: false };
+        }
+        return {
+            left: Keys.left(),
+            right: Keys.right(),
+            up: Keys.up(),
+            down: Keys.downArrow()
+        };
+    },
+
+    placePlayer: function (x, y) {
+        if (this.player.body) {
+            this.player.body.reset(x, y);
+            applyPlayerWorldBody(this.player);
+            this.player.body.stop();
+            this.player.body.embedded = false;
+            this.player.body.blocked.none = true;
+            this.player.body.blocked.up = false;
+            this.player.body.blocked.down = false;
+            this.player.body.blocked.left = false;
+            this.player.body.blocked.right = false;
+        } else {
+            this.player.setPosition(x, y);
+        }
+        if (this.cameras && this.cameras.main) {
+            this.cameras.main.centerOn(x, y);
+        }
+    },
+
+    applyIdleFacing: function () {
+        var face = this.lastFacing || 'down';
+        if (face === 'left') {
+            this.player.setFrame(1);
+            this.player.flipX = false;
+        } else if (face === 'right') {
+            this.player.setFrame(1);
+            this.player.flipX = true;
+        } else if (face === 'up') {
+            this.player.setFrame(2);
+            this.player.flipX = false;
+        } else {
+            this.player.setFrame(0);
+            this.player.flipX = false;
+        }
+    },
+
+    enterZone: function (zoneId, fromDir) {
+        var zone = ZONES[zoneId];
+        if (!zone) {
+            return;
+        }
+        this.zoneId = zoneId;
+        this.registry.set('zone', zoneId);
+        this.clearWorldObjects();
+
+        var neighbors = zoneNeighbors(zone);
+        var grid = generateMap(zone.seed, zone.biome, neighbors);
+        this.tileGrid = grid;
+        var data = flattenMap(grid);
+        this.map = this.make.tilemap({ data: data, tileWidth: 16, tileHeight: 16 });
+        var tiles = this.map.addTilesetImage('tiles', 'tiles', 16, 16, 0, 0, 1);
+        this.ground = this.map.createLayer(0, tiles, 0, 0);
+        this.ground.setCollision([TILE.WATER, TILE.TREE, TILE.ROCK, TILE.SHRINE]);
+
+        this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
+        this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
+        this.groundCollider = this.physics.add.collider(this.player, this.ground);
+        this.player.setCollideWorldBounds(true);
+        this.player.setScale(PLAYER_WORLD_SCALE);
+        applyPlayerWorldBody(this.player);
+
+        var spawn = fromDir ? spawnPointForEntry(fromDir) : defaultWorldSpawn();
+        this.placePlayer(spawn.x, spawn.y);
+        this.clearWalk();
+
+        this.spawnPeople(zoneId);
+        this.refreshHud();
+        Hud.log('You enter ' + zone.name + '.');
+    },
+
+    clearWorldObjects: function () {
+        this.clearWalk();
+        this.engageTarget = null;
+        this.talkTarget = null;
+        this.tileGrid = null;
+        if (this.groundCollider) {
+            this.groundCollider.destroy();
+            this.groundCollider = null;
+        }
+        for (var i = 0; i < this.floatLabels.length; i++) {
+            this.floatLabels[i].destroy();
+        }
+        this.floatLabels.length = 0;
+        this.clearLoot();
+        this.npcs.clear(true, true);
+        this.mobs.clear(true, true);
+        if (this.ground) {
+            this.ground.destroy();
+            this.ground = null;
+        }
+        if (this.map) {
+            this.map.destroy();
+            this.map = null;
+        }
+    },
+
+    spawnPeople: function (zoneId) {
+        var self = this;
+        (NPC_DEFS[zoneId] || []).forEach(function (def) {
+            var sprite = self.npcs.create(def.x, def.y, def.texture || ('npc-' + def.key));
+            if (def.tint && def.tint !== 0xffffff && !isUniqueMobTexture(def.texture || ('npc-' + def.key))) {
+                sprite.setTint(def.tint);
+            }
+            sprite.setImmovable(true);
+            sprite.body.setSize(12, 12);
+            sprite.npcDef = def;
+            var label = self.add.text(def.x, def.y - 14, def.name, {
+                fontSize: '8px',
+                fontFamily: 'Verdana, Geneva, sans-serif',
+                color: '#ffe08a',
+                stroke: '#000000',
+                strokeThickness: 2
+            }).setOrigin(0.5).setDepth(7);
+            sprite.nameLabel = label;
+            self.floatLabels.push(label);
+        });
+
+        (MOB_DEFS[zoneId] || []).forEach(function (def, index) {
+            var sprite = self.physics.add.sprite(def.x, def.y, def.texture, def.frame || 0);
+            self.mobs.add(sprite);
+            if (def.tint && def.tint !== 0xffffff && !isUniqueMobTexture(def.texture)) {
+                sprite.setTint(def.tint);
+            }
+            var scale = mobScaleFor(def.type, 'world');
+            sprite.setScale(scale);
+            applyMobWorldBody(sprite, def.type);
+            sprite.mobDef = Object.assign({ id: zoneId + '-' + index }, def);
+            sprite.aliveMob = true;
+            var label = self.add.text(def.x, def.y - Math.round(8 * scale) - 6, def.type, {
+                fontSize: '8px',
+                fontFamily: 'Verdana, Geneva, sans-serif',
+                color: '#ffb0a0',
+                stroke: '#000000',
+                strokeThickness: 2
+            }).setOrigin(0.5).setDepth(7);
+            sprite.nameLabel = label;
+            self.floatLabels.push(label);
+            self.physics.add.collider(sprite, self.ground);
+        });
+    },
+
+    refreshHud: function () {
+        var hero = this.registry.get('hero');
+        var quest = this.registry.get('quest');
+        var zone = ZONES[this.zoneId];
+        var questText = 'Talk to Guildmaster Bram in Emberhaven.';
+        if (quest.stage === 1) {
+            questText = 'Kill goblins in Northwood (' + quest.progress + '/' + quest.goal + ').';
+        } else if (quest.stage === 2) {
+            questText = 'Return to Guildmaster Bram for your reward.';
+        } else if (quest.stage >= 3) {
+            questText = 'Militia task complete. Explore the nine lands.';
+        }
+        Hud.setWorld({
+            zone: zone.name,
+            zoneId: this.zoneId,
+            hp: hero.hp,
+            maxHp: hero.maxHp,
+            gold: hero.gold,
+            xp: hero.xp,
+            level: hero.level,
+            quest: questText
+        });
+    },
+
+    onClick: function (pointer) {
+        if (this.encounterLock || Hud.mode === 'battle' || Hud.mode === 'title') {
+            return;
+        }
+        var x = pointer.worldX;
+        var y = pointer.worldY;
+        var loot = this.pickLoot(x, y, 18);
+        if (loot) {
+            this.tryPickup(loot);
+            return;
+        }
+        var hit = this.pickSprite(this.mobs, x, y, 18);
+        if (hit && hit.aliveMob) {
+            this.engageTarget = hit;
+            this.talkTarget = null;
+            this.setWalk(hit.x, hit.y, { allowEnd: true });
+            Hud.log('You target the ' + hit.mobDef.type + '.');
+            return;
+        }
+        hit = this.pickSprite(this.npcs, x, y, 18);
+        if (hit) {
+            this.talkTarget = hit;
+            this.engageTarget = null;
+            this.setWalk(hit.x, hit.y, { allowEnd: true });
+            return;
+        }
+        this.engageTarget = null;
+        this.talkTarget = null;
+        this.setWalk(x, y);
+    },
+
+    pickSprite: function (group, x, y, range) {
+        var kids = group.getChildren();
+        var best = null;
+        var bestD = range;
+        for (var i = 0; i < kids.length; i++) {
+            var sprite = kids[i];
+            if (!sprite.active) {
+                continue;
+            }
+            var d = Phaser.Math.Distance.Between(x, y, sprite.x, sprite.y);
+            if (d < bestD) {
+                bestD = d;
+                best = sprite;
+            }
+        }
+        return best;
+    },
+
+    pickLoot: function (x, y, range) {
+        var best = null;
+        var bestD = range;
+        for (var i = 0; i < this.groundLoot.length; i++) {
+            var drop = this.groundLoot[i];
+            if (!drop || drop.taken || !drop.sprite) {
+                continue;
+            }
+            var d = Phaser.Math.Distance.Between(x, y, drop.sprite.x, drop.sprite.y);
+            if (d < bestD) {
+                bestD = d;
+                best = drop;
+            }
+        }
+        return best;
+    },
+
+    setWalk: function (x, y, opts) {
+        opts = opts || {};
+        this.walkTarget = { x: x, y: y };
+        this.marker.setPosition(x, y).setVisible(true);
+        this.pathCheckAt = 0;
+        this.walkPath = this.computeWalkPath(x, y, opts);
+        this.drawPathLine();
+    },
+
+    clearWalk: function () {
+        this.walkTarget = null;
+        this.walkPath = null;
+        this.pathCheckAt = 0;
+        if (this.marker) {
+            this.marker.setVisible(false);
+        }
+        this.clearPathLine();
+    },
+
+    clearPathLine: function () {
+        if (this.pathGfx) {
+            this.pathGfx.clear();
+            this.pathGfx.setVisible(false);
+        }
+    },
+
+    collectOccupiedTiles: function (destX, destY) {
+        var occ = {};
+        var size = typeof TILE_SIZE === 'number' ? TILE_SIZE : 16;
+        var markSprite = function (sprite) {
+            if (!sprite || !sprite.active) {
+                return;
+            }
+            if (destX != null && Phaser.Math.Distance.Between(sprite.x, sprite.y, destX, destY) < 12) {
+                return;
+            }
+            var left;
+            var right;
+            var top;
+            var bottom;
+            if (sprite.body) {
+                left = sprite.body.x;
+                right = sprite.body.x + sprite.body.width;
+                top = sprite.body.y;
+                bottom = sprite.body.y + sprite.body.height;
+            } else {
+                left = sprite.x - 6;
+                right = sprite.x + 6;
+                top = sprite.y - 6;
+                bottom = sprite.y + 6;
+            }
+            var tx0 = Math.floor(left / size);
+            var tx1 = Math.floor((right - 1) / size);
+            var ty0 = Math.floor(top / size);
+            var ty1 = Math.floor((bottom - 1) / size);
+            var ty;
+            var tx;
+            for (ty = ty0; ty <= ty1; ty++) {
+                for (tx = tx0; tx <= tx1; tx++) {
+                    occ[tx + ',' + ty] = true;
+                }
+            }
+        };
+        if (this.npcs) {
+            this.npcs.children.iterate(markSprite);
+        }
+        if (!this.mobs) {
+            return occ;
+        }
+        this.mobs.children.iterate(function (mob) {
+            if (mob && mob.aliveMob) {
+                markSprite(mob);
+            }
+        });
+        return occ;
+    },
+
+    computeWalkPath: function (toX, toY, opts) {
+        opts = opts || {};
+        var grid = this.tileGrid;
+        if (!grid) {
+            return [{ x: toX, y: toY }];
+        }
+        var start = worldToTile(this.player.x, this.player.y);
+        var end = worldToTile(toX, toY);
+        if (!opts.allowEnd && !tileWalkable(grid, end.tx, end.ty)) {
+            var near = nearestWalkableTile(grid, end.tx, end.ty);
+            if (near) {
+                end = near;
+                var snapped = tileCenter(end.tx, end.ty);
+                toX = snapped.x;
+                toY = snapped.y;
+                this.walkTarget = { x: toX, y: toY };
+                this.marker.setPosition(toX, toY);
+            }
+        }
+        var occupied = this.collectOccupiedTiles(toX, toY);
+        var tiles = findTilePath(grid, start.tx, start.ty, end.tx, end.ty, {
+            avoid: occupied,
+            allowEnd: true
+        });
+        if (!tiles) {
+            tiles = findTilePath(grid, start.tx, start.ty, end.tx, end.ty, {
+                avoid: {},
+                allowEnd: true
+            });
+        }
+        if (!tiles) {
+            return [{ x: toX, y: toY }];
+        }
+        return tilesToWorldPath(tiles, toX, toY);
+    },
+
+    pathUsesOccupied: function (path, destX, destY) {
+        if (!path || !path.length) {
+            return false;
+        }
+        var occ = this.collectOccupiedTiles(destX, destY);
+        for (var i = 0; i < path.length; i++) {
+            var tile = worldToTile(path[i].x, path[i].y);
+            if (occ[tile.tx + ',' + tile.ty]) {
+                return true;
+            }
+        }
+        return false;
+    },
+
+    maybeRepath: function () {
+        if (!this.walkTarget || !this.walkPath || !this.walkPath.length) {
+            return;
+        }
+        var now = this.time.now;
+        if (this.pathCheckAt && now < this.pathCheckAt) {
+            return;
+        }
+        this.pathCheckAt = now + 280;
+        if (this.pathUsesOccupied(this.walkPath, this.walkTarget.x, this.walkTarget.y)) {
+            this.walkPath = this.computeWalkPath(this.walkTarget.x, this.walkTarget.y, { allowEnd: true });
+        }
+    },
+
+    aimWalkPoint: function () {
+        if (!this.walkPath || !this.walkPath.length) {
+            return this.walkTarget;
+        }
+        var dest = this.walkTarget;
+        while (this.walkPath.length) {
+            var next = this.walkPath[0];
+            var stepDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, next.x, next.y);
+            if (stepDist < 6) {
+                this.walkPath.shift();
+                continue;
+            }
+            if (this.walkPath.length > 1 && dest) {
+                var toNextX = next.x - this.player.x;
+                var toNextY = next.y - this.player.y;
+                var toDestX = dest.x - this.player.x;
+                var toDestY = dest.y - this.player.y;
+                if (toNextX * toDestX + toNextY * toDestY < 0) {
+                    this.walkPath.shift();
+                    continue;
+                }
+            }
+            return next;
+        }
+        return dest;
+    },
+
+    drawPathLine: function () {
+        if (!this.pathGfx) {
+            return;
+        }
+        this.pathGfx.clear();
+        if (!this.walkTarget || !this.walkPath || !this.walkPath.length) {
+            this.pathGfx.setVisible(false);
+            return;
+        }
+        this.pathGfx.setVisible(true);
+        this.pathGfx.lineStyle(2, PATH_LINE_COLOR, 0.8);
+        this.pathGfx.beginPath();
+        this.pathGfx.moveTo(Math.round(this.player.x), Math.round(this.player.y));
+        for (var i = 0; i < this.walkPath.length; i++) {
+            this.pathGfx.lineTo(Math.round(this.walkPath[i].x), Math.round(this.walkPath[i].y));
+        }
+        this.pathGfx.strokePath();
+    },
+
+    tryTalk: function (npc) {
+        var def = npc.npcDef;
+        var hero = this.registry.get('hero');
+        var quest = this.registry.get('quest');
+        if (def.key === 'guild') {
+            if (quest.stage === 0) {
+                quest.stage = 1;
+                quest.progress = 0;
+                this.registry.set('quest', quest);
+                Hud.log(def.name + ': Goblins plague Northwood. Bring me 5 kills.');
+            } else if (quest.stage === 1) {
+                Hud.log(def.name + ': ' + quest.progress + ' of ' + quest.goal + ' goblins down. Keep at it.');
+            } else if (quest.stage === 2) {
+                quest.stage = 3;
+                addItem(hero, 'coins', 50);
+                hero.xp += 40;
+                this.levelHero(hero);
+                this.registry.set('quest', quest);
+                this.registry.set('hero', hero);
+                Hud.log(def.name + ': The militia thanks you. 50 gold and combat training.');
+            } else {
+                Hud.log(def.name + ': Emberhaven stands because of you.');
+            }
+        } else if (def.key === 'banker' || def.key === 'witch') {
+            var cost = def.key === 'witch' ? 10 : 0;
+            if (hero.gold < cost) {
+                Hud.log(def.name + ': Come back with 10 gold.');
+            } else {
+                if (cost) {
+                    takeItem(hero, 'coins', cost);
+                }
+                hero.hp = hero.maxHp;
+                this.registry.set('hero', hero);
+                Hud.log(def.name + ': Your wounds close. HP restored.');
+            }
+        } else {
+            Hud.log(def.name + ': ' + def.lines[Phaser.Math.Between(0, def.lines.length - 1)]);
+        }
+        this.talkTarget = null;
+        this.refreshHud();
+    },
+
+    levelHero: function (hero) {
+        var next = 1 + Math.floor(hero.xp / 40);
+        if (next > hero.level) {
+            hero.level = next;
+            hero.maxHp = 90 + hero.level * 10;
+            hero.hp = hero.maxHp;
+            hero.damage = 14 + hero.level * 2;
+            Hud.log('Your combat level is now ' + hero.level + '.');
+        }
+    },
+
+    beginFight: function (mob) {
+        if (this.encounterLock || !mob.aliveMob) {
+            return;
+        }
+        this.encounterLock = true;
+        this.lastFought = mob;
+        this.clearWalk();
+        this.player.body.setVelocity(0);
+        this.registry.set('pendingEncounter', {
+            enemies: [Object.assign({}, mob.mobDef)]
+        });
+        this.cameras.main.shake(220);
+        var self = this;
+        this.time.delayedCall(260, function () {
+            self.scene.switch('BattleScene');
+        });
+    },
+
+    spawnLoot: function (x, y, drops) {
+        var self = this;
+        var now = this.time.now;
+        drops.forEach(function (drop, index) {
+            var ox = (index - (drops.length - 1) / 2) * 10;
+            var sprite = self.add.image(x + ox, y + 4, 'item-' + drop.id);
+            sprite.setDepth(5);
+            sprite.setScale(1);
+            sprite.setInteractive({ useHandCursor: true });
+            var entry = {
+                id: drop.id,
+                qty: drop.qty,
+                sprite: sprite,
+                taken: false,
+                until: now + 20000
+            };
+            sprite.on('pointerdown', function () {
+                self.tryPickup(entry);
+            });
+            self.groundLoot.push(entry);
+        });
+    },
+
+    tryPickup: function (drop) {
+        if (!drop || drop.taken) {
+            return false;
+        }
+        var hero = this.registry.get('hero');
+        addItem(hero, drop.id, drop.qty);
+        this.registry.set('hero', hero);
+        drop.taken = true;
+        if (drop.sprite) {
+            drop.sprite.destroy();
+            drop.sprite = null;
+        }
+        var label = itemName(drop.id);
+        Hud.log('You pick up ' + (drop.qty > 1 ? drop.qty + ' ' : '') + label + '.');
+        this.refreshHud();
+        return true;
+    },
+
+    autoPickupOn: function () {
+        var hero = this.registry.get('hero');
+        return !!(hero && hero.autoPickup !== false);
+    },
+
+    collectNearbyLoot: function () {
+        if (!this.autoPickupOn()) {
+            return;
+        }
+        var i;
+        for (i = this.groundLoot.length - 1; i >= 0; i--) {
+            var drop = this.groundLoot[i];
+            if (!drop || drop.taken || !drop.sprite) {
+                continue;
+            }
+            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, drop.sprite.x, drop.sprite.y) < 18) {
+                this.tryPickup(drop);
+            }
+        }
+    },
+
+    pruneLoot: function () {
+        var now = this.time.now;
+        var i;
+        for (i = this.groundLoot.length - 1; i >= 0; i--) {
+            var drop = this.groundLoot[i];
+            if (!drop) {
+                this.groundLoot.splice(i, 1);
+                continue;
+            }
+            if (drop.taken || now > drop.until) {
+                if (drop.sprite) {
+                    drop.sprite.destroy();
+                    drop.sprite = null;
+                }
+                this.groundLoot.splice(i, 1);
+            }
+        }
+    },
+
+    clearLoot: function () {
+        for (var i = 0; i < this.groundLoot.length; i++) {
+            if (this.groundLoot[i] && this.groundLoot[i].sprite) {
+                this.groundLoot[i].sprite.destroy();
+            }
+        }
+        this.groundLoot.length = 0;
+    },
+
+    wake: function () {
+        this.encounterLock = false;
+        this.engageGrace = this.time.now + 700;
+        this.player.body.setVelocity(0);
+        this.clearWalk();
+        var outcome = this.registry.get('battleOutcome');
+        var hero = this.registry.get('hero');
+        if (outcome === 'win' && this.lastFought) {
+            var def = this.lastFought.mobDef;
+            hero.xp += def.xp || 0;
+            gainSkillXp(hero, combatSkill(hero), def.xp || 10);
+            gainSkillXp(hero, 'hitpoints', Math.max(1, Math.ceil((def.xp || 10) / 3)));
+            this.levelHero(hero);
+            this.registry.set('hero', hero);
+            Hud.log('The ' + def.type + ' collapses. +' + def.xp + ' xp. Loot drops to the ground.');
+            if (def.type === 'Goblin') {
+                var quest = this.registry.get('quest');
+                if (quest.stage === 1) {
+                    quest.progress += 1;
+                    if (quest.progress >= quest.goal) {
+                        quest.stage = 2;
+                        Hud.log('That should be enough goblins. Return to Bram.');
+                    }
+                    this.registry.set('quest', quest);
+                }
+            }
+            this.spawnLoot(this.lastFought.x, this.lastFought.y, lootForMob(def));
+            this.lastFought.aliveMob = false;
+            this.lastFought.setVisible(false);
+            this.lastFought.body.enable = false;
+            if (this.lastFought.nameLabel) {
+                this.lastFought.nameLabel.setVisible(false);
+            }
+            var dead = this.lastFought;
+            this.time.delayedCall(18000, function () {
+                if (!dead) {
+                    return;
+                }
+                dead.aliveMob = true;
+                dead.setVisible(true);
+                dead.body.enable = true;
+                if (dead.nameLabel) {
+                    dead.nameLabel.setVisible(true);
+                }
+            });
+        } else if (outcome === 'flee') {
+            Hud.log('You break away from the fight.');
+        }
+        this.registry.set('battleOutcome', null);
+        this.lastFought = null;
+        this.engageTarget = null;
+        this.refreshHud();
+    },
+
+    checkExits: function () {
+        if (this.exitLock || this.encounterLock) {
+            return;
+        }
+        var zone = ZONES[this.zoneId];
+        var dir = null;
+        if (this.player.x < 14) {
+            dir = 'w';
+        } else if (this.player.x > this.map.widthInPixels - 14) {
+            dir = 'e';
+        } else if (this.player.y < 14) {
+            dir = 'n';
+        } else if (this.player.y > this.map.heightInPixels - 14) {
+            dir = 's';
+        }
+        if (!dir) {
+            return;
+        }
+        var next = neighborId(zone, dir);
+        if (!next) {
+            return;
+        }
+        this.exitLock = true;
+        this.enterZone(next, dir);
+        var self = this;
+        this.time.delayedCall(400, function () {
+            self.exitLock = false;
+        });
+    },
+
+    wanderMobs: function () {
+        this.mobs.children.iterate(function (mob) {
+            if (!mob || !mob.aliveMob || !mob.body) {
+                return;
+            }
+            if (Phaser.Math.Between(0, 80) !== 0) {
+                return;
+            }
+            mob.body.setVelocity(Phaser.Math.Between(-20, 20), Phaser.Math.Between(-20, 20));
+        });
+    },
+
+    autoAttackOn: function () {
+        var hero = this.registry.get('hero');
+        return !!(hero && hero.autoAttack);
+    },
+
+    tryAutoEngage: function () {
+        if (this.encounterLock || this.time.now < this.engageGrace) {
+            return false;
+        }
+        if (this.engageTarget && this.engageTarget.aliveMob) {
+            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.engageTarget.x, this.engageTarget.y) < 24) {
+                this.beginFight(this.engageTarget);
+                return true;
+            }
+        }
+        if (!this.autoAttackOn()) {
+            return false;
+        }
+        var near = this.pickSprite(this.mobs, this.player.x, this.player.y, 20);
+        if (near && near.aliveMob) {
+            this.beginFight(near);
+            return true;
+        }
+        return false;
+    },
+
+    update: function () {
+        if (!this.player || !this.player.body || this.encounterLock) {
+            return;
+        }
+
+        this.mobs.children.iterate(function (mob) {
+            if (mob && mob.nameLabel) {
+                var lift = 8 + Math.round((mob.displayHeight || 16) / 2);
+                mob.nameLabel.setPosition(mob.x, mob.y - lift);
+            }
+        });
+
+        var speed = 90;
+        var vx = 0;
+        var vy = 0;
+        var move = this.moveFlags();
+        if (move.left || move.right || move.up || move.down) {
+            this.clearWalk();
+            this.talkTarget = null;
+            if (move.left && !move.right) { vx = -speed; }
+            else if (move.right && !move.left) { vx = speed; }
+            if (move.up && !move.down) { vy = -speed; }
+            else if (move.down && !move.up) { vy = speed; }
+        } else if (this.walkTarget) {
+            this.maybeRepath();
+            var destDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.walkTarget.x, this.walkTarget.y);
+            if (destDist < 6) {
+                this.clearWalk();
+                this.player.body.setVelocity(0);
+            } else {
+                var aim = this.aimWalkPoint();
+                var dx = aim.x - this.player.x;
+                var dy = aim.y - this.player.y;
+                var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                vx = (dx / dist) * speed;
+                vy = (dy / dist) * speed;
+                this.drawPathLine();
+            }
+        } else if (this.walkPath) {
+            this.clearWalk();
+        }
+
+        this.player.body.setVelocity(vx, vy);
+        if (vx || vy) {
+            var len = Math.sqrt(vx * vx + vy * vy) || 1;
+            this.player.body.velocity.x = (vx / len) * speed;
+            this.player.body.velocity.y = (vy / len) * speed;
+        }
+
+        if (vx < -10) {
+            this.player.anims.play('left', true);
+            this.player.flipX = false;
+            this.lastFacing = 'left';
+        } else if (vx > 10) {
+            this.player.anims.play('right', true);
+            this.player.flipX = true;
+            this.lastFacing = 'right';
+        } else if (vy < -10) {
+            this.player.anims.play('up', true);
+            this.lastFacing = 'up';
+        } else if (vy > 10) {
+            this.player.anims.play('down', true);
+            this.lastFacing = 'down';
+        } else {
+            this.player.anims.stop();
+            this.applyIdleFacing();
+        }
+
+        this.collectNearbyLoot();
+        this.pruneLoot();
+
+        if (this.tryAutoEngage()) {
+            return;
+        }
+        if (this.talkTarget) {
+            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.talkTarget.x, this.talkTarget.y) < 22) {
+                this.player.body.setVelocity(0);
+                this.clearWalk();
+                this.tryTalk(this.talkTarget);
+            }
+        }
+
+        if (Keys.justPressed('Space')) {
+            var nearNpc = this.pickSprite(this.npcs, this.player.x, this.player.y, 28);
+            if (nearNpc) {
+                this.tryTalk(nearNpc);
+            }
+        }
+
+        this.wanderMobs();
+        this.checkExits();
+    }
+});
