@@ -1883,26 +1883,77 @@ EmberwoodTests.add('npcs: Fen Witch refuses below 10 gold and does not heal', fu
     });
 });
 
-EmberwoodTests.add('npcs: Fen Witch heals for 10 gold', function (win, H) {
-    H.enterZone(win, 'mire');
-    var witch = H.findNpc(win, 'witch');
-    var hero = H.hero(win);
-    hero.hp = 55;
-    hero.gold = 8;
-    win.syncCoins(hero);
-    win.game.registry.set('hero', hero);
-    H.world(win).tryTalk(witch);
-    assert(H.chatHas(win, 'Come back with 10 gold'), 'witch refuses poor hero');
-    assertEqual(H.hero(win).hp, 55, 'no heal without gold');
+EmberwoodTests.add('npcs: Fen Witch at 10+ gold heals and takeItem removes 10 coins', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        var world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(typeof win.takeItem, 'function', 'takeItem is the coin-removal helper');
 
-    hero = H.hero(win);
-    win.addItem(hero, 'coins', 10);
-    win.game.registry.set('hero', hero);
-    var gold = H.hero(win).gold;
-    H.world(win).tryTalk(witch);
-    assertEqual(H.hero(win).hp, H.hero(win).maxHp, 'witch healed');
-    assertEqual(H.hero(win).gold, gold - 10, 'witch took 10 gp');
-    H.enterZone(win, 'haven');
+        H.enterZone(win, 'mire');
+        world = H.world(win);
+        H.setAutoAttack(win, false);
+        var witch = H.findNpc(win, 'witch');
+        assert(witch, 'Fen Witch is in Mirefen');
+        assertEqual(witch.npcDef.name, 'Fen Witch', 'witch name');
+        assertEqual(Math.round(witch.x), 200, 'witch x');
+        assertEqual(Math.round(witch.y), 180, 'witch y');
+
+        function coinQty(hero) {
+            var stack = hero.inventory.filter(function (row) { return row.id === 'coins'; })[0];
+            return stack ? stack.qty : 0;
+        }
+
+        function assertPaidHeal(label, gold, hp) {
+            var hero = win.makeHero();
+            hero.hp = hp;
+            hero.gold = gold;
+            win.syncCoins(hero);
+            win.game.registry.set('hero', hero);
+            world.refreshHud();
+            assertEqual(coinQty(H.hero(win)), gold, label + ' coins match gold before talk');
+            var xp = H.hero(win).xp;
+            var shrimp = H.hero(win).inventory.filter(function (row) { return row.id === 'shrimp'; })[0];
+            var shrimpQty = shrimp ? shrimp.qty : 0;
+            win.Hud.el.log.innerHTML = '';
+            world.tryTalk(witch);
+            assertEqual(H.hero(win).hp, H.hero(win).maxHp, label + ' heals to max');
+            assertEqual(H.hero(win).hp, 100, label + ' HP is 100');
+            assertEqual(H.hero(win).gold, gold - 10, label + ' gold minus 10 via takeItem');
+            assertEqual(coinQty(H.hero(win)), gold - 10, label + ' coin stack minus 10 (takeItem, not gold-only)');
+            assertEqual(H.hero(win).xp, xp, label + ' XP unchanged');
+            assertEqual(H.lastChat(win), 'Fen Witch: Your wounds close. HP restored.', label + ' heal line');
+            assert(!H.chatHas(win, 'Come back with 10 gold'), label + ' does not refuse');
+            assertEqual(win.document.getElementById('hud-hp').textContent, '100 / 100', label + ' HUD HP');
+            assertEqual(win.document.getElementById('hud-gold').textContent, String(gold - 10), label + ' HUD gold');
+            var fill = win.document.getElementById('hp-fill');
+            assert(fill, 'HP fill bar exists');
+            assertEqual(fill.style.width, '100%', label + ' HP bar full');
+            var shrimpAfter = H.hero(win).inventory.filter(function (row) { return row.id === 'shrimp'; })[0];
+            assertEqual(shrimpAfter ? shrimpAfter.qty : 0, shrimpQty, label + ' food stack untouched');
+            assert(!win.game.input.keyboard, 'Phaser keyboard off after ' + label);
+        }
+
+        assertPaidHeal('exact 10gp', 10, 40);
+        assertPaidHeal('11gp', 11, 22);
+        assertPaidHeal('18gp', 18, 55);
+
+        H.enterZone(win, 'haven');
+        world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
 });
 
 EmberwoodTests.add('mobs: click a monster to target it', function (win, H) {
