@@ -2085,6 +2085,195 @@ EmberwoodTests.add('npcs: every NPC_DEFS entry spawns at xy with a yellow name l
     });
 });
 
+function colliderList(world) {
+    var colliders = world.physics && world.physics.world && world.physics.world.colliders;
+    if (!colliders) {
+        return [];
+    }
+    if (typeof colliders.getActive === 'function') {
+        return colliders.getActive();
+    }
+    return colliders.list || colliders._active || [];
+}
+
+function findPlayerNpcCollider(world) {
+    var list = colliderList(world);
+    var i;
+    for (i = 0; i < list.length; i++) {
+        var c = list[i];
+        if (!c) {
+            continue;
+        }
+        var a = c.object1;
+        var b = c.object2;
+        if ((a === world.player && b === world.npcs) || (b === world.player && a === world.npcs)) {
+            return c;
+        }
+    }
+    return null;
+}
+
+function parkMobsOnly(world) {
+    world.mobs.getChildren().forEach(function (mob) {
+        if (mob.body) {
+            mob.body.enable = false;
+            mob.body.setVelocity(0, 0);
+        }
+    });
+}
+
+function shoveNpcWithKey(win, H, npc, dir) {
+    var world = H.world(win);
+    var name = npc.npcDef && npc.npcDef.name ? npc.npcDef.name : 'npc';
+    var ox = npc.x;
+    var oy = npc.y;
+    var code;
+    var key;
+    var px = ox;
+    var py = oy;
+    var gap = 18;
+    if (dir === 'east') {
+        code = 'KeyD';
+        key = 'd';
+        px = ox - gap;
+        py = oy;
+    } else if (dir === 'west') {
+        code = 'KeyA';
+        key = 'a';
+        px = ox + gap;
+        py = oy;
+    } else if (dir === 'south') {
+        code = 'KeyS';
+        key = 's';
+        px = ox;
+        py = oy - gap;
+    } else {
+        code = 'KeyW';
+        key = 'w';
+        px = ox;
+        py = oy + gap;
+    }
+    world.npcs.getChildren().forEach(function (other) {
+        if (other.body) {
+            other.body.enable = other === npc;
+            other.body.setVelocity(0, 0);
+        }
+    });
+    parkMobsOnly(world);
+    world.placePlayer(px, py);
+    world.player.body.setVelocity(0, 0);
+    world.clearWalk();
+    world.exitLock = true;
+    world.encounterLock = false;
+    world.talkTarget = null;
+    world.engageTarget = null;
+    H.clearKeys(win);
+    var startX = world.player.x;
+    var startY = world.player.y;
+    return H.holdKey(win, code, key, 400).then(function () {
+        H.clearKeys(win);
+        world = H.world(win);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(npc.body.immovable, true, name + ' still immovable after shove');
+        assert(Math.abs(npc.x - ox) < 1, name + ' x not shoved, dx=' + (npc.x - ox));
+        assert(Math.abs(npc.y - oy) < 1, name + ' y not shoved, dy=' + (npc.y - oy));
+        assertEqual(npc.body.velocity.x, 0, name + ' vx still 0');
+        assertEqual(npc.body.velocity.y, 0, name + ' vy still 0');
+        if (dir === 'east') {
+            assert(world.player.x > startX, name + ' Keys.js D walked into the body');
+            assert(world.player.x < npc.x, name + ' did not pass through east');
+        } else if (dir === 'west') {
+            assert(world.player.x < startX, name + ' Keys.js A walked into the body');
+            assert(world.player.x > npc.x, name + ' did not pass through west');
+        } else if (dir === 'south') {
+            assert(world.player.y > startY, name + ' Keys.js S walked into the body');
+            assert(world.player.y < npc.y, name + ' did not pass through south');
+        } else {
+            assert(world.player.y < startY, name + ' Keys.js W walked into the body');
+            assert(world.player.y > npc.y, name + ' did not pass through north');
+        }
+        assert(!win.game.input.keyboard, 'Phaser keyboard off after shoving ' + name);
+        world.npcs.getChildren().forEach(function (other) {
+            if (other.body) {
+                other.body.enable = true;
+            }
+        });
+    });
+}
+
+EmberwoodTests.add('npcs: player-NPC arcade collider is immovable and does not shove NPCs', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        var world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(world.player.body.immovable, false, 'player body is movable');
+
+        var groupDefaults = world.npcs.defaults || {};
+        assert(groupDefaults.immovable === true || groupDefaults.setImmovable === true, 'NPC physics group defaults immovable');
+        var npcCollider = findPlayerNpcCollider(world);
+        assert(npcCollider, 'player-NPC arcade collider exists');
+        assertEqual(npcCollider.active, true, 'player-NPC collider is active');
+
+        world.npcs.getChildren().forEach(function (npc) {
+            var name = npc.npcDef && npc.npcDef.name ? npc.npcDef.name : 'npc';
+            assert(npc.body, name + ' has an arcade body');
+            assertEqual(npc.body.immovable, true, name + ' body is immovable');
+            assertEqual(npc.body.moves, true, name + ' body still participates in collision');
+            assertEqual(npc.body.velocity.x, 0, name + ' vx at rest');
+            assertEqual(npc.body.velocity.y, 0, name + ' vy at rest');
+        });
+
+        world.mobs.getChildren().forEach(function (mob) {
+            if (mob.body) {
+                mob.body.enable = false;
+                mob.body.setVelocity(0, 0);
+            }
+        });
+
+        var rowan = H.findNpc(win, 'guard');
+        var bram = H.findNpc(win, 'guild');
+        assert(rowan, 'Guard Rowan spawned');
+        assert(bram, 'Guildmaster Bram spawned');
+        assertEqual(Math.round(rowan.x), 252, 'Rowan x');
+        assertEqual(Math.round(rowan.y), 168, 'Rowan y');
+        assertEqual(Math.round(bram.x), 210, 'Bram x');
+        assertEqual(Math.round(bram.y), 150, 'Bram y');
+
+        return shoveNpcWithKey(win, H, rowan, 'east').then(function () {
+            return shoveNpcWithKey(win, H, bram, 'south');
+        }).then(function () {
+            H.enterZone(win, 'northwood');
+            world = H.world(win);
+            H.setAutoAttack(win, false);
+            parkMobsOnly(world);
+            npcCollider = findPlayerNpcCollider(world);
+            assert(npcCollider && npcCollider.active, 'player-NPC collider survives enterZone');
+            var kett = H.findNpc(win, 'ranger');
+            assert(kett, 'Ranger Kett spawned');
+            assertEqual(kett.body.immovable, true, 'Kett body is immovable');
+            return shoveNpcWithKey(win, H, kett, 'east');
+        }).then(function () {
+            H.enterZone(win, 'haven');
+            world = H.world(win);
+            world.placePlayer(spawn.x, spawn.y);
+            world.player.body.setVelocity(0, 0);
+            assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+            assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        });
+    });
+});
+
 EmberwoodTests.add('mobs: click a monster to target it', function (win, H) {
     H.enterZone(win, 'haven');
     H.setAutoAttack(win, false);

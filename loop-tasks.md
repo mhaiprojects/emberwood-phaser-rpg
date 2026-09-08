@@ -98,7 +98,7 @@ Flat-file project manager for the 30-second loop. Emberwood is a Phaser 3.90.0 c
 - [done] Fen Witch at ≥10 gold heals to max and removes 10 coins via `takeItem`. — Conclusion: From spawn (328,248) Mirefen Witch (200,180) at 10/11/18 gp heals wounded HP to 100, `takeItem` removes 10 coins (gold + stack stay in sync), HUD 100/100, heal line, no refuse. Phaser 3.90 keyboard off. Dedicated case pass; suite 75/75.
 - [done] Flavor NPCs (Rowan, Kett, Willa, Ned, Sila, Wisp, Corb, Ola) each emit `{Name}:` plus one of their lines. — Conclusion: From spawn (328,248) Rowan/Kett/Willa/Ned/Sila/Wisp/Corb/Ola each emit `{Name}:` plus both of their lines (Between 0..1). Not healers/Bram. Phaser 3.90 keyboard off. Dedicated case pass; suite 76/76.
 - [done] Every `NPC_DEFS` entry spawns at its x,y with a yellow name label. — Conclusion: From spawn (328,248) all 11 NPC_DEFS entries spawn at def.x/y with yellow `#ffe08a` name labels (not salmon mob `#ffb0a0`). Phaser 3.90 keyboard off. Dedicated case pass; suite 77/77.
-- [verify] Player–NPC arcade collider is immovable and does not shove NPCs around. — Conclusion: —
+- [done] Player–NPC arcade collider is immovable and does not shove NPCs around. — Conclusion: From spawn (328,248) NPC group defaults immovable, player–NPC collider stays active after enterZone. Keys.js D/S into Rowan/Bram/Kett leaves them at 252,168 / 210,150 / Northwood; player does not pass through. Phaser 3.90 keyboard off. Dedicated case pass + Playwright.
 - [todo] Click-to-continue multi-page dialogue instead of a single chat line. — Conclusion: —
 - [todo] Dialogue option buttons (Talk / Trade / Bank / Quest) where the NPC supports them. — Conclusion: —
 - [todo] Examine on NPCs (right-click or long-press) with a short flavor sentence each. — Conclusion: —
@@ -423,4 +423,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 52 | 2026-09-08 | Flavor NPCs emit Name: plus one of their lines | done — spawn (328,248) Rowan/Kett/Willa/Ned/Sila/Wisp/Corb/Ola both lines; Phaser 3.90 keyboard off; dedicated case pass; suite 76/76 |
 | 53 | 2026-09-08 | Every NPC_DEFS entry spawns at its x,y with a yellow name label | done — spawn (328,248) all 11 NPCs at def xy + yellow #ffe08a labels; Phaser 3.90 keyboard off; dedicated case pass; suite 77/77 |
 | playtest | 2026-09-08 | Background headless playtest; close owned browsers/servers/tabs | done — `tests/playwright-session.js`; no Glass/`open_resource` unless asked; `channel: chrome` removed from engage; AGENT.md cleanup rules |
+| 54 | 2026-09-08 | Player–NPC arcade collider is immovable and does not shove NPCs | done — spawn (328,248) Keys.js D/S into Rowan/Bram/Kett; NPCs stay put, player does not pass through; Phaser 3.90 keyboard off; dedicated case + Playwright |
 
