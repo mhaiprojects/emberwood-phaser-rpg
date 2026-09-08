@@ -3,40 +3,14 @@
  * Bram's militia reward is the first large income (+50 → 58).
  * Phaser keyboard stays off.
  *
- * Serve the repo, then:
+ * Headless via tests/playwright-session.js (reuses a live server, or starts
+ * python3 -m http.server on this port and kills that PID on exit).
  *   node tests/playwright-gold.js [port]
  */
 (async function () {
     var port = process.argv[2] || '8765';
-    var base = 'http://127.0.0.1:' + port + '/';
-    var playwright;
-    try {
-        playwright = require('playwright');
-    } catch (err) {
-        var pw = await import('playwright');
-        playwright = pw.default || pw;
-    }
-    var browser;
-    try {
-        browser = await playwright.chromium.launch({ headless: true });
-    } catch (err) {
-        browser = await playwright.chromium.launch({
-            headless: true,
-            executablePath: '/usr/bin/google-chrome-stable'
-        });
-    }
-    var page = await browser.newPage();
-    await page.goto(base, { waitUntil: 'domcontentloaded' });
-    await page.waitForFunction(function () {
-        return window.Hud && window.Hud.el && window.Hud.el.start && !window.Hud.el.start.disabled && window.game;
-    }, null, { timeout: 15000 });
-    await page.click('#btn-start');
-    await page.waitForFunction(function () {
-        var world = window.game && window.game.scene && window.game.scene.getScene('WorldScene');
-        return window.Hud && window.Hud.mode === 'world' && world && world.player;
-    }, null, { timeout: 10000 });
-
-    var result = await page.evaluate(function () {
+    var result = await require('./playwright-session').withGamePage(port, async function (page) {
+    return await page.evaluate(function () {
         var world = window.game.scene.getScene('WorldScene');
         var spawn = window.defaultWorldSpawn();
         if (spawn.x !== 328 || spawn.y !== 248) {
@@ -97,6 +71,7 @@
             paid: chat.indexOf('50 gold') !== -1
         };
     });
+    });
 
     if (result.startGold !== 8 || result.startHud !== '8') {
         throw new Error('start gold is ' + result.startGold + ' / HUD ' + result.startHud);
@@ -111,7 +86,6 @@
         throw new Error('reward failed: gold=' + result.gold + ' hud=' + result.hud + ' paid=' + result.paid);
     }
     console.log(JSON.stringify(result));
-    await browser.close();
 })().catch(function (err) {
     console.error(err && err.stack ? err.stack : err);
     process.exit(1);

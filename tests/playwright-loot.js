@@ -2,40 +2,14 @@
  * Playwright proof: win a haven chicken from spawn (328, 248) and confirm
  * coins + bones + shrimp drop at the mob's feet. Phaser keyboard stays off.
  *
- * Serve the repo, then:
+ * Headless via tests/playwright-session.js (reuses a live server, or starts
+ * python3 -m http.server on this port and kills that PID on exit).
  *   node tests/playwright-loot.js [port]
  */
 (async function () {
     var port = process.argv[2] || '39310';
-    var base = 'http://127.0.0.1:' + port + '/';
-    var playwright;
-    try {
-        playwright = require('playwright');
-    } catch (err) {
-        var pw = await import('playwright');
-        playwright = pw.default || pw;
-    }
-    var browser;
-    try {
-        browser = await playwright.chromium.launch({ headless: true });
-    } catch (err) {
-        browser = await playwright.chromium.launch({
-            headless: true,
-            executablePath: '/usr/bin/google-chrome-stable'
-        });
-    }
-    var page = await browser.newPage();
-    await page.goto(base, { waitUntil: 'domcontentloaded' });
-    await page.waitForFunction(function () {
-        return window.Hud && window.Hud.el && window.Hud.el.start && !window.Hud.el.start.disabled && window.game;
-    }, null, { timeout: 15000 });
-    await page.click('#btn-start');
-    await page.waitForFunction(function () {
-        var world = window.game && window.game.scene && window.game.scene.getScene('WorldScene');
-        return window.Hud && window.Hud.mode === 'world' && world && world.player;
-    }, null, { timeout: 10000 });
-
-    var result = await page.evaluate(function () {
+    var result = await require('./playwright-session').withGamePage(port, async function (page) {
+    return await page.evaluate(function () {
         return new Promise(function (resolve, reject) {
             var world = window.game.scene.getScene('WorldScene');
             var hero = window.game.registry.get('hero');
@@ -121,6 +95,7 @@
             setTimeout(tick, 300);
         });
     });
+    });
 
     if (result.keyboard) {
         throw new Error('Phaser keyboard was enabled');
@@ -129,7 +104,6 @@
         throw new Error('expected Phaser 3, got ' + result.version);
     }
     console.log('PASS loot at feet', JSON.stringify(result));
-    await browser.close();
 })().catch(function (err) {
     console.error('FAIL', err && err.message ? err.message : err);
     process.exit(1);

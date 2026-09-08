@@ -2,32 +2,14 @@
  * Playwright proof: from Emberhaven spawn, walk through the 1-tile courtyard
  * gate via Keys.js, then confirm a solid wall still blocks.
  *
- * Serve the repo, then:
+ * Headless via tests/playwright-session.js (reuses a live server, or starts
+ * python3 -m http.server on this port and kills that PID on exit).
  *   node tests/playwright-door.js [port]
  */
 (async function () {
     var port = process.argv[2] || '8765';
-    var base = 'http://127.0.0.1:' + port + '/';
-    var playwright;
-    try {
-        playwright = require('playwright');
-    } catch (err) {
-        var pw = await import('playwright');
-        playwright = pw.default || pw;
-    }
-    var browser = await playwright.chromium.launch({ headless: true });
-    var page = await browser.newPage();
-    await page.goto(base, { waitUntil: 'domcontentloaded' });
-    await page.waitForFunction(function () {
-        return window.Hud && window.Hud.el && window.Hud.el.start && !window.Hud.el.start.disabled && window.game;
-    }, null, { timeout: 15000 });
-    await page.click('#btn-start');
-    await page.waitForFunction(function () {
-        var world = window.game && window.game.scene && window.game.scene.getScene('WorldScene');
-        return window.Hud && window.Hud.mode === 'world' && world && world.player;
-    }, null, { timeout: 10000 });
-
-    var result = await page.evaluate(function () {
+    var result = await require('./playwright-session').withGamePage(port, async function (page) {
+    return await page.evaluate(function () {
         return new Promise(function (resolve, reject) {
             var world = window.game.scene.getScene('WorldScene');
             if (window.Hud && window.Hud.setAutoAttack) {
@@ -109,12 +91,12 @@
             }, 700);
         });
     });
+    });
 
     if (result.keyboard) {
         throw new Error('Phaser keyboard was enabled');
     }
     console.log('PASS door walk', JSON.stringify(result));
-    await browser.close();
 })().catch(function (err) {
     console.error('FAIL', err && err.message ? err.message : err);
     process.exit(1);

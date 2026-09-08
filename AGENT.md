@@ -15,16 +15,18 @@ Standing rules for agents working in this repo. Update this file when a durable 
 - Serve the folder with a static HTTP server (`file://` fails CORS): `python3 -m http.server 8765` (or another free port), then open `http://127.0.0.1:<port>/` (or `http://localhost:<port>/`).
 - Tests: same server, open `http://127.0.0.1:<port>/tests/run.html` (autoruns). `?autorun=0` loads without starting. Console: `runEmberwoodTests()`.
 
-## Inline / Glass browser (parent vs loop subagents)
+## Background playtest (default) vs Glass (on request)
+
+Automated playtest and the suite run in the **background**. Loop ticks / subagents must **not** pop Cursor Glass, system Chrome, or headed Playwright windows unless the human **explicitly** asks to see the sidebar.
 
 There are **two different browsers**. Do not conflate them.
 
-1. **Glass / Simple Browser** (the Cursor sidebar tab the human sees). Opened only via `cursor-app-control` `open_resource` with `{ "uri": "http://127.0.0.1:<port>/" }`. Glass routes to the **parent conversation**. Nested Task / loop-tick subagents **cannot** drive or retarget that tab.
-2. **`user-playwright`** (isolated Chromium). `browser_navigate` takes only `{ "url" }`. `browser_tabs` is list/new/close/select by index. There is **no** attach-to-Glass, no CDP endpoint, no “same tab as sidebar” flag. Playwright never is the inline tab.
+1. **Glass / Simple Browser** (the Cursor sidebar tab the human sees). Opened only via `cursor-app-control` `open_resource` with `{ "uri": "http://127.0.0.1:<port>/" }`. Glass routes to the **parent conversation**. Nested Task / loop-tick subagents **cannot** drive or retarget that tab (`unknown agent`). **Do not open Glass on every loop tick** — that interrupts the human. The parent calls `open_resource` **only** when the human asks to playtest in the inline browser.
+2. **Headless Playwright** (automated suite / CI). Prefer `node tests/playwright-*.js <port>`, which uses `tests/playwright-session.js`: `{ headless: true }`, no `slowMo`, no `channel: 'chrome'`. The `user-playwright` MCP (`browser_navigate` `{ "url" }` only; `browser_tabs` list/new/close/select by index) is isolated Chromium — never the sidebar. There is **no** attach-to-Glass, no CDP endpoint, no “same tab as sidebar” flag.
 
-There is **no supported way** for a nested/subagent to target the same Glass tab the parent opened. If `open_resource` is called from a nested agent it fails with `unknown agent: <uuid>`. Cursor’s native Browser Automation MCP (`cursor-ide-browser`) can be an inline pane **when enabled**, but it is a separate control surface from Glass `open_resource`, is **not** in this workspace’s MCP catalog today, and still has no API to hijack an existing Glass tab from a child agent.
+There is **no supported way** for a nested/subagent to target the same Glass tab the parent opened. Cursor’s native Browser Automation MCP (`cursor-ide-browser`) can be an inline pane **when enabled**, but it is a separate control surface from Glass `open_resource`, is **not** in this workspace’s MCP catalog today, and still has no API to hijack an existing Glass tab from a child agent.
 
-**How to open Glass (parent only; do not guess params):** Discover `open_resource` via `GetDynamicTools` (`namespace: cursor-app-control`, `toolName: open_resource`) before calling it. Schema:
+**How to open Glass (parent only, and only if the human asked; do not guess params):** Discover `open_resource` via `GetDynamicTools` (`namespace: cursor-app-control`, `toolName: open_resource`) before calling it. Schema:
 
 - MCP: `cursor-app-control` → `open_resource`
 - Only argument: `{ "uri": "<string>" }` (required).
@@ -35,26 +37,34 @@ There is **no supported way** for a nested/subagent to target the same Glass tab
 ### Parent coordinator — each loop tick
 
 1. Reuse the existing static server (do not start a second `python3 -m http.server` if one already serves the repo). Note the port.
-2. **Before spawning the tick subagent**, call `open_resource` so Glass shows the surface that tick cares about: `http://127.0.0.1:<port>/` (play/HUD) and/or `http://127.0.0.1:<port>/tests/run.html` (suite). Opening again on a later tick refreshes/focuses the sidebar for the human.
-3. Put that **exact base URL** in the Task prompt so the subagent points tests at the same origin the parent already opened.
-4. Do not ask the subagent to open Glass. Do not treat a Playwright screenshot as proof that the sidebar updated.
+2. Put that **exact base URL** in the Task prompt so the subagent points tests at the same origin (`http://127.0.0.1:<port>/`).
+3. **Do not** call `open_resource` on every tick. Opening Glass steals focus. Open it only when the human asked to playtest in the inline browser.
+4. Do not ask the subagent to open Glass. Do not treat a Playwright screenshot as the sidebar.
+
+### Tick cleanup (mandatory — success, fail, or abort)
+
+Close everything **this tick opened**. Use `try` / `finally`, or `tests/playwright-session.js` (`withGamePage` / `session.close()` already does this).
+
+- **Playwright node scripts:** `playwright-session` launches headless Chromium and always closes pages + browser in `finally`. SIGINT/SIGTERM also close. Do not leave headed windows. Do not use `slowMo`. Do not launch system Chrome (`channel: 'chrome'`).
+- **Owned HTTP server:** if this tick started `python3 -m http.server`, kill **that PID only** in `finally` (`stopOwnedServer`). Never `pkill` unrelated servers. Prefer reuse; `reuseOrStartServer` sets `owned` only when this process started the child.
+- **`user-playwright` MCP:** if this tick called `browser_navigate` or `browser_tabs` new, close those tabs (`browser_tabs` close by index) and `browser_close` when done. Do not leave extra MCP tabs.
+- **Glass:** if this tick did not open it, do not close the human’s sidebar. If the human asked for Glass, leave it.
 
 ### Subagents / future loop ticks must not
 
-- Call `open_resource` (will fail with `unknown agent`).
+- Call `open_resource` (fails with `unknown agent`, and would interrupt the human if it worked).
 - Treat Playwright as the Cursor sidebar / Glass tab.
 - Start a duplicate HTTP server when the parent already passed a live `http://127.0.0.1:<port>/` URL.
+- Launch headed Playwright, `slowMo` GUI, or system Chrome for routine playtest.
+- Return without closing browsers / owned servers / MCP tabs this tick opened.
 
-### Point tests at the URL the parent already opened
+### Point tests at the shared origin
 
-Same origin, two views:
+Same origin; Glass is optional and human-requested only:
 
-- Parent: `open_resource` → `http://127.0.0.1:<port>/tests/run.html` (human sees Glass).
-- Subagent: Playwright `browser_navigate` (or `node tests/playwright-*.js <port>`) to **that same URL** for autorun / CI-style proof.
+- Subagent: `node tests/playwright-*.js <port>` (or MCP `browser_navigate` to **that same URL**, then close the tab). Game: `http://127.0.0.1:<port>/` — suite: `http://127.0.0.1:<port>/tests/run.html`.
 
-`tests/run.html` autoruns on load (`?autorun=0` to skip; console `runEmberwoodTests()`). Playwright is still the automated suite runner. Glass is the human-visible playtest. They share files and port, not a tab.
-
-If `open_resource` is unavailable (no parent, Glass off), fall back to Playwright / headless and say so.
+`tests/run.html` autoruns on load (`?autorun=0` to skip; console `runEmberwoodTests()`). Headless Playwright is the automated suite runner. Glass is the human-visible playtest **when asked**. They share files and port, not a tab.
 
 ## Input (do not regress)
 
@@ -128,7 +138,7 @@ If `open_resource` is unavailable (no parent, Glass off), fall back to Playwrigh
 
 - Interaction suite: `tests/run.html` → `tests/runner.js` + `tests/harness.js` + `tests/interactions.js`.
 - Cases already cover title, HUD tabs/F-keys, skills/worn/styles/inv, eat, W-from-spawn (Keys.js only, Phaser keyboard off), WASD, arrows, HUD-focus walk (all 8 tabs + `bindHudBlur`), click-to-walk, HUD-then-world click-to-walk (canvas unfocused), purple A* path + courtyard-gate / house-door path + WASD cancel, zone NPC/mob spawn, `enterZone` cleanup (old tilemap/colliders/NPCs/mobs/labels/loot), talk (Space + click), Bram / Elise / Witch (refuse below 10 gp; ≥10 gp heals via `takeItem`), flavor NPCs (Rowan/Kett/Willa/Ned/Sila/Wisp/Corb/Ola `{Name}:` + one of their lines), every `NPC_DEFS` spawn at def x,y with a yellow `#ffe08a` name label, click-mob, win+loot, combat eat/flee/target, goblin quest, player/mob scales (1-tile world player; giant drake multi-tile), 1-tile door walk + wall block, auto-attack, auto-pickup (default on; off skips walk-over; click still takes), walk-loot, death+retry, Space not `preventDefault` on title/dead (`Keys.shouldBlockBrowser`).
-- Playwright (or the live browser) is the extra proof for movement and HUD smoke. The **parent** opens Glass for live proof; loop subagents keep Playwright for the autorun suite / CI (see Inline / Glass browser). Keep WASD green if you touch input.
+- Playwright is the extra proof for movement and HUD smoke. Default is **headless** via `tests/playwright-session.js` / `node tests/playwright-*.js <port>` (see Background playtest). The parent opens Glass **only if the human asked** to see the sidebar. Keep WASD green if you touch input. Always close browsers / owned servers / MCP tabs this tick opened.
 - Add a case in `tests/interactions.js` when you ship a matching feature. Extend `tests/harness.js` instead of copying scene guts.
 
 ## Project management
@@ -136,7 +146,7 @@ If `open_resource` is unavailable (no parent, Glass off), fall back to Playwrigh
 - `loop-tasks.md` is the **flat-file PM** (not a wiki). Filename is `loop-tasks.md` (not `loops-tasks.md`).
 - Max nesting 3: `#` title, `##` area, then a simple list. Each item has a status (`todo` | `doing` | `done` | `blocked` | `verify`) and a one-line Conclusion (`—` if not started).
 - The 30-second loop: pick the next `verify` in a section, else the next `todo`. One item per **spawned** tick. Mark `done` only after tests pass. Do not invent dones. Then **commit that tick's work** (see Loop-tick commits).
-- **Parent coordinator:** cadence is **30 seconds**. Only spin up a subagent when the next PM item is **independent** and will **not conflict** with in-progress `doing` items (same files / same system: WorldScene pathing, MapGen, Keys.js, tests colliding, etc.). If the next item would collide, **skip the tick** (do not spawn). Wait for the in-flight work to finish. Still one item per spawned tick; still commit after a completed item. **Before each spawn**, `open_resource` the game and/or `tests/run.html` in Glass and pass that `http://127.0.0.1:<port>/` URL in the Task prompt (see Inline / Glass browser).
+- **Parent coordinator:** cadence is **30 seconds**. Only spin up a subagent when the next PM item is **independent** and will **not conflict** with in-progress `doing` items (same files / same system: WorldScene pathing, MapGen, Keys.js, tests colliding, etc.). If the next item would collide, **skip the tick** (do not spawn). Wait for the in-flight work to finish. Still one item per spawned tick; still commit after a completed item. Pass the live `http://127.0.0.1:<port>/` URL in the Task prompt. **Do not** `open_resource` every tick (see Background playtest). Open Glass only if the human asked to playtest in the inline browser.
 - Do **not** rewrite the whole task list unless the human asks for a format change.
 
 ### Loop-tick commits

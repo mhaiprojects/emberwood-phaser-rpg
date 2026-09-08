@@ -12,9 +12,9 @@ Flat-file project manager for the 30-second loop. Emberwood is a Phaser 3.90.0 c
 6. Never re-enable Phaser keyboard. WASD/arrows stay on `js/input/Keys.js` only (`input.keyboard: false` in `js/main.js`). Keep WASD working if you touch input.
 7. After a tick completes an item (`done` + tests), commit that tick's work: stage only the relevant files (never secrets), HEREDOC message focused on WHY, then `git status`. Do not push unless asked. Skip if nothing to commit. A verify-only tick still commits the test + this file + `AGENT.md`. Do not rewrite this whole file; update the one item you actioned and the tick log.
 8. **Agents add tasks here; ticks implement one item.** New game-design / feature ideas are appended as `todo` (status + `Conclusion: —`) and are **not** built in the same pass. The 30-second loop (and later ticks) pick and implement one item. Exception: implement immediately only if the user says so (“implement now”, “fix this bug”, “redo this code”) or the change is process/docs (`AGENT.md` / this file’s format). When the user describes a feature, write well-specified items (and related follow-ups), then stop.
-9. **Parent coordinator (spawn vs skip).** Cadence is **30 seconds**. The parent must **only spin up a subagent** when the next PM item is **independent** and will **not conflict** with in-progress `doing` items (same files / same system: WorldScene pathing, MapGen, Keys.js, tests colliding, etc.). If the next item would collide, **skip the tick** (do not spawn). Wait for the in-flight work to finish. Still one item per spawned tick; still commit after a completed item.
+9. **Parent coordinator (spawn vs skip).** Cadence is **30 seconds**. The parent must **only spin up a subagent** when the next PM item is **independent** and will **not conflict** with in-progress `doing` items (same files / same system: WorldScene pathing, MapGen, Keys.js, tests colliding, etc.). If the next item would collide, **skip the tick** (do not spawn). Wait for the in-flight work to finish. Still one item per spawned tick; still commit after a completed item. Pass the live `http://127.0.0.1:<port>/` URL. **Do not** `open_resource` / Glass every tick — that interrupts the sidebar. Default playtest is headless Playwright; close browsers, MCP tabs, and any `http.server` PID **this tick started** when the tick finishes (success, fail, or abort). Open Glass only if the human asked to see the inline browser.
 
-**Last updated:** 2026-09-08 — Tick 53 verified every `NPC_DEFS` entry spawns at its x,y with a yellow name label.
+**Last updated:** 2026-09-08 — Process: background headless playtest; no Glass unless asked; close owned browsers/servers/tabs.
 
 **Total tasks: 294** (289 in the 14 playable sections + 5 stretch). All unique.
 
@@ -335,7 +335,7 @@ Flat-file project manager for the 30-second loop. Emberwood is a Phaser 3.90.0 c
 
 Existing `tests/interactions.js` cases must stay green. Add a case when you implement the matching feature.
 
-- [todo] Re-run `tests/run.html` (python3 http.server, free port) after every behavior change; do not check items off this file without that (or Playwright) proof. — Conclusion: —
+- [todo] Re-run `tests/run.html` (reuse the live python3 http.server, or start one and kill that PID) after every behavior change; do not check items off this file without that (or headless Playwright) proof. — Conclusion: —
 - [todo] Keep title, HUD tabs/F-keys, skills/worn/styles/inv, eat, WASD, arrows, HUD-focus walk, click-to-walk tests passing. — Conclusion: —
 - [todo] Keep zone spawn, flavor talk, Space talk, click-NPC, Bram, Elise, Witch tests passing. — Conclusion: —
 - [todo] Keep click-mob, win+ground-loot, combat eat, flee, two-foe list/canvas target, goblin quest, scales, auto-attack, auto-pickup, walk-loot, death+retry tests passing. — Conclusion: —
@@ -349,7 +349,7 @@ Existing `tests/interactions.js` cases must stay green. Add a case when you impl
 - [todo] Add a test that `Phaser.VERSION` starts with `3` and `game.input.keyboard` is disabled. — Conclusion: —
 - [todo] Add a test that WASD works with shop/bank/chat input focused (Keys.js + blur). — Conclusion: —
 - [todo] Playwright/browser smoke: title → play → walk → talk Bram → open Inv → eat refuse at full HP. — Conclusion: —
-- [todo] Verify changed features in the Cursor sidebar browser when possible. — Conclusion: —
+- [todo] Verify changed features in the Cursor sidebar (Glass) **only when the human asks** to see the inline browser; default playtest is headless Playwright and must not pop windows. — Conclusion: —
 - [todo] Extend `tests/harness.js` with helpers (`openShop`, `buryBones`, `gatherAt`) instead of duplicating scene guts. — Conclusion: —
 
 ---
@@ -422,4 +422,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 51 | 2026-09-08 | Fen Witch at ≥10 gold heals and takeItem removes 10 coins | done — spawn (328,248) 10/11/18 gp heals to 100, gold+stack −10; Phaser 3.90 keyboard off; dedicated case pass; suite 75/75 |
 | 52 | 2026-09-08 | Flavor NPCs emit Name: plus one of their lines | done — spawn (328,248) Rowan/Kett/Willa/Ned/Sila/Wisp/Corb/Ola both lines; Phaser 3.90 keyboard off; dedicated case pass; suite 76/76 |
 | 53 | 2026-09-08 | Every NPC_DEFS entry spawns at its x,y with a yellow name label | done — spawn (328,248) all 11 NPCs at def xy + yellow #ffe08a labels; Phaser 3.90 keyboard off; dedicated case pass; suite 77/77 |
+| playtest | 2026-09-08 | Background headless playtest; close owned browsers/servers/tabs | done — `tests/playwright-session.js`; no Glass/`open_resource` unless asked; `channel: chrome` removed from engage; AGENT.md cleanup rules |
 
