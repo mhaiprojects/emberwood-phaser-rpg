@@ -1,17 +1,18 @@
 # Emberwood loop tasks
 
-Flat-file project manager for the 2-minute loop. Emberwood is a Phaser 3.90.0 client-side RuneScape-like (no bundler, no Phaser 4). Each tick compares play to Old School RuneScape / classic point-and-click MMORPGs: click-to-act, skills with XP, shops, bank, gathering loops, context menus, and a persistent character.
+Flat-file project manager for the 30-second loop. Emberwood is a Phaser 3.90.0 client-side RuneScape-like (no bundler, no Phaser 4). Each tick compares play to Old School RuneScape / classic point-and-click MMORPGs: click-to-act, skills with XP, shops, bank, gathering loops, context menus, and a persistent character.
 
 **How a loop tick picks the next item**
 
 1. Scan top to bottom. Do not start a new system if an earlier item in the same section is still `todo`/`verify` and blocking (e.g. do not add Magic until Prayer bury-bones works if you are in Skills).
 2. Prefer the first `verify` in a section (prove the existing action still plays). If every `verify` in that section is `done`, take the next `todo`.
-3. One tick = one item (or that item plus its matching test). Finish game logic, UI/UX, and a test before setting `done`.
+3. One spawned tick = one item (or that item plus its matching test). Finish game logic, UI/UX, and a test before setting `done`.
 4. Statuses: `todo` (build it), `doing` (this tick), `done` (verified in play or tests), `blocked` (cannot proceed), `verify` (behavior exists — prove it).
 5. Conclusion is `—` until work starts. After work, one short line of what was found or shipped. Mark `done` only after tests pass. Code review is not play verification.
 6. Never re-enable Phaser keyboard. WASD/arrows stay on `js/input/Keys.js` only (`input.keyboard: false` in `js/main.js`). Keep WASD working if you touch input.
 7. After a tick completes an item (`done` + tests), commit that tick's work: stage only the relevant files (never secrets), HEREDOC message focused on WHY, then `git status`. Do not push unless asked. Skip if nothing to commit. A verify-only tick still commits the test + this file + `AGENT.md`. Do not rewrite this whole file; update the one item you actioned and the tick log.
-8. **Agents add tasks here; ticks implement one item.** New game-design / feature ideas are appended as `todo` (status + `Conclusion: —`) and are **not** built in the same pass. The 2-minute loop (and later ticks) pick and implement one item. Exception: implement immediately only if the user says so (“implement now”, “fix this bug”, “redo this code”) or the change is process/docs (`AGENT.md` / this file’s format). When the user describes a feature, write well-specified items (and related follow-ups), then stop.
+8. **Agents add tasks here; ticks implement one item.** New game-design / feature ideas are appended as `todo` (status + `Conclusion: —`) and are **not** built in the same pass. The 30-second loop (and later ticks) pick and implement one item. Exception: implement immediately only if the user says so (“implement now”, “fix this bug”, “redo this code”) or the change is process/docs (`AGENT.md` / this file’s format). When the user describes a feature, write well-specified items (and related follow-ups), then stop.
+9. **Parent coordinator (spawn vs skip).** Cadence is **30 seconds**. The parent must **only spin up a subagent** when the next PM item is **independent** and will **not conflict** with in-progress `doing` items (same files / same system: WorldScene pathing, MapGen, Keys.js, tests colliding, etc.). If the next item would collide, **skip the tick** (do not spawn). Wait for the in-flight work to finish. Still one item per spawned tick; still commit after a completed item.
 
 **Last updated:** 2026-09-08 — Tick 49 verified Fen Witch refuses below 10 gold and does not heal.
 

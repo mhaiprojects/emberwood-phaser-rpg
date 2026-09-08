@@ -110,12 +110,13 @@ Prefer the **Cursor sidebar / Glass in-IDE browser** for playtesting and verifyi
 
 - `loop-tasks.md` is the **flat-file PM** (not a wiki). Filename is `loop-tasks.md` (not `loops-tasks.md`).
 - Max nesting 3: `#` title, `##` area, then a simple list. Each item has a status (`todo` | `doing` | `done` | `blocked` | `verify`) and a one-line Conclusion (`—` if not started).
-- The 2-minute loop: pick the next `verify` in a section, else the next `todo`. One item per tick. Mark `done` only after tests pass. Do not invent dones. Then **commit that tick's work** (see Loop-tick commits).
+- The 30-second loop: pick the next `verify` in a section, else the next `todo`. One item per **spawned** tick. Mark `done` only after tests pass. Do not invent dones. Then **commit that tick's work** (see Loop-tick commits).
+- **Parent coordinator:** cadence is **30 seconds**. Only spin up a subagent when the next PM item is **independent** and will **not conflict** with in-progress `doing` items (same files / same system: WorldScene pathing, MapGen, Keys.js, tests colliding, etc.). If the next item would collide, **skip the tick** (do not spawn). Wait for the in-flight work to finish. Still one item per spawned tick; still commit after a completed item.
 - Do **not** rewrite the whole task list unless the human asks for a format change.
 
 ### Loop-tick commits
 
-Every 2-minute loop tick that completes an item **must** create a git commit of that tick's work. The human asked for commits after each loop; this overrides “do not commit unless asked.”
+Every 30-second loop tick that completes an item **must** create a git commit of that tick's work. The human asked for commits after each loop; this overrides “do not commit unless asked.”
 
 - Follow git safety: NEVER update git config; NEVER `--no-verify` / `--no-gpg-sign`; NEVER force push; NEVER destructive git; NEVER commit secrets (`.env`, credentials).
 - After finishing a PM item (status `done` + tests), stage only the relevant files and commit with a concise 1–2 sentence message focused on WHY (e.g. “Verify Bram stage 3 post-quest line.” or “Fix east/south zone entry spawning off-map.”).
@@ -131,13 +132,13 @@ EOF
 ### New game-design work goes on the PM first
 
 - New game-design / feature ideas are **added to `loop-tasks.md`** as `todo` (status + short `Conclusion: —`) and are **not implemented in the same pass**.
-- The 2-minute loop (and later ticks) **action** items from the PM — one item per tick.
+- The 30-second loop (and later ticks) **action** items from the PM — one item per spawned tick.
 - **Exception — implement immediately** only if the user explicitly says to do it now (e.g. “implement now”, “fix this bug”, “redo this code”) or the change is process/docs (`AGENT.md` / `loop-tasks.md` format).
 - When the user describes a feature, the correct response is: write well-specified PM items (and related follow-ups), then **stop**.
 
 ## Hard no's
 
-- Do not commit unless the human asks, **except** after each completed 2-minute loop tick (see Loop-tick commits). Do not push unless asked.
+- Do not commit unless the human asks, **except** after each completed 30-second loop tick (see Loop-tick commits). Do not push unless asked.
 - Do not enable Phaser keyboard or Phaser audio.
 - Do not introduce a bundler or Phaser 4.
 - Do not use commercial / third-party game art.
