@@ -14,7 +14,7 @@ Flat-file project manager for the 30-second loop. Emberwood is a Phaser 3.90.0 c
 8. **Agents add tasks here; ticks implement one item.** New game-design / feature ideas are appended as `todo` (status + `Conclusion: —`) and are **not** built in the same pass. The 30-second loop (and later ticks) pick and implement one item. Exception: implement immediately only if the user says so (“implement now”, “fix this bug”, “redo this code”) or the change is process/docs (`AGENT.md` / this file’s format). When the user describes a feature, write well-specified items (and related follow-ups), then stop.
 9. **Parent coordinator (spawn vs skip).** Cadence is **30 seconds**. The parent must **only spin up a subagent** when the next PM item is **independent** and will **not conflict** with in-progress `doing` items (same files / same system: WorldScene pathing, MapGen, Keys.js, tests colliding, etc.). If the next item would collide, **skip the tick** (do not spawn). Wait for the in-flight work to finish. Still one item per spawned tick; still commit after a completed item.
 
-**Last updated:** 2026-09-08 — Tick 51 verified Fen Witch at ≥10 gold heals and takeItem removes 10 coins.
+**Last updated:** 2026-09-08 — Tick 52 verified flavor NPCs emit `{Name}:` plus one of their lines.
 
 **Total tasks: 294** (289 in the 14 playable sections + 5 stretch). All unique.
 
@@ -96,7 +96,7 @@ Flat-file project manager for the 30-second loop. Emberwood is a Phaser 3.90.0 c
 - [done] Banker Elise restores HP to max for **0** gold. — Conclusion: From spawn (328,248) Elise (160,130) heals 40→100 and 22→max at 0 gp; gold/XP/coin stack unchanged; HUD HP 100/100. Phaser 3.90 keyboard off. Dedicated case pass; suite 74/74.
 - [done] Fen Witch refuses below 10 gold (`Come back with 10 gold`) and does not heal. — Conclusion: From spawn (328,248) Mirefen Witch (200,180) at 0/8/9 gp chats `Fen Witch: Come back with 10 gold.`; HP/gold/coins/XP unchanged; no heal line. Phaser 3.90 keyboard off. Dedicated case pass.
 - [done] Fen Witch at ≥10 gold heals to max and removes 10 coins via `takeItem`. — Conclusion: From spawn (328,248) Mirefen Witch (200,180) at 10/11/18 gp heals wounded HP to 100, `takeItem` removes 10 coins (gold + stack stay in sync), HUD 100/100, heal line, no refuse. Phaser 3.90 keyboard off. Dedicated case pass; suite 75/75.
-- [verify] Flavor NPCs (Rowan, Kett, Willa, Ned, Sila, Wisp, Corb, Ola) each emit `{Name}:` plus one of their lines. — Conclusion: —
+- [done] Flavor NPCs (Rowan, Kett, Willa, Ned, Sila, Wisp, Corb, Ola) each emit `{Name}:` plus one of their lines. — Conclusion: From spawn (328,248) Rowan/Kett/Willa/Ned/Sila/Wisp/Corb/Ola each emit `{Name}:` plus both of their lines (Between 0..1). Not healers/Bram. Phaser 3.90 keyboard off. Dedicated case pass; suite 76/76.
 - [verify] Every `NPC_DEFS` entry spawns at its x,y with a yellow name label. — Conclusion: —
 - [verify] Player–NPC arcade collider is immovable and does not shove NPCs around. — Conclusion: —
 - [todo] Click-to-continue multi-page dialogue instead of a single chat line. — Conclusion: —
@@ -420,4 +420,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 49 | 2026-09-08 | Fen Witch refuses below 10 gold and does not heal | done — spawn (328,248) 0/8/9 gp refuse `Come back with 10 gold.`; HP/gold/coins/XP unchanged; Phaser 3.90 keyboard off; dedicated case pass |
 | 50 | 2026-09-08 | Banker Elise restores HP to max for 0 gold | done — spawn (328,248) Elise heals 40→100 and 22→max at 0 gp; gold/XP/coins unchanged; HUD 100/100; Phaser 3.90 keyboard off; dedicated case pass; suite 74/74 |
 | 51 | 2026-09-08 | Fen Witch at ≥10 gold heals and takeItem removes 10 coins | done — spawn (328,248) 10/11/18 gp heals to 100, gold+stack −10; Phaser 3.90 keyboard off; dedicated case pass; suite 75/75 |
+| 52 | 2026-09-08 | Flavor NPCs emit Name: plus one of their lines | done — spawn (328,248) Rowan/Kett/Willa/Ned/Sila/Wisp/Corb/Ola both lines; Phaser 3.90 keyboard off; dedicated case pass; suite 76/76 |
 

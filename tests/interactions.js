@@ -1956,6 +1956,76 @@ EmberwoodTests.add('npcs: Fen Witch at 10+ gold heals and takeItem removes 10 co
     });
 });
 
+EmberwoodTests.add('npcs: flavor NPCs emit Name plus one of their lines', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        var world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        var flavor = [
+            { zone: 'haven', key: 'guard', name: 'Guard Rowan', x: 252, y: 168 },
+            { zone: 'northwood', key: 'ranger', name: 'Ranger Kett', x: 240, y: 200 },
+            { zone: 'millfields', key: 'farmer', name: 'Farmer Willa', x: 200, y: 180 },
+            { zone: 'southshore', key: 'fisher', name: 'Fisher Ned', x: 220, y: 160 },
+            { zone: 'westmead', key: 'wanderer', name: 'Wanderer Sila', x: 180, y: 190 },
+            { zone: 'graves', key: 'ghost', name: 'Wisp', x: 200, y: 170 },
+            { zone: 'darkmine', key: 'miner', name: 'Miner Corb', x: 210, y: 200 },
+            { zone: 'highlands', key: 'hermit', name: 'Hermit Ola', x: 240, y: 160 }
+        ];
+
+        var origBetween = win.Phaser.Math.Between;
+        try {
+            flavor.forEach(function (want) {
+                H.enterZone(win, want.zone);
+                world = H.world(win);
+                H.setAutoAttack(win, false);
+                var npc = H.findNpc(win, want.key);
+                assert(npc, want.name + ' spawned in ' + want.zone);
+                assertEqual(npc.npcDef.name, want.name, want.name + ' display name');
+                assertEqual(Math.round(npc.x), want.x, want.name + ' x');
+                assertEqual(Math.round(npc.y), want.y, want.name + ' y');
+                var lines = npc.npcDef.lines;
+                assert(lines && lines.length >= 2, want.name + ' has flavor lines');
+
+                lines.forEach(function (line, idx) {
+                    win.Phaser.Math.Between = function (lo, hi) {
+                        assertEqual(lo, 0, want.name + ' Between lo');
+                        assertEqual(hi, lines.length - 1, want.name + ' Between hi');
+                        return idx;
+                    };
+                    win.Hud.el.log.innerHTML = '';
+                    world.tryTalk(npc);
+                    assertEqual(H.lastChat(win), want.name + ': ' + line, want.name + ' line ' + idx);
+                    assert(H.lastChat(win).indexOf(want.name + ': ') === 0, want.name + ' Name: prefix');
+                    assert(!H.chatHas(win, 'Come back with 10 gold'), want.name + ' is not a paid healer');
+                    assert(!H.chatHas(win, 'Your wounds close'), want.name + ' does not heal');
+                    assert(!H.chatHas(win, 'Goblins plague Northwood'), want.name + ' is not Bram');
+                    assert(!win.game.input.keyboard, 'Phaser keyboard off after ' + want.name);
+                });
+            });
+            assertEqual(flavor.length, 8, 'eight flavor NPCs');
+        } finally {
+            win.Phaser.Math.Between = origBetween;
+        }
+
+        H.enterZone(win, 'haven');
+        world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('mobs: click a monster to target it', function (win, H) {
     H.enterZone(win, 'haven');
     H.setAutoAttack(win, false);
