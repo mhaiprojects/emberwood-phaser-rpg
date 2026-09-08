@@ -481,6 +481,9 @@ var WorldScene = new Phaser.Class({
     },
 
     tryTalk: function (npc) {
+        if (this.encounterLock || Hud.mode === 'battle') {
+            return;
+        }
         var def = npc.npcDef;
         var hero = this.registry.get('hero');
         var quest = this.registry.get('quest');
@@ -845,7 +848,7 @@ var WorldScene = new Phaser.Class({
             }
         }
 
-        if (Keys.justPressed('Space')) {
+        if (Keys.justPressed('Space') && Hud.mode !== 'battle') {
             var nearNpc = this.pickSprite(this.npcs, this.player.x, this.player.y, 28);
             if (nearNpc) {
                 this.tryTalk(nearNpc);

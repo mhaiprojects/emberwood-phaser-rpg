@@ -2274,6 +2274,91 @@ EmberwoodTests.add('npcs: player-NPC arcade collider is immovable and does not s
     });
 });
 
+EmberwoodTests.add('npcs: talking never starts during battle or encounterLock', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        var world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        var bram = H.findNpc(win, 'guild');
+        assert(bram, 'Bram exists in Emberhaven');
+        win.game.registry.set('quest', { id: 'goblins', stage: 3, progress: 5, goal: 5 });
+        var gold = H.hero(win).gold;
+        var xp = H.hero(win).xp;
+        world.placePlayer(bram.x + 16, bram.y);
+        world.player.body.setVelocity(0, 0);
+        world.talkTarget = null;
+        world.encounterLock = false;
+        win.Hud.mode = 'world';
+        world.refreshHud();
+
+        world.scene.pause();
+        try {
+            var chatCount = H.chat(win).length;
+            world.tryTalk(bram);
+            assertEqual(H.chat(win).length, chatCount + 1, 'unlocked tryTalk still speaks');
+            assertEqual(H.lastChat(win), 'Guildmaster Bram: Emberhaven stands because of you.', 'post-quest line when unlocked');
+            assertEqual(H.quest(win).stage, 3, 'unlocked talk does not change stage 3');
+
+            chatCount = H.chat(win).length;
+            world.talkTarget = bram;
+            world.encounterLock = true;
+            world.tryTalk(bram);
+            assertEqual(H.chat(win).length, chatCount, 'tryTalk is silent under encounterLock');
+            assertEqual(world.talkTarget, bram, 'blocked tryTalk does not clear talkTarget');
+            H.key(win, 'Space', ' ', 'keydown');
+            assert(win.Keys.pressed.Space === true, 'Space is just-pressed via Keys.js under lock');
+            world.update();
+            assertEqual(H.chat(win).length, chatCount, 'Space update does not talk under encounterLock');
+            H.key(win, 'Space', ' ', 'keyup');
+            H.clearKeys(win);
+            world.encounterLock = false;
+
+            win.Hud.mode = 'battle';
+            world.talkTarget = bram;
+            world.tryTalk(bram);
+            assertEqual(H.chat(win).length, chatCount, 'tryTalk is silent while Hud.mode is battle');
+            H.key(win, 'Space', ' ', 'keydown');
+            world.update();
+            assertEqual(H.chat(win).length, chatCount, 'Space does not talk while Hud.mode is battle');
+            H.key(win, 'Space', ' ', 'keyup');
+            H.clearKeys(win);
+            assertEqual(H.quest(win).stage, 3, 'battle/lock talk does not change quest');
+            assertEqual(H.hero(win).gold, gold, 'battle/lock talk does not pay');
+            assertEqual(H.hero(win).xp, xp, 'battle/lock talk does not grant XP');
+
+            win.Hud.mode = 'world';
+            world.encounterLock = false;
+            world.talkTarget = null;
+            world.tryTalk(bram);
+            assertEqual(H.chat(win).length, chatCount + 1, 'tryTalk works again after unlock');
+            assertEqual(H.lastChat(win), 'Guildmaster Bram: Emberhaven stands because of you.', 'post-quest line after unlock');
+        } finally {
+            H.clearKeys(win);
+            win.Hud.mode = 'world';
+            world.encounterLock = false;
+            world.talkTarget = null;
+            world.scene.resume();
+        }
+
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('mobs: click a monster to target it', function (win, H) {
     H.enterZone(win, 'haven');
     H.setAutoAttack(win, false);

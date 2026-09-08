@@ -109,7 +109,7 @@ Flat-file project manager for the 30-second loop. Emberwood is a Phaser 3.90.0 c
 - [todo] Give Fisher Ned / Miner Corb / Farmer Willa / Ranger Kett tutor lines that unlock or explain fishing, mining, cows, and combat styles. — Conclusion: —
 - [todo] NPC idle facing and a tiny wander leash so they are not statues. — Conclusion: —
 - [todo] Add a cook / priest / shopkeeper as original CC0 SVGs (extend `tools/generate_svgs.py`, do not use commercial packs). — Conclusion: —
-- [verify] Talking never starts during `Hud.mode === 'battle'` or `encounterLock`. — Conclusion: —
+- [done] Talking never starts during `Hud.mode === 'battle'` or `encounterLock`. — Conclusion: From spawn (328,248) unlocked tryTalk still speaks; encounterLock and `Hud.mode === 'battle'` keep tryTalk + Keys.js Space silent (no gold/XP/stage change); talk works after unlock. Phaser 3.90 keyboard off. Dedicated case + Playwright; suite 79/79.
 
 ## 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
 
@@ -424,4 +424,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 53 | 2026-09-08 | Every NPC_DEFS entry spawns at its x,y with a yellow name label | done — spawn (328,248) all 11 NPCs at def xy + yellow #ffe08a labels; Phaser 3.90 keyboard off; dedicated case pass; suite 77/77 |
 | playtest | 2026-09-08 | Background headless playtest; close owned browsers/servers/tabs | done — `tests/playwright-session.js`; no Glass/`open_resource` unless asked; `channel: chrome` removed from engage; AGENT.md cleanup rules |
 | 54 | 2026-09-08 | Player–NPC arcade collider is immovable and does not shove NPCs | done — spawn (328,248) Keys.js D/S into Rowan/Bram/Kett; NPCs stay put, player does not pass through; Phaser 3.90 keyboard off; dedicated case + Playwright |
+| 55 | 2026-09-08 | Talking never starts during battle or encounterLock | done — spawn (328,248) tryTalk/Space silent under lock and Hud.mode battle; unlocked post-quest line still speaks; Phaser 3.90 keyboard off; dedicated case + Playwright; suite 79/79 |
 
