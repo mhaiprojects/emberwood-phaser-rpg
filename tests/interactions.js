@@ -2599,6 +2599,71 @@ EmberwoodTests.add('combat: auto-attack on engages nearest living mob within 20p
     });
 });
 
+EmberwoodTests.add('combat: engageGrace is ~800ms on zone enter and ~700ms after battle', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.setAutoAttack(win, true);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        world.enterZone('haven', null);
+        world.exitLock = false;
+        world.encounterLock = false;
+        var remainingEnter = world.engageGrace - world.time.now;
+        assert(remainingEnter >= 780 && remainingEnter <= 800, 'zone enter grace ~800ms (got ' + remainingEnter + 'ms)');
+
+        var chicken = H.findMob(win, 'Chicken');
+        assert(chicken && chicken.aliveMob, 'living chicken in haven');
+        chicken.setPosition(spawn.x + 10, spawn.y);
+        if (chicken.body) {
+            chicken.body.setVelocity(0, 0);
+        }
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.engageTarget = null;
+        world.talkTarget = null;
+        world.walkTarget = null;
+        var dist = win.Phaser.Math.Distance.Between(world.player.x, world.player.y, chicken.x, chicken.y);
+        assertEqual(dist, 10, 'fixture: living chicken at 10px');
+        assertEqual(H.hero(win).autoAttack, true, 'auto-attack is on');
+        assertEqual(world.tryAutoEngage(), false, 'zone-enter grace blocks auto-attack at 10px');
+        assert(!win.game.scene.isActive('BattleScene'), 'no BattleScene during zone-enter grace');
+
+        win.game.registry.set('battleOutcome', null);
+        world.wake();
+        var remainingWake = world.engageGrace - world.time.now;
+        assert(remainingWake >= 680 && remainingWake <= 700, 'wake grace ~700ms (got ' + remainingWake + 'ms)');
+        assertEqual(world.encounterLock, false, 'wake clears encounterLock');
+        assertEqual(world.tryAutoEngage(), false, 'post-battle grace blocks auto-attack at 10px');
+        assert(!win.game.scene.isActive('BattleScene'), 'no BattleScene during post-battle grace');
+
+        return H.startFight(win, chicken).then(function () {
+            assertEqual(win.Hud.mode, 'battle', 'HUD in battle');
+            return H.forceFlee(win);
+        }).then(function () {
+            world = H.world(win);
+            var remainingFlee = world.engageGrace - world.time.now;
+            assert(remainingFlee > 0, 'flee wake still has grace remaining (' + remainingFlee + 'ms)');
+            assert(remainingFlee <= 700, 'flee wake grace is at most 700ms (got ' + remainingFlee + 'ms)');
+            world.placePlayer(spawn.x, spawn.y);
+            world.player.body.setVelocity(0, 0);
+            chicken.setPosition(spawn.x + 10, spawn.y);
+            if (chicken.body) {
+                chicken.body.setVelocity(0, 0);
+            }
+            world.engageTarget = null;
+            assertEqual(world.tryAutoEngage(), false, 'returning from battle blocks auto-attack');
+            assertEqual(Math.round(world.player.x), 328, 'at spawn x');
+            assertEqual(Math.round(world.player.y), 248, 'at spawn y');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        });
+    });
+});
+
 EmberwoodTests.add('combat: auto-attack off does not engage unless the player clicked that mob', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');

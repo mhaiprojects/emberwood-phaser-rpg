@@ -129,6 +129,7 @@ var WorldScene = new Phaser.Class({
 
         this.spawnPeople(zoneId);
         this.refreshHud();
+        this.engageGrace = this.time.now + 800;
         Hud.log('You enter ' + zone.name + '.');
     },
 
