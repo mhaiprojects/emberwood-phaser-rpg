@@ -7,39 +7,39 @@ Do not paste `AGENT.md` or `loop-tasks.md` into the Task prompt.
 
 Pick **#1**. One spawned tick = one item. Refresh this file after commit.
 
-## 1. [verify] Clicking a foe in the HTML battle list on your turn selects and strikes that index.
-
-- Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
-- Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
-- Test: `combat: manual list click hits the chosen foe`
-- URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
-
-## 2. [verify] Canvas click on a foe selects (`fromSprite`) without striking unless `selectingEnemy`.
+## 1. [verify] Canvas click on a foe selects (`fromSprite`) without striking unless `selectingEnemy`.
 
 - Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
 - Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
 - Test: `combat: canvas select then Attack uses that target`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
-## 3. [verify] The gold target rectangle follows the selected living enemy and hides when they die.
+## 2. [verify] The gold target rectangle follows the selected living enemy and hides when they die.
 
 - Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
 - Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
 - Test: `add a dedicated case; nearest existing: combat: canvas select then Attack uses that target`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
-## 4. [verify] Accurate → Attack XP, Aggressive → Strength XP, Defensive → Defence XP on a **win**.
+## 3. [verify] Accurate → Attack XP, Aggressive → Strength XP, Defensive → Defence XP on a **win**.
 
 - Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
 - Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
 - Test: `add a dedicated case; nearest existing: hud: start skills Hitpoints 10 / 1154 XP / 100 HP; others 1 / 0`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
-## 5. [verify] Hitpoints XP on win is `ceil(mobXp / 3)` (minimum 1).
+## 4. [verify] Hitpoints XP on win is `ceil(mobXp / 3)` (minimum 1).
 
 - Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
 - Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
 - Test: `hud: start skills Hitpoints 10 / 1154 XP / 100 HP; others 1 / 0`
+- URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
+
+## 5. [verify] Eat food in combat uses shrimp then bread (`eatBestFood`), heals, consumes one, and spends the turn.
+
+- Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
+- Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
+- Test: `combat: Eat food uses inventory on your turn`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
 After `done` + tests: commit, then `python3 tools/loop-next.py`.

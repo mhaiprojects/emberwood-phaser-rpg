@@ -119,7 +119,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Auto-attack **off** does not engage unless the player clicked that mob. — Conclusion: From spawn (328,248) auto-attack off, living chicken at 10px, no engageTarget: tryAutoEngage false, no BattleScene. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] `engageGrace` is ~800ms on zone enter and ~700ms after returning from battle. — Conclusion: From spawn (328,248) enterZone remaining ~800ms blocks auto-attack at 10px; wake/flee remaining ~700ms blocks re-aggro; Phaser 3.90 keyboard off. Dedicated case + Playwright; ?only=engageGrace 2/2.
 - [done] Attack on a single foe auto-selects index 0 and deals damage (variance −2..+2, min 1). — Conclusion: startBattle/autoSelectTarget pick index 0; takeDamage uses Between(-2,2) min 1. Playwright from spawn (328,248) drop=16; dedicated suite case pass. Phaser 3.90 keyboard off.
-- [verify] Clicking a foe in the HTML battle list on your turn selects and strikes that index. — Conclusion: —
+- [done] Clicking a foe in the HTML battle list on your turn selects and strikes that index. — Conclusion: On player turn, `#battle-enemies` `.enemy-btn` click (`onEnemyPicked` without `fromSprite`) sets `targetIndex` and strikes that foe; the other stays full. Phaser 3.90 keyboard off. Dedicated case + Playwright; ?only=manual list click 1/1.
 - [verify] Canvas click on a foe selects (`fromSprite`) without striking unless `selectingEnemy`. — Conclusion: —
 - [verify] The gold target rectangle follows the selected living enemy and hides when they die. — Conclusion: —
 - [verify] Accurate → Attack XP, Aggressive → Strength XP, Defensive → Defence XP on a **win**. — Conclusion: —
@@ -429,4 +429,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | cheap-loop | 2026-09-16 | Event-paced loop, loop-next.md tick card, targeted ?only= tests | process — stop 30s skip-spam; parent reads loop-next.md only |
 | 57 | 2026-09-16 | Auto-attack off does not engage unless the player clicked that mob | done — spawn (328,248) living chicken at 10px, auto-attack off, no engageTarget: tryAutoEngage false, no BattleScene; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 58 | 2026-09-16 | engageGrace is ~800ms on zone enter and ~700ms after returning from battle | done — spawn (328,248) enterZone ~800ms blocks 10px auto-attack; wake/flee ~700ms blocks re-aggro; Phaser 3.90 keyboard off; dedicated case + Playwright 2/2 |
+| 59 | 2026-09-16 | Clicking a foe in the HTML battle list on your turn selects and strikes that index | done — HTML .enemy-btn click selects+strikes chosen index (cow hit, goblin full); Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 

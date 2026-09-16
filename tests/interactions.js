@@ -2910,18 +2910,28 @@ EmberwoodTests.add('combat: Run flees back to the world', function (win, H) {
 });
 
 EmberwoodTests.add('combat: manual list click hits the chosen foe', function (win, H) {
-    H.setAutoAttack(win, false);
-    return H.startCustomFight(win, [
-        { type: 'Goblin', texture: 'slime', tint: 0x5aa33a, hp: 40, damage: 1, gold: 0, xp: 1 },
-        { type: 'Cow', texture: 'slime', tint: 0xaa7744, hp: 40, damage: 1, gold: 0, xp: 1 }
-    ]).then(function () {
+    return ensureWorldPlay(win, H).then(function () {
+        H.setAutoAttack(win, false);
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard stays off');
+        return H.startCustomFight(win, [
+            { type: 'Goblin', texture: 'slime', tint: 0x5aa33a, hp: 40, damage: 1, gold: 0, xp: 1 },
+            { type: 'Cow', texture: 'slime', tint: 0xaa7744, hp: 40, damage: 1, gold: 0, xp: 1 }
+        ]);
+    }).then(function () {
         var battle = H.battle(win);
         assertEqual(battle.enemies.length, 2, 'two foes');
         assertEqual(battle.targetIndex, 0, 'default first foe');
-        win.Hud.onEnemyPicked(1, false);
+        assert(battle.isPlayerTurn(), 'player turn');
+        var buttons = win.Hud.el.enemies.querySelectorAll('.enemy-btn');
+        assertEqual(buttons.length, 2, 'two HTML list buttons');
+        assert(buttons[0].className.indexOf('is-target') !== -1, 'list highlights index 0');
+        buttons[1].click();
+        assertEqual(battle.targetIndex, 1, 'list click selected cow');
         return H.sleep(250).then(function () {
             assertEqual(battle.enemies[0].hp, 40, 'goblin untouched');
             assert(battle.enemies[1].hp < 40, 'cow took the hit');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
             return H.forceFlee(win);
         });
     }).then(function () {
