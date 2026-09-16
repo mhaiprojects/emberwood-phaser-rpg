@@ -5,12 +5,18 @@ var EmberwoodTests = {
         this.cases.push({ name: name, fn: fn });
     },
 
-    run: function (win, onCase) {
+    run: function (win, onCase, only) {
         var self = this;
         var H = EmberwoodHarness;
         var results = [];
         var chain = Promise.resolve();
-        this.cases.forEach(function (item) {
+        var needle = only ? String(only).toLowerCase() : '';
+        var cases = needle
+            ? this.cases.filter(function (item) {
+                return item.name.toLowerCase().indexOf(needle) !== -1;
+            })
+            : this.cases;
+        cases.forEach(function (item) {
             chain = chain.then(function () {
                 var started = Date.now();
                 return Promise.resolve()
@@ -2590,6 +2596,44 @@ EmberwoodTests.add('combat: auto-attack on engages nearest living mob within 20p
             assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
             assert(!win.game.input.keyboard, 'Phaser keyboard still off');
         });
+    });
+});
+
+EmberwoodTests.add('combat: auto-attack off does not engage unless the player clicked that mob', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        assertEqual(H.hero(win).autoAttack, false, 'auto-attack is off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        var chicken = H.findMob(win, 'Chicken');
+        assert(chicken && chicken.aliveMob, 'living chicken in haven');
+        chicken.setPosition(spawn.x + 10, spawn.y);
+        if (chicken.body) {
+            chicken.body.setVelocity(0, 0);
+        }
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.engageTarget = null;
+        world.talkTarget = null;
+        world.walkTarget = null;
+        world.encounterLock = false;
+        world.engageGrace = 0;
+
+        var dist = win.Phaser.Math.Distance.Between(world.player.x, world.player.y, chicken.x, chicken.y);
+        assertEqual(dist, 10, 'fixture: living mob within 20px');
+        assertEqual(world.engageTarget, null, 'no engageTarget (player did not click the mob)');
+        assertEqual(world.tryAutoEngage(), false, 'auto-attack off does not engage');
+        assertEqual(world.encounterLock, false, 'no encounterLock');
+        assert(!win.game.scene.isActive('BattleScene'), 'no BattleScene');
+        assertEqual(win.Hud.mode, 'world', 'HUD stays in world');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
     });
 });
 

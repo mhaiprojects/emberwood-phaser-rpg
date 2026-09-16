@@ -44,9 +44,11 @@
         statusEl.textContent = 'Running…';
         statusEl.className = '';
         return prepareGame(reload).then(function () {
+            var onlyMatch = /[?&]only=([^&]*)/.exec(location.search);
+            var only = onlyMatch ? decodeURIComponent(onlyMatch[1].replace(/\+/g, ' ')) : '';
             return EmberwoodTests.run(gameWindow(), function (row) {
                 write((row.ok ? 'PASS' : 'FAIL') + '  ' + row.name + '  (' + row.ms + 'ms)' + (row.error ? '\n    ' + row.error : ''), row.ok ? 'ok' : 'bad');
-            });
+            }, only);
         }).then(function (report) {
             var line = report.passed + '/' + report.total + ' passed';
             statusEl.textContent = line;
