@@ -8,6 +8,13 @@ var DEST_X_ARM = 8;
 var MOB_RESPAWN_MS = 18000;
 var DOOR_ANIM_MS = 220;
 var DOOR_OPEN_SCALE_X = 0.18;
+var COLLIDE_TILES = [
+    TILE.WATER, TILE.TREE, TILE.ROCK, TILE.SHRINE,
+    TILE.STALL, TILE.RANGE, TILE.ANVIL, TILE.BOOTH,
+    TILE.DOCK, TILE.BOAT, TILE.TOMB, TILE.DOOR
+];
+var COLLISION_DEBUG_FILL = 0xf38630;
+var COLLISION_DEBUG_FACE = 0xffff66;
 
 var WorldScene = new Phaser.Class({
     Extends: Phaser.Scene,
@@ -46,6 +53,11 @@ var WorldScene = new Phaser.Class({
         this.pathGfx = this.add.graphics();
         this.pathGfx.setDepth(4);
         this.pathGfx.setVisible(false);
+        this.collisionDebug = false;
+        this.collisionDebugTileCount = 0;
+        this.collisionDebugGfx = this.add.graphics();
+        this.collisionDebugGfx.setDepth(20);
+        this.collisionDebugGfx.setVisible(false);
         this.npcs = this.physics.add.group({ immovable: true });
         this.mobs = this.physics.add.group();
         this.floatLabels = [];
@@ -128,11 +140,7 @@ var WorldScene = new Phaser.Class({
         this.map = this.make.tilemap({ data: data, tileWidth: 16, tileHeight: 16 });
         var tiles = this.map.addTilesetImage('tiles', 'tiles', 16, 16, 0, 0, 1);
         this.ground = this.map.createLayer(0, tiles, 0, 0);
-        this.ground.setCollision([
-            TILE.WATER, TILE.TREE, TILE.ROCK, TILE.SHRINE,
-            TILE.STALL, TILE.RANGE, TILE.ANVIL, TILE.BOOTH,
-            TILE.DOCK, TILE.BOAT, TILE.TOMB, TILE.DOOR
-        ]);
+        this.ground.setCollision(COLLIDE_TILES);
         this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
         this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
         this.groundCollider = this.physics.add.collider(this.player, this.ground);
@@ -140,6 +148,66 @@ var WorldScene = new Phaser.Class({
         this.player.setScale(PLAYER_WORLD_SCALE);
         applyPlayerWorldBody(this.player);
         this.applyUnlockedDoors();
+        this.applyCollisionDebug();
+    },
+
+    setCollisionDebug: function (on) {
+        this.collisionDebug = !!on;
+        this.applyCollisionDebug();
+        return this.collisionDebug;
+    },
+
+    applyArcadeBodyDebug: function (on) {
+        var phys = this.physics && this.physics.world;
+        if (!phys) {
+            return;
+        }
+        phys.drawDebug = !!on;
+        if (on) {
+            if (!phys.debugGraphic || !phys.debugGraphic.scene) {
+                if (typeof phys.createDebugGraphic === 'function') {
+                    phys.createDebugGraphic();
+                } else {
+                    phys.debugGraphic = this.add.graphics().setDepth(1000);
+                }
+            }
+            phys.debugGraphic.setVisible(true);
+        } else if (phys.debugGraphic) {
+            phys.debugGraphic.clear();
+            phys.debugGraphic.setVisible(false);
+        }
+    },
+
+    applyCollisionDebug: function () {
+        var on = !!this.collisionDebug;
+        var gfx = this.collisionDebugGfx;
+        if (!gfx || !gfx.scene) {
+            gfx = this.add.graphics();
+            gfx.setDepth(20);
+            this.collisionDebugGfx = gfx;
+        }
+        gfx.clear();
+        this.collisionDebugTileCount = 0;
+        this.applyArcadeBodyDebug(on);
+        if (!on) {
+            gfx.setVisible(false);
+            return;
+        }
+        gfx.setVisible(true);
+        gfx.fillStyle(COLLISION_DEBUG_FILL, 0.32);
+        gfx.lineStyle(1, COLLISION_DEBUG_FACE, 0.85);
+        var count = 0;
+        if (this.ground && this.ground.forEachTile) {
+            this.ground.forEachTile(function (tile) {
+                if (!tile || !tile.collides) {
+                    return;
+                }
+                gfx.fillRect(tile.pixelX, tile.pixelY, tile.width, tile.height);
+                gfx.strokeRect(tile.pixelX, tile.pixelY, tile.width, tile.height);
+                count += 1;
+            });
+        }
+        this.collisionDebugTileCount = count;
     },
 
     doorUnlockKey: function (tx, ty) {

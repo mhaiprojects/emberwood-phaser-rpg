@@ -231,13 +231,15 @@ img.pix {
 #style-row button.is-on,
 .auto-attack-btn.is-on,
 .auto-pickup-btn.is-on,
-.run-mode-btn.is-on {
+.run-mode-btn.is-on,
+.collision-debug-btn.is-on {
     background: #7a623e;
 }
 
 .auto-attack-btn,
 .auto-pickup-btn,
-.run-mode-btn {
+.run-mode-btn,
+.collision-debug-btn {
     margin-top: 8px;
 }
 

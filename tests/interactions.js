@@ -10755,3 +10755,108 @@ EmberwoodTests.add('world: gathering uses Phaser 3 arcade overlap or distance on
         });
     });
 });
+
+function countCollidingTiles(world) {
+    var n = 0;
+    if (!world || !world.ground || !world.ground.forEachTile) {
+        return 0;
+    }
+    world.ground.forEachTile(function (tile) {
+        if (tile && tile.collides) {
+            n += 1;
+        }
+    });
+    return n;
+}
+
+EmberwoodTests.add('world: collision debug overlay toggles arcade bodies and colliding tiles', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        H.clearKeys(win);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        var arcadeCfg = win.game.config && win.game.config.physics && win.game.config.physics.arcade;
+        assert(arcadeCfg && arcadeCfg.debug === false, 'config arcade.debug stays false');
+        assertEqual(world.collisionDebug, false, 'overlay starts off');
+        assertEqual(world.physics.world.drawDebug, false, 'arcade drawDebug starts off');
+        assert(!world.collisionDebugGfx.visible, 'tile overlay hidden by default');
+        assertEqual(world.collisionDebugTileCount, 0, 'no colliding tiles drawn by default');
+
+        H.click(win, '#tab-bar button[data-tab="settings"]');
+        assert(H.panelVisible(win, 'settings'), 'Settings panel visible');
+        var btn = win.document.querySelector('#panel-settings [data-collision-debug]');
+        assert(btn, 'Settings collision debug button exists');
+        assertMatch(btn.textContent, 'Off', 'button starts Off');
+
+        var shrine = world.ground.getTileAt(18, 8);
+        assert(shrine && shrine.index === win.TILE.SHRINE, 'haven shrine is TILE.SHRINE');
+        assert(shrine.collides, 'shrine tile collides');
+
+        var settingsClicked = H.mouseClick(win, btn);
+        assertEqual(world.collisionDebug, true, 'settings click turns overlay on');
+        assertEqual(world.physics.world.drawDebug, true, 'arcade body debug on');
+        assert(world.physics.world.debugGraphic && world.physics.world.debugGraphic.visible, 'arcade debug graphic visible');
+        assert(world.collisionDebugGfx.visible, 'colliding tile overlay visible');
+        var havenCount = countCollidingTiles(world);
+        assert(havenCount > 20, 'haven has colliding tiles, n=' + havenCount);
+        assertEqual(world.collisionDebugTileCount, havenCount, 'overlay draws every colliding tile');
+        assert(H.chatHas(win, 'Collision debug on'), 'on chat');
+        assertMatch(btn.textContent, 'On', 'button On');
+        assert(btn.classList.contains('is-on'), 'button is-on');
+        assert(win.document.activeElement !== settingsClicked, 'settings toggle blurs after click');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off after settings click');
+
+        H.enterZone(win, 'northwood');
+        assertEqual(world.collisionDebug, true, 'overlay survives zone change');
+        assertEqual(world.physics.world.drawDebug, true, 'arcade debug stays on after enterZone');
+        assert(world.collisionDebugGfx.visible, 'tile overlay redrawn in Northwood');
+        var woodCount = countCollidingTiles(world);
+        assert(woodCount > 20, 'Northwood colliding tiles, n=' + woodCount);
+        assertEqual(world.collisionDebugTileCount, woodCount, 'Northwood overlay matches collides');
+        H.enterZone(win, 'haven');
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+
+        win.dispatchEvent(new win.KeyboardEvent('keydown', {
+            key: 'F9', code: 'F9', bubbles: true, cancelable: true
+        }));
+        assertEqual(world.collisionDebug, false, 'F9 toggles overlay off');
+        assertEqual(world.physics.world.drawDebug, false, 'arcade drawDebug off after F9');
+        assert(world.physics.world.debugGraphic && !world.physics.world.debugGraphic.visible, 'arcade debug graphic hidden');
+        assert(!world.collisionDebugGfx.visible, 'tile overlay hidden after F9');
+        assertEqual(world.collisionDebugTileCount, 0, 'no colliding tiles drawn after F9');
+        assert(H.chatHas(win, 'Collision debug off'), 'off chat');
+        assertMatch(win.document.querySelector('#panel-settings [data-collision-debug]').textContent, 'Off', 'button Off after F9');
+        assert(!win.Keys.isDown('KeyW') && !win.Keys.isDown('KeyA') && !win.Keys.isDown('KeyS') && !win.Keys.isDown('KeyD'), 'F9 does not press WASD');
+
+        H.click(win, '#panel-settings [data-collision-debug]');
+        assertEqual(world.collisionDebug, true, 'settings click turns overlay back on');
+
+        var walkY = world.player.y;
+        return H.holdKey(win, 'KeyW', 'w', 400).then(function () {
+            assert(world.player.y < walkY - 12, 'W still walks north with overlay on, y=' + world.player.y);
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+            world.setCollisionDebug(false);
+            win.Hud.renderCollisionDebug();
+            world.placePlayer(spawn.x, spawn.y);
+            world.player.body.setVelocity(0, 0);
+            H.clearKeys(win);
+            assertEqual(Math.round(world.player.x), 328, 'restored spawn x');
+            assertEqual(Math.round(world.player.y), 248, 'restored spawn y');
+        });
+    });
+});
+

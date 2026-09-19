@@ -82,7 +82,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Giant mobs (drake) occupy more than 1 tile (sprite + 28×28 body). — Conclusion: Drake world scale 2, display 48px, body 28×28; not required to fit 1-tile interiors. Suite 35/35.
 - [done] Giant mobs block 2×2 (or more) and cannot enter 1-tile interiors. — Conclusion: From spawn (328,248) Drake 2×2 occupancy + 28×28 body cannot pass courtyard gate or bank 1-tile door; player D still walks through (x≈390). Phaser 3.90 keyboard off. Dedicated + Playwright 1/1.
 - [done] Agility shortcuts vs doors (level-gated squeeze / climb beside a locked door). — Conclusion: From spawn (328,248) Millfields farm door (26,17) stays locked without an Iron key; squeeze at (25,17) needs Agility 5 (tests set the level) and chats You need Agility level 5 / You squeeze through the gap. Phaser 3.90 keyboard off. Dedicated + Playwright 1/1.
-- [todo] Collision debug overlay (toggle arcade body + colliding tiles). — Conclusion: —
+- [done] Collision debug overlay (toggle arcade body + colliding tiles). — Conclusion: From spawn (328,248) Settings/F9 toggle arcade body debug + colliding-tile overlay (default off, 158 haven tiles); Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 
 ## 3. NPCs — talk, examine, trade, quests (24)
 
@@ -500,4 +500,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 127 | 2026-09-19 | Examine door (flavor text on the courtyard gate and house doors) | done — spawn (328,248) left-click gate/house doors still walk PATH; Examine logs flavor; Millfields lock unchanged; Phaser keyboard off; dedicated + Playwright 1/1 |
 | 128 | 2026-09-19 | Giant mobs block 2×2 and cannot enter 1-tile interiors | done — spawn (328,248) Drake 2×2 occupancy cannot pass gate/bank 1-tile doors; player D still walks through; Phaser keyboard off; dedicated + Playwright 1/1 |
 | 129 | 2026-09-19 | Agility shortcuts vs doors (level-gated squeeze beside a locked door) | done — spawn (328,248) farm door (26,17) stays locked without a key; squeeze (25,17) needs Agility 5; Phaser keyboard off; dedicated + Playwright 1/1 |
+| 130 | 2026-09-19 | Collision debug overlay (toggle arcade body + colliding tiles) | done — spawn (328,248) Settings/F9 toggle arcade bodies + colliding tiles (default off); Phaser keyboard off; dedicated + Playwright 1/1 |
 

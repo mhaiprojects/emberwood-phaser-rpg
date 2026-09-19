@@ -124,6 +124,13 @@ var Hud = {
             }
             self.toggleRun();
         });
+        document.addEventListener('click', function (event) {
+            var btn = event.target.closest('[data-collision-debug]');
+            if (!btn) {
+                return;
+            }
+            self.toggleCollisionDebug();
+        });
         this.el.inv.addEventListener('click', function (event) {
             var slot = event.target.closest('[data-item]');
             if (!slot) {
@@ -185,6 +192,14 @@ var Hud = {
         window.addEventListener('keydown', function (event) {
             if (event.code === 'Escape' && self.el.worldMap && !self.el.worldMap.hidden) {
                 self.hideWorldMap();
+            }
+            if (event.code === 'F9') {
+                if (window.Keys && Keys.typing(event)) {
+                    return;
+                }
+                event.preventDefault();
+                self.toggleCollisionDebug();
+                return;
             }
             var tabs = {
                 F1: 'combat', F2: 'skills', F3: 'quest', F4: 'inv',
@@ -474,6 +489,29 @@ var Hud = {
         this.renderAutoAttack(hero);
         this.renderAutoPickup(hero);
         this.renderRun(hero);
+        this.renderCollisionDebug();
+    },
+
+    toggleCollisionDebug: function () {
+        var world = window.game && window.game.scene && window.game.scene.getScene('WorldScene');
+        if (!world || typeof world.setCollisionDebug !== 'function') {
+            this.renderCollisionDebug();
+            return false;
+        }
+        world.setCollisionDebug(!world.collisionDebug);
+        this.renderCollisionDebug();
+        this.log('Collision debug ' + (world.collisionDebug ? 'on' : 'off') + '.');
+        return world.collisionDebug;
+    },
+
+    renderCollisionDebug: function () {
+        var world = window.game && window.game.scene && window.game.scene.getScene('WorldScene');
+        var on = !!(world && world.collisionDebug);
+        var buttons = document.querySelectorAll('[data-collision-debug]');
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].classList.toggle('is-on', on);
+            buttons[i].textContent = 'Collision debug: ' + (on ? 'On' : 'Off');
+        }
     },
 
     toggleRun: function () {
