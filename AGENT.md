@@ -81,7 +81,7 @@ Same origin; Glass is optional and human-requested only:
 
 ## Pathfinding
 
-- Tile A* in `js/world/Pathfind.js` (8-dir, no corner-cutting so 1-tile doors stay passable). Walkable = not WATER / TREE / ROCK / SHRINE (same as arcade collision). Soft-avoid NPC and living-mob tiles when a detour exists; if the only route is through them, walk through (or stop adjacent for talk/fight as today). `walkTarget` is still the final destination; `walkPath` holds remaining waypoints. Purple 2px line (`0xaa66ff`, depth 4) redraws from the player and clears on arrive, WASD, zone change, or combat. Occupied tiles are skipped at compute time; WorldScene also repaths about every 280ms if a mob steps onto the remaining path.
+- Tile A* in `js/world/Pathfind.js` (8-dir, no corner-cutting so 1-tile doors stay passable). Walkable = not WATER / TREE / ROCK / SHRINE (same as arcade collision). Soft-avoid NPC and living-mob tiles when a detour exists; if a mob parks on the only corridor, wait or stop adjacent instead of walking through them (talk/fight still walk up to the clicked target). `walkTarget` is still the final destination; `walkPath` holds remaining waypoints. Purple 2px line (`0xaa66ff`, depth 4) redraws from the player and clears on arrive, WASD, zone change, or combat. Occupied tiles are skipped at compute time; WorldScene also repaths about every 280ms if a mob steps onto the remaining path or the corridor is blocked.
 
 ## HUD / UI
 

@@ -6516,6 +6516,129 @@ EmberwoodTests.add('movement: click path goes through the courtyard gate', funct
     });
 });
 
+EmberwoodTests.add('movement: click path waits or stops adjacent when a mob parks on the only corridor', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.exitLock = true;
+        world.engageTarget = null;
+        world.talkTarget = null;
+        world.clearWalk();
+
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.') === 0, 'Phaser 3');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(!world.cursors, 'WorldScene has no Phaser cursors');
+
+        var gate = win.HAVEN_GATE_TILE;
+        var gatePt = win.tileCenter(gate.x, gate.y);
+        var dest = win.tileCenter(gate.x + 4, gate.y);
+        var gateWest = gate.x * (win.TILE_SIZE || 16);
+        var gateEast = (gate.x + 1) * (win.TILE_SIZE || 16);
+        var rock = win.TILE.ROCK;
+        var gy;
+        for (gy = 0; gy < win.MAP_H; gy++) {
+            if (gy !== gate.y) {
+                world.tileGrid[gy][gate.x] = rock;
+            }
+        }
+        var chicken = H.findMob(win, 'Chicken');
+        assert(chicken, 'haven chicken exists');
+        world.mobs.children.iterate(function (mob) {
+            if (!mob) {
+                return;
+            }
+            if (mob === chicken) {
+                mob.setPosition(gatePt.x, gatePt.y);
+                mob.aliveMob = true;
+                if (mob.body) {
+                    mob.body.reset(gatePt.x, gatePt.y);
+                    mob.body.setVelocity(0, 0);
+                }
+                return;
+            }
+            mob.setPosition(80, 80);
+            if (mob.body) {
+                mob.body.reset(80, 80);
+                mob.body.setVelocity(0, 0);
+            }
+        });
+        var origWander = world.wanderMobs;
+        world.wanderMobs = function () {};
+
+        var avoid = {};
+        avoid[gate.x + ',' + gate.y] = true;
+        var blocked = win.findTilePath(world.tileGrid, 20, 15, gate.x + 4, gate.y, { avoid: avoid, allowEnd: true });
+        assertEqual(blocked, null, 'A* has no route through the parked corridor');
+        var nearest = win.findTilePath(world.tileGrid, 20, 15, gate.x + 4, gate.y, { avoid: avoid, allowEnd: true, nearest: true });
+        assert(nearest && nearest.length, 'nearest path stops short of the corridor');
+        var lastNear = nearest[nearest.length - 1];
+        assert(lastNear.tx !== gate.x || lastNear.ty !== gate.y, 'nearest path does not enter the occupied gate');
+        assert(lastNear.tx < gate.x, 'nearest path stays west of the blocked gate');
+
+        world.onClick({ worldX: dest.x, worldY: dest.y });
+        assert(world.walkTarget, 'walkTarget stays the far-side click');
+        assertEqual(Math.round(world.walkTarget.x), Math.round(dest.x), 'walk x is east of the gate');
+        assertEqual(Math.round(world.walkTarget.y), Math.round(dest.y), 'walk y is the gate row');
+        assert(world.walkBlocked, 'corridor is marked blocked');
+        var tiles = pathTilesFromWalk(win, world);
+        assert(!pathIncludesTile(tiles, gate.x, gate.y), 'path does not walk through the parked mob');
+        assert(world.marker.visible, 'yellow marker stays on the far dest');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off after click');
+
+        return H.waitUntil(function () {
+            return world.player.x > spawn.x + 16 && world.player.x < gateWest;
+        }, 4000, 'walk up to the blocked gate').then(function () {
+            var xAtGate = world.player.x;
+            var yAtGate = world.player.y;
+            return H.sleep(800).then(function () {
+                assert(world.player.x < gateWest + 4, 'waited west of the gate, x=' + world.player.x);
+                assert(world.player.x < gateEast, 'did not walk through the parked mob');
+                assert(world.walkTarget, 'still waiting on the original dest');
+                assert(Math.abs(world.player.x - xAtGate) < 18, 'stayed adjacent instead of walking through');
+                assert(Math.abs(world.player.y - yAtGate) < 18, 'did not slide off the corridor');
+                assertEqual(Math.round(chicken.x), Math.round(gatePt.x), 'chicken stayed parked on the gate');
+                assert(!win.game.input.keyboard, 'Phaser keyboard stays off while waiting');
+
+                chicken.setPosition(80, 80);
+                if (chicken.body) {
+                    chicken.body.reset(80, 80);
+                    chicken.body.setVelocity(0, 0);
+                }
+                world.pathCheckAt = 0;
+                world.maybeRepath();
+                assert(world.walkTarget, 'dest kept after the corridor opens');
+                assert(!world.walkBlocked, 'repath clears the blocked flag');
+                assert(pathIncludesTile(pathTilesFromWalk(win, world), gate.x, gate.y), 'open corridor uses the gate');
+
+                return H.waitUntil(function () {
+                    return world.player.x > gateEast;
+                }, 4000, 'resume through the gate after the mob moves').then(function () {
+                    assert(world.player.x > gatePt.x, 'passed the corridor once the mob moved');
+                    assert(!win.game.input.keyboard, 'Phaser keyboard stays off');
+                    world.wanderMobs = origWander;
+                    world.clearWalk();
+                    H.enterZone(win, 'haven');
+                    world.placePlayer(spawn.x, spawn.y);
+                    world.player.body.setVelocity(0, 0);
+                });
+            });
+        }).then(null, function (err) {
+            world.wanderMobs = origWander;
+            throw err;
+        });
+    });
+});
+
 EmberwoodTests.add('movement: Esc and click-self cancel walk and hide the purple line', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');

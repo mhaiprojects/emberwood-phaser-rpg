@@ -98,12 +98,25 @@ function findTilePath(grid, startTx, startTy, endTx, endTy, options) {
         return 10 * (dx + dy) + (14 - 20) * Math.min(dx, dy);
     }
 
+    function reconstruct(tx, ty) {
+        var path = [{ tx: tx, ty: ty }];
+        var step = came[tx + ',' + ty];
+        while (step) {
+            path.push(step);
+            step = came[step.tx + ',' + step.ty];
+        }
+        path.reverse();
+        return path;
+    }
+
     var open = [{ tx: startTx, ty: startTy, g: 0, f: heur(startTx, startTy) }];
     var bestG = {};
     bestG[startTx + ',' + startTy] = 0;
     var came = {};
     var closed = {};
     var guard = 0;
+    var nearest = { tx: startTx, ty: startTy, h: heur(startTx, startTy) };
+    var wantNearest = !!options.nearest;
 
     while (open.length && guard++ < 2500) {
         var best = 0;
@@ -118,15 +131,12 @@ function findTilePath(grid, startTx, startTy, endTx, endTy, options) {
             continue;
         }
         closed[ck] = true;
+        var curH = heur(cur.tx, cur.ty);
+        if (curH < nearest.h) {
+            nearest = { tx: cur.tx, ty: cur.ty, h: curH };
+        }
         if (cur.tx === endTx && cur.ty === endTy) {
-            var path = [{ tx: endTx, ty: endTy }];
-            var step = came[ck];
-            while (step) {
-                path.push(step);
-                step = came[step.tx + ',' + step.ty];
-            }
-            path.reverse();
-            return path;
+            return reconstruct(endTx, endTy);
         }
         for (var d = 0; d < dirs.length; d++) {
             var nx = cur.tx + dirs[d][0];
@@ -155,6 +165,9 @@ function findTilePath(grid, startTx, startTy, endTx, endTy, options) {
             came[nk] = { tx: cur.tx, ty: cur.ty };
             open.push({ tx: nx, ty: ny, g: g, f: g + heur(nx, ny) });
         }
+    }
+    if (wantNearest) {
+        return reconstruct(nearest.tx, nearest.ty);
     }
     return null;
 }

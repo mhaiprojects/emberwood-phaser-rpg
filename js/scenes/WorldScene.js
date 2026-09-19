@@ -16,6 +16,7 @@ var WorldScene = new Phaser.Class({
         this.zoneId = this.registry.get('zone') || 'haven';
         this.walkTarget = null;
         this.walkPath = null;
+        this.walkBlocked = false;
         this.pathCheckAt = 0;
         this.tileGrid = null;
         this.engageTarget = null;
@@ -418,6 +419,7 @@ var WorldScene = new Phaser.Class({
     clearWalk: function () {
         this.walkTarget = null;
         this.walkPath = null;
+        this.walkBlocked = false;
         this.pathCheckAt = 0;
         if (this.marker) {
             this.marker.setVisible(false);
@@ -507,14 +509,25 @@ var WorldScene = new Phaser.Class({
             avoid: occupied,
             allowEnd: true
         });
+        this.walkBlocked = false;
         if (!tiles) {
             tiles = findTilePath(grid, start.tx, start.ty, end.tx, end.ty, {
-                avoid: {},
-                allowEnd: true
+                avoid: occupied,
+                allowEnd: true,
+                nearest: true
             });
+            if (tiles && tiles.length) {
+                var last = tiles[tiles.length - 1];
+                if (last.tx !== end.tx || last.ty !== end.ty) {
+                    this.walkBlocked = true;
+                    var stop = tileCenter(last.tx, last.ty);
+                    return tilesToWorldPath(tiles, stop.x, stop.y);
+                }
+            }
         }
         if (!tiles) {
-            return [{ x: toX, y: toY }];
+            this.walkBlocked = true;
+            return [];
         }
         return tilesToWorldPath(tiles, toX, toY);
     },
@@ -534,7 +547,7 @@ var WorldScene = new Phaser.Class({
     },
 
     maybeRepath: function () {
-        if (!this.walkTarget || !this.walkPath || !this.walkPath.length) {
+        if (!this.walkTarget) {
             return;
         }
         var now = this.time.now;
@@ -542,13 +555,40 @@ var WorldScene = new Phaser.Class({
             return;
         }
         this.pathCheckAt = now + 280;
-        if (this.pathUsesOccupied(this.walkPath, this.walkTarget.x, this.walkTarget.y)) {
+        if (this.walkBlocked || !this.walkPath || !this.walkPath.length || this.pathUsesOccupied(this.walkPath, this.walkTarget.x, this.walkTarget.y)) {
             this.walkPath = this.computeWalkPath(this.walkTarget.x, this.walkTarget.y, { allowEnd: true });
+            this.drawPathLine();
         }
+    },
+
+    nextStepOccupied: function (aim) {
+        if (!aim || !this.walkTarget) {
+            return false;
+        }
+        var occ = this.collectOccupiedTiles(this.walkTarget.x, this.walkTarget.y);
+        var from = worldToTile(this.player.x, this.player.y);
+        var to = worldToTile(aim.x, aim.y);
+        var dx = to.tx === from.tx ? 0 : (to.tx > from.tx ? 1 : -1);
+        var dy = to.ty === from.ty ? 0 : (to.ty > from.ty ? 1 : -1);
+        if (!dx && !dy) {
+            return false;
+        }
+        var stepTx = from.tx + dx;
+        var stepTy = from.ty + dy;
+        if (occ[stepTx + ',' + stepTy]) {
+            return true;
+        }
+        if (dx && dy && occ[stepTx + ',' + from.ty] && occ[from.tx + ',' + stepTy]) {
+            return true;
+        }
+        return false;
     },
 
     aimWalkPoint: function () {
         if (!this.walkPath || !this.walkPath.length) {
+            if (this.walkBlocked) {
+                return null;
+            }
             return this.walkTarget;
         }
         var dest = this.walkTarget;
@@ -570,6 +610,9 @@ var WorldScene = new Phaser.Class({
                 }
             }
             return next;
+        }
+        if (this.walkBlocked) {
+            return null;
         }
         return dest;
     },
@@ -974,12 +1017,18 @@ var WorldScene = new Phaser.Class({
                 this.player.body.setVelocity(0);
             } else {
                 var aim = this.aimWalkPoint();
-                var dx = aim.x - this.player.x;
-                var dy = aim.y - this.player.y;
-                var dist = Math.sqrt(dx * dx + dy * dy) || 1;
-                vx = (dx / dist) * speed;
-                vy = (dy / dist) * speed;
-                this.drawPathLine();
+                if (!aim || this.nextStepOccupied(aim)) {
+                    vx = 0;
+                    vy = 0;
+                    this.drawPathLine();
+                } else {
+                    var dx = aim.x - this.player.x;
+                    var dy = aim.y - this.player.y;
+                    var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                    vx = (dx / dist) * speed;
+                    vy = (dy / dist) * speed;
+                    this.drawPathLine();
+                }
             }
         } else if (this.walkPath) {
             this.clearWalk();
