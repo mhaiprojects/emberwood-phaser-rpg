@@ -1,3 +1,14 @@
+function unitHero(unit) {
+    if (!unit || typeof PlayerCharacter === 'undefined' || !(unit instanceof PlayerCharacter)) {
+        return null;
+    }
+    var scene = unit.scene;
+    if (!scene || !scene.registry || typeof scene.registry.get !== 'function') {
+        return null;
+    }
+    return scene.registry.get('hero') || null;
+}
+
 var Unit = new Phaser.Class({
     Extends: Phaser.GameObjects.Sprite,
 
@@ -95,6 +106,9 @@ var Unit = new Phaser.Class({
                     return;
                 }
                 var amount = self.damage;
+                if (typeof equippedWeaponDamage === 'function') {
+                    amount = equippedWeaponDamage(unitHero(self), self.damage);
+                }
                 if (typeof triangleHit === 'function' && typeof combatClass === 'function') {
                     amount = triangleHit(amount, combatClass(self), combatClass(target));
                 }
@@ -111,8 +125,12 @@ var Unit = new Phaser.Class({
         if (!this.living) {
             return 0;
         }
+        var defence = 0;
+        if (typeof equippedShieldDefence === 'function') {
+            defence = equippedShieldDefence(unitHero(this));
+        }
         var variance = Phaser.Math.Between(-2, 2);
-        var dealt = Math.max(1, amount + variance);
+        var dealt = Math.max(1, amount - defence + variance);
         this.hp = Math.max(0, this.hp - dealt);
         this.setTint(0xff5555);
         this.showFloater('-' + dealt, '#ff6b6b');

@@ -529,31 +529,123 @@ EmberwoodTests.add('hud: wear/wield/remove sword and shield refresh worn tab', f
     }).then(function () {
         var battle = H.battle(win);
         var you = battle.heroes[0];
+        var hero = H.hero(win);
+        assertEqual(hero.equipment.weapon, 'sword', 'still wearing sword in battle');
+        assertEqual(hero.equipment.shield, 'shield', 'still wearing shield in battle');
+        assertEqual(you.damage, 24, 'battle actor still copies hero.damage onto the sprite');
+
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        return H.forceFlee(win);
+    }).then(function () {
+        H.enterZone(win, 'haven');
+    }).catch(function (err) {
+        return H.cleanupBattle(win).then(function () {
+            throw err;
+        });
+    });
+});
+
+EmberwoodTests.add('combat: equipped weapon damage and shield defence apply to hits', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof win.equippedWeaponDamage, 'function', 'equippedWeaponDamage helper');
+        assertEqual(typeof win.equippedShieldDefence, 'function', 'equippedShieldDefence helper');
+        assertEqual(win.ITEM_DB.sword.damage, 16, 'ITEM_DB sword damage is 16');
+        assertEqual(win.ITEM_DB.shield.defence, 1, 'ITEM_DB shield defence is 1');
+
+        var hero = H.hero(win);
+        assertEqual(hero.equipment.weapon, 'sword', 'starter wears bronze sword');
+        assertEqual(hero.equipment.shield, 'shield', 'starter wears wooden shield');
+        hero.damage = 24;
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        assertEqual(win.equippedWeaponDamage(hero, hero.damage), 16, 'worn sword uses ITEM_DB damage 16 not hero.damage 24');
+        assertEqual(win.equippedShieldDefence(hero), 1, 'worn shield uses ITEM_DB defence 1');
+
+        assert(win.unequipItem(hero, 'weapon'), 'unequip sword');
+        win.game.registry.set('hero', hero);
+        assertEqual(hero.equipment.weapon, null, 'sword slot empty');
+        assertEqual(win.equippedWeaponDamage(hero, hero.damage), 24, 'unarmed falls back to hero.damage');
+        assert(win.equipItem(hero, 'sword'), 're-wield sword');
+        win.game.registry.set('hero', hero);
+        assertEqual(win.equippedWeaponDamage(hero, hero.damage), 16, 're-wield restores sword damage 16');
+
+        assert(win.unequipItem(hero, 'shield'), 'unequip shield');
+        win.game.registry.set('hero', hero);
+        assertEqual(win.equippedShieldDefence(hero), 0, 'no shield is defence 0');
+        assert(win.equipItem(hero, 'shield'), 're-wear shield');
+        win.game.registry.set('hero', hero);
+        assertEqual(win.equippedShieldDefence(hero), 1, 're-wear restores shield defence 1');
+
+        return H.startCustomFight(win, [
+            { type: 'Goblin', texture: 'slime', tint: 0x5aa33a, hp: 80, damage: 8, gold: 0, xp: 1 }
+        ]);
+    }).then(function () {
+        var battle = H.battle(win);
+        var you = battle.heroes[0];
         var foe = battle.enemies[0];
         var hero = H.hero(win);
         assertEqual(hero.equipment.weapon, 'sword', 'still wearing sword in battle');
         assertEqual(hero.equipment.shield, 'shield', 'still wearing shield in battle');
-        assertEqual(win.ITEM_DB.sword.damage, 16, 'ITEM_DB sword damage unused');
-        assertEqual(win.ITEM_DB.shield.defence, 1, 'ITEM_DB shield defence unused');
-        assertEqual(you.damage, 24, 'battle actor uses hero.damage, not ITEM_DB.sword.damage 16');
+        assertEqual(you.damage, 24, 'battle sprite still holds hero.damage 24');
+        assertEqual(win.equippedWeaponDamage(hero, you.damage), 16, 'attack helper still reads worn sword 16');
 
         var orig = win.Phaser.Math.Between;
-        try {
-            win.Phaser.Math.Between = function (lo, hi) {
-                assertEqual(lo, -2, 'hit variance low is -2');
-                assertEqual(hi, 2, 'hit variance high is +2');
-                return 0;
-            };
-            var outgoing = foe.takeDamage(you.damage);
-            assertEqual(outgoing, 24, 'outgoing hit is hero.damage + 0, not worn sword 16');
-            var incoming = you.takeDamage(8);
-            assertEqual(incoming, 8, 'incoming hit is amount + 0, not reduced by worn shield defence 1');
-        } finally {
-            win.Phaser.Math.Between = orig;
+        win.Phaser.Math.Between = function (lo, hi) {
+            assertEqual(lo, -2, 'hit variance low is -2');
+            assertEqual(hi, 2, 'hit variance high is +2');
+            return 0;
+        };
+
+        function landHit(attacker, defender, label) {
+            var before = defender.hp;
+            attacker.attack(defender);
+            return H.waitUntil(function () {
+                return defender.hp < before;
+            }, 2000, label).then(function () {
+                return before - defender.hp;
+            });
         }
 
-        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
-        return H.forceFlee(win);
+        return landHit(you, foe, 'worn sword outgoing hit').then(function (drop) {
+            assertEqual(drop, 16, 'outgoing hit uses worn sword damage 16, not hero.damage 24');
+            var incoming = you.takeDamage(8);
+            assertEqual(incoming, 7, 'incoming hit is 8 minus worn shield defence 1');
+
+            assert(win.unequipItem(hero, 'weapon'), 'unequip sword in battle');
+            win.game.registry.set('hero', hero);
+            assertEqual(hero.equipment.weapon, null, 'battle unequip clears weapon');
+            return landHit(you, foe, 'unarmed outgoing hit');
+        }).then(function (drop) {
+            assertEqual(drop, 24, 'unarmed outgoing hit falls back to hero.damage 24');
+
+            assert(win.unequipItem(hero, 'shield'), 'unequip shield in battle');
+            win.game.registry.set('hero', hero);
+            assertEqual(hero.equipment.shield, null, 'battle unequip clears shield');
+            assertEqual(you.takeDamage(8), 8, 'unshielded incoming hit is amount + 0');
+
+            assert(win.equipItem(hero, 'sword'), 're-wield in battle');
+            assert(win.equipItem(hero, 'shield'), 're-wear in battle');
+            win.game.registry.set('hero', hero);
+            return landHit(you, foe, 're-equipped outgoing hit');
+        }).then(function (drop) {
+            assertEqual(drop, 16, 're-wield outgoing hit is sword damage 16 again');
+            assertEqual(you.takeDamage(8), 7, 're-wear incoming hit is reduced by defence 1 again');
+            win.Phaser.Math.Between = orig;
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+            return H.forceFlee(win);
+        }).catch(function (err) {
+            win.Phaser.Math.Between = orig;
+            throw err;
+        });
     }).then(function () {
         H.enterZone(win, 'haven');
     }).catch(function (err) {
@@ -1467,7 +1559,7 @@ EmberwoodTests.add('combat: melee vs ranged vs magic triangle hook', function (w
             });
         }).then(function (incomingBefore) {
             win.Phaser.Math.Between = orig;
-            assertEqual(you.hp, incomingBefore - 6, 'magic vs ranged incoming is 6 (8 * 0.75)');
+            assertEqual(you.hp, incomingBefore - 5, 'magic vs ranged incoming is 5 (8 * 0.75 minus wooden shield defence 1)');
             return H.forceFlee(win);
         }).catch(function (err) {
             win.Phaser.Math.Between = orig;

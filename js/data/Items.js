@@ -148,6 +148,37 @@ function itemEquipVerb(id) {
     return null;
 }
 
+function equippedWeaponDamage(hero, fallback) {
+    var base = typeof fallback === 'number' ? fallback : 0;
+    if (!hero || !hero.equipment) {
+        return base;
+    }
+    var id = hero.equipment.weapon;
+    if (!id) {
+        return base;
+    }
+    var def = ITEM_DB[id];
+    if (def && typeof def.damage === 'number') {
+        return def.damage;
+    }
+    return base;
+}
+
+function equippedShieldDefence(hero) {
+    if (!hero || !hero.equipment) {
+        return 0;
+    }
+    var id = hero.equipment.shield;
+    if (!id) {
+        return 0;
+    }
+    var def = ITEM_DB[id];
+    if (def && typeof def.defence === 'number') {
+        return def.defence;
+    }
+    return 0;
+}
+
 function equipItem(hero, id) {
     if (!hero || !id) {
         return false;
