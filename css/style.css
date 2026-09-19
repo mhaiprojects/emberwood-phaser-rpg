@@ -426,6 +426,18 @@ button.ghost {
     font-size: 11px;
 }
 
+#dialogue-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 4px 0 8px;
+}
+
+#dialogue-options button {
+    padding: 4px 10px;
+    font-size: 12px;
+}
+
 #title-overlay,
 #dead-overlay,
 #world-map-overlay {
@@ -442,6 +454,7 @@ button.ghost {
 #dead-overlay[hidden],
 #world-map-overlay[hidden],
 #dialogue-overlay[hidden],
+#dialogue-options[hidden],
 #battle-panel[hidden],
 #credit-text[hidden],
 #ctx-menu[hidden],

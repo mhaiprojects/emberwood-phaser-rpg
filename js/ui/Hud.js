@@ -39,6 +39,7 @@ var Hud = {
             dialogue: document.getElementById('dialogue-overlay'),
             dialogueSpeaker: document.getElementById('dialogue-speaker'),
             dialogueText: document.getElementById('dialogue-text'),
+            dialogueOptions: document.getElementById('dialogue-options'),
             dialogueContinue: document.getElementById('dialogue-continue')
         };
         this.ctxTarget = null;
@@ -196,6 +197,14 @@ var Hud = {
         }
         if (this.el.dialogue) {
             this.el.dialogue.addEventListener('click', function (event) {
+                var btn = event.target && event.target.closest && event.target.closest('[data-dialogue-option]');
+                if (btn) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    btn.blur();
+                    self.chooseDialogueOption(btn.getAttribute('data-dialogue-option'));
+                    return;
+                }
                 event.preventDefault();
                 self.advanceDialogue();
             });
@@ -406,7 +415,7 @@ var Hud = {
         }
     },
 
-    startDialogue: function (speaker, pages) {
+    startDialogue: function (speaker, pages, options) {
         var clean = [];
         pages = pages || [];
         for (var i = 0; i < pages.length; i++) {
@@ -418,8 +427,15 @@ var Hud = {
             this.hideDialogue();
             return;
         }
+        if (!options || !options.length) {
+            var world = window.game && window.game.scene.getScene('WorldScene');
+            var def = world && world.dialogueNpc && world.dialogueNpc.npcDef;
+            options = typeof npcDialogueOptions === 'function' && def
+                ? npcDialogueOptions(def)
+                : [];
+        }
         this.hideContextMenu();
-        this.dialogue = { speaker: speaker || '', pages: clean, index: 0 };
+        this.dialogue = { speaker: speaker || '', pages: clean, index: 0, options: options };
         this.renderDialogue(true);
     },
 
@@ -449,9 +465,51 @@ var Hud = {
                 ? 'Click to close'
                 : 'Click to continue';
         }
+        this.renderDialogueOptions();
         if (logPage) {
             this.log(d.speaker + ': ' + page);
         }
+    },
+
+    renderDialogueOptions: function () {
+        var row = this.el && this.el.dialogueOptions;
+        var overlay = this.el && this.el.dialogue;
+        var opts = this.dialogue && this.dialogue.options ? this.dialogue.options : [];
+        if (!row) {
+            return;
+        }
+        row.innerHTML = '';
+        if (!opts.length) {
+            row.hidden = true;
+            if (overlay) {
+                overlay.removeAttribute('data-options');
+            }
+            return;
+        }
+        row.hidden = false;
+        var ids = [];
+        for (var i = 0; i < opts.length; i++) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.setAttribute('data-dialogue-option', opts[i].id);
+            btn.textContent = opts[i].label;
+            row.appendChild(btn);
+            ids.push(opts[i].id);
+        }
+        if (overlay) {
+            overlay.setAttribute('data-options', ids.join(','));
+        }
+    },
+
+    chooseDialogueOption: function (id) {
+        if (!this.dialogueOpen() || this.mode !== 'world') {
+            return;
+        }
+        var world = window.game && window.game.scene.getScene('WorldScene');
+        if (!world || world.encounterLock || !world.chooseDialogueOption) {
+            return;
+        }
+        world.chooseDialogueOption(id);
     },
 
     advanceDialogue: function () {
@@ -473,6 +531,15 @@ var Hud = {
             this.el.dialogue.hidden = true;
             this.el.dialogue.removeAttribute('data-page');
             this.el.dialogue.removeAttribute('data-pages');
+            this.el.dialogue.removeAttribute('data-options');
+        }
+        if (this.el && this.el.dialogueOptions) {
+            this.el.dialogueOptions.innerHTML = '';
+            this.el.dialogueOptions.hidden = true;
+        }
+        var world = window.game && window.game.scene.getScene('WorldScene');
+        if (world) {
+            world.dialogueNpc = null;
         }
     },
 

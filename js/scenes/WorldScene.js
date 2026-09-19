@@ -34,6 +34,7 @@ var WorldScene = new Phaser.Class({
         this.tileGrid = null;
         this.engageTarget = null;
         this.talkTarget = null;
+        this.dialogueNpc = null;
         this.exitLock = false;
         this.encounterLock = false;
         this.engageGrace = 0;
@@ -595,6 +596,7 @@ var WorldScene = new Phaser.Class({
         this.clearDoorFx();
         this.engageTarget = null;
         this.talkTarget = null;
+        this.dialogueNpc = null;
         this.tileGrid = null;
         if (this.groundCollider) {
             this.groundCollider.destroy();
@@ -1406,10 +1408,49 @@ var WorldScene = new Phaser.Class({
             pages = (def.lines || []).slice();
         }
         this.talkTarget = null;
+        this.dialogueNpc = npc;
         this.refreshHud();
         Hud.startDialogue(def.name, pages);
         if (afterTalk) {
             afterTalk();
+        }
+    },
+
+    chooseDialogueOption: function (id) {
+        if (this.encounterLock || Hud.mode === 'battle') {
+            return;
+        }
+        var npc = this.dialogueNpc;
+        var def = npc && npc.npcDef;
+        if (!def) {
+            return;
+        }
+        var options = typeof npcDialogueOptions === 'function' ? npcDialogueOptions(def) : [];
+        var allowed = false;
+        for (var i = 0; i < options.length; i++) {
+            if (options[i].id === id) {
+                allowed = true;
+                break;
+            }
+        }
+        if (!allowed) {
+            return;
+        }
+        if (id === 'talk') {
+            this.talkTarget = null;
+            Hud.startDialogue(def.name, (def.lines || []).slice(), options);
+            return;
+        }
+        if (id === 'quest') {
+            this.tryTalk(npc);
+            return;
+        }
+        if (id === 'bank') {
+            Hud.log(def.name + ': The vault is still being fitted.');
+            return;
+        }
+        if (id === 'trade') {
+            Hud.log(def.name + ': I have nothing to trade yet.');
         }
     },
 

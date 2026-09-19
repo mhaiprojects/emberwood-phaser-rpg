@@ -91,35 +91,57 @@ function zoneDanger(zoneId) {
     return types.length ? types.join(', ') : 'None';
 }
 
+var DIALOGUE_OPTION_LABELS = {
+    talk: 'Talk',
+    trade: 'Trade',
+    bank: 'Bank',
+    quest: 'Quest'
+};
+
+function npcDialogueOptions(def) {
+    var raw = def && def.options && def.options.length ? def.options : ['talk'];
+    var seen = {};
+    var out = [];
+    for (var i = 0; i < raw.length; i++) {
+        var id = raw[i];
+        if (!DIALOGUE_OPTION_LABELS[id] || seen[id]) {
+            continue;
+        }
+        seen[id] = true;
+        out.push({ id: id, label: DIALOGUE_OPTION_LABELS[id] });
+    }
+    return out;
+}
+
 var NPC_DEFS = {
     haven: [
-        { key: 'guild', name: 'Guildmaster Bram', x: 210, y: 150, tint: 0xffffff, lines: ['Welcome to Emberhaven, adventurer.', 'Goblins from Northwood raid our stores.', 'Slay 5 goblins and return. The militia will pay.'] },
-        { key: 'banker', name: 'Banker Elise', x: 160, y: 130, tint: 0xffffff, lines: ['Your coin is safe with me.', 'Rest here if the roads were cruel.'] },
-        { key: 'guard', name: 'Guard Rowan', x: 252, y: 168, tint: 0xffffff, lines: ['Keep to the paths.', 'North is woods. East is farms. South is the sea.'] }
+        { key: 'guild', name: 'Guildmaster Bram', x: 210, y: 150, tint: 0xffffff, options: ['talk', 'quest'], lines: ['Welcome to Emberhaven, adventurer.', 'Goblins from Northwood raid our stores.', 'Slay 5 goblins and return. The militia will pay.'] },
+        { key: 'banker', name: 'Banker Elise', x: 160, y: 130, tint: 0xffffff, options: ['talk', 'bank'], lines: ['Your coin is safe with me.', 'Rest here if the roads were cruel.'] },
+        { key: 'guard', name: 'Guard Rowan', x: 252, y: 168, tint: 0xffffff, options: ['talk'], lines: ['Keep to the paths.', 'North is woods. East is farms. South is the sea.'] }
     ],
     northwood: [
-        { key: 'ranger', name: 'Ranger Kett', x: 240, y: 200, tint: 0xffffff, lines: ['Goblins nest in these trees.', 'Click a goblin to fight it, like the old days.'] }
+        { key: 'ranger', name: 'Ranger Kett', x: 240, y: 200, tint: 0xffffff, options: ['talk'], lines: ['Goblins nest in these trees.', 'Click a goblin to fight it, like the old days.'] }
     ],
     millfields: [
-        { key: 'farmer', name: 'Farmer Willa', x: 200, y: 180, tint: 0xffffff, lines: ['Cows got into the cabbages again.', 'The mill road runs back to Emberhaven.'] }
+        { key: 'farmer', name: 'Farmer Willa', x: 200, y: 180, tint: 0xffffff, options: ['talk'], lines: ['Cows got into the cabbages again.', 'The mill road runs back to Emberhaven.'] }
     ],
     southshore: [
-        { key: 'fisher', name: 'Fisher Ned', x: 220, y: 160, tint: 0xffffff, lines: ['Crabs pinch harder than they look.', 'Ships used to stop here. Not anymore.'] }
+        { key: 'fisher', name: 'Fisher Ned', x: 220, y: 160, tint: 0xffffff, options: ['talk'], lines: ['Crabs pinch harder than they look.', 'Ships used to stop here. Not anymore.'] }
     ],
     westmead: [
-        { key: 'wanderer', name: 'Wanderer Sila', x: 180, y: 190, tint: 0xffffff, lines: ['Plains look empty until they are not.', 'Graves lie north-west. Do not linger.'] }
+        { key: 'wanderer', name: 'Wanderer Sila', x: 180, y: 190, tint: 0xffffff, options: ['talk'], lines: ['Plains look empty until they are not.', 'Graves lie north-west. Do not linger.'] }
     ],
     graves: [
-        { key: 'ghost', name: 'Wisp', x: 200, y: 170, tint: 0xffffff, lines: ['The dead remember steel.', 'Turn back unless you seek bones.'] }
+        { key: 'ghost', name: 'Wisp', x: 200, y: 170, tint: 0xffffff, options: ['talk'], lines: ['The dead remember steel.', 'Turn back unless you seek bones.'] }
     ],
     darkmine: [
-        { key: 'miner', name: 'Miner Corb', x: 210, y: 200, tint: 0xffffff, lines: ['Bats took the lower shaft.', 'Ore waits for someone braver than me.'] }
+        { key: 'miner', name: 'Miner Corb', x: 210, y: 200, tint: 0xffffff, options: ['talk'], lines: ['Bats took the lower shaft.', 'Ore waits for someone braver than me.'] }
     ],
     highlands: [
-        { key: 'hermit', name: 'Hermit Ola', x: 240, y: 160, tint: 0xffffff, lines: ['Drakes nest on the windrock.', 'Bring a stout shield.'] }
+        { key: 'hermit', name: 'Hermit Ola', x: 240, y: 160, tint: 0xffffff, options: ['talk'], lines: ['Drakes nest on the windrock.', 'Bring a stout shield.'] }
     ],
     mire: [
-        { key: 'witch', name: 'Fen Witch', x: 200, y: 180, tint: 0xffffff, lines: ['The fen drinks the lost.', 'I can stitch wounds... for a price.'] }
+        { key: 'witch', name: 'Fen Witch', x: 200, y: 180, tint: 0xffffff, options: ['talk'], lines: ['The fen drinks the lost.', 'I can stitch wounds... for a price.'] }
     ]
 };
 

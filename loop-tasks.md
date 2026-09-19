@@ -100,7 +100,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Every `NPC_DEFS` entry spawns at its x,y with a yellow name label. — Conclusion: From spawn (328,248) all 11 NPC_DEFS entries spawn at def.x/y with yellow `#ffe08a` name labels (not salmon mob `#ffb0a0`). Phaser 3.90 keyboard off. Dedicated case pass; suite 77/77.
 - [done] Player–NPC arcade collider is immovable and does not shove NPCs around. — Conclusion: From spawn (328,248) NPC group defaults immovable, player–NPC collider stays active after enterZone. Keys.js D/S into Rowan/Bram/Kett leaves them at 252,168 / 210,150 / Northwood; player does not pass through. Phaser 3.90 keyboard off. Dedicated case pass + Playwright.
 - [done] Click-to-continue multi-page dialogue instead of a single chat line. — Conclusion: From spawn (328,248) Rowan talk opens HTML `#dialogue-overlay` page 1; click / world-click pages through `lines` then closes; Bram special line stays one page; no Talk/Trade buttons. Phaser 3.90 keyboard off. Dedicated + Playwright 1/1.
-- [todo] Dialogue option buttons (Talk / Trade / Bank / Quest) where the NPC supports them. — Conclusion: —
+- [done] Dialogue option buttons (Talk / Trade / Bank / Quest) where the NPC supports them. — Conclusion: From spawn (328,248) Rowan shows Talk only; Bram Talk+Quest (Quest reports 0/5); Elise Talk+Bank stubs the vault (no shop/bank UI); Witch Talk only; no Trade. Phaser 3.90 keyboard off. Dedicated + Playwright 1/1.
 - [todo] Examine on NPCs (right-click or long-press) with a short flavor sentence each. — Conclusion: —
 - [todo] A Shopkeeper in Emberhaven and a Trade window (see Shops). — Conclusion: —
 - [todo] Convert Elise from heal-only to a **bank booth** (deposit / withdraw); keep free heal as a separate Nurse or a bank option. — Conclusion: —
@@ -502,4 +502,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 129 | 2026-09-19 | Agility shortcuts vs doors (level-gated squeeze beside a locked door) | done — spawn (328,248) farm door (26,17) stays locked without a key; squeeze (25,17) needs Agility 5; Phaser keyboard off; dedicated + Playwright 1/1 |
 | 130 | 2026-09-19 | Collision debug overlay (toggle arcade body + colliding tiles) | done — spawn (328,248) Settings/F9 toggle arcade bodies + colliding tiles (default off); Phaser keyboard off; dedicated + Playwright 1/1 |
 | 131 | 2026-09-19 | Click-to-continue multi-page dialogue instead of a single chat line | done — spawn (328,248) Rowan pages via HTML `#dialogue-overlay`; click/world-click continue; Bram stays one page; Phaser keyboard off; dedicated + Playwright 1/1 |
+| 132 | 2026-09-19 | Dialogue option buttons Talk / Trade / Bank / Quest where the NPC supports them | done — spawn (328,248) Rowan Talk; Bram Talk+Quest; Elise Talk+Bank stub (no shop/bank UI); Witch Talk; no Trade; Phaser keyboard off; dedicated + Playwright 1/1 |
 

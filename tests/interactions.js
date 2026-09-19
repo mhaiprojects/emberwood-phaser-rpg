@@ -3654,6 +3654,153 @@ EmberwoodTests.add('npcs: click-to-continue pages through multi-line dialogue', 
     });
 });
 
+EmberwoodTests.add('npcs: dialogue option buttons Talk Trade Bank Quest where the NPC supports them', function (win, H) {
+    function optionIds(overlay) {
+        var btns = overlay.querySelectorAll('[data-dialogue-option]');
+        var ids = [];
+        for (var i = 0; i < btns.length; i++) {
+            ids.push(btns[i].getAttribute('data-dialogue-option'));
+        }
+        return ids.join(',');
+    }
+
+    function optionLabels(overlay) {
+        var btns = overlay.querySelectorAll('[data-dialogue-option]');
+        var labels = [];
+        for (var i = 0; i < btns.length; i++) {
+            labels.push(btns[i].textContent);
+        }
+        return labels.join(',');
+    }
+
+    function noShopBank(win, label) {
+        assert(!win.document.getElementById('shop-overlay') || win.document.getElementById('shop-overlay').hidden, label + ' does not open shop UI');
+        assert(!win.document.getElementById('bank-overlay') || win.document.getElementById('bank-overlay').hidden, label + ' does not open bank UI');
+    }
+
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        var world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(win.Hud.mode, 'world', 'world mode');
+
+        var overlay = win.document.getElementById('dialogue-overlay');
+        var row = win.document.getElementById('dialogue-options');
+        assert(overlay && overlay === win.Hud.el.dialogue, '#dialogue-overlay is Hud.el.dialogue');
+        assert(row && row === win.Hud.el.dialogueOptions, '#dialogue-options is Hud.el.dialogueOptions');
+        assert(row.hidden, 'option row starts hidden');
+        assertEqual(optionIds(overlay), '', 'no option buttons before talk');
+
+        var rowan = H.findNpc(win, 'guard');
+        assert(rowan, 'Rowan is in Emberhaven');
+        assertEqual(win.npcDialogueOptions(rowan.npcDef).map(function (opt) { return opt.id; }).join(','), 'talk', 'Rowan supports Talk only');
+        win.Hud.el.log.innerHTML = '';
+        world.tryTalk(rowan);
+        assert(win.Hud.dialogueOpen(), 'Rowan talk opens dialogue');
+        assertEqual(optionIds(overlay), 'talk', 'Rowan shows Talk');
+        assertEqual(optionLabels(overlay), 'Talk', 'Rowan Talk label');
+        assertEqual(overlay.getAttribute('data-options'), 'talk', 'Rowan data-options is talk');
+        assert(!overlay.querySelector('[data-dialogue-option="trade"]'), 'Rowan has no Trade');
+        assert(!overlay.querySelector('[data-dialogue-option="bank"]'), 'Rowan has no Bank');
+        assert(!overlay.querySelector('[data-dialogue-option="quest"]'), 'Rowan has no Quest');
+        H.click(win, overlay.querySelector('[data-dialogue-option="talk"]'));
+        assert(win.Hud.dialogueOpen(), 'Talk button does not close dialogue');
+        assertEqual(win.document.getElementById('dialogue-text').textContent, rowan.npcDef.lines[0], 'Talk replays flavor page 1');
+        assertEqual(overlay.getAttribute('data-page'), '1', 'Talk restarts at page 1');
+        assert(!world.walkTarget, 'Talk button does not walk');
+        assertEqual(win.Hud.mode, 'world', 'Talk keeps Hud.mode world');
+        H.click(win, overlay);
+        assertEqual(win.document.getElementById('dialogue-text').textContent, rowan.npcDef.lines[1], 'overlay click still pages after Talk');
+        win.Hud.hideDialogue();
+
+        win.game.registry.set('quest', { id: 'goblins', stage: 0, progress: 0, goal: 5 });
+        world.refreshHud();
+        var bram = H.findNpc(win, 'guild');
+        assert(bram, 'Bram is in Emberhaven');
+        assertEqual(win.npcDialogueOptions(bram.npcDef).map(function (opt) { return opt.id; }).join(','), 'talk,quest', 'Bram supports Talk and Quest');
+        win.Hud.el.log.innerHTML = '';
+        world.tryTalk(bram);
+        assertEqual(H.quest(win).stage, 1, 'tryTalk still accepts the militia task');
+        assertEqual(optionIds(overlay), 'talk,quest', 'Bram shows Talk and Quest');
+        assertEqual(optionLabels(overlay), 'Talk,Quest', 'Bram Talk Quest labels');
+        assert(!overlay.querySelector('[data-dialogue-option="trade"]'), 'Bram has no Trade');
+        assert(!overlay.querySelector('[data-dialogue-option="bank"]'), 'Bram has no Bank');
+        var gold = H.hero(win).gold;
+        var xp = H.hero(win).xp;
+        H.click(win, overlay.querySelector('[data-dialogue-option="talk"]'));
+        assertEqual(win.document.getElementById('dialogue-text').textContent, bram.npcDef.lines[0], 'Talk shows Bram flavor, not the quest briefing');
+        assertEqual(H.quest(win).stage, 1, 'Talk does not change quest stage');
+        assertEqual(H.hero(win).gold, gold, 'Talk does not pay');
+        H.click(win, overlay.querySelector('[data-dialogue-option="quest"]'));
+        assert(win.Hud.dialogueOpen(), 'Quest keeps dialogue open');
+        assertEqual(H.lastChat(win), 'Guildmaster Bram: 0 of 5 goblins down. Keep at it.', 'Quest button reports progress');
+        assertEqual(H.quest(win).stage, 1, 'Quest at stage 1 does not pay');
+        assertEqual(H.hero(win).gold, gold, 'Quest button does not pay gold');
+        assertEqual(H.hero(win).xp, xp, 'Quest button does not grant XP');
+        win.Hud.hideDialogue();
+
+        var elise = H.findNpc(win, 'banker');
+        assert(elise, 'Elise is in Emberhaven');
+        assertEqual(win.npcDialogueOptions(elise.npcDef).map(function (opt) { return opt.id; }).join(','), 'talk,bank', 'Elise supports Talk and Bank');
+        var hero = H.hero(win);
+        hero.hp = 40;
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        win.Hud.el.log.innerHTML = '';
+        world.tryTalk(elise);
+        assertEqual(H.hero(win).hp, 100, 'tryTalk still heals');
+        assertEqual(optionIds(overlay), 'talk,bank', 'Elise shows Talk and Bank');
+        assertEqual(optionLabels(overlay), 'Talk,Bank', 'Elise Talk Bank labels');
+        assert(!overlay.querySelector('[data-dialogue-option="trade"]'), 'Elise has no Trade');
+        assert(!overlay.querySelector('[data-dialogue-option="quest"]'), 'Elise has no Quest');
+        gold = H.hero(win).gold;
+        H.click(win, overlay.querySelector('[data-dialogue-option="bank"]'));
+        assert(win.Hud.dialogueOpen(), 'Bank stub keeps dialogue open');
+        assertEqual(H.lastChat(win), 'Banker Elise: The vault is still being fitted.', 'Bank is a stub until the bank UI item');
+        assertEqual(H.hero(win).gold, gold, 'Bank stub does not take gold');
+        assertEqual(H.hero(win).hp, 100, 'Bank stub does not change HP');
+        noShopBank(win, 'Elise Bank');
+        H.click(win, overlay.querySelector('[data-dialogue-option="talk"]'));
+        assertEqual(win.document.getElementById('dialogue-text').textContent, elise.npcDef.lines[0], 'Talk shows Elise flavor');
+        noShopBank(win, 'Elise Talk');
+        win.Hud.hideDialogue();
+
+        H.enterZone(win, 'mire');
+        world = H.world(win);
+        H.setAutoAttack(win, false);
+        world.encounterLock = false;
+        var witch = H.findNpc(win, 'witch');
+        assert(witch, 'Fen Witch is in Mirefen');
+        assertEqual(win.npcDialogueOptions(witch.npcDef).map(function (opt) { return opt.id; }).join(','), 'talk', 'Witch supports Talk only');
+        world.tryTalk(witch);
+        assertEqual(optionIds(overlay), 'talk', 'Witch shows Talk only');
+        assert(!overlay.querySelector('[data-dialogue-option="trade"]'), 'Witch is not a shop');
+        assert(!overlay.querySelector('[data-dialogue-option="bank"]'), 'Witch has no Bank');
+        assert(!overlay.querySelector('[data-dialogue-option="quest"]'), 'Witch has no Quest');
+        win.Hud.hideDialogue();
+
+        H.enterZone(win, 'haven');
+        world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        noShopBank(win, 'return to spawn');
+    });
+});
+
 EmberwoodTests.add('npcs: every NPC_DEFS entry spawns at xy with a yellow name label', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');
