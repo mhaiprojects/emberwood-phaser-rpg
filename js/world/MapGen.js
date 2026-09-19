@@ -12,6 +12,7 @@ var TILE = {
 var MAP_W = 36;
 var MAP_H = 28;
 var HAVEN_GATE_TILE = { x: 23, y: 15 };
+var INTERIOR_EXIT_TILE = { x: 18, y: 20 };
 
 function tileCenter(tx, ty) {
     var size = typeof TILE_SIZE === 'number' ? TILE_SIZE : 16;
@@ -221,6 +222,40 @@ function generateMap(seed, biome, neighbors) {
     }
 
     return grid;
+}
+
+function generateInterior(kind) {
+    var grid = makeGrid(TILE.ROCK);
+    var x0 = 12;
+    var y0 = 8;
+    var w = 12;
+    var h = 13;
+    var ix;
+    var iy;
+    for (iy = y0; iy < y0 + h; iy++) {
+        for (ix = x0; ix < x0 + w; ix++) {
+            var edge = ix === x0 || iy === y0 || ix === x0 + w - 1 || iy === y0 + h - 1;
+            setCell(grid, ix, iy, edge ? TILE.ROCK : TILE.PATH);
+        }
+    }
+    setCell(grid, INTERIOR_EXIT_TILE.x, INTERIOR_EXIT_TILE.y, TILE.PATH);
+    for (ix = x0 + 2; ix < x0 + w - 2; ix++) {
+        setCell(grid, ix, y0 + 2, TILE.ROCK);
+    }
+    setCell(grid, x0 + Math.floor(w / 2), y0 + 2, TILE.PATH);
+    if (kind === 'bank') {
+        setCell(grid, x0 + 3, y0 + 4, TILE.SHRINE);
+    } else if (kind === 'shop') {
+        setCell(grid, x0 + 3, y0 + 5, TILE.FLOWER);
+        setCell(grid, x0 + 8, y0 + 5, TILE.FLOWER);
+    } else if (kind === 'guild') {
+        setCell(grid, x0 + Math.floor(w / 2), y0 + 2, TILE.SHRINE);
+    }
+    return grid;
+}
+
+function interiorSpawnPoint() {
+    return tileCenter(INTERIOR_EXIT_TILE.x, INTERIOR_EXIT_TILE.y - 1);
 }
 
 function flattenMap(grid) {

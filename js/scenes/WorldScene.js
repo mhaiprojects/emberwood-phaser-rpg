@@ -17,6 +17,7 @@ var WorldScene = new Phaser.Class({
     create: function () {
         Keys.init();
         this.zoneId = this.registry.get('zone') || 'haven';
+        this.interiorId = null;
         this.walkTarget = null;
         this.walkPath = null;
         this.walkBlocked = false;
@@ -114,38 +115,52 @@ var WorldScene = new Phaser.Class({
         }
     },
 
-    enterZone: function (zoneId, fromDir) {
-        var zone = ZONES[zoneId];
-        if (!zone) {
-            return;
-        }
-        if (fromDir && this.zoneId && this.zoneId !== zoneId) {
-            this.snapshotMobs();
-        } else if (!fromDir) {
-            this.clearMobZoneState();
-        }
-        if (this.zoneId && this.zoneId !== zoneId) {
-            this.snapshotLoot();
-        }
-        this.zoneId = zoneId;
-        this.registry.set('zone', zoneId);
-        this.clearWorldObjects();
-
-        var neighbors = zoneNeighbors(zone);
-        var grid = generateMap(zone.seed, zone.biome, neighbors);
+    applyTilemap: function (grid) {
         this.tileGrid = grid;
         var data = flattenMap(grid);
         this.map = this.make.tilemap({ data: data, tileWidth: 16, tileHeight: 16 });
         var tiles = this.map.addTilesetImage('tiles', 'tiles', 16, 16, 0, 0, 1);
         this.ground = this.map.createLayer(0, tiles, 0, 0);
         this.ground.setCollision([TILE.WATER, TILE.TREE, TILE.ROCK, TILE.SHRINE]);
-
         this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
         this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
         this.groundCollider = this.physics.add.collider(this.player, this.ground);
         this.player.setCollideWorldBounds(true);
         this.player.setScale(PLAYER_WORLD_SCALE);
         applyPlayerWorldBody(this.player);
+    },
+
+    lockExits: function () {
+        this.exitLock = true;
+        var self = this;
+        this.time.delayedCall(400, function () {
+            self.exitLock = false;
+        });
+    },
+
+    enterZone: function (zoneId, fromDir) {
+        var zone = ZONES[zoneId];
+        if (!zone) {
+            return;
+        }
+        var leavingInterior = !!this.interiorId;
+        if (!leavingInterior) {
+            if (fromDir && this.zoneId && this.zoneId !== zoneId) {
+                this.snapshotMobs();
+            } else if (!fromDir) {
+                this.clearMobZoneState();
+            }
+            if (this.zoneId && this.zoneId !== zoneId) {
+                this.snapshotLoot();
+            }
+        }
+        this.interiorId = null;
+        this.zoneId = zoneId;
+        this.registry.set('zone', zoneId);
+        this.clearWorldObjects();
+
+        var neighbors = zoneNeighbors(zone);
+        this.applyTilemap(generateMap(zone.seed, zone.biome, neighbors));
 
         var spawn = fromDir ? spawnPointForEntry(fromDir) : defaultWorldSpawn();
         this.placePlayer(spawn.x, spawn.y);
@@ -156,6 +171,47 @@ var WorldScene = new Phaser.Class({
         this.refreshHud();
         this.engageGrace = this.time.now + 800;
         Hud.log('You enter ' + zone.name + '.');
+    },
+
+    enterInterior: function (interiorId) {
+        var spec = interiorById(interiorId);
+        if (!spec || this.interiorId === interiorId) {
+            return;
+        }
+        if (!this.interiorId) {
+            this.snapshotMobs();
+            this.snapshotLoot();
+        }
+        this.interiorId = interiorId;
+        this.clearWorldObjects();
+        this.applyTilemap(generateInterior(interiorId));
+        var spawn = interiorSpawnPoint();
+        this.placePlayer(spawn.x, spawn.y);
+        this.clearWalk();
+        this.refreshHud();
+        this.engageGrace = this.time.now + 800;
+        Hud.log('You enter ' + spec.name + '.');
+        this.lockExits();
+    },
+
+    leaveInterior: function () {
+        var spec = interiorById(this.interiorId);
+        var zone = ZONES[this.zoneId];
+        if (!spec || !zone) {
+            return;
+        }
+        this.interiorId = null;
+        this.clearWorldObjects();
+        this.applyTilemap(generateMap(zone.seed, zone.biome, zoneNeighbors(zone)));
+        var out = tileCenter(spec.doorTx, spec.doorTy + 1);
+        this.placePlayer(out.x, out.y);
+        this.clearWalk();
+        this.spawnPeople(this.zoneId);
+        this.restoreLoot(this.zoneId);
+        this.refreshHud();
+        this.engageGrace = this.time.now + 800;
+        Hud.log('You enter ' + zone.name + '.');
+        this.lockExits();
     },
 
     clearWorldObjects: function () {
@@ -405,6 +461,7 @@ var WorldScene = new Phaser.Class({
         var hero = this.registry.get('hero');
         var quest = this.registry.get('quest');
         var zone = ZONES[this.zoneId];
+        var interior = this.interiorId ? interiorById(this.interiorId) : null;
         var questText = 'Talk to Guildmaster Bram in Emberhaven.';
         if (quest.stage === 1) {
             questText = 'Kill goblins in Northwood (' + quest.progress + '/' + quest.goal + ').';
@@ -414,7 +471,7 @@ var WorldScene = new Phaser.Class({
             questText = 'Militia task complete. Explore the nine lands.';
         }
         Hud.setWorld({
-            zone: zone.name,
+            zone: interior ? interior.name : zone.name,
             zoneId: this.zoneId,
             hp: hero.hp,
             maxHp: hero.maxHp,
@@ -614,6 +671,9 @@ var WorldScene = new Phaser.Class({
 
     walkTowardZone: function (zoneId) {
         if (this.encounterLock || Hud.mode === 'battle' || Hud.mode === 'title' || Hud.mode === 'dead') {
+            return;
+        }
+        if (this.interiorId) {
             return;
         }
         var here = ZONES[this.zoneId];
@@ -1107,8 +1167,42 @@ var WorldScene = new Phaser.Class({
         this.refreshHud();
     },
 
+    checkDoors: function () {
+        if (this.exitLock || this.encounterLock || this.interiorId) {
+            return;
+        }
+        if (this.zoneId !== 'haven') {
+            return;
+        }
+        var tile = worldToTile(this.player.x, this.player.y);
+        var spec = interiorAtDoor(tile.tx, tile.ty);
+        if (!spec) {
+            return;
+        }
+        this.enterInterior(spec.id);
+    },
+
+    checkInteriorExit: function () {
+        if (this.exitLock || this.encounterLock || !this.interiorId) {
+            return;
+        }
+        var tile = worldToTile(this.player.x, this.player.y);
+        if (tile.tx !== INTERIOR_EXIT_TILE.x || tile.ty !== INTERIOR_EXIT_TILE.y) {
+            return;
+        }
+        this.leaveInterior();
+    },
+
     checkExits: function () {
         if (this.exitLock || this.encounterLock) {
+            return;
+        }
+        if (this.interiorId) {
+            this.checkInteriorExit();
+            return;
+        }
+        this.checkDoors();
+        if (this.interiorId || this.exitLock) {
             return;
         }
         var zone = ZONES[this.zoneId];
@@ -1129,12 +1223,8 @@ var WorldScene = new Phaser.Class({
         if (!next) {
             return;
         }
-        this.exitLock = true;
+        this.lockExits();
         this.enterZone(next, dir);
-        var self = this;
-        this.time.delayedCall(400, function () {
-            self.exitLock = false;
-        });
     },
 
     wanderMobs: function () {

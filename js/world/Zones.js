@@ -15,6 +15,30 @@ ZONE_LIST.forEach(function (zone) {
     ZONES[zone.id] = zone;
 });
 
+var INTERIOR_LIST = [
+    { id: 'bank', name: 'Emberhaven Bank', doorTx: 11, doorTy: 10 },
+    { id: 'shop', name: 'Emberhaven Shop', doorTx: 25, doorTy: 11 },
+    { id: 'guild', name: 'Emberhaven Guild Hall', doorTx: 15, doorTy: 20 }
+];
+
+function interiorById(id) {
+    for (var i = 0; i < INTERIOR_LIST.length; i++) {
+        if (INTERIOR_LIST[i].id === id) {
+            return INTERIOR_LIST[i];
+        }
+    }
+    return null;
+}
+
+function interiorAtDoor(tx, ty) {
+    for (var i = 0; i < INTERIOR_LIST.length; i++) {
+        if (INTERIOR_LIST[i].doorTx === tx && INTERIOR_LIST[i].doorTy === ty) {
+            return INTERIOR_LIST[i];
+        }
+    }
+    return null;
+}
+
 function zoneByGrid(gx, gy) {
     for (var i = 0; i < ZONE_LIST.length; i++) {
         if (ZONE_LIST[i].gx === gx && ZONE_LIST[i].gy === gy) {

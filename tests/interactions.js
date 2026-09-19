@@ -8732,6 +8732,133 @@ EmberwoodTests.add('world: Emberhaven houses have a south-wall PATH door', funct
     });
 });
 
+EmberwoodTests.add('world: Emberhaven bank shop and guild doors enter one indoor tilemap', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.interiorId = null;
+        world.exitLock = false;
+        world.encounterLock = false;
+        assertEqual(spawn.x, 328, 'spawn x tile center');
+        assertEqual(spawn.y, 248, 'spawn y tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.') === 0, 'Phaser 3');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        assert(win.INTERIOR_LIST && win.INTERIOR_LIST.length === 3, 'three interior defs');
+        assertEqual(typeof win.generateInterior, 'function', 'generateInterior exists');
+        assertEqual(typeof world.enterInterior, 'function', 'enterInterior exists');
+        assertEqual(typeof world.leaveInterior, 'function', 'leaveInterior exists');
+        assertEqual(typeof world.map.createLayer, 'function', 'Phaser 3 createLayer');
+
+        var wanted = [
+            { id: 'bank', name: 'Emberhaven Bank', doorTx: 11, doorTy: 10 },
+            { id: 'shop', name: 'Emberhaven Shop', doorTx: 25, doorTy: 11 },
+            { id: 'guild', name: 'Emberhaven Guild Hall', doorTx: 15, doorTy: 20 }
+        ];
+        wanted.forEach(function (want) {
+            var spec = win.interiorById(want.id);
+            assert(spec, want.id + ' def exists');
+            assertEqual(spec.name, want.name, want.id + ' name');
+            assertEqual(spec.doorTx, want.doorTx, want.id + ' door tx');
+            assertEqual(spec.doorTy, want.doorTy, want.id + ' door ty');
+            assertEqual(world.tileGrid[want.doorTy][want.doorTx], win.TILE.PATH, want.id + ' overworld door is PATH');
+            var doorTile = world.ground.getTileAt(want.doorTx, want.doorTy);
+            assert(doorTile, want.id + ' door tile exists');
+            assertEqual(!!doorTile.collides, false, want.id + ' door does not collide');
+            assert(win.interiorAtDoor(want.doorTx, want.doorTy), want.id + ' interiorAtDoor hits');
+        });
+
+        parkWorldBodies(world);
+        var bank = win.interiorById('bank');
+        var south = win.tileCenter(bank.doorTx, bank.doorTy + 1);
+        world.placePlayer(south.x, south.y);
+        world.player.body.setVelocity(0, 0);
+        world.clearWalk();
+        world.exitLock = false;
+        world.encounterLock = false;
+        H.clearKeys(win);
+        H.key(win, 'KeyW', 'w', 'keydown');
+        return H.waitUntil(function () {
+            return H.world(win).interiorId === 'bank';
+        }, 1500, 'Keys.js W into bank door').then(function () {
+            H.key(win, 'KeyW', 'w', 'keyup');
+            H.clearKeys(win);
+            world = H.world(win);
+            world.player.body.setVelocity(0, 0);
+            assertEqual(world.interiorId, 'bank', 'entered bank interior');
+            assertEqual(world.zoneId, 'haven', 'parent zone stays Emberhaven');
+            assertEqual(win.document.getElementById('hud-zone').textContent, 'Emberhaven Bank', 'HUD title is the bank');
+            var here = win.document.querySelector('#minimap .mm-cell.is-here');
+            assert(here, 'minimap still has is-here');
+            assertEqual(here.dataset.zone, 'haven', 'minimap stays Emberhaven');
+            assert(H.chatHas(win, 'You enter Emberhaven Bank.'), 'enter-bank chat');
+            assert(world.map && world.ground, 'indoor Phaser 3 tilemap exists');
+            assertEqual(typeof world.map.createLayer, 'function', 'indoor map still Phaser 3 createLayer');
+            assertEqual(world.map.width, 36, 'indoor map width 36');
+            assertEqual(world.map.height, 28, 'indoor map height 28');
+            var exit = win.INTERIOR_EXIT_TILE;
+            assertEqual(world.tileGrid[exit.y][exit.x], win.TILE.PATH, 'indoor south door is PATH');
+            assertEqual(world.tileGrid[exit.y][exit.x - 1], win.TILE.ROCK, 'indoor door west frame is ROCK');
+            var at = win.worldToTile(world.player.x, world.player.y);
+            assert(at.ty < exit.y, 'spawned inside north of the indoor door');
+            assertEqual(world.npcs.getChildren().length, 0, 'indoor scene has no overworld NPCs');
+            assertEqual(world.mobs.getChildren().length, 0, 'indoor scene has no overworld mobs');
+            assert(!win.game.input.keyboard, 'Phaser keyboard off indoors');
+
+            world.exitLock = false;
+            world.placePlayer(win.tileCenter(exit.x, exit.y).x, win.tileCenter(exit.x, exit.y).y);
+            world.player.body.setVelocity(0, 0);
+            world.checkInteriorExit();
+            world = H.world(win);
+            assertEqual(world.interiorId, null, 'left the indoor tilemap');
+            assertEqual(world.zoneId, 'haven', 'returned to Emberhaven');
+            assertEqual(win.document.getElementById('hud-zone').textContent, 'Emberhaven', 'HUD title is Emberhaven');
+            assert(H.chatHas(win, 'You enter Emberhaven.'), 'leave chat returns to Emberhaven');
+            var out = win.worldToTile(world.player.x, world.player.y);
+            assertEqual(out.tx, bank.doorTx, 'exit lands on the bank door column');
+            assertEqual(out.ty, bank.doorTy + 1, 'exit lands south of the bank door');
+            assert(H.findNpc(win, 'guild'), 'Bram is back in the overworld');
+
+            world.exitLock = false;
+            world.enterInterior('shop');
+            assertEqual(world.interiorId, 'shop', 'shop door uses the same indoor scene');
+            assertEqual(win.document.getElementById('hud-zone').textContent, 'Emberhaven Shop', 'HUD title is the shop');
+            assert(H.chatHas(win, 'You enter Emberhaven Shop.'), 'enter-shop chat');
+            world.exitLock = false;
+            world.leaveInterior();
+            assertEqual(world.interiorId, null, 'left the shop');
+            var shopOut = win.worldToTile(world.player.x, world.player.y);
+            assertEqual(shopOut.tx, 25, 'shop exit south of shop door x');
+            assertEqual(shopOut.ty, 12, 'shop exit south of shop door y');
+
+            world.exitLock = false;
+            world.enterInterior('guild');
+            assertEqual(world.interiorId, 'guild', 'guild door uses the same indoor scene');
+            assertEqual(win.document.getElementById('hud-zone').textContent, 'Emberhaven Guild Hall', 'HUD title is the guild hall');
+            assert(H.chatHas(win, 'You enter Emberhaven Guild Hall.'), 'enter-guild chat');
+            world.exitLock = false;
+            world.leaveInterior();
+            assertEqual(world.interiorId, null, 'left the guild hall');
+
+            H.enterZone(win, 'haven');
+            world = H.world(win);
+            world.placePlayer(spawn.x, spawn.y);
+            world.player.body.setVelocity(0, 0);
+            assertEqual(world.interiorId, null, 'enterZone clears interior');
+            assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+            assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        });
+    });
+});
+
 function countTilesInRows(grid, index, y0, y1) {
     var n = 0;
     var y;
