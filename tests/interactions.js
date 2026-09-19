@@ -2804,6 +2804,73 @@ EmberwoodTests.add('combat: Accurate Attack XP, Aggressive Strength XP, Defensiv
     });
 });
 
+EmberwoodTests.add('combat: Hitpoints XP on win is ceil(mobXp / 3) min 1', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        world.placePlayer(spawn.x, spawn.y);
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.') === 0, 'Phaser 3');
+
+        var rows = [
+            { mobXp: 1, expect: 1 },
+            { mobXp: 2, expect: 1 },
+            { mobXp: 4, expect: 2 },
+            { mobXp: 5, expect: 2 },
+            { mobXp: 10, expect: 4 }
+        ];
+
+        function winWithMobXp(row) {
+            return H.cleanupBattle(win).then(function () {
+                H.enterZone(win, 'haven');
+                H.setAutoAttack(win, false);
+                var hero = win.makeHero();
+                win.game.registry.set('hero', hero);
+                world.refreshHud();
+                world.placePlayer(spawn.x, spawn.y);
+                hero = H.hero(win);
+                assertEqual(hero.skills.hitpoints.xp, 1154, 'mobXp ' + row.mobXp + ' Hitpoints starts 1154');
+                assertEqual(hero.skills.hitpoints.level, 10, 'mobXp ' + row.mobXp + ' Hitpoints starts 10');
+                var chicken = H.findMob(win, 'Chicken');
+                return H.startFight(win, chicken).then(function () {
+                    world.lastFought.mobDef = Object.assign({}, world.lastFought.mobDef, { xp: row.mobXp });
+                    assertEqual(
+                        Math.max(1, Math.ceil(row.mobXp / 3)),
+                        row.expect,
+                        'mobXp ' + row.mobXp + ' formula is ' + row.expect
+                    );
+                    win.Hud.tryAttack();
+                    return H.waitWorld(win);
+                }).then(function () {
+                    hero = H.hero(win);
+                    assertEqual(
+                        hero.skills.hitpoints.xp,
+                        1154 + row.expect,
+                        'mobXp ' + row.mobXp + ' grants Hitpoints +' + row.expect
+                    );
+                    assert(H.chatHas(win, 'collapses'), 'mobXp ' + row.mobXp + ' win chat');
+                    assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+                });
+            });
+        }
+
+        return winWithMobXp(rows[0])
+            .then(function () { return winWithMobXp(rows[1]); })
+            .then(function () { return winWithMobXp(rows[2]); })
+            .then(function () { return winWithMobXp(rows[3]); })
+            .then(function () { return winWithMobXp(rows[4]); })
+            .then(function () {
+                H.enterZone(win, 'haven');
+            });
+    }).catch(function (err) {
+        return H.cleanupBattle(win).then(function () {
+            throw err;
+        });
+    });
+});
+
 EmberwoodTests.add('combat: Attack auto-selects index 0 and rolls damage -2..+2 min 1', function (win, H) {
     H.enterZone(win, 'haven');
     H.setAutoAttack(win, false);

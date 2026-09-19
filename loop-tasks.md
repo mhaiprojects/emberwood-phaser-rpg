@@ -123,7 +123,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Canvas click on a foe selects (`fromSprite`) without striking unless `selectingEnemy`. — Conclusion: canvas `pointerdown`/`fromSprite` cow selects no strike; Attack hits cow; `selectingEnemy` fromSprite strikes; goblin full; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1
 - [done] The gold target rectangle follows the selected living enemy and hides when they die. — Conclusion: Gold 0xf0d060 rect follows selected living foe (canvas cow + move) and hides on die(); reselect shows again; last death hides. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1
 - [done] Accurate → Attack XP, Aggressive → Strength XP, Defensive → Defence XP on a **win**. — Conclusion: From spawn (328,248) Accurate/Aggressive/Defensive chicken wins grant Attack/Strength/Defence +4 XP; other melee skills stay 0. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [verify] Hitpoints XP on win is `ceil(mobXp / 3)` (minimum 1). — Conclusion: —
+- [done] Hitpoints XP on win is `ceil(mobXp / 3)` (minimum 1). — Conclusion: From spawn (328,248) chicken wins grant Hitpoints `ceil(mobXp/3)` min 1 (1→+1, 2→+1, 4→+2, 5→+2, 10→+4 from 1154). Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [verify] Eat food in combat uses shrimp then bread (`eatBestFood`), heals, consumes one, and spends the turn. — Conclusion: —
 - [verify] Eat at full HP does not consume food and returns the turn. — Conclusion: —
 - [verify] Eat with no food chats `You have no food.` and returns the turn. — Conclusion: —
@@ -433,4 +433,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 60 | 2026-09-19 | Canvas click on a foe selects (fromSprite) without striking unless selectingEnemy | done — canvas fromSprite cow selects no strike; Attack hits cow; selectingEnemy fromSprite strikes; goblin full; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 61 | 2026-09-19 | The gold target rectangle follows the selected living enemy and hides when they die | done — gold 0xf0d060 rect follows selected living foe and hides on death; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 62 | 2026-09-19 | Accurate Attack XP, Aggressive Strength XP, Defensive Defence XP on a win | done — spawn (328,248) chicken +4 XP to Attack/Strength/Defence by style; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 63 | 2026-09-19 | Hitpoints XP on win is ceil(mobXp / 3) (minimum 1) | done — spawn (328,248) chicken wins grant Hitpoints ceil(mobXp/3) min 1 (1→+1, 2→+1, 4→+2, 5→+2, 10→+4 from 1154); Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 
