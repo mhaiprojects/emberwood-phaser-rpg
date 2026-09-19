@@ -466,6 +466,62 @@ EmberwoodTests.add('hud: click bread at low HP heals 20 and decrements', functio
     });
 });
 
+EmberwoodTests.add('hud: click coins/sword/shield/bones only logs the item name', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+
+        var hero = H.hero(win);
+        assertEqual(hero.hp, 100, 'starts at full HP');
+        assertEqual(hero.gold, 8, 'starts with 8 gold');
+        assert(!hero.inventory.some(function (s) { return s.id === 'bones'; }), 'starter kit has no bones');
+        win.addItem(hero, 'bones', 2);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        assert(win.document.querySelector('#inv-grid [data-item="coins"]'), 'coins slot');
+        assert(win.document.querySelector('#inv-grid [data-item="sword"]'), 'sword slot');
+        assert(win.document.querySelector('#inv-grid [data-item="shield"]'), 'shield slot');
+        assert(win.document.querySelector('#inv-grid [data-item="bones"]'), 'bones slot');
+
+        var beforeInv = hero.inventory.map(function (s) { return s.id + ':' + s.qty; }).join(',');
+        var clicks = [
+            ['coins', 'Coins.'],
+            ['sword', 'Bronze sword.'],
+            ['shield', 'Wooden shield.'],
+            ['bones', 'Bones.']
+        ];
+        clicks.forEach(function (pair) {
+            try {
+                H.click(win, '#inv-grid [data-item="' + pair[0] + '"]');
+            } catch (err) {
+                throw new Error(pair[0] + ' click crashed: ' + (err && err.message ? err.message : err));
+            }
+            assertEqual(H.lastChat(win), pair[1], pair[0] + ' logs only the item name');
+        });
+
+        hero = H.hero(win);
+        assertEqual(hero.hp, 100, 'HP unchanged after non-food clicks');
+        assertEqual(hero.gold, 8, 'gold unchanged after coin click');
+        assertEqual(
+            hero.inventory.map(function (s) { return s.id + ':' + s.qty; }).join(','),
+            beforeInv,
+            'inventory stacks unchanged'
+        );
+        assert(!H.chatHas(win, 'You eat'), 'non-food clicks do not eat');
+        assert(!H.chatHas(win, 'bury'), 'bones click does not bury');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('hud: eat food from inventory', function (win, H) {
     H.click(win, '#tab-bar button[data-tab="inv"]');
     H.click(win, '#inv-grid [data-item="shrimp"]');

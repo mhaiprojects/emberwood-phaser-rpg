@@ -152,7 +152,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Click shrimp at full HP chats `already at full health` and does not consume. — Conclusion: From spawn (328,248) full-HP Inv click shrimp chats already at full health, qty unchanged, HP 100; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Click shrimp at low HP heals 12 (capped) and decrements the stack. — Conclusion: From spawn (328,248) Inv click shrimp at 70 HP heals 12→82 and at 95 caps at maxHp 100; qty −1 each; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Click bread heals 20 (capped) and decrements the stack. — Conclusion: From spawn (328,248) Inv click bread at 70 HP heals 20→90 and at 85 caps at maxHp 100; qty −1 each; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [verify] Click coins / sword / shield / bones only logs the item name (no crash). — Conclusion: —
+- [done] Click coins / sword / shield / bones only logs the item name (no crash). — Conclusion: From spawn (328,248) Inv click coins/sword/shield/bones logs Coins./Bronze sword./Wooden shield./Bones.; qty/HP/gold unchanged; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [verify] `addItem('coins')` increments `hero.gold` and `syncCoins`; `takeItem('coins')` decrements both. — Conclusion: —
 - [verify] Stacks merge by `id` and a stack is removed when `qty` hits 0. — Conclusion: —
 - [todo] A hard 28-stack inventory cap: loot / shop buy / gather refuse with `inventory full`. — Conclusion: —
@@ -448,4 +448,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 75 | 2026-09-19 | Click shrimp at full HP chats already at full health and does not consume | done — spawn (328,248) full-HP Inv click shrimp chats already at full health, qty unchanged, HP 100; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 76 | 2026-09-19 | Click shrimp at low HP heals 12 (capped) and decrements the stack | done — spawn (328,248) Inv click shrimp 70→82 and 95→100 cap; qty −1 each; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 77 | 2026-09-19 | Click bread heals 20 (capped) and decrements the stack | done — spawn (328,248) Inv click bread 70→90 and 85→100 cap; qty −1 each; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 78 | 2026-09-19 | Click coins / sword / shield / bones only logs the item name | done — spawn (328,248) Inv click logs Coins./Bronze sword./Wooden shield./Bones.; qty/HP/gold unchanged; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 
