@@ -5242,7 +5242,34 @@ EmberwoodTests.add('loot: prune and pickup do not throw if a sprite was already 
     });
 });
 
-EmberwoodTests.add('loot: clearLoot on zone change wipes ground loot', function (win, H) {
+EmberwoodTests.add('loot: persist ground loot when leaving a zone', function (win, H) {
+    function snapLive(drops) {
+        return drops.map(function (drop) {
+            return {
+                id: drop.id,
+                qty: drop.qty,
+                x: drop.sprite.x,
+                y: drop.sprite.y,
+                until: drop.until
+            };
+        });
+    }
+
+    function assertRestored(win, H, saved, via) {
+        var live = H.lootLive(win);
+        assertEqual(live.length, saved.length, via + ' restored live loot count');
+        saved.forEach(function (want) {
+            var got = live.filter(function (drop) {
+                return drop.id === want.id && drop.qty === want.qty;
+            })[0];
+            assert(got, via + ' restored ' + want.id);
+            assertEqual(got.until, want.until, via + ' ' + want.id + ' keeps original until');
+            assertEqual(Math.round(got.sprite.x), Math.round(want.x), via + ' ' + want.id + ' x');
+            assertEqual(Math.round(got.sprite.y), Math.round(want.y), via + ' ' + want.id + ' y');
+            assert(got.sprite.active !== false, via + ' ' + want.id + ' sprite is live');
+        });
+    }
+
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');
         H.setAutoAttack(win, false);
@@ -5261,13 +5288,19 @@ EmberwoodTests.add('loot: clearLoot on zone change wipes ground loot', function 
         assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
         assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
         assertEqual(typeof world.clearLoot, 'function', 'clearLoot helper');
+        assertEqual(typeof world.snapshotLoot, 'function', 'snapshotLoot helper');
+        assertEqual(typeof world.restoreLoot, 'function', 'restoreLoot helper');
         assertEqual(typeof world.enterZone, 'function', 'enterZone helper');
 
         var gold = H.hero(win).gold;
         var invLen = H.hero(win).inventory.length;
+        var spawnedAt = world.time.now;
         world.spawnLoot(200, 200, [{ id: 'coins', qty: 3 }, { id: 'bones', qty: 1 }]);
         var live = H.lootLive(win);
         assertEqual(live.length, 2, 'haven has ground loot before leave');
+        assertEqual(live[0].until, spawnedAt + 20000, 'first until is now + 20000');
+        assertEqual(live[1].until, spawnedAt + 20000, 'second until is now + 20000');
+        var saved = snapLive(live);
         var sprites = live.map(function (drop) { return drop.sprite; });
         sprites.forEach(function (sprite, i) {
             assert(sprite, 'drop ' + i + ' has a sprite');
@@ -5278,29 +5311,46 @@ EmberwoodTests.add('loot: clearLoot on zone change wipes ground loot', function 
         world.enterZone('northwood', null);
         world = H.world(win);
         assertEqual(world.zoneId, 'northwood', 'enterZone lands in Northwood');
-        assertEqual((world.groundLoot || []).length, 0, 'enterZone clearLoot emptied groundLoot');
-        assertEqual(H.lootLive(win).length, 0, 'no live loot after enterZone');
+        assertEqual((world.groundLoot || []).length, 0, 'Northwood has no haven pile');
+        assertEqual(H.lootLive(win).length, 0, 'no live loot in Northwood');
         sprites.forEach(function (sprite, i) {
             assert(isDestroyedGo(sprite), 'old loot sprite ' + i + ' is destroyed');
         });
-        assertEqual(H.hero(win).gold, gold, 'gold unchanged after wipe');
-        assertEqual(H.hero(win).inventory.length, invLen, 'inventory unchanged after wipe');
+        assertEqual(H.hero(win).gold, gold, 'gold unchanged after leave');
+        assertEqual(H.hero(win).inventory.length, invLen, 'inventory unchanged after leave');
         var newChat = H.chat(win).slice(chatBefore);
         assert(!newChat.some(function (line) {
             return line.indexOf('You pick up') !== -1;
-        }), 'zone change wipes loot without pickup');
+        }), 'zone change does not pick up loot');
 
         H.enterZone(win, 'haven');
         world = H.world(win);
-        assertEqual(world.zoneId, 'haven', 'returned to Emberhaven');
-        assertEqual((world.groundLoot || []).length, 0, 'returning does not restore ground loot');
-        assertEqual(H.lootLive(win).length, 0, 'no persisted loot in haven');
-
         world.placePlayer(spawn.x, spawn.y);
         world.player.body.setVelocity(0, 0);
+        assertEqual(world.zoneId, 'haven', 'returned to Emberhaven');
+        assertRestored(win, H, saved, 'enterZone return');
+        sprites.forEach(function (sprite, i) {
+            assert(isDestroyedGo(sprite), 'returned loot uses a new sprite ' + i);
+        });
+        assertEqual(H.hero(win).gold, gold, 'gold still unchanged after return');
+        assertEqual(H.hero(win).inventory.length, invLen, 'inventory still unchanged after return');
+
+        world.pruneLoot();
+        assertEqual(H.lootLive(win).length, 2, 'prune keeps persisted loot before until');
+        var savedNow = world.time.now;
+        world.time.now = saved[0].until;
+        world.pruneLoot();
+        assertEqual(H.lootLive(win).length, 2, 'persisted loot remains at exactly until');
+        world.time.now = saved[0].until + 1;
+        world.pruneLoot();
+        assertEqual(H.lootLive(win).length, 0, 'persisted loot expires after until');
+        world.time.now = savedNow;
+
         world.clearLoot();
         world.spawnLoot(80, 80, [{ id: 'coins', qty: 1 }, { id: 'shrimp', qty: 1 }]);
-        var walkSprites = H.lootLive(win).map(function (drop) { return drop.sprite; });
+        var walkLive = H.lootLive(win);
+        var walkSaved = snapLive(walkLive);
+        var walkSprites = walkLive.map(function (drop) { return drop.sprite; });
         assertEqual(walkSprites.length, 2, 'haven has loot before walk leave');
         var strip = 14;
         var pathX = win.tileCenter(18, 14).x;
@@ -5318,7 +5368,7 @@ EmberwoodTests.add('loot: clearLoot on zone change wipes ground loot', function 
             return H.sleep(50).then(function () {
                 world = H.world(win);
                 assertEqual(world.zoneId, 'northwood', 'W walk enters Northwood');
-                assertEqual((world.groundLoot || []).length, 0, 'walk enterZone clearLoot emptied groundLoot');
+                assertEqual((world.groundLoot || []).length, 0, 'walk leave has no haven pile');
                 walkSprites.forEach(function (sprite, i) {
                     assert(isDestroyedGo(sprite), 'walk-leave loot sprite ' + i + ' is destroyed');
                 });
@@ -5328,7 +5378,20 @@ EmberwoodTests.add('loot: clearLoot on zone change wipes ground loot', function 
                 world.player.body.setVelocity(0, 0);
                 assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
                 assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
-                assertEqual((world.groundLoot || []).length, 0, 'haven still has no persisted loot');
+                assertRestored(win, H, walkSaved, 'walk return');
+
+                world.clearLoot();
+                world.spawnLoot(200, 200, [{ id: 'bones', qty: 1 }]);
+                var away = H.lootLive(win)[0];
+                var awayUntil = away.until;
+                world.enterZone('northwood', 'n');
+                world = H.world(win);
+                world.time.now = awayUntil + 1;
+                world.enterZone('haven', 's');
+                world = H.world(win);
+                world.placePlayer(spawn.x, spawn.y);
+                world.player.body.setVelocity(0, 0);
+                assertEqual(H.lootLive(win).length, 0, 'loot expired while away is not restored');
                 assert(!win.game.input.keyboard, 'Phaser keyboard still off');
             });
         });

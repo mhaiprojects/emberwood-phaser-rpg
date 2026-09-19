@@ -66,7 +66,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Click-minimap to open a world-map panel (or stop using `<button>` if cells are display-only). — Conclusion: From spawn (328,248) Minimap chrome click opens HTML `#world-map-overlay` (mode stays world); `.mm-cell` are divs not buttons and still walk toward that land; title/battle ignore chrome; Phaser 3.90 keyboard off. Dedicated + Playwright 1/1.
 - [done] A world-map panel listing all nine lands, biome, and danger (chickens vs drakes). — Conclusion: From spawn (328,248) `#world-map-list` shows all 9 lands with biome and danger (Chicken…Drake); minimap cells still walk; overlay stays HTML `hidden` CSS, not Phaser text. Phaser 3.90 keyboard off. Dedicated + Playwright 1/1.
 - [done] Persist mob alive/dead/respawn timers when leaving a zone and returning (currently full respawn). — Conclusion: From spawn (328,248) a dead haven chicken stays dead with the remaining ~18s timer after walk-leave/return (not a full respawn); in-zone 18s still queues; elapsed-while-away revives in place. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [todo] Persist ground loot when leaving a zone (currently `clearLoot` wipes it). — Conclusion: —
+- [done] Persist ground loot when leaving a zone (currently `clearLoot` wipes it). — Conclusion: From spawn (328,248) coins+bones persist after enterZone + Keys.js W leave/return with the original 20s until; old sprites destroyed; elapsed-while-away expires. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [todo] Enterable interiors (bank, shop, guild hall) as a second tilemap or indoor scene. — Conclusion: —
 - [todo] Examine on scenery: tree, rock, shrine, water, house wall. — Conclusion: —
 - [todo] Darkmine “lower shaft” as a second mine room (Miner Corb already mentions it). — Conclusion: —
@@ -488,4 +488,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 115 | 2026-09-19 | Click-minimap chrome opens a world-map panel; cells are not buttons | done — spawn (328,248) chrome opens `#world-map-overlay`; cells are divs and still walk; Phaser keyboard off; dedicated + Playwright 1/1 |
 | 116 | 2026-09-19 | World-map panel lists nine lands, biome, and danger | done — spawn (328,248) list shows all 9 lands + biome + Chicken…Drake; cells still walk; HTML hidden CSS; Phaser keyboard off; dedicated + Playwright 1/1 |
 | 117 | 2026-09-19 | Persist mob alive/dead/respawn timers across zone leave and return | done — spawn (328,248) dead chicken + remaining ~18s timer persist on walk-return; in-zone 18s still queues; elapsed-away revives in place; Phaser keyboard off; dedicated + Playwright 1/1 |
+| 118 | 2026-09-19 | Persist ground loot when leaving a zone | done — spawn (328,248) coins+bones persist after enterZone + Keys.js W leave/return with original 20s until; old sprites destroyed; elapsed-away expires; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 

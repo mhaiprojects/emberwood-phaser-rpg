@@ -30,6 +30,7 @@ var WorldScene = new Phaser.Class({
         this.lastFought = null;
         this.lastFacing = 'down';
         this.groundLoot = [];
+        this.lootZoneState = {};
         this.mobZoneState = {};
 
         this.marker = this.add.rectangle(0, 0, 6, 6, DEST_X_COLOR).setVisible(false).setDepth(8);
@@ -123,6 +124,9 @@ var WorldScene = new Phaser.Class({
         } else if (!fromDir) {
             this.clearMobZoneState();
         }
+        if (this.zoneId && this.zoneId !== zoneId) {
+            this.snapshotLoot();
+        }
         this.zoneId = zoneId;
         this.registry.set('zone', zoneId);
         this.clearWorldObjects();
@@ -148,6 +152,7 @@ var WorldScene = new Phaser.Class({
         this.clearWalk();
 
         this.spawnPeople(zoneId);
+        this.restoreLoot(zoneId);
         this.refreshHud();
         this.engageGrace = this.time.now + 800;
         Hud.log('You enter ' + zone.name + '.');
@@ -923,27 +928,75 @@ var WorldScene = new Phaser.Class({
         });
     },
 
+    placeLoot: function (x, y, drop, until) {
+        var self = this;
+        var sprite = this.add.image(x, y, 'item-' + drop.id);
+        sprite.setDepth(5);
+        sprite.setScale(1);
+        sprite.setInteractive({ useHandCursor: true });
+        var entry = {
+            id: drop.id,
+            qty: drop.qty,
+            sprite: sprite,
+            taken: false,
+            until: until
+        };
+        sprite.on('pointerdown', function () {
+            self.tryPickup(entry);
+        });
+        this.groundLoot.push(entry);
+        return entry;
+    },
+
     spawnLoot: function (x, y, drops) {
         var self = this;
         var now = this.time.now;
         drops.forEach(function (drop, index) {
             var ox = (index - (drops.length - 1) / 2) * 10;
-            var sprite = self.add.image(x + ox, y + 4, 'item-' + drop.id);
-            sprite.setDepth(5);
-            sprite.setScale(1);
-            sprite.setInteractive({ useHandCursor: true });
-            var entry = {
+            self.placeLoot(x + ox, y + 4, drop, now + 20000);
+        });
+    },
+
+    snapshotLoot: function () {
+        if (!this.lootZoneState) {
+            this.lootZoneState = {};
+        }
+        var now = this.time.now;
+        var saved = [];
+        var i;
+        for (i = 0; i < this.groundLoot.length; i++) {
+            var drop = this.groundLoot[i];
+            if (!drop || drop.taken || now > drop.until) {
+                continue;
+            }
+            saved.push({
                 id: drop.id,
                 qty: drop.qty,
-                sprite: sprite,
-                taken: false,
-                until: now + 20000
-            };
-            sprite.on('pointerdown', function () {
-                self.tryPickup(entry);
+                x: drop.sprite ? drop.sprite.x : drop.x,
+                y: drop.sprite ? drop.sprite.y : drop.y,
+                until: drop.until
             });
-            self.groundLoot.push(entry);
-        });
+        }
+        this.lootZoneState[this.zoneId] = saved;
+    },
+
+    restoreLoot: function (zoneId) {
+        var saved = this.lootZoneState && this.lootZoneState[zoneId];
+        if (!saved || !saved.length) {
+            return;
+        }
+        var now = this.time.now;
+        var keep = [];
+        var i;
+        for (i = 0; i < saved.length; i++) {
+            var drop = saved[i];
+            if (!drop || now > drop.until) {
+                continue;
+            }
+            this.placeLoot(drop.x, drop.y, drop, drop.until);
+            keep.push(drop);
+        }
+        this.lootZoneState[zoneId] = keep;
     },
 
     tryPickup: function (drop) {
