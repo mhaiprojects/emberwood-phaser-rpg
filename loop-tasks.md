@@ -130,7 +130,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Run succeeds on `Between(0,99) < 70`, chats run/break-away, outcome `flee`, no XP/loot. — Conclusion: spawn (328,248) Between(0,99) return 0 succeeds; chats run/break-away; outcome flee; no XP/loot; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1.
 - [done] Run fail chats `You fail to get away!` and the enemy still gets a turn. — Conclusion: spawn (328,248) Between(0,99) return 70 fails; chats `You fail to get away!`; enemy still attacks; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1
 - [done] Player death shows `#dead-overlay` “You are dead”, `Hud.mode === 'dead'`, and combat level in the subtitle. — Conclusion: done — lose starts GameOverScene; `#dead-overlay` “You are dead”, `Hud.mode === 'dead'`, `#dead-text` Combat level N; retry returns to title; Phaser 3.90 keyboard off; Playwright 1/1 —
-- [verify] Return to title stops scenes and shows `#title-overlay` again. — Conclusion: —
+- [done] Return to title stops scenes and shows `#title-overlay` again. — Conclusion: Return to title stops World/Battle/GameOver, only TitleScene + `#title-overlay`; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1
 - [verify] HP bars go green / amber / red at 65% and 35% and that ± floaters appear on hit/heal. — Conclusion: —
 - [verify] Worn sword/shield are **display-only** today; then apply weapon `damage` and shield `defence` to the hit formula. — Conclusion: —
 - [todo] Reconcile `levelHero` (combat XP / 40) with `gainSkillXp` / `maxHp = 10 * hitpoints` so one combat-level rule wins. — Conclusion: —
@@ -440,4 +440,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 67 | 2026-09-19 | Run succeeds on Between(0,99) < 70, chats run/break-away, outcome flee, no XP/loot | done — spawn (328,248) Between(0,99) return 0 succeeds; chats run/break-away; outcome flee; no XP/loot; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 68 | 2026-09-19 | Run fail chats You fail to get away! and the enemy still gets a turn | done — spawn (328,248) Between(0,99) return 70 fails; chats `You fail to get away!`; enemy still attacks; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 69 | 2026-09-19 | Player death shows #dead-overlay You are dead, Hud.mode dead, combat level subtitle | done — lose → GameOverScene `#dead-overlay` “You are dead”, Hud.mode dead, `#dead-text` Combat level N; retry → title; Phaser 3.90 keyboard off; Playwright 1/1 |
+| 70 | 2026-09-19 | Return to title stops scenes and shows #title-overlay again | done — Return to title stops World/Battle/GameOver, only TitleScene + `#title-overlay`; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 

@@ -48,7 +48,10 @@ var Hud = {
             self.showTitle();
             if (window.game) {
                 window.game.scene.getScenes(true).forEach(function (scene) {
-                    scene.scene.stop();
+                    var key = scene.sys.settings.key;
+                    if (key && key !== 'TitleScene') {
+                        window.game.scene.stop(key);
+                    }
                 });
                 window.game.scene.start('TitleScene');
             }

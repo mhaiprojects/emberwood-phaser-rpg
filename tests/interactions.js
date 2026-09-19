@@ -3706,6 +3706,51 @@ EmberwoodTests.add('combat: defeat shows You are dead and retry returns to title
     });
 });
 
+EmberwoodTests.add('title: Return to title stops scenes and shows title-overlay', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(win.game.scene.isActive('WorldScene'), 'WorldScene running before death');
+        assert(win.document.getElementById('title-overlay').hidden, 'title overlay hidden in world');
+        var hero = H.hero(win);
+        hero.hp = 4;
+        win.game.registry.set('hero', hero);
+        H.setAutoAttack(win, false);
+        return H.startCustomFight(win, [
+            { type: 'Drake', texture: 'drake', tint: 0xffffff, hp: 80, damage: 20, gold: 0, xp: 1 }
+        ]);
+    }).then(function () {
+        win.Hud.tryAttack();
+        return H.waitUntil(function () {
+            return !win.document.getElementById('dead-overlay').hidden;
+        }, 5000, 'death overlay');
+    }).then(function () {
+        assert(win.game.scene.isActive('GameOverScene'), 'GameOverScene active on death');
+        assert(!win.game.scene.isActive('WorldScene'), 'WorldScene already stopped on death');
+        assert(!win.game.scene.isActive('BattleScene'), 'BattleScene already stopped on death');
+        assert(win.document.getElementById('title-overlay').hidden, 'title overlay still hidden while dead');
+        H.click(win, '#btn-retry');
+        return H.waitUntil(function () {
+            return !win.document.getElementById('title-overlay').hidden && win.game.scene.isActive('TitleScene');
+        }, 4000, 'title overlay and TitleScene');
+    }).then(function () {
+        var overlay = win.document.getElementById('title-overlay');
+        assert(overlay && overlay.hidden === false, '#title-overlay shown again');
+        assertEqual(win.Hud.mode, 'title', 'hud title mode');
+        assert(win.document.getElementById('dead-overlay').hidden, 'death overlay closed');
+        assert(win.game.scene.isActive('TitleScene'), 'TitleScene running');
+        assert(!win.game.scene.isActive('WorldScene'), 'WorldScene stopped');
+        assert(!win.game.scene.isActive('BattleScene'), 'BattleScene stopped');
+        assert(!win.game.scene.isActive('GameOverScene'), 'GameOverScene stopped');
+        var active = win.game.scene.getScenes(true).map(function (scene) {
+            return scene.sys.settings.key;
+        });
+        assertEqual(active.length, 1, 'only TitleScene remains active');
+        assertEqual(active[0], 'TitleScene', 'active scene is TitleScene');
+        assert(!win.game.input.keyboard, 'Phaser keyboard stays off');
+    });
+});
+
 function ensureWorldPlay(win, H) {
     return H.cleanupBattle(win).then(function () {
         var world = H.world(win);
