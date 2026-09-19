@@ -193,6 +193,13 @@ var Hud = {
             }
             self.toggleCollisionDebug();
         });
+        document.addEventListener('click', function (event) {
+            var btn = event.target.closest('[data-spell]');
+            var spell = btn && btn.getAttribute('data-spell');
+            if (spell === 'windstrike') {
+                self.castWindStrike();
+            }
+        });
         this.el.inv.addEventListener('click', function (event) {
             var slot = event.target.closest('[data-item]');
             if (!slot) {
@@ -587,6 +594,39 @@ var Hud = {
         }
         this.saveHero(hero);
         this.log('You bury the bones.');
+        return true;
+    },
+
+    castWindStrike: function () {
+        var hero = this.hero();
+        var world;
+        if (!hero || this.mode === 'title' || this.mode === 'dead') {
+            return false;
+        }
+        if (this.mode === 'battle') {
+            if (!this.canBattleAct()) {
+                this.log('Cast Wind Strike on your combat turn.');
+                return false;
+            }
+            this.selectingEnemy = false;
+            this.setActionsEnabled(false);
+            this.battle.receivePlayerSelection('windstrike', this.battle.targetIndex);
+            return true;
+        }
+        world = window.game && window.game.scene.getScene('WorldScene');
+        if (!world || world.encounterLock) {
+            return false;
+        }
+        if (typeof hasWindStrikeRunes === 'function' && !hasWindStrikeRunes(hero)) {
+            this.log('You do not have the runes for Wind Strike.');
+            return false;
+        }
+        if (typeof windStrike !== 'function' || !windStrike(hero)) {
+            this.log('You do not have the runes for Wind Strike.');
+            return false;
+        }
+        this.saveHero(hero);
+        this.log('You cast Wind Strike.');
         return true;
     },
 

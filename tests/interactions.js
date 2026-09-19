@@ -847,10 +847,12 @@ EmberwoodTests.add('hud: inventory and ground Examine logs ITEM_DB flavor', func
             arrow: 'A sheaf of bronze arrows with grey-goose fletching.',
             shield: 'A round wooden shield bound with iron.',
             bones: 'Dry bones. Someone should bury them.',
+            airrune: 'A pale blue rune. It hums with air.',
+            mindrune: 'A dull purple rune. It focuses the mind.',
             key: 'A heavy iron key with a worn bit.'
         };
         var ids = Object.keys(win.ITEM_DB);
-        assertEqual(ids.length, 10, 'ten ITEM_DB entries');
+        assertEqual(ids.length, 12, 'twelve ITEM_DB entries');
         var seen = {};
         ids.forEach(function (id) {
             var def = win.ITEM_DB[id];
@@ -1022,10 +1024,12 @@ EmberwoodTests.add('hud: ITEM_DB value fields for shops and later High Alch', fu
             arrow: 1,
             shield: 20,
             bones: 1,
+            airrune: 4,
+            mindrune: 3,
             key: 1
         };
         var ids = Object.keys(win.ITEM_DB);
-        assertEqual(ids.length, 10, 'ten ITEM_DB entries');
+        assertEqual(ids.length, 12, 'twelve ITEM_DB entries');
         assert(!win.ITEM_DB.logs && !win.ITEM_DB.ore && !win.ITEM_DB.net, 'no gathering section items');
         ids.forEach(function (id) {
             var def = win.ITEM_DB[id];
@@ -8714,8 +8718,6 @@ EmberwoodTests.add('skills: burying inventory bones grants Prayer XP', function 
         assert(win.ITEM_DB.bones.bury, 'bones are buryable');
         assertEqual(win.ITEM_DB.bones.buryXp, 4, 'bones bury for 4 Prayer XP');
         assertEqual(win.itemDefaultVerb('bones'), 'bury', 'bones default is bury');
-        assertEqual(typeof win.windStrike, 'undefined', 'Magic is not this tick');
-        assert(!win.ITEM_DB.airrune && !win.ITEM_DB.mindrune, 'no Wind Strike runes this tick');
 
         function stackQty(hero, id) {
             var stack = hero.inventory.filter(function (row) { return row.id === id; })[0];
@@ -8800,7 +8802,144 @@ EmberwoodTests.add('skills: burying inventory bones grants Prayer XP', function 
         assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
         assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
         assert(!win.game.input.keyboard, 'Phaser keyboard still off');
-        assertEqual(typeof win.windStrike, 'undefined', 'Magic still not this tick');
+    });
+});
+
+EmberwoodTests.add('skills: Magic panel Wind Strike grants Magic XP', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, true);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.clearLoot();
+        if (win.Hud.hideContextMenu) {
+            win.Hud.hideContextMenu();
+        }
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof win.windStrike, 'function', 'windStrike helper');
+        assertEqual(typeof win.hasWindStrikeRunes, 'function', 'hasWindStrikeRunes helper');
+        assertEqual(typeof win.gainSkillXp, 'function', 'gainSkillXp helper');
+        assert(win.ITEM_DB.airrune, 'air rune exists');
+        assert(win.ITEM_DB.mindrune, 'mind rune exists');
+        assertEqual(win.WIND_STRIKE_XP, 5, 'Wind Strike grants 5 Magic XP');
+        assertEqual(win.itemDefaultVerb('airrune'), 'drop', 'air rune default is drop');
+        assertEqual(win.itemDefaultVerb('mindrune'), 'drop', 'mind rune default is drop');
+        assertEqual(typeof win.highAlch, 'undefined', 'High Alch is not this tick');
+        assertEqual(typeof win.cookFood, 'undefined', 'Cooking XP is not this tick');
+
+        function stackQty(hero, id) {
+            var stack = hero.inventory.filter(function (row) { return row.id === id; })[0];
+            return stack ? stack.qty : 0;
+        }
+
+        var hero = win.makeHero();
+        win.addItem(hero, 'airrune', 2);
+        win.addItem(hero, 'mindrune', 2);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(stackQty(hero, 'airrune'), 2, 'starter air runes 2');
+        assertEqual(stackQty(hero, 'mindrune'), 2, 'starter mind runes 2');
+        assertEqual(hero.skills.magic.xp, 0, 'Magic XP starts 0');
+        assertEqual(hero.skills.magic.level, 1, 'Magic starts 1');
+        assertEqual(hero.skills.prayer.xp, 0, 'Prayer XP stays 0');
+        assertEqual(hero.skills.cooking.xp, 0, 'Cooking XP stays 0');
+        assertEqual(hero.level, 3, 'starter combat level 3');
+
+        H.click(win, '#tab-bar button[data-tab="magic"]');
+        assert(H.panelVisible(win, 'magic'), 'Magic panel visible');
+        assertEqual(win.Hud.tab, 'magic', 'hud.tab magic');
+        var stub = win.document.querySelector('#panel-magic p');
+        assert(!stub || stub.textContent.indexOf('not learned yet') === -1, 'Magic stub is gone');
+        var castBtn = win.document.getElementById('btn-wind-strike');
+        assert(castBtn, 'Wind Strike button exists');
+        assertEqual(castBtn.getAttribute('data-spell'), 'windstrike', 'Wind Strike data-spell');
+        assertEqual(castBtn.textContent.trim(), 'Wind Strike', 'Wind Strike label');
+
+        var dropsHost = win.Hud.ensureXpDrops();
+        assert(dropsHost && dropsHost.id === 'xp-drops', 'xp-drops host exists');
+        dropsHost.innerHTML = '';
+        win.Hud.el.log.innerHTML = '';
+
+        H.click(win, '#btn-wind-strike');
+        hero = H.hero(win);
+        assertEqual(stackQty(hero, 'airrune'), 1, 'cast takes one air rune');
+        assertEqual(stackQty(hero, 'mindrune'), 1, 'cast takes one mind rune');
+        assertEqual(H.lastChat(win), 'You cast Wind Strike.', 'cast chat');
+        assertEqual(hero.skills.magic.xp, 5, 'first cast grants 5 Magic XP');
+        assertEqual(hero.skills.magic.level, 1, '5 XP does not level Magic');
+        assertEqual(hero.skills.prayer.xp, 0, 'cast does not grant Prayer XP');
+        assertEqual(hero.skills.cooking.xp, 0, 'cast does not grant Cooking XP');
+        assertEqual(hero.level, 3, 'combat level unchanged at Magic 1');
+        assertEqual(H.lootLive(win).length, 0, 'cast does not drop runes');
+        var drops = win.document.querySelectorAll('#xp-drops .xp-drop');
+        assertEqual(drops.length, 1, 'one Magic XP drop');
+        assertEqual(drops[0].getAttribute('data-skill'), 'magic', 'drop skill is magic');
+        assertEqual(drops[0].getAttribute('data-xp'), '5', 'drop amount is 5');
+        var magicIcon = drops[0].querySelector('img.pix');
+        assert(magicIcon && magicIcon.getAttribute('src').indexOf('assets/svg/skills/magic.svg') !== -1, 'Magic skill icon');
+
+        H.click(win, '#tab-bar button[data-tab="skills"]');
+        var magicRow = win.document.querySelector('#skills-list [data-skill="magic"]');
+        assert(magicRow, 'Magic Skills row exists');
+        assert(
+            String(magicRow.getAttribute('title') || '').indexOf('5 XP') !== -1,
+            'Skills tab shows Magic Wind Strike XP'
+        );
+
+        H.click(win, '#tab-bar button[data-tab="magic"]');
+        H.click(win, '#btn-wind-strike');
+        hero = H.hero(win);
+        assertEqual(stackQty(hero, 'airrune'), 0, 'second cast takes the last air rune');
+        assertEqual(stackQty(hero, 'mindrune'), 0, 'second cast takes the last mind rune');
+        assertEqual(hero.skills.magic.xp, 10, 'second cast grants another 5 Magic XP');
+        assertEqual(H.lastChat(win), 'You cast Wind Strike.', 'second cast chat');
+        assert(!win.document.querySelector('#inv-grid [data-item="airrune"]'), 'air rune slot gone');
+
+        H.click(win, '#btn-wind-strike');
+        assertEqual(H.lastChat(win), 'You do not have the runes for Wind Strike.', 'missing runes chat');
+        assertEqual(H.hero(win).skills.magic.xp, 10, 'failed cast grants no more Magic XP');
+        assertEqual(win.windStrike(hero), false, 'empty stacks do not cast');
+        assertEqual(hero.skills.magic.xp, 10, 'helper miss grants no more Magic XP');
+        win.addItem(hero, 'airrune', 1);
+        win.game.registry.set('hero', hero);
+        assertEqual(win.windStrike(hero), false, 'air without mind does not cast');
+        assertEqual(stackQty(hero, 'airrune'), 1, 'partial runes are not consumed');
+        assertEqual(hero.skills.magic.xp, 10, 'partial runes grant no Magic XP');
+
+        world.encounterLock = true;
+        win.addItem(hero, 'mindrune', 1);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        H.click(win, '#btn-wind-strike');
+        assertEqual(stackQty(H.hero(win), 'airrune'), 1, 'encounterLock does not spend air');
+        assertEqual(stackQty(H.hero(win), 'mindrune'), 1, 'encounterLock does not spend mind');
+        assertEqual(H.hero(win).skills.magic.xp, 10, 'encounterLock grants no Magic XP');
+        world.encounterLock = false;
+
+        win.Hud.mode = 'battle';
+        H.click(win, '#btn-wind-strike');
+        assertEqual(H.lastChat(win), 'Cast Wind Strike on your combat turn.', 'battle waits for a combat turn');
+        assertEqual(stackQty(H.hero(win), 'airrune'), 1, 'off-turn battle does not spend air');
+        assertEqual(H.hero(win).skills.magic.xp, 10, 'off-turn battle grants no Magic XP');
+        win.Hud.mode = 'world';
+
+        world.clearLoot();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        assertEqual(typeof win.cookFood, 'undefined', 'Cooking still not this tick');
     });
 });
 

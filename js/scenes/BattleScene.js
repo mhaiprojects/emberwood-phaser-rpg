@@ -274,6 +274,45 @@ var BattleScene = new Phaser.Class({
             Hud.renderHero(hero);
             this.events.emit('Message', 'You eat ' + eaten.name + ' and recover ' + restored + ' HP.');
             this.queueTurn(800);
+        } else if (action === 'windstrike') {
+            var hero = this.registry.get('hero');
+            if (targetIndex == null) {
+                targetIndex = this.autoSelectTarget();
+            }
+            var target = this.enemies[targetIndex];
+            if (typeof hasWindStrikeRunes === 'function' && !hasWindStrikeRunes(hero)) {
+                this.waitingForPlayer = true;
+                this.events.emit('Message', 'You do not have the runes for Wind Strike.');
+                this.busy = false;
+                Hud.setActionsEnabled(true);
+                return;
+            }
+            if (!target || !target.living) {
+                this.waitingForPlayer = true;
+                Hud.selectingEnemy = true;
+                this.events.emit('Message', 'Select a target.');
+                this.busy = false;
+                Hud.setActionsEnabled(true);
+                return;
+            }
+            if (typeof windStrike !== 'function' || !windStrike(hero)) {
+                this.waitingForPlayer = true;
+                this.events.emit('Message', 'You do not have the runes for Wind Strike.');
+                this.busy = false;
+                Hud.setActionsEnabled(true);
+                return;
+            }
+            this.registry.set('hero', hero);
+            if (typeof Hud !== 'undefined' && Hud.renderHero) {
+                Hud.renderHero(hero);
+            }
+            this.busy = true;
+            this.targetIndex = targetIndex;
+            this.refreshTargetMarker();
+            var amount = typeof WIND_STRIKE_DAMAGE === 'number' ? WIND_STRIKE_DAMAGE : 2;
+            var dealt = target.takeDamage(amount);
+            this.events.emit('Message', 'You cast Wind Strike on ' + target.type + ' for ' + dealt);
+            this.queueTurn(BATTLE_TURN_QUEUE_MS);
         } else if (action === 'flee') {
             if (Phaser.Math.Between(0, 99) < 70) {
                 this.events.emit('Message', 'You run from the fight.');

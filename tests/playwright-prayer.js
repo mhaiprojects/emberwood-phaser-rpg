@@ -56,9 +56,6 @@
             if (!window.ITEM_DB.bones || window.ITEM_DB.bones.buryXp !== 4) {
                 throw new Error('bones buryXp is ' + (window.ITEM_DB.bones && window.ITEM_DB.bones.buryXp));
             }
-            if (typeof window.windStrike === 'function' || window.ITEM_DB.airrune || window.ITEM_DB.mindrune) {
-                throw new Error('Magic started this tick');
-            }
 
             world.enterZone('haven', null);
             world.exitLock = false;

@@ -210,6 +210,15 @@ img.pix {
     padding: 3px 6px;
 }
 
+#magic-list {
+    display: grid;
+    gap: 6px;
+}
+
+#magic-list button {
+    text-align: left;
+}
+
 #equip-grid {
     display: grid;
     gap: 4px;

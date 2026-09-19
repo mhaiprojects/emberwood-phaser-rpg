@@ -8,8 +8,13 @@ var ITEM_DB = {
     arrow: { name: 'Bronze arrows', icon: 'assets/svg/items/arrow.svg', slot: 'ammo', stack: true, value: 1, examine: 'A sheaf of bronze arrows with grey-goose fletching.' },
     shield: { name: 'Wooden shield', icon: 'assets/svg/items/shield.svg', slot: 'shield', defence: 1, value: 20, examine: 'A round wooden shield bound with iron.' },
     bones: { name: 'Bones', icon: 'assets/svg/items/bones.svg', stack: true, bury: true, buryXp: 4, value: 1, examine: 'Dry bones. Someone should bury them.' },
+    airrune: { name: 'Air rune', icon: 'assets/svg/items/airrune.svg', stack: true, rune: true, value: 4, examine: 'A pale blue rune. It hums with air.' },
+    mindrune: { name: 'Mind rune', icon: 'assets/svg/items/mindrune.svg', stack: true, rune: true, value: 3, examine: 'A dull purple rune. It focuses the mind.' },
     key: { name: 'Iron key', icon: 'assets/svg/items/key.svg', value: 1, examine: 'A heavy iron key with a worn bit.' }
 };
+
+var WIND_STRIKE_XP = 5;
+var WIND_STRIKE_DAMAGE = 2;
 
 var SKILL_NAMES = [
     ['attack', 'Attack'],
@@ -336,6 +341,35 @@ function buryItem(hero, id) {
     xp = typeof def.buryXp === 'number' ? def.buryXp : 0;
     if (xp > 0) {
         gainSkillXp(hero, 'prayer', xp);
+    }
+    return true;
+}
+
+function itemQty(hero, id) {
+    if (!hero || !id) {
+        return 0;
+    }
+    var stack = findStack(hero.inventory, id);
+    return stack && stack.qty > 0 ? stack.qty : 0;
+}
+
+function hasWindStrikeRunes(hero) {
+    return itemQty(hero, 'airrune') >= 1 && itemQty(hero, 'mindrune') >= 1;
+}
+
+function windStrike(hero) {
+    if (!hero || !hasWindStrikeRunes(hero)) {
+        return false;
+    }
+    if (!takeItem(hero, 'airrune', 1)) {
+        return false;
+    }
+    if (!takeItem(hero, 'mindrune', 1)) {
+        addItem(hero, 'airrune', 1);
+        return false;
+    }
+    if (WIND_STRIKE_XP > 0) {
+        gainSkillXp(hero, 'magic', WIND_STRIKE_XP);
     }
     return true;
 }

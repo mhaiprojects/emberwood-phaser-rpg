@@ -51,9 +51,6 @@
             if (typeof window.rangedWeaponEquipped !== 'function' || typeof window.consumeAmmo !== 'function') {
                 throw new Error('ranged helpers missing');
             }
-            if (typeof window.windStrike === 'function' || window.ITEM_DB.airrune || window.ITEM_DB.mindrune) {
-                throw new Error('Magic started this tick');
-            }
 
             world.enterZone('haven', null);
             world.exitLock = false;

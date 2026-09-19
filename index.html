@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="assets/svg/ui/combat.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/style.css?v=lvlup1">
+    <link rel="stylesheet" href="css/style.css?v=magic1">
 </head>
 <body>
     <div id="shell">
@@ -93,7 +93,9 @@
                     </div>
                     <div id="panel-magic" class="tab-panel" hidden>
                         <h3>Magic</h3>
-                        <p>Wind Strike is not learned yet.</p>
+                        <div id="magic-list">
+                            <button type="button" id="btn-wind-strike" data-spell="windstrike" title="Air rune + Mind rune">Wind Strike</button>
+                        </div>
                     </div>
                     <div id="panel-settings" class="tab-panel" hidden>
                         <h3>Settings</h3>
@@ -234,9 +236,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
     <script src="js/input/Keys.js?v=run1"></script>
-    <script src="js/data/Items.js?v=pray1"></script>
+    <script src="js/data/Items.js?v=magic1"></script>
     <script src="js/data/Scales.js?v=giant1"></script>
-    <script src="js/ui/Hud.js?v=lvlup1"></script>
+    <script src="js/ui/Hud.js?v=magic1"></script>
     <script src="js/world/MapGen.js?v=agil1"></script>
     <script src="js/world/Pathfind.js?v=giant1"></script>
     <script src="js/world/Zones.js?v=tutor1"></script>
@@ -245,10 +247,10 @@
     <script src="js/sprites/Enemy.js"></script>
     <script src="js/ui/Menu.js"></script>
     <script src="js/ui/Message.js"></script>
-    <script src="js/scenes/BootScene.js?v=useon1"></script>
+    <script src="js/scenes/BootScene.js?v=magic1"></script>
     <script src="js/scenes/TitleScene.js?v=move4"></script>
     <script src="js/scenes/WorldScene.js?v=hpxp1"></script>
-    <script src="js/scenes/BattleScene.js?v=hitxp1"></script>
+    <script src="js/scenes/BattleScene.js?v=magic1"></script>
     <script src="js/scenes/UIScene.js"></script>
     <script src="js/scenes/GameOverScene.js?v=cmb1"></script>
     <script src="js/main.js?v=move4"></script>
