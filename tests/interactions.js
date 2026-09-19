@@ -1237,7 +1237,7 @@ EmberwoodTests.add('skills: skill-row hover or click shows current XP and XP-to-
         assertEqual(typeof win.skillXpToNext, 'function', 'skillXpToNext exists');
         assertEqual(typeof win.skillXpText, 'function', 'skillXpText exists');
         assertEqual(typeof win.Hud.showSkillXp, 'function', 'showSkillXp exists');
-        assertEqual(typeof win.xpDropFloater, 'undefined', 'XP drop floater is not this tick');
+        assertEqual(typeof win.xpDropFloater, 'function', 'XP drop floater helper exists');
 
         assertEqual(win.xpForNextSkillLevel(1), 50, 'level 1 next total is 50');
         assertEqual(win.xpForNextSkillLevel(2), 200, 'level 2 next total is 200');
@@ -1287,7 +1287,75 @@ EmberwoodTests.add('skills: skill-row hover or click shows current XP and XP-to-
         win.Hud.el.log.innerHTML = '';
         H.click(win, attackRow);
         assertEqual(H.lastChat(win), after, 'click chats updated Attack XP');
-        assert(!H.chatHas(win, 'XP drop'), 'no XP drop floater this tick');
+        assert(!H.chatHas(win, 'XP drop'), 'floater is not a chat line');
+
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
+EmberwoodTests.add('skills: XP drop floater shows number and skill icon on gain', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assertEqual(win.Hud.mode, 'world', 'world mode');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(typeof win.gainSkillXp, 'function', 'gainSkillXp exists');
+        assertEqual(typeof win.xpDropFloater, 'function', 'xpDropFloater exists');
+        assertEqual(typeof win.Hud.showXpDrop, 'function', 'Hud.showXpDrop exists');
+        assertEqual(typeof win.showLevelUpModal, 'undefined', 'level-up modal is not this tick');
+        assert(!win.document.getElementById('level-up-overlay'), 'no level-up overlay');
+
+        var host = win.Hud.ensureXpDrops();
+        assert(host && host.id === 'xp-drops', 'xp-drops host exists');
+        host.innerHTML = '';
+        assertEqual(win.document.querySelectorAll('.xp-drop').length, 0, 'no leftover drops');
+
+        win.gainSkillXp(hero, 'attack', 50);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        var drops = win.document.querySelectorAll('.xp-drop');
+        assertEqual(drops.length, 1, 'one Attack drop after +50');
+        assertEqual(drops[0].getAttribute('data-skill'), 'attack', 'drop skill is attack');
+        assertEqual(drops[0].getAttribute('data-xp'), '50', 'drop amount is 50');
+        assertEqual(drops[0].querySelector('.xp-drop-amt').textContent, '50', 'drop shows 50');
+        var atkIcon = drops[0].querySelector('img.pix');
+        assert(atkIcon && atkIcon.getAttribute('src').indexOf('assets/svg/skills/attack.svg') !== -1, 'Attack skill icon');
+
+        win.gainSkillXp(hero, 'hitpoints', 4);
+        drops = win.document.querySelectorAll('.xp-drop');
+        assertEqual(drops.length, 2, 'Hitpoints drop stacks under Attack');
+        var hpDrop = drops[1];
+        assertEqual(hpDrop.getAttribute('data-skill'), 'hitpoints', 'second drop is Hitpoints');
+        assertEqual(hpDrop.getAttribute('data-xp'), '4', 'Hitpoints drop amount is 4');
+        assertEqual(hpDrop.querySelector('.xp-drop-amt').textContent, '4', 'Hitpoints drop shows 4');
+        var hpIcon = hpDrop.querySelector('img.pix');
+        assert(hpIcon && hpIcon.getAttribute('src').indexOf('assets/svg/skills/hitpoints.svg') !== -1, 'Hitpoints skill icon');
+
+        var beforeZero = drops.length;
+        win.gainSkillXp(hero, 'attack', 0);
+        assertEqual(win.document.querySelectorAll('.xp-drop').length, beforeZero, '0 XP adds no drop');
+        win.gainSkillXp(hero, 'nosuchskill', 12);
+        assertEqual(win.document.querySelectorAll('.xp-drop').length, beforeZero, 'unknown skill adds no drop');
+        assertEqual(win.xpDropFloater('strength', 0), null, 'direct 0 XP floater is skipped');
+        assertEqual(typeof win.showLevelUpModal, 'undefined', 'still no level-up modal');
+        assert(!win.document.getElementById('level-up-overlay'), 'still no level-up overlay');
+        assert(!H.chatHas(win, 'XP drop'), 'floater is not a chat line');
 
         world.placePlayer(spawn.x, spawn.y);
         world.player.body.setVelocity(0, 0);

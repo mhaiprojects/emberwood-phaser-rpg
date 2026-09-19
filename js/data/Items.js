@@ -588,7 +588,17 @@ function gainSkillXp(hero, skill, amount) {
             Hud.log(named[1] + ' increased to ' + s.level + '.');
         }
     }
+    if (amount > 0 && typeof xpDropFloater === 'function') {
+        xpDropFloater(skill, amount);
+    }
     applyCombatLevel(hero, true);
+}
+
+function xpDropFloater(skill, amount) {
+    if (typeof Hud !== 'undefined' && Hud.showXpDrop) {
+        return Hud.showXpDrop(skill, amount);
+    }
+    return null;
 }
 
 function xpForNextSkillLevel(level) {

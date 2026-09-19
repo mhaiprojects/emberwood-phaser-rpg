@@ -1,7 +1,6 @@
 /**
  * Playwright proof: from spawn (328, 248), Skills tab rows show current XP
- * and XP-to-next on hover (title) or click (chat). No XP drop floater this
- * tick. Phaser keyboard stays off.
+ * and XP-to-next on hover (title) or click (chat). Phaser keyboard stays off.
  *
  * Headless via tests/playwright-session.js (reuses a live server, or starts
  * python3 -m http.server on this port and kills that PID on exit).
@@ -50,8 +49,8 @@
             if (typeof window.skillXpText !== 'function') {
                 throw new Error('skillXpText helper missing');
             }
-            if (typeof window.xpDropFloater === 'function') {
-                throw new Error('XP drop floater started this tick');
+            if (typeof window.xpDropFloater !== 'function') {
+                throw new Error('xpDropFloater helper missing');
             }
 
             world.enterZone('haven', null);

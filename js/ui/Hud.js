@@ -606,6 +606,55 @@ var Hud = {
         return true;
     },
 
+    ensureXpDrops: function () {
+        if (this.el && this.el.xpDrops && this.el.xpDrops.parentNode) {
+            return this.el.xpDrops;
+        }
+        var host = document.getElementById('xp-drops');
+        if (!host) {
+            var parent = document.getElementById('content') || document.body;
+            host = document.createElement('div');
+            host.id = 'xp-drops';
+            parent.appendChild(host);
+        }
+        if (this.el) {
+            this.el.xpDrops = host;
+        }
+        return host;
+    },
+
+    showXpDrop: function (skill, amount) {
+        var n = Number(amount);
+        if (!skill || !(n > 0)) {
+            return null;
+        }
+        var shown = String(Math.floor(n));
+        var host = this.ensureXpDrops();
+        if (!host) {
+            return null;
+        }
+        var row = document.createElement('div');
+        row.className = 'xp-drop';
+        row.setAttribute('data-skill', skill);
+        row.setAttribute('data-xp', shown);
+        var img = document.createElement('img');
+        img.className = 'pix';
+        img.alt = '';
+        img.src = typeof skillIcon === 'function' ? skillIcon(skill) : ('assets/svg/skills/' + skill + '.svg');
+        var num = document.createElement('span');
+        num.className = 'xp-drop-amt';
+        num.textContent = shown;
+        row.appendChild(img);
+        row.appendChild(num);
+        host.appendChild(row);
+        window.setTimeout(function () {
+            if (row.parentNode) {
+                row.parentNode.removeChild(row);
+            }
+        }, 1600);
+        return row;
+    },
+
     beginUseOn: function (id) {
         var hero = this.hero();
         if (!id || this.mode !== 'world' || !hero || !heroHasItem(hero, id)) {

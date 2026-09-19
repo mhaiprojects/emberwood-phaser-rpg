@@ -178,7 +178,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] `gainSkillXp` level curve `1 + floor(sqrt(xp / 50))` and Hitpoints never below 10. — Conclusion: From spawn (328,248) `gainSkillXp` is `1 + floor(sqrt(xp / 50))`; Attack 50→2, Strength 200→3; 1154 XP curves to 5 but Hitpoints stays ≥10. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] A Hitpoints level-up sets `hero.maxHp = 10 * level` and chats `{Skill} increased to N.` — Conclusion: From spawn (328,248) Hitpoints 10/1154/100; 5000 XP → 11, maxHp 110, chat `Hitpoints increased to 11.`; 6050 → 12 / 120; Attack 2 chats `Attack increased to 2.` without changing maxHp. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Show current XP and XP-to-next on skill-row hover or click. — Conclusion: From spawn (328,248) Skills tab hover title + click chat current XP and XP-to-next (Hitpoints 1154 / 3846, Attack 0 / 50); no XP drop floater. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [todo] An XP drop floater (OSRS-style number + skill icon) on gain. — Conclusion: —
+- [done] An XP drop floater (OSRS-style number + skill icon) on gain. — Conclusion: From spawn (328,248) gainSkillXp shows an OSRS-style #xp-drops floater (skill icon + amount) for Attack +50 and Hitpoints +4; 0 XP / unknown skill add none; no level-up modal. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [todo] A level-up modal / fanfare in chat (not only one log line). — Conclusion: —
 - [todo] Train Attack / Strength / Defence from **hits**, not only kills (partial XP per successful attack). — Conclusion: —
 - [todo] Train Hitpoints on each successful melee hit, not only on win. — Conclusion: —
@@ -533,4 +533,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 161 | 2026-09-19 | Block Use in world while Hud.mode is battle | done — spawn (328,248) Inv Use blocked with `Use Eat food on your combat turn.`; world eat still works after; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 162 | 2026-09-19 | Use-item-on (raw on fire, bones on shrine) as a target cursor | done — spawn (328,248) Inv Use bones→shrine and raw shrimp→range (fire) consume with no Prayer/Cooking XP; miss/Esc cancel cursor; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 163 | 2026-09-19 | Item value fields used by shops and a later High Alch | done — spawn (328,248) ITEM_DB gp values (coins/bones/key 1, shrimp/raw 5, bread 12, sword 26, shield 20); shop Buy/Sell stubbed; no High Alch; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
+| 164 | 2026-09-19 | An XP drop floater (OSRS-style number + skill icon) on gain | done — spawn (328,248) Attack +50 and Hitpoints +4 show icon+number in #xp-drops; 0 XP / unknown skill add none; no level-up modal; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 
