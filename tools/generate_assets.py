@@ -58,9 +58,9 @@ def hash_n(x, y, seed):
     return (x * 374761393 + y * 668265263 + seed * 1274126177) & 0xFFFFFFFF
 
 
-# --- tiles 8 x 16x16 ---
+# --- tiles 12 x 16x16 ---
 TILE = 16
-TILE_COUNT = 8
+TILE_COUNT = 12
 
 K = (22, 16, 14, 255)
 SKIN = (236, 188, 132, 255)
@@ -159,6 +159,59 @@ def make_tiles():
     put(sheet, TILE * TILE_COUNT, ox + 8, 8, (240, 220, 90, 255), TILE)
     put(sheet, TILE * TILE_COUNT, ox + 7, 9, (240, 220, 90, 255), TILE)
     put(sheet, TILE * TILE_COUNT, ox + 8, 9, (240, 220, 90, 255), TILE)
+
+    def fill_path_bg(ox):
+        for y in range(TILE):
+            for x in range(TILE):
+                n = hash_n(x, y, 41) % 6
+                if n == 0:
+                    c = (168, 128, 72, 255)
+                elif n == 1:
+                    c = (140, 102, 56, 255)
+                else:
+                    c = (156, 116, 64, 255)
+                put(sheet, TILE * TILE_COUNT, ox + x, y, c, TILE)
+
+    # 8 stall (wooden counter + cloth)
+    ox = TILE * 8
+    fill_path_bg(ox)
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 2, 8, 12, 6, (122, 78, 40, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 2, 7, 12, 2, (168, 108, 56, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 3, 4, 10, 4, (196, 72, 48, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 4, 3, 8, 1, (220, 96, 60, 255))
+    put(sheet, TILE * TILE_COUNT, ox + 5, 5, (240, 220, 90, 255), TILE)
+    put(sheet, TILE * TILE_COUNT, ox + 10, 6, (80, 160, 72, 255), TILE)
+
+    # 9 cooking range
+    ox = TILE * 9
+    fill_path_bg(ox)
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 3, 5, 10, 10, (86, 82, 76, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 4, 6, 8, 3, (48, 44, 40, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 5, 7, 6, 2, (220, 96, 40, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 6, 8, 4, 1, (240, 180, 64, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 4, 11, 8, 3, (64, 60, 56, 255))
+    put(sheet, TILE * TILE_COUNT, ox + 7, 4, (48, 44, 40, 255), TILE)
+    put(sheet, TILE * TILE_COUNT, ox + 8, 4, (48, 44, 40, 255), TILE)
+
+    # 10 anvil
+    ox = TILE * 10
+    fill_path_bg(ox)
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 5, 11, 6, 4, (96, 64, 32, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 6, 8, 4, 4, (72, 76, 84, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 3, 6, 11, 3, (92, 96, 108, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 2, 7, 3, 2, (72, 76, 84, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 4, 6, 8, 1, (168, 176, 188, 255))
+
+    # 11 bank booth
+    ox = TILE * 11
+    fill_path_bg(ox)
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 2, 4, 12, 11, (122, 86, 48, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 3, 5, 10, 6, (48, 40, 28, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 4, 6, 8, 4, (180, 150, 72, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 2, 11, 12, 3, (148, 108, 56, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 2, 4, 12, 1, (212, 168, 48, 255))
+    put(sheet, TILE * TILE_COUNT, ox + 7, 8, (240, 220, 90, 255), TILE)
+    put(sheet, TILE * TILE_COUNT, ox + 8, 8, (240, 220, 90, 255), TILE)
     write_png(os.path.join(ASSETS, "tiles.png"), TILE * TILE_COUNT, TILE, sheet)
 
 

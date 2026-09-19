@@ -6,13 +6,23 @@ var TILE = {
     WATER: 5,
     TREE: 6,
     ROCK: 7,
-    SHRINE: 8
+    SHRINE: 8,
+    STALL: 9,
+    RANGE: 10,
+    ANVIL: 11,
+    BOOTH: 12
 };
 
 var MAP_W = 36;
 var MAP_H = 28;
 var HAVEN_GATE_TILE = { x: 23, y: 15 };
 var INTERIOR_EXIT_TILE = { x: 18, y: 20 };
+var TOWN_PROPS = {
+    stall: { x: 16, y: 11 },
+    range: { x: 16, y: 17 },
+    anvil: { x: 21, y: 12 },
+    booth: { x: 14, y: 12 }
+};
 var TOWN_HOUSES = [
     { x: 8, y: 6, w: 6, h: 5 },
     { x: 22, y: 7, w: 7, h: 5 },
@@ -28,7 +38,11 @@ var SCENERY_EXAMINE = {
     rock: "It's a rock.",
     shrine: 'A weathered stone shrine.',
     water: "It's water.",
-    wall: "It's a house wall."
+    wall: "It's a house wall.",
+    stall: 'A market stall. The grocer is away.',
+    range: 'A cooking range. The fire is out.',
+    anvil: 'A well-used smithing anvil.',
+    booth: 'A bank booth. The clerk is away.'
 };
 
 function tileCenter(tx, ty) {
@@ -207,6 +221,10 @@ function generateMap(seed, biome, neighbors) {
         setCell(grid, HAVEN_GATE_TILE.x, HAVEN_GATE_TILE.y, TILE.PATH);
         setCell(grid, HAVEN_GATE_TILE.x, HAVEN_GATE_TILE.y + 1, TILE.ROCK);
         setCell(grid, HAVEN_GATE_TILE.x, HAVEN_GATE_TILE.y + 2, TILE.ROCK);
+        setCell(grid, TOWN_PROPS.stall.x, TOWN_PROPS.stall.y, TILE.STALL);
+        setCell(grid, TOWN_PROPS.range.x, TOWN_PROPS.range.y, TILE.RANGE);
+        setCell(grid, TOWN_PROPS.anvil.x, TOWN_PROPS.anvil.y, TILE.ANVIL);
+        setCell(grid, TOWN_PROPS.booth.x, TOWN_PROPS.booth.y, TILE.BOOTH);
     } else if (biome === 'forest') {
         scatter(grid, TILE.TREE, 70, seed, true);
         scatter(grid, TILE.FLOWER, 12, seed + 1, true);
@@ -263,7 +281,7 @@ function generateInterior(kind) {
     }
     setCell(grid, x0 + Math.floor(w / 2), y0 + 2, TILE.PATH);
     if (kind === 'bank') {
-        setCell(grid, x0 + 3, y0 + 4, TILE.SHRINE);
+        setCell(grid, x0 + 3, y0 + 4, TILE.BOOTH);
     } else if (kind === 'shop') {
         setCell(grid, x0 + 3, y0 + 5, TILE.FLOWER);
         setCell(grid, x0 + 8, y0 + 5, TILE.FLOWER);
@@ -335,6 +353,18 @@ function sceneryKindAt(grid, tx, ty, opts) {
     }
     if (index === TILE.SHRINE) {
         return 'shrine';
+    }
+    if (index === TILE.STALL) {
+        return 'stall';
+    }
+    if (index === TILE.RANGE) {
+        return 'range';
+    }
+    if (index === TILE.ANVIL) {
+        return 'anvil';
+    }
+    if (index === TILE.BOOTH) {
+        return 'booth';
     }
     if (index === TILE.ROCK) {
         if (opts.interior || isHouseWallAt(grid, tx, ty, opts.houseRects)) {

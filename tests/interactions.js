@@ -9119,6 +9119,152 @@ EmberwoodTests.add('world: examine on scenery tree, rock, shrine, water, house w
     });
 });
 
+EmberwoodTests.add('world: Emberhaven stall, range, anvil, and bank booth are examine-only scenery', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.engageTarget = null;
+        world.talkTarget = null;
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        if (win.Hud.hideContextMenu) {
+            win.Hud.hideContextMenu();
+        }
+        assertEqual(spawn.x, 328, 'spawn x tile center');
+        assertEqual(spawn.y, 248, 'spawn y tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assertEqual(win.Hud.mode, 'world', 'world mode');
+        assert(String(win.Phaser.VERSION).indexOf('3.') === 0, 'Phaser 3');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(!world.cursors, 'WorldScene has no Phaser cursors');
+        assertEqual(win.TILE.STALL, 9, 'STALL index');
+        assertEqual(win.TILE.RANGE, 10, 'RANGE index');
+        assertEqual(win.TILE.ANVIL, 11, 'ANVIL index');
+        assertEqual(win.TILE.BOOTH, 12, 'BOOTH index');
+        assertEqual(win.examineSceneryText('stall'), 'A market stall. The grocer is away.', 'stall examine text');
+        assertEqual(win.examineSceneryText('range'), 'A cooking range. The fire is out.', 'range examine text');
+        assertEqual(win.examineSceneryText('anvil'), 'A well-used smithing anvil.', 'anvil examine text');
+        assertEqual(win.examineSceneryText('booth'), 'A bank booth. The clerk is away.', 'booth examine text');
+        assertEqual(win.tileBlockedByTerrain(win.TILE.STALL), true, 'Pathfind blocks stall');
+        assertEqual(win.tileBlockedByTerrain(win.TILE.RANGE), true, 'Pathfind blocks range');
+        assertEqual(win.tileBlockedByTerrain(win.TILE.ANVIL), true, 'Pathfind blocks anvil');
+        assertEqual(win.tileBlockedByTerrain(win.TILE.BOOTH), true, 'Pathfind blocks booth');
+
+        var props = win.TOWN_PROPS;
+        assert(props && props.stall && props.range && props.anvil && props.booth, 'TOWN_PROPS exists');
+        var specs = [
+            { key: 'stall', tile: win.TILE.STALL, kind: 'stall', line: 'A market stall. The grocer is away.' },
+            { key: 'range', tile: win.TILE.RANGE, kind: 'range', line: 'A cooking range. The fire is out.' },
+            { key: 'anvil', tile: win.TILE.ANVIL, kind: 'anvil', line: 'A well-used smithing anvil.' },
+            { key: 'booth', tile: win.TILE.BOOTH, kind: 'booth', line: 'A bank booth. The clerk is away.' }
+        ];
+        var opts = { houseRects: win.housesForBiome('town') };
+        specs.forEach(function (spec) {
+            var at = props[spec.key];
+            assertEqual(world.tileGrid[at.y][at.x], spec.tile, spec.key + ' tile at ' + at.x + ',' + at.y);
+            assertEqual(win.sceneryKindAt(world.tileGrid, at.x, at.y, opts), spec.kind, spec.key + ' kind');
+            var layerTile = world.ground.getTileAt(at.x, at.y);
+            assert(layerTile && layerTile.collides, spec.key + ' collides');
+        });
+        assertEqual(world.tileGrid[15][20], win.TILE.PATH, 'spawn tile stays PATH');
+
+        function clickTile(tx, ty) {
+            var pt = win.tileCenter(tx, ty);
+            world.onClick({ worldX: pt.x, worldY: pt.y });
+            return pt;
+        }
+        function rightTile(tx, ty) {
+            var pt = win.tileCenter(tx, ty);
+            world.onClick({
+                worldX: pt.x,
+                worldY: pt.y,
+                button: 2,
+                rightButtonDown: function () { return true; },
+                event: { clientX: 48, clientY: 56 }
+            });
+            return pt;
+        }
+
+        specs.forEach(function (spec) {
+            var at = props[spec.key];
+            if (world.clearWalk) {
+                world.clearWalk();
+            }
+            clickTile(at.x, at.y);
+            assertEqual(H.lastChat(win), spec.line, 'left-click ' + spec.key + ' logs examine');
+            assert(!world.walkTarget, spec.key + ' examine does not walk');
+        });
+
+        var menu = win.document.getElementById('ctx-menu');
+        assert(menu, 'ctx-menu element exists');
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        win.Hud.hideContextMenu();
+        rightTile(props.stall.x, props.stall.y);
+        assert(!world.walkTarget, 'right-click stall does not walk immediately');
+        assert(!menu.hidden, 'right-click stall opens context menu');
+        var examBtn = menu.querySelector('[data-ctx="examine"]');
+        var walkBtn = menu.querySelector('[data-ctx="walk-here"]');
+        assert(examBtn, 'Examine action is listed');
+        assertEqual(examBtn.textContent, 'Examine', 'Examine label');
+        assert(walkBtn, 'Walk here remains listed on stall');
+        H.mouseClick(win, examBtn);
+        assert(menu.hidden, 'Examine closes the menu');
+        assertEqual(H.lastChat(win), 'A market stall. The grocer is away.', 'Examine menu logs stall line');
+        assert(!world.walkTarget, 'Examine menu does not walk');
+
+        world.enterInterior('bank');
+        world = H.world(win);
+        world.encounterLock = false;
+        var boothTx = win.INTERIOR_ROOM.x + 3;
+        var boothTy = win.INTERIOR_ROOM.y + 4;
+        assertEqual(world.interiorId, 'bank', 'entered Emberhaven Bank');
+        assertEqual(world.tileGrid[boothTy][boothTx], win.TILE.BOOTH, 'bank interior has a booth');
+        assertEqual(win.sceneryKindAt(world.tileGrid, boothTx, boothTy, { interior: true }), 'booth', 'interior booth kind');
+        var boothPt = win.tileCenter(boothTx, boothTy);
+        world.onClick({ worldX: boothPt.x, worldY: boothPt.y });
+        assertEqual(H.lastChat(win), 'A bank booth. The clerk is away.', 'left-click interior booth logs examine');
+        assert(!world.walkTarget, 'interior booth examine does not walk');
+        assert(
+            !win.document.getElementById('shop-overlay') || win.document.getElementById('shop-overlay').hidden,
+            'shop overlay stays hidden'
+        );
+        assert(
+            !win.document.getElementById('bank-overlay') || win.document.getElementById('bank-overlay').hidden,
+            'bank overlay stays hidden'
+        );
+
+        world.leaveInterior();
+        world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = true;
+        var lastBefore = H.lastChat(win);
+        clickTile(props.stall.x, props.stall.y);
+        assertEqual(H.lastChat(win), lastBefore, 'encounterLock ignores town-prop examine');
+        world.encounterLock = false;
+        win.Hud.mode = 'battle';
+        clickTile(props.stall.x, props.stall.y);
+        assertEqual(H.lastChat(win), lastBefore, 'battle mode ignores town-prop examine');
+        win.Hud.mode = 'world';
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        H.clearKeys(win);
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        assertEqual(Math.round(world.player.x), 328, 'restored spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'restored spawn y');
+    });
+});
+
 function countTilesInRows(grid, index, y0, y1) {
     var n = 0;
     var y;

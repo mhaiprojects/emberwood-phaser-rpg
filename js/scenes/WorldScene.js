@@ -121,7 +121,10 @@ var WorldScene = new Phaser.Class({
         this.map = this.make.tilemap({ data: data, tileWidth: 16, tileHeight: 16 });
         var tiles = this.map.addTilesetImage('tiles', 'tiles', 16, 16, 0, 0, 1);
         this.ground = this.map.createLayer(0, tiles, 0, 0);
-        this.ground.setCollision([TILE.WATER, TILE.TREE, TILE.ROCK, TILE.SHRINE]);
+        this.ground.setCollision([
+            TILE.WATER, TILE.TREE, TILE.ROCK, TILE.SHRINE,
+            TILE.STALL, TILE.RANGE, TILE.ANVIL, TILE.BOOTH
+        ]);
         this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
         this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
         this.groundCollider = this.physics.add.collider(this.player, this.ground);
