@@ -1,6 +1,6 @@
 /**
  * Playwright proof: from spawn (328, 248), gainSkillXp shows an OSRS-style
- * XP drop floater (number + skill icon). No level-up modal this tick.
+ * XP drop floater (number + skill icon). Phaser keyboard stays off.
  * Phaser keyboard stays off.
  *
  * Headless via tests/playwright-session.js (reuses a live server, or starts
@@ -47,9 +47,6 @@
             }
             if (typeof window.Hud.showXpDrop !== 'function') {
                 throw new Error('Hud.showXpDrop missing');
-            }
-            if (typeof window.showLevelUpModal === 'function' || document.getElementById('level-up-overlay')) {
-                throw new Error('level-up modal started this tick');
             }
 
             world.enterZone('haven', null);

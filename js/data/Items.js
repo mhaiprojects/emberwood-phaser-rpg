@@ -585,13 +585,24 @@ function gainSkillXp(hero, skill, amount) {
         }
         var named = SKILL_NAMES.filter(function (n) { return n[0] === skill; })[0];
         if (named) {
-            Hud.log(named[1] + ' increased to ' + s.level + '.');
+            if (typeof showLevelUpModal === 'function') {
+                showLevelUpModal(skill, named[1], s.level);
+            } else if (typeof Hud !== 'undefined' && Hud.log) {
+                Hud.log(named[1] + ' increased to ' + s.level + '.');
+            }
         }
     }
     if (amount > 0 && typeof xpDropFloater === 'function') {
         xpDropFloater(skill, amount);
     }
     applyCombatLevel(hero, true);
+}
+
+function showLevelUpModal(skill, name, level) {
+    if (typeof Hud !== 'undefined' && Hud.showLevelUp) {
+        return Hud.showLevelUp(skill, name, level);
+    }
+    return null;
 }
 
 function xpDropFloater(skill, amount) {

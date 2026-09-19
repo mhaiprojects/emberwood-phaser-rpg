@@ -384,6 +384,11 @@ canvas {
     color: #f2e6c9;
 }
 
+.chat-line.chat-fanfare {
+    color: #ffe08a;
+    font-weight: 700;
+}
+
 .hint {
     margin: 6px 0 0;
     color: #b9a888;
@@ -436,6 +441,44 @@ button.ghost {
     display: flex;
     justify-content: center;
     background: none;
+}
+
+#level-up-overlay {
+    position: fixed;
+    left: 12px;
+    right: 242px;
+    bottom: 222px;
+    z-index: 16;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+}
+
+#level-up-overlay .level-up-card {
+    width: min(280px, 86%);
+    background: #3a2f22;
+    border: 2px solid #c9a227;
+    padding: 16px 18px 14px;
+    text-align: center;
+    box-shadow: 0 4px 0 #1a140c;
+}
+
+#level-up-overlay .level-up-card img.pix {
+    width: 40px;
+    height: 40px;
+    image-rendering: auto;
+}
+
+#level-up-overlay .level-up-card h2 {
+    margin: 8px 0 4px;
+    font-size: 16px;
+    color: #ffe08a;
+}
+
+#level-up-overlay .level-up-card p {
+    margin: 0 0 12px;
+    color: #f2e6c9;
 }
 
 #dialogue-overlay .dialogue-card {
@@ -616,6 +659,7 @@ button.ghost {
 #world-map-overlay[hidden],
 #shop-overlay[hidden],
 #bank-overlay[hidden],
+#level-up-overlay[hidden],
 #dialogue-overlay[hidden],
 #dialogue-options[hidden],
 #battle-panel[hidden],

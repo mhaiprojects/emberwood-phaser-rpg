@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="assets/svg/ui/combat.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/style.css?v=xpdrop1">
+    <link rel="stylesheet" href="css/style.css?v=lvlup1">
 </head>
 <body>
     <div id="shell">
@@ -144,6 +144,15 @@
 
     <div id="ctx-menu" hidden></div>
 
+    <div id="level-up-overlay" hidden>
+        <div class="level-up-card" role="dialog" aria-labelledby="level-up-title">
+            <img id="level-up-icon" class="pix" alt="">
+            <h2 id="level-up-title">Level up</h2>
+            <p id="level-up-copy"></p>
+            <button type="button" id="btn-level-up-close">Continue</button>
+        </div>
+    </div>
+
     <div id="dialogue-overlay" hidden>
         <div class="dialogue-card">
             <h2 id="dialogue-speaker"></h2>
@@ -225,9 +234,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
     <script src="js/input/Keys.js?v=run1"></script>
-    <script src="js/data/Items.js?v=xpdrop1"></script>
+    <script src="js/data/Items.js?v=lvlup1"></script>
     <script src="js/data/Scales.js?v=giant1"></script>
-    <script src="js/ui/Hud.js?v=xpdrop1"></script>
+    <script src="js/ui/Hud.js?v=lvlup1"></script>
     <script src="js/world/MapGen.js?v=agil1"></script>
     <script src="js/world/Pathfind.js?v=giant1"></script>
     <script src="js/world/Zones.js?v=tutor1"></script>

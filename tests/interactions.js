@@ -1318,8 +1318,6 @@ EmberwoodTests.add('skills: XP drop floater shows number and skill icon on gain'
         assertEqual(typeof win.gainSkillXp, 'function', 'gainSkillXp exists');
         assertEqual(typeof win.xpDropFloater, 'function', 'xpDropFloater exists');
         assertEqual(typeof win.Hud.showXpDrop, 'function', 'Hud.showXpDrop exists');
-        assertEqual(typeof win.showLevelUpModal, 'undefined', 'level-up modal is not this tick');
-        assert(!win.document.getElementById('level-up-overlay'), 'no level-up overlay');
 
         var host = win.Hud.ensureXpDrops();
         assert(host && host.id === 'xp-drops', 'xp-drops host exists');
@@ -1353,8 +1351,6 @@ EmberwoodTests.add('skills: XP drop floater shows number and skill icon on gain'
         win.gainSkillXp(hero, 'nosuchskill', 12);
         assertEqual(win.document.querySelectorAll('.xp-drop').length, beforeZero, 'unknown skill adds no drop');
         assertEqual(win.xpDropFloater('strength', 0), null, 'direct 0 XP floater is skipped');
-        assertEqual(typeof win.showLevelUpModal, 'undefined', 'still no level-up modal');
-        assert(!win.document.getElementById('level-up-overlay'), 'still no level-up overlay');
         assert(!H.chatHas(win, 'XP drop'), 'floater is not a chat line');
 
         world.placePlayer(spawn.x, spawn.y);
@@ -1841,6 +1837,95 @@ EmberwoodTests.add('skills: Hitpoints level-up sets maxHp to 10 * level and chat
         }
         assertEqual(byName.Hitpoints, '12', 'Skills tab Hitpoints is 12');
         assertEqual(byName.Attack, '2', 'Skills tab Attack is 2');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
+EmberwoodTests.add('skills: level-up modal and chat fanfare not only one log line', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof win.gainSkillXp, 'function', 'gainSkillXp exists');
+        assertEqual(typeof win.showLevelUpModal, 'function', 'showLevelUpModal exists');
+        assertEqual(typeof win.Hud.showLevelUp, 'function', 'Hud.showLevelUp exists');
+
+        var overlay = win.Hud.ensureLevelUpModal();
+        assert(overlay && overlay.id === 'level-up-overlay', 'level-up overlay exists');
+        assert(overlay.hidden, 'overlay starts hidden');
+        win.Hud.hideLevelUp();
+        win.Hud.el.log.innerHTML = '';
+
+        hero = H.hero(win);
+        assertEqual(hero.skills.hitpoints.level, 10, 'Hitpoints starts 10');
+        assertEqual(hero.skills.attack.level, 1, 'Attack starts 1');
+
+        win.gainSkillXp(hero, 'hitpoints', 3845);
+        assertEqual(hero.skills.hitpoints.level, 10, 'Hitpoints stays 10 below 5000 XP');
+        assert(overlay.hidden, 'no modal below the Hitpoints curve');
+        assert(!H.chatHas(win, 'Congratulations'), 'no fanfare below the curve');
+        assert(!H.chatHas(win, 'Hitpoints increased'), 'no Hitpoints increased line below the curve');
+
+        win.gainSkillXp(hero, 'attack', 50);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        assertEqual(hero.skills.attack.level, 2, 'Attack levels to 2');
+        assert(!overlay.hidden, 'Attack level-up shows the modal');
+        assertEqual(overlay.getAttribute('data-skill'), 'attack', 'modal skill is attack');
+        assertEqual(overlay.getAttribute('data-level'), '2', 'modal level is 2');
+        var atkIcon = overlay.querySelector('#level-up-icon');
+        assert(atkIcon && atkIcon.getAttribute('src').indexOf('assets/svg/skills/attack.svg') !== -1, 'Attack skill icon');
+        assertEqual(win.document.getElementById('level-up-copy').textContent, 'Your Attack level is now 2.', 'modal copy is the new Attack level');
+        var attackFanfare = H.chat(win).filter(function (line) {
+            return line.indexOf('Congratulations') !== -1 || line.indexOf('Your Attack level is now 2.') !== -1 || line.indexOf('Attack increased to 2.') !== -1;
+        });
+        assert(attackFanfare.length >= 3, 'Attack fanfare is more than one log line');
+        assert(H.chatHas(win, 'Congratulations, you just advanced an Attack level.'), 'Attack congratulations line');
+        assert(H.chatHas(win, 'Your Attack level is now 2.'), 'Attack now-N line');
+        assert(H.chatHas(win, 'Attack increased to 2.'), 'keeps Skill increased to N');
+        assert(win.document.querySelectorAll('#chat-log .chat-fanfare').length >= 2, 'fanfare lines are marked in chat');
+        assertEqual(hero.maxHp, 100, 'Attack level-up does not change maxHp');
+
+        H.click(win, '#btn-level-up-close');
+        assert(overlay.hidden, 'Continue hides the modal');
+        assertEqual(win.Hud.mode, 'world', 'modal does not steal Hud.mode');
+
+        win.Hud.el.log.innerHTML = '';
+        win.gainSkillXp(hero, 'hitpoints', 1);
+        assertEqual(hero.skills.hitpoints.level, 11, 'Hitpoints levels to 11');
+        assertEqual(hero.maxHp, 110, 'maxHp is 10 * Hitpoints 11');
+        assert(!overlay.hidden, 'Hitpoints level-up shows the modal');
+        assertEqual(overlay.getAttribute('data-skill'), 'hitpoints', 'modal skill is hitpoints');
+        assertEqual(overlay.getAttribute('data-level'), '11', 'modal level is 11');
+        var hpIcon = overlay.querySelector('#level-up-icon');
+        assert(hpIcon && hpIcon.getAttribute('src').indexOf('assets/svg/skills/hitpoints.svg') !== -1, 'Hitpoints skill icon');
+        var hpFanfare = H.chat(win).filter(function (line) {
+            return line.indexOf('Congratulations') !== -1 || line.indexOf('Your Hitpoints level is now 11.') !== -1 || line.indexOf('Hitpoints increased to 11.') !== -1;
+        });
+        assert(hpFanfare.length >= 3, 'Hitpoints fanfare is more than one log line');
+        assert(H.chatHas(win, 'Congratulations, you just advanced a Hitpoints level.'), 'Hitpoints congratulations line');
+        assert(H.chatHas(win, 'Your Hitpoints level is now 11.'), 'Hitpoints now-N line');
+        assert(H.chatHas(win, 'Hitpoints increased to 11.'), 'keeps Skill increased to N');
+
+        H.click(win, '#tab-bar button[data-tab="skills"]');
+        assert(H.panelVisible(win, 'skills'), 'skills tab still clicks with the modal up');
+
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
         assert(!win.game.input.keyboard, 'Phaser keyboard still off');
     });
 });
