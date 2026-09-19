@@ -7580,6 +7580,55 @@ EmberwoodTests.add('loot: win drops coins bones and extra food at the mob feet',
     });
 });
 
+EmberwoodTests.add('loot: item-sword and item-shield load so ground drops show them', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.clearLoot();
+        world.encounterLock = false;
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        ['coins', 'bones', 'shrimp', 'bread', 'sword', 'shield'].forEach(function (id) {
+            assert(win.game.textures.exists('item-' + id), 'item-' + id + ' is loaded');
+        });
+
+        world.spawnLoot(spawn.x, spawn.y, [
+            { id: 'sword', qty: 1 },
+            { id: 'shield', qty: 1 }
+        ]);
+        var live = H.lootLive(win);
+        assertEqual(live.length, 2, 'sword and shield ground pile');
+        assertEqual(live[0].id, 'sword', 'first drop is sword');
+        assertEqual(live[1].id, 'shield', 'second drop is shield');
+        assert(live[0].sprite, 'sword has a sprite');
+        assert(live[1].sprite, 'shield has a sprite');
+        assertEqual(live[0].sprite.texture.key, 'item-sword', 'sword sprite uses item-sword');
+        assertEqual(live[1].sprite.texture.key, 'item-shield', 'shield sprite uses item-shield');
+        assert(live[0].sprite.texture.key !== '__MISSING', 'sword is not the missing texture');
+        assert(live[1].sprite.texture.key !== '__MISSING', 'shield is not the missing texture');
+        assertEqual(live[0].sprite.x, spawn.x - 5, 'sword offset -5');
+        assertEqual(live[1].sprite.x, spawn.x + 5, 'shield offset +5');
+        assertEqual(live[0].sprite.y, spawn.y + 4, 'sword sits at feet y+4');
+        assertEqual(live[1].sprite.y, spawn.y + 4, 'shield sits at feet y+4');
+
+        world.clearLoot();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('loot: sprites are interactive and offset by 10px per extra drop', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');
