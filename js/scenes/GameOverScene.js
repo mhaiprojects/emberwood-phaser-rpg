@@ -11,6 +11,6 @@ var GameOverScene = new Phaser.Class({
         var level = typeof combatLevel === 'function' ? combatLevel(hero) : (hero.level || 1);
         Hud.hideBattle();
         Hud.showDead('Combat level ' + level + '. Emberwood claimed another traveller.');
-        Hud.log('You died. Return to title to try again.');
+        Hud.log('You died. Respawn in Emberhaven to keep your items, or return to title to abandon.');
     }
 });

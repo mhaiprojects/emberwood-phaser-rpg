@@ -29,6 +29,7 @@ var Hud = {
             start: document.getElementById('btn-start'),
             credits: document.getElementById('btn-credits'),
             creditText: document.getElementById('credit-text'),
+            respawn: document.getElementById('btn-respawn'),
             retry: document.getElementById('btn-retry'),
             inv: document.getElementById('inv-grid'),
             skills: document.getElementById('skills-list'),
@@ -67,6 +68,9 @@ var Hud = {
         });
         this.el.credits.addEventListener('click', function () {
             self.el.creditText.hidden = !self.el.creditText.hidden;
+        });
+        this.el.respawn.addEventListener('click', function () {
+            self.respawnInHaven();
         });
         this.el.retry.addEventListener('click', function () {
             self.hideDead();
@@ -432,6 +436,43 @@ var Hud = {
 
     hideDead: function () {
         this.el.dead.hidden = true;
+    },
+
+    safeDeathHp: function (hero) {
+        var maxHp = hero && hero.maxHp > 0 ? hero.maxHp : 10;
+        return Math.max(1, Math.floor(maxHp / 10));
+    },
+
+    respawnInHaven: function () {
+        var hero = this.hero();
+        if (hero) {
+            hero.hp = this.safeDeathHp(hero);
+            this.saveHero(hero);
+        }
+        this.hideDead();
+        this.mode = 'world';
+        if (!window.game) {
+            return;
+        }
+        window.game.registry.set('zone', 'haven');
+        window.game.registry.set('battleOutcome', null);
+        var world = window.game.scene.getScene('WorldScene');
+        if (window.game.scene.isActive('WorldScene') && world && world.player && world.respawnInHaven) {
+            world.respawnInHaven();
+            this.log('You wake in Emberhaven, barely standing.');
+            if (window.game.scene.isActive('GameOverScene')) {
+                window.game.scene.stop('GameOverScene');
+            }
+            return;
+        }
+        window.game.registry.set('respawnAfterDeath', true);
+        window.game.scene.getScenes(true).forEach(function (scene) {
+            var key = scene.sys.settings.key;
+            if (key && key !== 'WorldScene') {
+                window.game.scene.stop(key);
+            }
+        });
+        window.game.scene.start('WorldScene');
     },
 
     showContextMenu: function (items, pos) {

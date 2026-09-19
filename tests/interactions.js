@@ -8506,6 +8506,99 @@ EmberwoodTests.add('title: Return to title stops scenes and shows title-overlay'
     });
 });
 
+EmberwoodTests.add('combat: death respawns in Emberhaven at low HP and keeps items', function (win, H) {
+    function stackQty(list, id) {
+        var row = (list || []).filter(function (stack) { return stack.id === id; })[0];
+        return row ? row.qty : 0;
+    }
+    var expectedHp;
+    return ensureWorldPlay(win, H).then(function () {
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+
+        var hero = H.hero(win);
+        win.takeItem(hero, 'shrimp', 1);
+        win.addItem(hero, 'bones', 2);
+        hero.gold = 12;
+        win.syncCoins(hero);
+        hero.hp = 4;
+        expectedHp = win.Hud.safeDeathHp(hero);
+        assertEqual(expectedHp, 10, 'safe-death HP is 10% of maxHp');
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+
+        var respawn = win.document.getElementById('btn-respawn');
+        var retry = win.document.getElementById('btn-retry');
+        assert(respawn && respawn === win.Hud.el.respawn, '#btn-respawn is Hud.el.respawn');
+        assertEqual(respawn.textContent.replace(/\s+/g, ' ').trim(), 'Respawn in Emberhaven', 'respawn button copy');
+        assert(retry && retry === win.Hud.el.retry, '#btn-retry is Hud.el.retry');
+        assertEqual(retry.textContent.replace(/\s+/g, ' ').trim(), 'Return to title', 'abandon retry copy');
+
+        return H.startCustomFight(win, [
+            { type: 'Drake', texture: 'drake', tint: 0xffffff, hp: 80, damage: 20, gold: 0, xp: 1 }
+        ]);
+    }).then(function () {
+        win.Hud.tryAttack();
+        return H.waitUntil(function () {
+            return !win.document.getElementById('dead-overlay').hidden;
+        }, 5000, 'death overlay');
+    }).then(function () {
+        assertMatch(win.document.getElementById('dead-overlay').innerText, 'You are dead', 'death heading');
+        assertEqual(win.Hud.mode, 'dead', 'hud dead mode');
+        assert(win.game.scene.isActive('GameOverScene'), 'GameOverScene active on death');
+        assert(!win.game.scene.isActive('WorldScene'), 'WorldScene already stopped on death');
+        assert(!win.game.scene.isActive('BattleScene'), 'BattleScene already stopped on death');
+        assert(win.document.getElementById('title-overlay').hidden, 'title stays hidden while dead');
+
+        var deadHero = H.hero(win);
+        assertEqual(stackQty(deadHero.inventory, 'shrimp'), 7, 'shrimp kept while dead');
+        assertEqual(stackQty(deadHero.inventory, 'bones'), 2, 'bones kept while dead');
+        assertEqual(deadHero.gold, 12, 'gold kept while dead');
+        assertEqual(stackQty(deadHero.inventory, 'coins'), 12, 'coin stack kept while dead');
+        assertEqual(deadHero.equipment.weapon, 'sword', 'worn sword kept');
+        assertEqual(deadHero.equipment.shield, 'shield', 'worn shield kept');
+
+        H.click(win, '#btn-respawn');
+        return H.waitUntil(function () {
+            var world = H.world(win);
+            return win.Hud.mode === 'world' &&
+                world && world.scene.isActive() && world.player &&
+                win.document.getElementById('dead-overlay').hidden;
+        }, 4000, 'respawn world');
+    }).then(function () {
+        var world = H.world(win);
+        var hero = H.hero(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(win.Hud.mode, 'world', 'hud world after respawn');
+        assert(win.document.getElementById('dead-overlay').hidden, 'death overlay closed');
+        assert(win.document.getElementById('title-overlay').hidden, 'title stays hidden after respawn');
+        assert(win.game.scene.isActive('WorldScene'), 'WorldScene running after respawn');
+        assert(!win.game.scene.isActive('GameOverScene'), 'GameOverScene stopped');
+        assert(!win.game.scene.isActive('BattleScene'), 'BattleScene stays stopped');
+        assert(!win.game.scene.isActive('TitleScene'), 'TitleScene stays off');
+        assertEqual(world.zoneId, 'haven', 'respawned in Emberhaven');
+        assertEqual(Math.round(world.player.x), spawn.x, 'respawn at courtyard x');
+        assertEqual(Math.round(world.player.y), spawn.y, 'respawn at courtyard y');
+        assertEqual(hero.hp, expectedHp, 'respawn HP is low');
+        assertEqual(hero.maxHp, 100, 'maxHp unchanged');
+        assertEqual(stackQty(hero.inventory, 'shrimp'), 7, 'shrimp kept after respawn');
+        assertEqual(stackQty(hero.inventory, 'bones'), 2, 'bones kept after respawn');
+        assertEqual(hero.gold, 12, 'gold kept after respawn');
+        assertEqual(stackQty(hero.inventory, 'coins'), 12, 'coin stack kept after respawn');
+        assertEqual(stackQty(hero.inventory, 'sword'), 1, 'sword kept');
+        assertEqual(stackQty(hero.inventory, 'shield'), 1, 'shield kept');
+        assert(H.chatHas(win, 'You wake in Emberhaven'), 'respawn chat');
+        assert(!win.game.input.keyboard, 'Phaser keyboard stays off after respawn');
+    });
+});
+
 function ensureWorldPlay(win, H) {
     return H.cleanupBattle(win).then(function () {
         if (win.Hud && win.Hud.hideDialogue) {

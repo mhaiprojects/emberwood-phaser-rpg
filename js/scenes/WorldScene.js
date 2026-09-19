@@ -99,8 +99,30 @@ var WorldScene = new Phaser.Class({
         this.enterZone(this.zoneId, null);
         this.refreshHud();
         this.engageGrace = this.time.now + 800;
-        Hud.log('You arrive in Emberhaven. WASD or arrows to walk, Ctrl to run, or click the ground.');
-        Hud.log('Open Inventory (F4) for food. The Guildmaster by the courtyard has work.');
+        if (this.registry.get('respawnAfterDeath')) {
+            this.registry.set('respawnAfterDeath', false);
+            Hud.log('You wake in Emberhaven, barely standing.');
+        } else {
+            Hud.log('You arrive in Emberhaven. WASD or arrows to walk, Ctrl to run, or click the ground.');
+            Hud.log('Open Inventory (F4) for food. The Guildmaster by the courtyard has work.');
+        }
+    },
+
+    respawnInHaven: function () {
+        this.encounterLock = false;
+        this.exitLock = false;
+        this.lastFought = null;
+        this.engageTarget = null;
+        this.talkTarget = null;
+        if (this.interiorId || this.zoneId !== 'haven') {
+            this.enterZone('haven', null);
+        } else {
+            var spawn = defaultWorldSpawn();
+            this.placePlayer(spawn.x, spawn.y);
+            this.clearWalk();
+            this.refreshHud();
+        }
+        this.engageGrace = this.time.now + 800;
     },
 
     moveFlags: function () {
