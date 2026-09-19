@@ -21,6 +21,7 @@ var TOWN_HOUSES = [
 var FARM_HOUSES = [
     { x: 24, y: 14, w: 5, h: 4 }
 ];
+var MINE_SHAFT_HOUSE = { x: 6, y: 8, w: 6, h: 5 };
 var INTERIOR_ROOM = { x: 12, y: 8, w: 12, h: 13 };
 var SCENERY_EXAMINE = {
     tree: "It's a tree.",
@@ -230,6 +231,7 @@ function generateMap(seed, biome, neighbors) {
     } else if (biome === 'mine') {
         scatter(grid, TILE.ROCK, 55, seed, true);
         scatter(grid, TILE.TREE, 8, seed + 5, true);
+        house(grid, MINE_SHAFT_HOUSE.x, MINE_SHAFT_HOUSE.y, MINE_SHAFT_HOUSE.w, MINE_SHAFT_HOUSE.h);
     } else if (biome === 'plains') {
         scatter(grid, TILE.FLOWER, 24, seed, true);
         scatter(grid, TILE.TREE, 14, seed + 6, true);
@@ -267,6 +269,11 @@ function generateInterior(kind) {
         setCell(grid, x0 + 8, y0 + 5, TILE.FLOWER);
     } else if (kind === 'guild') {
         setCell(grid, x0 + Math.floor(w / 2), y0 + 2, TILE.SHRINE);
+    } else if (kind === 'shaft') {
+        setCell(grid, x0 + 3, y0 + 5, TILE.ROCK);
+        setCell(grid, x0 + 8, y0 + 5, TILE.ROCK);
+        setCell(grid, x0 + 3, y0 + 8, TILE.ROCK);
+        setCell(grid, x0 + 8, y0 + 8, TILE.ROCK);
     }
     return grid;
 }
@@ -289,6 +296,9 @@ function housesForBiome(biome) {
     }
     if (biome === 'farm') {
         return FARM_HOUSES;
+    }
+    if (biome === 'mine') {
+        return [MINE_SHAFT_HOUSE];
     }
     return [];
 }

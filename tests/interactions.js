@@ -8751,7 +8751,7 @@ EmberwoodTests.add('world: Emberhaven bank shop and guild doors enter one indoor
         assert(String(win.Phaser.VERSION).indexOf('3.') === 0, 'Phaser 3');
         assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
 
-        assert(win.INTERIOR_LIST && win.INTERIOR_LIST.length === 3, 'three interior defs');
+        assert(win.INTERIOR_LIST && win.INTERIOR_LIST.length === 4, 'four interior defs');
         assertEqual(typeof win.generateInterior, 'function', 'generateInterior exists');
         assertEqual(typeof world.enterInterior, 'function', 'enterInterior exists');
         assertEqual(typeof world.leaveInterior, 'function', 'leaveInterior exists');
@@ -8846,6 +8846,112 @@ EmberwoodTests.add('world: Emberhaven bank shop and guild doors enter one indoor
             world.exitLock = false;
             world.leaveInterior();
             assertEqual(world.interiorId, null, 'left the guild hall');
+
+            H.enterZone(win, 'haven');
+            world = H.world(win);
+            world.placePlayer(spawn.x, spawn.y);
+            world.player.body.setVelocity(0, 0);
+            assertEqual(world.interiorId, null, 'enterZone clears interior');
+            assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+            assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        });
+    });
+});
+
+EmberwoodTests.add('world: Darkmine lower shaft is a second indoor mine room', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'darkmine');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        world.interiorId = null;
+        world.exitLock = false;
+        world.encounterLock = false;
+        assertEqual(spawn.x, 328, 'spawn x tile center');
+        assertEqual(spawn.y, 248, 'spawn y tile center');
+        assert(String(win.Phaser.VERSION).indexOf('3.') === 0, 'Phaser 3');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        var shaft = win.interiorById('shaft');
+        assert(shaft, 'shaft def exists');
+        assertEqual(shaft.name, 'Darkmine Lower Shaft', 'shaft name');
+        assertEqual(shaft.zoneId, 'darkmine', 'shaft belongs to Darkmine');
+        assertEqual(shaft.doorTx, 9, 'shaft door tx');
+        assertEqual(shaft.doorTy, 12, 'shaft door ty');
+        assertEqual(win.MINE_SHAFT_HOUSE.x, 6, 'shaft house x');
+        assertEqual(win.housesForBiome('mine').length, 1, 'mine biome has the shaft house');
+        assertEqual(world.tileGrid[shaft.doorTy][shaft.doorTx], win.TILE.PATH, 'shaft overworld door is PATH');
+        assertEqual(world.tileGrid[shaft.doorTy][shaft.doorTx - 1], win.TILE.ROCK, 'shaft door west frame is ROCK');
+        assertEqual(world.tileGrid[shaft.doorTy][shaft.doorTx + 1], win.TILE.ROCK, 'shaft door east frame is ROCK');
+        var doorTile = world.ground.getTileAt(shaft.doorTx, shaft.doorTy);
+        assert(doorTile, 'shaft door tile exists');
+        assertEqual(!!doorTile.collides, false, 'shaft door does not collide');
+        assert(win.interiorAtDoor(shaft.doorTx, shaft.doorTy, 'darkmine'), 'interiorAtDoor hits in Darkmine');
+        assert(!win.interiorAtDoor(shaft.doorTx, shaft.doorTy, 'haven'), 'haven does not use the shaft door');
+
+        var corb = H.findNpc(win, 'miner');
+        assert(corb, 'Miner Corb stays in Darkmine');
+        assertEqual(corb.npcDef.name, 'Miner Corb', 'Corb display name');
+        assertEqual(Math.round(corb.x), 210, 'Corb x');
+        assertEqual(Math.round(corb.y), 200, 'Corb y');
+        assert(corb.npcDef.lines.indexOf('Bats took the lower shaft.') !== -1, 'Corb mentions the lower shaft');
+
+        parkWorldBodies(world);
+        var south = win.tileCenter(shaft.doorTx, shaft.doorTy + 1);
+        world.placePlayer(south.x, south.y);
+        world.player.body.setVelocity(0, 0);
+        world.clearWalk();
+        world.exitLock = false;
+        world.encounterLock = false;
+        H.clearKeys(win);
+        H.key(win, 'KeyW', 'w', 'keydown');
+        return H.waitUntil(function () {
+            return H.world(win).interiorId === 'shaft';
+        }, 1500, 'Keys.js W into Darkmine shaft door').then(function () {
+            H.key(win, 'KeyW', 'w', 'keyup');
+            H.clearKeys(win);
+            world = H.world(win);
+            world.player.body.setVelocity(0, 0);
+            assertEqual(world.interiorId, 'shaft', 'entered lower shaft');
+            assertEqual(world.zoneId, 'darkmine', 'parent zone stays Darkmine');
+            assertEqual(win.document.getElementById('hud-zone').textContent, 'Darkmine Lower Shaft', 'HUD title is the shaft');
+            var here = win.document.querySelector('#minimap .mm-cell.is-here');
+            assert(here, 'minimap still has is-here');
+            assertEqual(here.dataset.zone, 'darkmine', 'minimap stays Darkmine');
+            assert(H.chatHas(win, 'You enter Darkmine Lower Shaft.'), 'enter-shaft chat');
+            assert(world.map && world.ground, 'indoor Phaser 3 tilemap exists');
+            assertEqual(typeof world.map.createLayer, 'function', 'indoor map still Phaser 3 createLayer');
+            assertEqual(world.map.width, 36, 'indoor map width 36');
+            assertEqual(world.map.height, 28, 'indoor map height 28');
+            var exit = win.INTERIOR_EXIT_TILE;
+            assertEqual(world.tileGrid[exit.y][exit.x], win.TILE.PATH, 'indoor south door is PATH');
+            assertEqual(world.tileGrid[exit.y][exit.x - 1], win.TILE.ROCK, 'indoor door west frame is ROCK');
+            var at = win.worldToTile(world.player.x, world.player.y);
+            assert(at.ty < exit.y, 'spawned inside north of the indoor door');
+            assertEqual(world.npcs.getChildren().length, 0, 'shaft has no overworld NPCs');
+            assert(!H.findNpc(win, 'miner'), 'Miner Corb is not inside the shaft');
+            assertEqual(world.mobs.getChildren().length, 0, 'shaft has no overworld mobs');
+            assertEqual(world.tileGrid[13][15], win.TILE.ROCK, 'shaft has mine rock pillars');
+            assert(!win.game.input.keyboard, 'Phaser keyboard off in the shaft');
+
+            world.exitLock = false;
+            world.placePlayer(win.tileCenter(exit.x, exit.y).x, win.tileCenter(exit.x, exit.y).y);
+            world.player.body.setVelocity(0, 0);
+            world.checkInteriorExit();
+            world = H.world(win);
+            assertEqual(world.interiorId, null, 'left the lower shaft');
+            assertEqual(world.zoneId, 'darkmine', 'returned to Darkmine');
+            assertEqual(win.document.getElementById('hud-zone').textContent, 'Darkmine', 'HUD title is Darkmine');
+            assert(H.chatHas(win, 'You enter Darkmine.'), 'leave chat returns to Darkmine');
+            var out = win.worldToTile(world.player.x, world.player.y);
+            assertEqual(out.tx, shaft.doorTx, 'exit lands on the shaft door column');
+            assertEqual(out.ty, shaft.doorTy + 1, 'exit lands south of the shaft door');
+            corb = H.findNpc(win, 'miner');
+            assert(corb, 'Miner Corb is back in Darkmine');
+            assertEqual(Math.round(corb.x), 210, 'Corb still at x 210');
+            assertEqual(Math.round(corb.y), 200, 'Corb still at y 200');
 
             H.enterZone(win, 'haven');
             world = H.world(win);

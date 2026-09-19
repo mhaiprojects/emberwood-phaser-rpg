@@ -16,9 +16,16 @@ ZONE_LIST.forEach(function (zone) {
 });
 
 var INTERIOR_LIST = [
-    { id: 'bank', name: 'Emberhaven Bank', doorTx: 11, doorTy: 10 },
-    { id: 'shop', name: 'Emberhaven Shop', doorTx: 25, doorTy: 11 },
-    { id: 'guild', name: 'Emberhaven Guild Hall', doorTx: 15, doorTy: 20 }
+    { id: 'bank', name: 'Emberhaven Bank', doorTx: 11, doorTy: 10, zoneId: 'haven' },
+    { id: 'shop', name: 'Emberhaven Shop', doorTx: 25, doorTy: 11, zoneId: 'haven' },
+    { id: 'guild', name: 'Emberhaven Guild Hall', doorTx: 15, doorTy: 20, zoneId: 'haven' },
+    {
+        id: 'shaft',
+        name: 'Darkmine Lower Shaft',
+        doorTx: MINE_SHAFT_HOUSE.x + Math.floor(MINE_SHAFT_HOUSE.w / 2),
+        doorTy: MINE_SHAFT_HOUSE.y + MINE_SHAFT_HOUSE.h - 1,
+        zoneId: 'darkmine'
+    }
 ];
 
 function interiorById(id) {
@@ -30,11 +37,16 @@ function interiorById(id) {
     return null;
 }
 
-function interiorAtDoor(tx, ty) {
+function interiorAtDoor(tx, ty, zoneId) {
     for (var i = 0; i < INTERIOR_LIST.length; i++) {
-        if (INTERIOR_LIST[i].doorTx === tx && INTERIOR_LIST[i].doorTy === ty) {
-            return INTERIOR_LIST[i];
+        var spec = INTERIOR_LIST[i];
+        if (spec.doorTx !== tx || spec.doorTy !== ty) {
+            continue;
         }
+        if (zoneId && spec.zoneId && spec.zoneId !== zoneId) {
+            continue;
+        }
+        return spec;
     }
     return null;
 }

@@ -1221,11 +1221,8 @@ var WorldScene = new Phaser.Class({
         if (this.exitLock || this.encounterLock || this.interiorId) {
             return;
         }
-        if (this.zoneId !== 'haven') {
-            return;
-        }
         var tile = worldToTile(this.player.x, this.player.y);
-        var spec = interiorAtDoor(tile.tx, tile.ty);
+        var spec = interiorAtDoor(tile.tx, tile.ty, this.zoneId);
         if (!spec) {
             return;
         }
