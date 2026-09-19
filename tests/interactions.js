@@ -4009,6 +4009,80 @@ EmberwoodTests.add('loot: win drops coins bones and extra food at the mob feet',
     });
 });
 
+EmberwoodTests.add('loot: sprites are interactive and offset by 10px per extra drop', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.clearLoot();
+        world.encounterLock = false;
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        function assertInteractiveOffsets(feetX, feetY, drops, expectedXs) {
+            world.clearLoot();
+            world.spawnLoot(feetX, feetY, drops);
+            var live = H.lootLive(win);
+            assertEqual(live.length, drops.length, drops.length + '-drop pile size');
+            live.forEach(function (drop, index) {
+                var sprite = drop.sprite;
+                assert(sprite, drop.id + ' has a sprite');
+                assert(sprite.input, drop.id + ' is interactive');
+                assert(sprite.input.enabled !== false, drop.id + ' input enabled');
+                assertEqual(sprite.input.cursor, 'pointer', drop.id + ' uses hand cursor');
+                assert(sprite.listenerCount('pointerdown') >= 1, drop.id + ' listens for pointerdown');
+                assertEqual(sprite.x, expectedXs[index], drop.id + ' x is 10px per extra drop');
+                assertEqual(sprite.y, feetY + 4, drop.id + ' sits at feet y+4');
+                if (index > 0) {
+                    assertEqual(sprite.x - live[index - 1].sprite.x, 10, drop.id + ' is 10px from previous drop');
+                }
+            });
+            return live;
+        }
+
+        assertInteractiveOffsets(200, 200, [{ id: 'coins', qty: 1 }], [200]);
+        assertInteractiveOffsets(200, 200, [{ id: 'coins', qty: 1 }, { id: 'bones', qty: 1 }], [195, 205]);
+        assertInteractiveOffsets(200, 200, [
+            { id: 'coins', qty: 1 },
+            { id: 'bones', qty: 1 },
+            { id: 'shrimp', qty: 1 }
+        ], [190, 200, 210]);
+
+        var chicken = H.findMob(win, 'Chicken');
+        assert(chicken && chicken.aliveMob, 'living chicken in haven');
+        var table = win.lootForMob(chicken.mobDef);
+        assertEqual(table.map(function (drop) { return drop.id; }).join(','), 'coins,bones,shrimp', 'chicken table');
+        var atFeet = assertInteractiveOffsets(chicken.x, chicken.y, table, [
+            chicken.x - 10,
+            chicken.x,
+            chicken.x + 10
+        ]);
+        assertEqual(atFeet[0].id, 'coins', 'first extra drop is coins at -10');
+        assertEqual(atFeet[2].id, 'shrimp', 'second extra drop is shrimp at +10');
+
+        world.clearLoot();
+        world.spawnLoot(200, 200, [{ id: 'coins', qty: 2 }]);
+        var gold = H.hero(win).gold;
+        H.lootLive(win)[0].sprite.emit('pointerdown');
+        assertEqual(H.hero(win).gold, gold + 2, 'pointerdown picks up coins');
+        assert(H.chatHas(win, 'You pick up'), 'click pickup chat');
+        assertEqual(H.lootLive(win).length, 0, 'clicked pile taken');
+
+        world.clearLoot();
+        world.placePlayer(spawn.x, spawn.y);
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('combat: Eat food uses inventory on your turn', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');

@@ -241,7 +241,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] A combat win drops coins (mob gold) + bones, and extra shrimp (chicken/crab) or bread (cow), at the mob’s feet. — Conclusion: Chicken/crab/cow wins drop coins (mob gold qty) + bones + shrimp/bread at lastFought feet (y+4, ±10px spread); goblin table has no extra food. Suite 39/39 + Playwright from spawn (328,248).
 - [done] Gold/bones are **not** added to the hero until pickup (`combat: Attack…winning loots` contract). — Conclusion: From spawn (328,248) chicken win drops coins+bones at feet; gold/HUD/coin stack/bones stay until pickup. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Click loot within 18px always picks up; walk within 18px only when auto-pickup is on; both chat `You pick up…`. — Conclusion: `collectNearbyLoot` gated by `hero.autoPickup !== false`; click `onClick` / sprite still take. Suite cases pass.
-- [verify] Loot sprites are interactive and offset by 10px per extra drop. — Conclusion: —
+- [done] Loot sprites are interactive and offset by 10px per extra drop. — Conclusion: From spawn (328,248) spawnLoot 1/2/3-drop piles sit at 0 / ±5 / ±10px and y+4; each sprite is interactive (hand cursor + pointerdown pickup). Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [verify] Loot expires at `until = now + 20000` and the sprite is destroyed. — Conclusion: —
 - [verify] `clearLoot` on zone change (until persistence is implemented). — Conclusion: —
 - [verify] Pickup during `encounterLock` is blocked or deferred. — Conclusion: —
@@ -456,4 +456,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 83 | 2026-09-19 | Skill icons resolve under assets/svg/skills/{id}.svg | done — spawn (328,248) skillIcon + 12 Skills-tab icons + side HUD Hitpoints fetch 200 SVG and decode; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 84 | 2026-09-19 | Gathering uses Phaser 3 arcade overlap/distance only (no Phaser 4) | done — spawn (328,248) Distance.Between <18 (18 miss / 17 gather); arcade default; no Phaser 4; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 85 | 2026-09-19 | Gold/bones are not added to the hero until pickup | done — spawn (328,248) chicken win drops coins+bones at feet; gold/HUD/bones stay until pickup; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 86 | 2026-09-19 | Loot sprites are interactive and offset by 10px per extra drop | done — spawn (328,248) 1/2/3-drop piles at 0 / ±5 / ±10px y+4; interactive hand cursor + pointerdown; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 
