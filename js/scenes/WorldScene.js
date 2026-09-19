@@ -1,3 +1,9 @@
+var WALK_SPEED = 90;
+var RUN_SPEED = 180;
+var RUN_ENERGY_MAX = 100;
+var RUN_DRAIN_PER_SEC = 25;
+var RUN_RESTORE_PER_SEC = 15;
+
 var WorldScene = new Phaser.Class({
     Extends: Phaser.Scene,
 
@@ -46,7 +52,7 @@ var WorldScene = new Phaser.Class({
         this.enterZone(this.zoneId, null);
         this.refreshHud();
         this.engageGrace = this.time.now + 800;
-        Hud.log('You arrive in Emberhaven. WASD or arrows to walk, or click the ground.');
+        Hud.log('You arrive in Emberhaven. WASD or arrows to walk, Ctrl to run, or click the ground.');
         Hud.log('Open Inventory (F4) for food. The Guildmaster by the courtyard has work.');
     },
 
@@ -753,6 +759,52 @@ var WorldScene = new Phaser.Class({
         return !!(hero && hero.autoAttack);
     },
 
+    ensureRunState: function (hero) {
+        if (!hero) {
+            return hero;
+        }
+        if (hero.runEnergy == null || hero.runEnergy > RUN_ENERGY_MAX) {
+            hero.runEnergy = RUN_ENERGY_MAX;
+        }
+        if (hero.runEnergy < 0) {
+            hero.runEnergy = 0;
+        }
+        if (hero.running == null) {
+            hero.running = false;
+        }
+        return hero;
+    },
+
+    moveSpeed: function () {
+        var hero = this.ensureRunState(this.registry.get('hero'));
+        if (hero && hero.running && hero.runEnergy > 0) {
+            return RUN_SPEED;
+        }
+        return WALK_SPEED;
+    },
+
+    tickRunEnergy: function (dtSec, moving) {
+        var hero = this.ensureRunState(this.registry.get('hero'));
+        if (!hero || !(dtSec > 0)) {
+            return;
+        }
+        var actuallyRunning = !!(hero.running && moving && hero.runEnergy > 0);
+        if (actuallyRunning) {
+            hero.runEnergy = Math.max(0, hero.runEnergy - RUN_DRAIN_PER_SEC * dtSec);
+            if (hero.runEnergy <= 0) {
+                hero.runEnergy = 0;
+                hero.running = false;
+                Hud.log('You are too tired to run.');
+            }
+        } else {
+            hero.runEnergy = Math.min(RUN_ENERGY_MAX, hero.runEnergy + RUN_RESTORE_PER_SEC * dtSec);
+        }
+        this.registry.set('hero', hero);
+        if (window.Hud && Hud.renderRun) {
+            Hud.renderRun(hero);
+        }
+    },
+
     tryAutoEngage: function () {
         if (this.encounterLock || this.time.now < this.engageGrace) {
             return false;
@@ -774,8 +826,12 @@ var WorldScene = new Phaser.Class({
         return false;
     },
 
-    update: function () {
+    update: function (time, delta) {
+        var dt = (typeof delta === 'number' && isFinite(delta) && delta > 0) ? Math.min(delta, 80) / 1000 : 0;
         if (!this.player || !this.player.body || this.encounterLock) {
+            if (this.encounterLock) {
+                this.tickRunEnergy(dt, false);
+            }
             return;
         }
 
@@ -786,7 +842,11 @@ var WorldScene = new Phaser.Class({
             }
         });
 
-        var speed = 90;
+        if (window.Hud && Hud.mode === 'world' && Keys.runTogglePressed()) {
+            Hud.toggleRun();
+        }
+
+        var speed = this.moveSpeed();
         var vx = 0;
         var vy = 0;
         var move = this.moveFlags();
@@ -826,6 +886,8 @@ var WorldScene = new Phaser.Class({
             this.player.body.velocity.x = (vx / len) * speed;
             this.player.body.velocity.y = (vy / len) * speed;
         }
+
+        this.tickRunEnergy(dt, !!(vx || vy));
 
         if (vx < -10) {
             this.player.anims.play('left', true);

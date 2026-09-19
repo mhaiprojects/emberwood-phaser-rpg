@@ -46,7 +46,9 @@ var EmberwoodHarness = {
         ArrowRight: 39,
         ArrowDown: 40,
         Space: 32,
-        Escape: 27
+        Escape: 27,
+        ControlLeft: 17,
+        ControlRight: 17
     },
 
     click: function (win, selector) {

@@ -109,6 +109,13 @@ var Hud = {
             self.renderAutoPickup(hero);
             self.log('Auto-pickup ' + (hero.autoPickup !== false ? 'on' : 'off') + '.');
         });
+        document.addEventListener('click', function (event) {
+            var btn = event.target.closest('[data-run-toggle]');
+            if (!btn) {
+                return;
+            }
+            self.toggleRun();
+        });
         this.el.inv.addEventListener('click', function (event) {
             var slot = event.target.closest('[data-item]');
             if (!slot) {
@@ -296,6 +303,57 @@ var Hud = {
         this.renderStyles(hero);
         this.renderAutoAttack(hero);
         this.renderAutoPickup(hero);
+        this.renderRun(hero);
+    },
+
+    toggleRun: function () {
+        var hero = this.hero();
+        if (!hero) {
+            return false;
+        }
+        if (hero.runEnergy == null) {
+            hero.runEnergy = 100;
+        }
+        if (!hero.running && hero.runEnergy <= 0) {
+            this.log('You are too tired to run.');
+            this.renderRun(hero);
+            return false;
+        }
+        hero.running = !hero.running;
+        this.saveHero(hero);
+        this.renderRun(hero);
+        this.log(hero.running ? 'You start running.' : 'You start walking.');
+        return true;
+    },
+
+    paintRunEnergy: function (energy, max, running) {
+        var fill = document.getElementById('run-fill');
+        var label = document.getElementById('hud-run');
+        var bar = document.getElementById('run-bar');
+        var amount = typeof energy === 'number' ? energy : 0;
+        var cap = max || 100;
+        if (label) {
+            label.textContent = String(Math.round(amount));
+        }
+        if (fill) {
+            var ratio = cap ? amount / cap : 0;
+            fill.style.width = Math.max(0, Math.min(100, ratio * 100)) + '%';
+            fill.style.backgroundColor = running ? '#e6c56a' : '#6a9ad4';
+        }
+        if (bar) {
+            bar.classList.toggle('is-on', !!running);
+        }
+    },
+
+    renderRun: function (hero) {
+        var on = !!(hero && hero.running);
+        var energy = hero && hero.runEnergy != null ? hero.runEnergy : 100;
+        var buttons = document.querySelectorAll('.run-mode-btn');
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].classList.toggle('is-on', on);
+            buttons[i].textContent = 'Run: ' + (on ? 'On' : 'Off');
+        }
+        this.paintRunEnergy(energy, 100, on);
     },
 
     renderInventory: function (hero) {

@@ -33,6 +33,8 @@ function makeHero() {
         style: 'accurate',
         autoAttack: true,
         autoPickup: true,
+        running: false,
+        runEnergy: 100,
         equipment: { weapon: 'sword', shield: 'shield' },
         inventory: [
             { id: 'coins', qty: 8 },

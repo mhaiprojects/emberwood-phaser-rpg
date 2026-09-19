@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="assets/svg/ui/combat.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/style.css?v=loot3">
+    <link rel="stylesheet" href="css/style.css?v=run1">
 </head>
 <body>
     <div id="shell">
@@ -19,6 +19,8 @@
                 <div class="stat"><span><img class="pix" src="assets/svg/ui/combat.svg" alt=""> Combat</span><strong id="hud-level">1</strong></div>
                 <div class="stat"><span><img class="pix" src="assets/svg/skills/hitpoints.svg" alt=""> Hitpoints</span><strong id="hud-hp">100 / 100</strong></div>
                 <div class="hp-bar"><div id="hp-fill"></div></div>
+                <div class="stat"><span>Run energy</span><strong id="hud-run">100</strong></div>
+                <div class="hp-bar run-bar" id="run-bar" data-run-toggle title="Click to toggle walk or run (Ctrl)"><div id="run-fill"></div></div>
                 <div class="stat"><span><img class="pix" src="assets/svg/ui/gold.svg" alt=""> Gold</span><strong id="hud-gold">0</strong></div>
                 <div class="stat"><span><img class="pix" src="assets/svg/ui/xp.svg" alt=""> XP</span><strong id="hud-xp">0</strong></div>
             </div>
@@ -42,7 +44,7 @@
             <div id="chat-col" class="panel">
                 <h2>Chat</h2>
                 <div id="chat-log"></div>
-                <p class="hint">WASD or arrows to walk. Click ground, NPCs, or monsters. F1–F8 switch panels. Auto-attack and auto-pickup are in Combat and Settings. Loot drops on the ground — walk over it when auto-pickup is on, or click it. Click food in Inventory to eat.</p>
+                <p class="hint">WASD or arrows to walk. Ctrl toggles run. Click ground, NPCs, or monsters. F1–F8 switch panels. Auto-attack and auto-pickup are in Combat and Settings. Loot drops on the ground — walk over it when auto-pickup is on, or click it. Click food in Inventory to eat.</p>
             </div>
             <div id="iface">
                 <div id="tab-panels">
@@ -60,6 +62,9 @@
                         <h3>Auto-pickup</h3>
                         <p>When on, walking near a loot pile picks it up. When off, click the pile to take it.</p>
                         <button type="button" class="auto-pickup-btn" data-auto-pickup title="When on, walking near a loot pile picks it up.">Auto-pickup: On</button>
+                        <h3>Run</h3>
+                        <p>Ctrl or this toggle sprints. Run energy drains while running and restores while walking or idle.</p>
+                        <button type="button" class="run-mode-btn" data-run-toggle title="Toggle walk or run (Ctrl)">Run: Off</button>
                     </div>
                     <div id="panel-skills" class="tab-panel" hidden>
                         <h3>Skills</h3>
@@ -94,6 +99,9 @@
                         <h3>Auto-pickup</h3>
                         <p>When on, walking near a loot pile picks it up. When off, click the pile to take it. New games start with this on.</p>
                         <button type="button" class="auto-pickup-btn" data-auto-pickup title="When on, walking near a loot pile picks it up.">Auto-pickup: On</button>
+                        <h3>Run</h3>
+                        <p>Ctrl toggles run. Energy drains while running and restores while walking or idle.</p>
+                        <button type="button" class="run-mode-btn" data-run-toggle title="Toggle walk or run (Ctrl)">Run: Off</button>
                     </div>
                 </div>
                 <div id="tab-bar">
@@ -129,10 +137,10 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
-    <script src="js/input/Keys.js?v=move4-esc1"></script>
-    <script src="js/data/Items.js?v=loot3"></script>
+    <script src="js/input/Keys.js?v=run1"></script>
+    <script src="js/data/Items.js?v=run1"></script>
     <script src="js/data/Scales.js?v=tile2"></script>
-    <script src="js/ui/Hud.js?v=loot3-returntitle1-hpbar1"></script>
+    <script src="js/ui/Hud.js?v=run1"></script>
     <script src="js/world/MapGen.js?v=biome1"></script>
     <script src="js/world/Pathfind.js?v=path1"></script>
     <script src="js/world/Zones.js?v=tile1"></script>
@@ -143,7 +151,7 @@
     <script src="js/ui/Message.js"></script>
     <script src="js/scenes/BootScene.js"></script>
     <script src="js/scenes/TitleScene.js?v=move4"></script>
-    <script src="js/scenes/WorldScene.js?v=path1-loot3-idle1-adj12-1-talklock1-grace1-esc1"></script>
+    <script src="js/scenes/WorldScene.js?v=run1"></script>
     <script src="js/scenes/BattleScene.js"></script>
     <script src="js/scenes/UIScene.js"></script>
     <script src="js/scenes/GameOverScene.js"></script>

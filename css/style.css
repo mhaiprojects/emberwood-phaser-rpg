@@ -230,12 +230,14 @@ img.pix {
 
 #style-row button.is-on,
 .auto-attack-btn.is-on,
-.auto-pickup-btn.is-on {
+.auto-pickup-btn.is-on,
+.run-mode-btn.is-on {
     background: #7a623e;
 }
 
 .auto-attack-btn,
-.auto-pickup-btn {
+.auto-pickup-btn,
+.run-mode-btn {
     margin-top: 8px;
 }
 
@@ -280,6 +282,20 @@ canvas {
     height: 100%;
     width: 100%;
     background: #3dcc6a;
+}
+
+.run-bar {
+    cursor: pointer;
+}
+
+.run-bar.is-on {
+    border-color: #e6c56a;
+}
+
+#run-fill {
+    height: 100%;
+    width: 100%;
+    background: #6a9ad4;
 }
 
 #minimap {

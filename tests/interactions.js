@@ -6375,6 +6375,109 @@ EmberwoodTests.add('movement: Esc and click-self cancel walk and hide the purple
     });
 });
 
+EmberwoodTests.add('movement: walk vs run toggle drains and restores run energy', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        var hero = H.hero(win);
+        hero.running = false;
+        hero.runEnergy = 100;
+        win.game.registry.set('hero', hero);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.clearWalk();
+        world.refreshHud();
+
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.') === 0, 'Phaser 3');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(!world.cursors, 'WorldScene has no Phaser cursors');
+        assertEqual(typeof win.Keys.runTogglePressed, 'function', 'Keys.runTogglePressed exists');
+        assertEqual(H.hero(win).running, false, 'starts walking');
+        assertEqual(H.hero(win).runEnergy, 100, 'full run energy');
+        assertEqual(win.document.getElementById('hud-run').textContent.trim(), '100', 'HUD energy 100');
+        var fill = win.document.getElementById('run-fill');
+        assert(fill, 'run-energy bar exists');
+        assertEqual(fill.style.width, '100%', 'bar full');
+        assertEqual(world.moveSpeed(), 90, 'walk speed is 90');
+
+        var walkY = world.player.y;
+        return H.holdKey(win, 'KeyW', 'w', 400).then(function () {
+            var walked = walkY - world.player.y;
+            assert(walked > 16 && walked < 55, 'W walks at walk speed, dy=' + walked);
+            assert(H.hero(win).runEnergy >= 99, 'walking at full energy stays full');
+            assertEqual(H.hero(win).running, false, 'still walking');
+
+            world.placePlayer(spawn.x, spawn.y);
+            world.player.body.setVelocity(0, 0);
+            H.clearKeys(win);
+
+            H.key(win, 'ControlLeft', 'Control', 'keydown');
+            assert(win.Keys.isDown('Control'), 'Keys.js recorded Control');
+            assert(win.Keys.pressed.Control === true, 'Control is just-pressed via Keys.js');
+            world.update();
+            H.key(win, 'ControlLeft', 'Control', 'keyup');
+            H.clearKeys(win);
+            assertEqual(H.hero(win).running, true, 'Ctrl toggles run on');
+            assert(H.chatHas(win, 'You start running.'), 'run chat');
+            assertEqual(world.moveSpeed(), 180, 'run speed is 180');
+            assertMatch(win.document.querySelector('#panel-combat .run-mode-btn').textContent, 'On', 'combat Run On');
+            assertMatch(win.document.querySelector('#panel-settings .run-mode-btn').textContent, 'On', 'settings Run On');
+
+            var runY = world.player.y;
+            var energyBefore = H.hero(win).runEnergy;
+            return H.holdKey(win, 'KeyW', 'w', 400).then(function () {
+                var ran = runY - world.player.y;
+                assert(ran > walked + 10, 'run covers more ground than walk, dy=' + ran);
+                assert(H.hero(win).runEnergy < energyBefore - 4, 'running drains energy');
+                assertEqual(H.hero(win).running, true, 'still set to run');
+
+                var drained = H.hero(win).runEnergy;
+                world.player.body.setVelocity(0, 0);
+                H.clearKeys(win);
+                return H.sleep(400).then(function () {
+                    assert(H.hero(win).runEnergy > drained + 2, 'idle restores energy');
+                    assertEqual(win.document.getElementById('hud-run').textContent.trim(), String(Math.round(H.hero(win).runEnergy)), 'HUD tracks restore');
+
+                    H.click(win, '#run-bar');
+                    assertEqual(H.hero(win).running, false, 'energy bar click walks');
+                    assert(H.chatHas(win, 'You start walking.'), 'walk chat');
+                    assertEqual(world.moveSpeed(), 90, 'walk speed after toggle off');
+
+                    var tired = H.hero(win);
+                    tired.runEnergy = 0;
+                    tired.running = false;
+                    win.game.registry.set('hero', tired);
+                    world.refreshHud();
+                    H.click(win, '#panel-settings .run-mode-btn');
+                    assertEqual(H.hero(win).running, false, 'no run at 0 energy');
+                    assert(H.chatHas(win, 'You are too tired to run.'), 'tired chat');
+                    assertEqual(win.document.getElementById('hud-run').textContent.trim(), '0', 'HUD energy 0');
+
+                    tired.runEnergy = 20;
+                    tired.running = false;
+                    win.game.registry.set('hero', tired);
+                    world.placePlayer(spawn.x, spawn.y);
+                    world.player.body.setVelocity(0, 0);
+                    return H.holdKey(win, 'KeyD', 'd', 400).then(function () {
+                        assert(H.hero(win).runEnergy > 20, 'walking restores energy');
+                        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+                        world.placePlayer(spawn.x, spawn.y);
+                        world.player.body.setVelocity(0, 0);
+                        H.clearKeys(win);
+                    });
+                });
+            });
+        });
+    });
+});
+
 EmberwoodTests.add('movement: WASD cancels click path and hides the purple line', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');

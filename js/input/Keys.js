@@ -71,6 +71,8 @@ var Keys = {
         if (key === 'arrowright') { add('ArrowRight'); }
         if (key === ' ' || key === 'spacebar' || key === 'space') { add('Space'); }
         if (key === 'escape') { add('Escape'); }
+        if (key === 'control') { add('Control'); }
+        if (code === 'ControlLeft' || code === 'ControlRight') { add('Control'); }
         if (keyCode === 87) { add('KeyW'); }
         if (keyCode === 65) { add('KeyA'); }
         if (keyCode === 83) { add('KeyS'); }
@@ -81,6 +83,7 @@ var Keys = {
         if (keyCode === 40) { add('ArrowDown'); }
         if (keyCode === 32) { add('Space'); }
         if (keyCode === 27) { add('Escape'); }
+        if (keyCode === 17) { add('Control'); }
         return names;
     },
 
@@ -136,5 +139,9 @@ var Keys = {
 
     moving: function () {
         return this.left() || this.right() || this.up() || this.downArrow();
+    },
+
+    runTogglePressed: function () {
+        return this.justPressed('Control');
     }
 };
