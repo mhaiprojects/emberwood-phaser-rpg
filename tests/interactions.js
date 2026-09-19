@@ -644,7 +644,7 @@ EmberwoodTests.add('hud: side HUD shows zone combat level HP fill gold XP and ta
         assert(questEl && questEl.closest('#side'), 'task text is on the side HUD');
 
         assertEqual(zoneEl.textContent, 'Emberhaven', 'starter zone name');
-        assertEqual(levelEl.textContent, '1', 'starter combat level');
+        assertEqual(levelEl.textContent, '3', 'starter OSRS combat level');
         assertEqual(hpEl.textContent.replace(/\s+/g, ' ').trim(), '100 / 100', 'starter HP cur / max');
         assertEqual(fill.style.width, '100%', 'starter HP fill 100%');
         assertEqual(goldEl.textContent, '8', 'starter gold');
@@ -656,14 +656,15 @@ EmberwoodTests.add('hud: side HUD shows zone combat level HP fill gold XP and ta
         hero.maxHp = 110;
         hero.gold = 25;
         hero.xp = 40;
-        hero.level = 2;
+        hero.skills.attack.level = 10;
+        hero.skills.strength.level = 10;
         win.game.registry.set('hero', hero);
         win.game.registry.set('quest', { id: 'goblins', stage: 1, progress: 3, goal: 5 });
         H.enterZone(win, 'millfields');
         world.refreshHud();
 
         assertEqual(zoneEl.textContent, 'Millfields', 'zone name updates');
-        assertEqual(levelEl.textContent, '2', 'combat level updates');
+        assertEqual(levelEl.textContent, '9', 'combat level updates from Attack+Strength');
         assertEqual(hpEl.textContent.replace(/\s+/g, ' ').trim(), '55 / 110', 'HP cur / max updates');
         assertEqual(fill.style.width, '50%', 'HP fill is 50% at 55/110');
         assertEqual(goldEl.textContent, '25', 'gold updates');
@@ -1109,42 +1110,136 @@ EmberwoodTests.add('combat: levelHero XP/40 does not overwrite maxHp from Hitpoi
         assertEqual(typeof win.gainSkillXp, 'function', 'gainSkillXp exists');
 
         hero = H.hero(win);
-        assertEqual(hero.level, 1, 'starter combat level 1');
+        assertEqual(hero.level, 3, 'starter OSRS combat level 3');
         assertEqual(hero.xp, 0, 'starter combat XP 0');
         assertEqual(hero.skills.hitpoints.level, 10, 'Hitpoints starts 10');
         assertEqual(hero.skills.hitpoints.xp, 1154, 'Hitpoints starts 1154 XP');
         assertEqual(hero.maxHp, 100, 'start maxHp 100');
         assertEqual(hero.hp, 100, 'start hp 100');
         assertEqual(hero.damage, 16, 'starter damage 16');
+        assertEqual(win.combatLevel(hero), 3, 'derived combat is 3');
 
         hero.xp = 40;
         world.levelHero(hero);
-        assertEqual(hero.level, 2, 'combat XP 40 raises combat level to 2');
-        assertEqual(hero.maxHp, 100, 'combat level-up leaves maxHp as 10 * Hitpoints 10');
-        assertEqual(hero.hp, 100, 'combat level-up does not grow or refill HP');
-        assertEqual(hero.damage, 18, 'combat level-up still sets damage 14 + level * 2');
-        assert(H.chatHas(win, 'Your combat level is now 2.'), 'combat level chat');
-        assert(!H.chatHas(win, 'Hitpoints increased'), 'combat level-up does not chat Hitpoints');
+        assertEqual(hero.level, 3, 'combat XP 40 does not overwrite OSRS combat');
+        assertEqual(hero.maxHp, 100, 'combat XP leaves maxHp as 10 * Hitpoints 10');
+        assertEqual(hero.hp, 100, 'combat XP does not grow or refill HP');
+        assertEqual(hero.damage, 18, 'combat XP still sets damage 14 + rank * 2');
+        assert(!H.chatHas(win, 'Your combat level is now'), 'XP/40 does not chat combat level');
+        assert(!H.chatHas(win, 'Hitpoints increased'), 'combat XP does not chat Hitpoints');
 
         win.gainSkillXp(hero, 'hitpoints', 3846);
         assertEqual(hero.skills.hitpoints.xp, 5000, 'Hitpoints reaches 5000 XP');
         assertEqual(hero.skills.hitpoints.level, 11, 'Hitpoints levels to 11');
         assertEqual(hero.maxHp, 110, 'maxHp is 10 * Hitpoints 11');
         assertEqual(hero.hp, 100, 'Hitpoints level-up does not fill current HP');
+        assertEqual(hero.level, 3, 'Hitpoints 11 keeps OSRS combat at 3');
         assert(H.chatHas(win, 'Hitpoints increased to 11.'), 'Hitpoints chats Skill increased to N');
 
         hero.xp = 80;
         world.levelHero(hero);
-        assertEqual(hero.level, 3, 'combat XP 80 raises combat level to 3');
-        assertEqual(hero.maxHp, 110, 'later combat level-up still leaves maxHp as 10 * Hitpoints');
-        assertEqual(hero.hp, 100, 'later combat level-up does not fill HP');
-        assert(H.chatHas(win, 'Your combat level is now 3.'), 'second combat level chat');
+        assertEqual(hero.level, 3, 'later combat XP still leaves OSRS combat');
+        assertEqual(hero.maxHp, 110, 'later combat XP still leaves maxHp as 10 * Hitpoints');
+        assertEqual(hero.hp, 100, 'later combat XP does not fill HP');
+        assertEqual(hero.damage, 20, 'rank 3 still sets damage 20');
 
         win.game.registry.set('hero', hero);
         world.refreshHud();
         assertEqual(win.document.getElementById('hud-hp').textContent, '100 / 110', 'HUD follows Hitpoints maxHp');
-        assertEqual(win.document.getElementById('hud-level').textContent, '3', 'HUD combat level is 3');
+        assertEqual(win.document.getElementById('hud-level').textContent, '3', 'HUD combat level stays OSRS 3');
         assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
+EmberwoodTests.add('combat: OSRS-like combat level from Attack Strength Defence Hitpoints Prayer Ranged Magic', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        world.placePlayer(spawn.x, spawn.y);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof win.combatLevel, 'function', 'combatLevel exists');
+        assertEqual(typeof win.applyCombatLevel, 'function', 'applyCombatLevel exists');
+
+        hero = H.hero(win);
+        assertEqual(hero.skills.attack.level, 1, 'Attack starts 1');
+        assertEqual(hero.skills.strength.level, 1, 'Strength starts 1');
+        assertEqual(hero.skills.defence.level, 1, 'Defence starts 1');
+        assertEqual(hero.skills.hitpoints.level, 10, 'Hitpoints starts 10');
+        assertEqual(hero.skills.prayer.level, 1, 'Prayer starts 1');
+        assertEqual(hero.skills.ranged.level, 1, 'Ranged starts 1');
+        assertEqual(hero.skills.magic.level, 1, 'Magic starts 1');
+        assertEqual(win.combatLevel(hero), 3, 'OSRS starter combat is 3');
+        assertEqual(hero.level, 3, 'hero.level matches derived combat');
+        assertEqual(hero.maxHp, 100, 'maxHp is 10 * Hitpoints 10');
+        assertEqual(win.document.getElementById('hud-level').textContent, '3', 'HUD shows derived combat 3');
+
+        hero.skills.cooking.level = 99;
+        assertEqual(win.combatLevel(hero), 3, 'Cooking does not change combat');
+
+        hero.xp = 40;
+        world.levelHero(hero);
+        assertEqual(hero.level, 3, 'combat XP 40 does not overwrite OSRS combat');
+        assertEqual(hero.maxHp, 100, 'levelHero leaves maxHp as 10 * Hitpoints');
+        assertEqual(hero.damage, 18, 'combat XP still raises damage');
+        assert(!H.chatHas(win, 'Your combat level is now'), 'XP/40 does not chat combat level');
+        world.refreshHud();
+        assertEqual(win.document.getElementById('hud-level').textContent, '3', 'HUD stays 3 after XP/40');
+
+        hero.skills.attack.level = 2;
+        hero.skills.strength.level = 2;
+        assertEqual(win.combatLevel(hero), 4, 'Attack 2 Strength 2 is combat 4');
+        win.applyCombatLevel(hero, true);
+        assertEqual(hero.level, 4, 'hero.level updates to 4');
+        assert(H.chatHas(win, 'Your combat level is now 4.'), 'combat level chat on skill raise');
+        world.refreshHud();
+        assertEqual(win.document.getElementById('hud-level').textContent, '4', 'HUD shows combat 4');
+        assertEqual(hero.maxHp, 100, 'melee skills do not change maxHp');
+
+        hero.skills.defence.level = 20;
+        assertEqual(win.combatLevel(hero), 8, 'Defence 20 with Atk/Str 2 HP 10 is combat 8');
+
+        hero.skills.defence.level = 1;
+        win.gainSkillXp(hero, 'hitpoints', 3846);
+        assertEqual(hero.skills.hitpoints.level, 11, 'Hitpoints 11');
+        assertEqual(hero.maxHp, 110, 'maxHp is 10 * Hitpoints 11');
+        assertEqual(win.combatLevel(hero), 4, 'HP 11 with Atk/Str 2 stays combat 4');
+
+        hero.skills.prayer.level = 6;
+        assertEqual(win.combatLevel(hero), 5, 'Prayer 6 raises base combat to 5');
+
+        hero.skills.ranged.level = 20;
+        assertEqual(win.combatLevel(hero), 13, 'Ranged 20 beats melee for combat 13');
+
+        hero.skills.magic.level = 30;
+        assertEqual(win.combatLevel(hero), 18, 'Magic 30 beats ranged for combat 18');
+
+        ['attack', 'strength', 'defence', 'hitpoints', 'prayer', 'ranged', 'magic'].forEach(function (id) {
+            hero.skills[id].level = 99;
+        });
+        assertEqual(win.combatLevel(hero), 126, '99 combat skills are 126');
+        hero.maxHp = 10 * hero.skills.hitpoints.level;
+        win.applyCombatLevel(hero, false);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        assertEqual(hero.level, 126, 'hero.level is 126');
+        assertEqual(win.document.getElementById('hud-level').textContent, '126', 'HUD shows 126');
+        assertEqual(win.document.getElementById('hud-hp').textContent, hero.hp + ' / 990', 'HUD maxHp follows Hitpoints');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+
+        win.game.registry.set('hero', win.makeHero());
+        H.enterZone(win, 'haven');
+        world.placePlayer(spawn.x, spawn.y);
+        world.refreshHud();
     });
 });
 
@@ -3107,7 +3202,7 @@ EmberwoodTests.add('npcs: Bram stage 2 pays 50 gold + 40 combat XP and levels if
         assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
         assertEqual(H.hero(win).gold, 8, 'starter gold is 8');
         assertEqual(H.hero(win).xp, 0, 'starter combat XP is 0');
-        assertEqual(H.hero(win).level, 1, 'starter combat level is 1');
+        assertEqual(H.hero(win).level, 3, 'starter OSRS combat level is 3');
         assertEqual(win.document.getElementById('hud-quest').textContent, 'Return to Guildmaster Bram for your reward.', 'side HUD at stage 2');
         assertEqual(win.document.getElementById('hud-quest-tab').textContent, 'Return to Guildmaster Bram for your reward.', 'journal at stage 2');
         var bram = H.findNpc(win, 'guild');
@@ -3117,20 +3212,22 @@ EmberwoodTests.add('npcs: Bram stage 2 pays 50 gold + 40 combat XP and levels if
         assertEqual(H.quest(win).stage, 3, 'stage 2 talk completes the quest');
         assertEqual(H.hero(win).gold, 58, 'pays 50 gold (8 + 50)');
         assertEqual(H.hero(win).xp, 40, 'grants 40 combat XP');
-        assertEqual(H.hero(win).level, 2, 'levelHero raises combat level 1 → 2');
-        assertEqual(H.hero(win).maxHp, 100, 'combat level-up leaves maxHp as 10 * Hitpoints');
-        assertEqual(H.hero(win).damage, 18, 'level-up damage is 14 + level * 2');
+        assertEqual(H.hero(win).level, 3, 'Bram XP does not overwrite OSRS combat');
+        assertEqual(H.hero(win).maxHp, 100, 'combat XP leaves maxHp as 10 * Hitpoints');
+        assertEqual(H.hero(win).damage, 18, 'level-up damage is 14 + xp-rank * 2');
         assert(H.chatHas(win, 'militia thanks you'), 'reward speech');
         assert(H.chatHas(win, '50 gold and combat training'), 'reward names gold and training');
-        assert(H.chatHas(win, 'Your combat level is now 2.'), 'levels when XP crosses the next threshold');
+        assert(!H.chatHas(win, 'Your combat level is now'), 'Bram XP does not chat combat level');
         assertEqual(win.document.getElementById('hud-gold').textContent, '58', 'HUD gold after pay');
         assertEqual(win.document.getElementById('hud-xp').textContent, '40', 'HUD XP after pay');
-        assertEqual(win.document.getElementById('hud-level').textContent, '2', 'HUD combat level after level-up');
+        assertEqual(win.document.getElementById('hud-level').textContent, '3', 'HUD combat stays OSRS 3');
         assertEqual(win.document.getElementById('hud-quest').textContent, 'Militia task complete. Explore the nine lands.', 'side HUD after complete');
         assertEqual(win.document.getElementById('hud-quest-tab').textContent, 'Militia task complete. Explore the nine lands.', 'journal after complete');
 
         hero = win.makeHero();
-        hero.level = 5;
+        hero.skills.attack.level = 4;
+        hero.skills.strength.level = 3;
+        hero.level = win.combatLevel(hero);
         hero.xp = 0;
         hero.maxHp = 140;
         hero.hp = 140;
@@ -3142,11 +3239,11 @@ EmberwoodTests.add('npcs: Bram stage 2 pays 50 gold + 40 combat XP and levels if
         assertEqual(H.quest(win).stage, 3, 'already-leveled hero still completes');
         assertEqual(H.hero(win).gold, 58, 'still pays 50 gold');
         assertEqual(H.hero(win).xp, 40, 'still grants 40 combat XP');
-        assertEqual(H.hero(win).level, 5, 'does not level when already above the XP curve');
-        assertEqual(H.hero(win).maxHp, 140, 'maxHp unchanged when no level-up');
-        assertEqual(H.hero(win).damage, 24, 'damage unchanged when no level-up');
+        assertEqual(H.hero(win).level, 5, 'OSRS combat stays 5 when skills are unchanged');
+        assertEqual(H.hero(win).maxHp, 140, 'maxHp unchanged when skills are unchanged');
+        assertEqual(H.hero(win).damage, 24, 'damage unchanged when already above the XP rank');
         assertEqual(H.lastChat(win), 'Guildmaster Bram: The militia thanks you. 50 gold and combat training.', 'no extra level-up line when not needed');
-        assertEqual(win.document.getElementById('hud-level').textContent, '5', 'HUD level stays 5');
+        assertEqual(win.document.getElementById('hud-level').textContent, '5', 'HUD combat stays 5');
     });
 });
 

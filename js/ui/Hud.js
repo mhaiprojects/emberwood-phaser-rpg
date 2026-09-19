@@ -838,6 +838,11 @@ var Hud = {
         }
         this.el.hp.textContent = hero.hp + ' / ' + hero.maxHp;
         this.el.gold.textContent = String(hero.gold);
+        if (this.el.level) {
+            this.el.level.textContent = String(
+                typeof combatLevel === 'function' ? combatLevel(hero) : hero.level
+            );
+        }
         this.paintHpFill(hero.hp, hero.maxHp);
         this.renderInventory(hero);
         this.renderSkills(hero);

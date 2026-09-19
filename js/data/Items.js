@@ -24,7 +24,7 @@ var SKILL_NAMES = [
 ];
 
 function makeHero() {
-    return {
+    var hero = {
         hp: 100,
         maxHp: 100,
         damage: 16,
@@ -62,6 +62,8 @@ function makeHero() {
             agility: { level: 1, xp: 0 }
         }
     };
+    applyCombatLevel(hero, false);
+    return hero;
 }
 
 function addItem(hero, id, qty) {
@@ -194,6 +196,41 @@ function heroSkillLevel(hero, skill) {
     return level;
 }
 
+function combatLevel(hero) {
+    var attack = heroSkillLevel(hero, 'attack');
+    var strength = heroSkillLevel(hero, 'strength');
+    var defence = heroSkillLevel(hero, 'defence');
+    var hitpoints = heroSkillLevel(hero, 'hitpoints');
+    var prayer = heroSkillLevel(hero, 'prayer');
+    var ranged = heroSkillLevel(hero, 'ranged');
+    var magic = heroSkillLevel(hero, 'magic');
+    var base = 0.25 * (defence + hitpoints + Math.floor(prayer / 2));
+    var melee = 0.325 * (attack + strength);
+    var range = 0.325 * Math.floor(ranged * 1.5);
+    var mage = 0.325 * Math.floor(magic * 1.5);
+    var power = melee;
+    if (range > power) {
+        power = range;
+    }
+    if (mage > power) {
+        power = mage;
+    }
+    return Math.floor(base + power);
+}
+
+function applyCombatLevel(hero, announce) {
+    if (!hero) {
+        return 1;
+    }
+    var next = combatLevel(hero);
+    var prev = typeof hero.level === 'number' ? hero.level : 0;
+    hero.level = next;
+    if (announce && next > prev && typeof Hud !== 'undefined' && Hud.log) {
+        Hud.log('Your combat level is now ' + next + '.');
+    }
+    return next;
+}
+
 function gainSkillXp(hero, skill, amount) {
     var s = hero.skills[skill];
     if (!s) {
@@ -214,6 +251,7 @@ function gainSkillXp(hero, skill, amount) {
             Hud.log(named[1] + ' increased to ' + s.level + '.');
         }
     }
+    applyCombatLevel(hero, true);
 }
 
 function itemName(id) {

@@ -924,6 +924,9 @@ var WorldScene = new Phaser.Class({
         } else if (quest.stage >= 3) {
             questText = 'Militia task complete. Explore the nine lands.';
         }
+        if (typeof applyCombatLevel === 'function') {
+            applyCombatLevel(hero, false);
+        }
         Hud.setWorld({
             zone: interior ? interior.name : zone.name,
             zoneId: this.zoneId,
@@ -931,7 +934,7 @@ var WorldScene = new Phaser.Class({
             maxHp: hero.maxHp,
             gold: hero.gold,
             xp: hero.xp,
-            level: hero.level,
+            level: typeof combatLevel === 'function' ? combatLevel(hero) : hero.level,
             quest: questText
         });
         this.refreshQuestIcons();
@@ -1794,11 +1797,13 @@ var WorldScene = new Phaser.Class({
     },
 
     levelHero: function (hero) {
-        var next = 1 + Math.floor(hero.xp / 40);
-        if (next > hero.level) {
-            hero.level = next;
-            hero.damage = 14 + hero.level * 2;
-            Hud.log('Your combat level is now ' + hero.level + '.');
+        var rank = 1 + Math.floor(hero.xp / 40);
+        var nextDamage = 14 + rank * 2;
+        if (nextDamage > hero.damage) {
+            hero.damage = nextDamage;
+        }
+        if (typeof applyCombatLevel === 'function') {
+            applyCombatLevel(hero, false);
         }
     },
 
