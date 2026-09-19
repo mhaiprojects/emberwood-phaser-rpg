@@ -2898,7 +2898,7 @@ EmberwoodTests.add('hud: Use-on targets fire with raw shrimp and shrine with bon
         hero = H.hero(win);
         assertEqual(stackQty(hero, 'rawshrimp'), 1, 'range consumes one raw shrimp');
         assertEqual(stackQty(hero, 'shrimp'), 9, 'raw becomes cooked shrimp');
-        assertEqual(hero.skills.cooking.xp, 0, 'range does not grant Cooking XP this tick');
+        assertEqual(hero.skills.cooking.xp, 30, 'range grants Cooking XP');
         assertEqual(H.lastChat(win), 'You use the Raw shrimp on the fire.', 'raw-on-fire chat');
         assertEqual(win.Hud.useOnId, null, 'cursor clears after fire');
 
@@ -8940,6 +8940,159 @@ EmberwoodTests.add('skills: Magic panel Wind Strike grants Magic XP', function (
         assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
         assert(!win.game.input.keyboard, 'Phaser keyboard still off');
         assertEqual(typeof win.cookFood, 'undefined', 'Cooking still not this tick');
+    });
+});
+
+EmberwoodTests.add('skills: Use-on raw shrimp on fire or range grants Cooking XP', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, true);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.clearLoot();
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        if (win.Hud.hideContextMenu) {
+            win.Hud.hideContextMenu();
+        }
+        if (win.Hud.clearUseOn) {
+            win.Hud.clearUseOn();
+        }
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof win.useItemOnScenery, 'function', 'useItemOnScenery helper');
+        assertEqual(typeof win.Hud.beginUseOn, 'function', 'beginUseOn helper');
+        assertEqual(typeof win.Hud.finishUseOn, 'function', 'finishUseOn helper');
+        assertEqual(typeof win.gainSkillXp, 'function', 'gainSkillXp helper');
+        assert(win.ITEM_DB.rawshrimp, 'raw shrimp exists');
+        assertEqual(win.ITEM_DB.rawshrimp.cook, 'shrimp', 'raw shrimp cooks to shrimp');
+        assertEqual(win.ITEM_DB.rawshrimp.cookXp, 30, 'raw shrimp cooks for 30 Cooking XP');
+        assertEqual(win.itemCanUseOn('rawshrimp', 'range'), true, 'raw uses on range');
+        assertEqual(win.itemCanUseOn('rawshrimp', 'fire'), true, 'raw uses on fire');
+        assertEqual(typeof win.cookFood, 'undefined', 'cookFood helper is not this tick');
+        assertEqual(typeof win.catchFish, 'undefined', 'Fishing XP is not this tick');
+
+        function stackQty(hero, id) {
+            var stack = hero.inventory.filter(function (row) { return row.id === id; })[0];
+            return stack ? stack.qty : 0;
+        }
+        function clickTile(tx, ty) {
+            var pt = win.tileCenter(tx, ty);
+            world.onClick({ worldX: pt.x, worldY: pt.y });
+            return pt;
+        }
+
+        var hero = win.makeHero();
+        win.addItem(hero, 'rawshrimp', 3);
+        win.addItem(hero, 'bones', 1);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(stackQty(hero, 'rawshrimp'), 3, 'starter raw shrimp 3');
+        assertEqual(stackQty(hero, 'shrimp'), 8, 'starter cooked shrimp');
+        assertEqual(hero.skills.cooking.xp, 0, 'Cooking XP starts 0');
+        assertEqual(hero.skills.cooking.level, 1, 'Cooking starts 1');
+        assertEqual(hero.skills.fishing.xp, 0, 'Fishing XP stays 0');
+        assertEqual(hero.skills.prayer.xp, 0, 'Prayer XP stays 0');
+        assertEqual(hero.level, 3, 'starter combat level 3');
+        assertEqual(win.TOWN_PROPS.range.x, 16, 'haven range x');
+        assertEqual(win.TOWN_PROPS.range.y, 17, 'haven range y');
+        assertEqual(world.tileGrid[17][16], win.TILE.RANGE, 'haven range tile');
+
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        var dropsHost = win.Hud.ensureXpDrops();
+        assert(dropsHost && dropsHost.id === 'xp-drops', 'xp-drops host exists');
+        dropsHost.innerHTML = '';
+        win.Hud.el.log.innerHTML = '';
+
+        win.Hud.beginUseOn('rawshrimp');
+        assertEqual(win.Hud.useOnId, 'rawshrimp', 'use-on id is raw shrimp');
+        clickTile(16, 17);
+        hero = H.hero(win);
+        assertEqual(stackQty(hero, 'rawshrimp'), 2, 'range consumes one raw shrimp');
+        assertEqual(stackQty(hero, 'shrimp'), 9, 'raw becomes cooked shrimp');
+        assertEqual(H.lastChat(win), 'You use the Raw shrimp on the fire.', 'raw-on-range chat');
+        assertEqual(hero.skills.cooking.xp, 30, 'range cook grants 30 Cooking XP');
+        assertEqual(hero.skills.cooking.level, 1, '30 XP does not level Cooking');
+        assertEqual(hero.skills.fishing.xp, 0, 'range cook does not grant Fishing XP');
+        assertEqual(hero.skills.prayer.xp, 0, 'range cook does not grant Prayer XP');
+        assertEqual(hero.level, 3, 'combat level unchanged at Cooking 1');
+        assertEqual(H.lootLive(win).length, 0, 'cook does not drop food');
+        assertEqual(win.Hud.useOnId, null, 'cursor clears after range');
+        var drops = win.document.querySelectorAll('#xp-drops .xp-drop');
+        assertEqual(drops.length, 1, 'one Cooking XP drop');
+        assertEqual(drops[0].getAttribute('data-skill'), 'cooking', 'drop skill is cooking');
+        assertEqual(drops[0].getAttribute('data-xp'), '30', 'drop amount is 30');
+        var cookIcon = drops[0].querySelector('img.pix');
+        assert(cookIcon && cookIcon.getAttribute('src').indexOf('assets/svg/skills/cooking.svg') !== -1, 'Cooking skill icon');
+
+        H.click(win, '#tab-bar button[data-tab="skills"]');
+        var cookRow = win.document.querySelector('#skills-list [data-skill="cooking"]');
+        assert(cookRow, 'Cooking Skills row exists');
+        assert(
+            String(cookRow.getAttribute('title') || '').indexOf('30 XP') !== -1,
+            'Skills tab shows Cooking XP'
+        );
+
+        dropsHost.innerHTML = '';
+        var fireResult = win.useItemOnScenery(hero, 'rawshrimp', 'fire');
+        assert(fireResult && fireResult.ok, 'helper cooks on fire kind');
+        assertEqual(fireResult.cooked, 'shrimp', 'fire helper cooked shrimp');
+        assertEqual(stackQty(hero, 'rawshrimp'), 1, 'fire helper consumes one raw shrimp');
+        assertEqual(stackQty(hero, 'shrimp'), 10, 'fire helper adds cooked shrimp');
+        assertEqual(hero.skills.cooking.xp, 60, 'fire cook grants another 30 Cooking XP');
+        assertEqual(hero.skills.cooking.level, 2, '60 XP reaches Cooking 2');
+        var overlay = win.document.getElementById('level-up-overlay');
+        assert(overlay && !overlay.hidden, 'Cooking 2 shows the level-up overlay');
+        win.Hud.hideLevelUp();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        drops = win.document.querySelectorAll('#xp-drops .xp-drop');
+        assertEqual(drops.length, 1, 'one fire Cooking XP drop');
+        assertEqual(drops[0].getAttribute('data-skill'), 'cooking', 'fire drop skill is cooking');
+        assertEqual(drops[0].getAttribute('data-xp'), '30', 'fire drop amount is 30');
+
+        H.click(win, '#tab-bar button[data-tab="skills"]');
+        cookRow = win.document.querySelector('#skills-list [data-skill="cooking"]');
+        assert(
+            String(cookRow.getAttribute('title') || '').indexOf('60 XP') !== -1,
+            'Skills tab shows fire Cooking XP'
+        );
+
+        assertEqual(win.useItemOnScenery(hero, 'rawshrimp', 'shrine'), null, 'raw does not cook on shrine');
+        assertEqual(stackQty(hero, 'rawshrimp'), 1, 'shrine miss does not consume raw');
+        assertEqual(hero.skills.cooking.xp, 60, 'shrine miss grants no Cooking XP');
+
+        win.Hud.beginUseOn('bones');
+        clickTile(18, 8);
+        hero = H.hero(win);
+        assertEqual(stackQty(hero, 'bones'), 0, 'shrine still consumes bones');
+        assertEqual(hero.skills.prayer.xp, 0, 'shrine still grants no Prayer XP');
+        assertEqual(hero.skills.cooking.xp, 60, 'bones on shrine grant no Cooking XP');
+
+        world.encounterLock = true;
+        win.Hud.beginUseOn('rawshrimp');
+        clickTile(16, 17);
+        assertEqual(stackQty(H.hero(win), 'rawshrimp'), 1, 'encounterLock does not cook');
+        assertEqual(H.hero(win).skills.cooking.xp, 60, 'encounterLock grants no Cooking XP');
+        world.encounterLock = false;
+
+        world.clearLoot();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        assertEqual(typeof win.catchFish, 'undefined', 'Fishing still not this tick');
     });
 });
 

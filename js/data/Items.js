@@ -1,7 +1,7 @@
 var ITEM_DB = {
     coins: { name: 'Coins', icon: 'assets/svg/items/coins.svg', stack: true, value: 1, examine: 'A small pile of copper and silver coins.' },
     shrimp: { name: 'Cooked shrimp', icon: 'assets/svg/items/shrimp.svg', heal: 12, stack: true, value: 5, examine: 'A cooked shrimp, still warm enough to eat.' },
-    rawshrimp: { name: 'Raw shrimp', icon: 'assets/svg/items/rawshrimp.svg', stack: true, cook: 'shrimp', value: 5, examine: 'A raw shrimp. It should be cooked.' },
+    rawshrimp: { name: 'Raw shrimp', icon: 'assets/svg/items/rawshrimp.svg', stack: true, cook: 'shrimp', cookXp: 30, value: 5, examine: 'A raw shrimp. It should be cooked.' },
     bread: { name: 'Bread', icon: 'assets/svg/items/bread.svg', heal: 20, stack: true, value: 12, examine: 'A dense loaf baked for the road.' },
     sword: { name: 'Bronze sword', icon: 'assets/svg/items/sword.svg', slot: 'weapon', damage: 16, value: 26, examine: 'A short bronze blade, nicked but serviceable.' },
     shortbow: { name: 'Shortbow', icon: 'assets/svg/items/shortbow.svg', slot: 'weapon', damage: 16, combatClass: 'ranged', value: 32, examine: 'A yew shortbow, light enough for bronze arrows.' },
@@ -316,6 +316,7 @@ function itemUseTargetName(kind) {
 
 function useItemOnScenery(hero, id, kind) {
     var def = ITEM_DB[id];
+    var xp;
     if (!hero || !id || !def || !itemCanUseOn(id, kind)) {
         return null;
     }
@@ -325,6 +326,12 @@ function useItemOnScenery(hero, id, kind) {
     if (def.cook && !addItem(hero, def.cook, 1)) {
         addItem(hero, id, 1);
         return { ok: false, full: true };
+    }
+    if (def.cook && (kind === 'range' || kind === 'fire')) {
+        xp = typeof def.cookXp === 'number' ? def.cookXp : 0;
+        if (xp > 0) {
+            gainSkillXp(hero, 'cooking', xp);
+        }
     }
     return { ok: true, id: id, kind: kind, cooked: def.cook || null };
 }

@@ -1,7 +1,7 @@
 /**
  * Playwright proof: from spawn (328, 248), inventory Use-on is a target
  * cursor. Bones on the shrine and raw shrimp on the Emberhaven range
- * (fire) consume without Prayer/Cooking XP. Phaser keyboard stays off.
+ * (fire) consume; shrine still grants no Prayer XP. Phaser keyboard stays off.
  *
  * Headless via tests/playwright-session.js (reuses a live server, or starts
  * python3 -m http.server on this port and kills that PID on exit).
@@ -107,8 +107,8 @@
             if (stackQty(hero, 'shrimp') !== 9) {
                 throw new Error('cooked qty is ' + stackQty(hero, 'shrimp'));
             }
-            if (hero.skills.cooking.xp !== 0) {
-                throw new Error('Cooking XP changed');
+            if (hero.skills.cooking.xp !== 30) {
+                throw new Error('Cooking XP is ' + hero.skills.cooking.xp + ' not 30');
             }
             if (lastChat() !== 'You use the Raw shrimp on the fire.') {
                 throw new Error('fire chat was ' + lastChat());
