@@ -228,6 +228,64 @@ EmberwoodTests.add('hud: skills, worn, combat style, inventory', function (win, 
     assertMatch(inv.querySelector('[data-item="coins"]').textContent, '8', 'coin stack');
 });
 
+EmberwoodTests.add('hud: Accurate Aggressive Defensive highlight and persist on hero.style', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        var assertStyleOn = function (style, label) {
+            var buttons = win.document.querySelectorAll('#style-row button[data-style]');
+            assertEqual(buttons.length, 3, label + ' has Accurate/Aggressive/Defensive');
+            var on = [];
+            for (var i = 0; i < buttons.length; i++) {
+                if (buttons[i].classList.contains('is-on')) {
+                    on.push(buttons[i].getAttribute('data-style'));
+                }
+            }
+            assertEqual(on.length, 1, label + ' leaves only one style is-on');
+            assertEqual(on[0], style, label + ' is-on matches ' + style);
+            assertEqual(H.hero(win).style, style, label + ' hero.style is ' + style);
+            assertEqual(win.game.registry.get('hero').style, style, label + ' registry persists ' + style);
+        };
+
+        H.click(win, '#tab-bar button[data-tab="combat"]');
+        assertEqual(H.hero(win).style, 'accurate', 'starter style is Accurate');
+        assertStyleOn('accurate', 'default Accurate');
+
+        ['aggressive', 'defensive', 'accurate'].forEach(function (style) {
+            H.click(win, '#style-row button[data-style="' + style + '"]');
+            assertStyleOn(style, 'click ' + style);
+            assert(H.chatHas(win, 'Combat style: ' + style), style + ' logs Combat style');
+        });
+
+        H.click(win, '#style-row button[data-style="aggressive"]');
+        assertStyleOn('aggressive', 'before zone change');
+        H.enterZone(win, 'northwood');
+        world.refreshHud();
+        H.click(win, '#tab-bar button[data-tab="combat"]');
+        assertStyleOn('aggressive', 'after Northwood refreshHud');
+        assertEqual(H.hero(win).style, 'aggressive', 'Aggressive survives zone change');
+
+        H.click(win, '#style-row button[data-style="defensive"]');
+        assertStyleOn('defensive', 'before return to haven');
+        H.enterZone(win, 'haven');
+        world.placePlayer(spawn.x, spawn.y);
+        world.refreshHud();
+        H.click(win, '#tab-bar button[data-tab="combat"]');
+        assertStyleOn('defensive', 'after haven refreshHud');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off after style clicks');
+    });
+});
+
 EmberwoodTests.add('hud: worn sword/shield are display-only', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         var world = H.world(win);
