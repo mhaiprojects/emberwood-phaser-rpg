@@ -263,11 +263,24 @@ var Hud = {
             this.el.questTab.textContent = state.quest;
         }
         this.highlightMinimap(state.zoneId);
-        var fill = document.getElementById('hp-fill');
-        if (fill) {
-            fill.style.width = Math.max(0, Math.min(100, (state.hp / state.maxHp) * 100)) + '%';
-        }
+        this.paintHpFill(state.hp, state.maxHp);
         this.renderHero(this.hero());
+    },
+
+    paintHpFill: function (hp, maxHp) {
+        var fill = document.getElementById('hp-fill');
+        if (!fill) {
+            return;
+        }
+        var ratio = maxHp ? hp / maxHp : 0;
+        fill.style.width = Math.max(0, Math.min(100, ratio * 100)) + '%';
+        if (ratio < 0.35) {
+            fill.style.backgroundColor = '#cc3d3d';
+        } else if (ratio < 0.65) {
+            fill.style.backgroundColor = '#d4a017';
+        } else {
+            fill.style.backgroundColor = '#3dcc6a';
+        }
     },
 
     renderHero: function (hero) {
@@ -276,10 +289,7 @@ var Hud = {
         }
         this.el.hp.textContent = hero.hp + ' / ' + hero.maxHp;
         this.el.gold.textContent = String(hero.gold);
-        var fill = document.getElementById('hp-fill');
-        if (fill && hero.maxHp) {
-            fill.style.width = Math.max(0, Math.min(100, (hero.hp / hero.maxHp) * 100)) + '%';
-        }
+        this.paintHpFill(hero.hp, hero.maxHp);
         this.renderInventory(hero);
         this.renderSkills(hero);
         this.renderEquip(hero);

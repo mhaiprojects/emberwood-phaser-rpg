@@ -3476,6 +3476,116 @@ EmberwoodTests.add('combat: gold target rectangle follows selected living enemy 
     });
 });
 
+EmberwoodTests.add('combat: HP bars go green amber red at 65 and 35 and floaters show on hit heal', function (win, H) {
+    function rgbOf(hex) {
+        var n = parseInt(hex.slice(1), 16);
+        return 'rgb(' + ((n >> 16) & 255) + ', ' + ((n >> 8) & 255) + ', ' + (n & 255) + ')';
+    }
+    function expectHudBar(hp, hex, label) {
+        var hero = H.hero(win);
+        hero.hp = hp;
+        win.game.registry.set('hero', hero);
+        H.world(win).refreshHud();
+        var fill = win.document.getElementById('hp-fill');
+        assert(fill, 'HUD hp-fill exists');
+        assertEqual(fill.style.width, hp + '%', label + ' HUD width');
+        var painted = fill.style.backgroundColor.replace(/\s+/g, '');
+        var expect = rgbOf(hex).replace(/\s+/g, '');
+        assert(painted === hex || painted === expect || painted === hex.toLowerCase(), label + ' HUD color ' + painted);
+    }
+    function expectUnitBar(unit, hp, color, label) {
+        unit.hp = hp;
+        unit.refreshHpBar();
+        var ratio = hp / unit.maxHp;
+        assertEqual(unit.hpBarFill.width, 28 * ratio, label + ' bar width');
+        assertEqual(unit.hpBarFill.fillColor, color, label + ' bar color');
+    }
+    function findFloater(battle, prefix) {
+        var list = battle.children.list;
+        for (var i = list.length - 1; i >= 0; i--) {
+            var obj = list[i];
+            if (obj.type === 'Text' && String(obj.text).indexOf(prefix) === 0) {
+                return obj;
+            }
+        }
+        return null;
+    }
+
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        world.placePlayer(spawn.x, spawn.y);
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+        assertEqual(H.hero(win).maxHp, 100, 'starter maxHp 100');
+
+        expectHudBar(100, '#3dcc6a', 'full');
+        expectHudBar(65, '#3dcc6a', '65% green');
+        expectHudBar(64, '#d4a017', 'just under 65% amber');
+        expectHudBar(35, '#d4a017', '35% amber');
+        expectHudBar(34, '#cc3d3d', 'just under 35% red');
+
+        return H.startCustomFight(win, [
+            { type: 'Goblin', texture: 'slime', tint: 0x5aa33a, hp: 100, damage: 1, gold: 0, xp: 1 }
+        ]);
+    }).then(function () {
+        var battle = H.battle(win);
+        var hero = battle.heroes[0];
+        var foe = battle.enemies[0];
+        assertEqual(hero.maxHp, 100, 'battle hero maxHp 100');
+        assertEqual(foe.maxHp, 100, 'battle foe maxHp 100');
+
+        expectUnitBar(hero, 100, 0x3dcc6a, 'hero full green');
+        expectUnitBar(hero, 65, 0x3dcc6a, 'hero 65% green');
+        expectUnitBar(hero, 64, 0xd4a017, 'hero 64% amber');
+        expectUnitBar(hero, 35, 0xd4a017, 'hero 35% amber');
+        expectUnitBar(hero, 34, 0xcc3d3d, 'hero 34% red');
+        expectUnitBar(foe, 100, 0x3dcc6a, 'foe full green');
+        expectUnitBar(foe, 65, 0x3dcc6a, 'foe 65% green');
+        expectUnitBar(foe, 64, 0xd4a017, 'foe 64% amber');
+        expectUnitBar(foe, 35, 0xd4a017, 'foe 35% amber');
+        expectUnitBar(foe, 34, 0xcc3d3d, 'foe 34% red');
+
+        var orig = win.Phaser.Math.Between;
+        win.Phaser.Math.Between = function () { return 0; };
+        try {
+            foe.hp = 80;
+            foe.refreshHpBar();
+            assertEqual(foe.takeDamage(7), 7, 'hit deals 7');
+            var hit = findFloater(battle, '-');
+            assert(hit, 'minus floater on hit');
+            assertEqual(hit.text, '-7', 'hit floater text');
+            assertEqual(String(hit.style.color).toLowerCase(), '#ff6b6b', 'hit floater color');
+
+            hero.hp = 50;
+            hero.refreshHpBar();
+            assertEqual(hero.heal(12), 12, 'heal restores 12');
+            var plus = findFloater(battle, '+');
+            assert(plus, 'plus floater on heal');
+            assertEqual(plus.text, '+12', 'heal floater text');
+            assertEqual(String(plus.style.color).toLowerCase(), '#7dffb3', 'heal floater color');
+        } finally {
+            win.Phaser.Math.Between = orig;
+        }
+
+        expectUnitBar(foe, foe.hp, 0x3dcc6a, 'foe after hit still green');
+        expectUnitBar(hero, hero.hp, 0xd4a017, 'hero after heal amber');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        return H.forceFlee(win);
+    }).then(function () {
+        H.enterZone(win, 'haven');
+    }).catch(function (err) {
+        return H.cleanupBattle(win).then(function () {
+            throw err;
+        });
+    });
+});
+
 EmberwoodTests.add('combat: goblin kill advances the militia quest', function (win, H) {
     return H.cleanupBattle(win).then(function () {
         H.enterZone(win, 'northwood');

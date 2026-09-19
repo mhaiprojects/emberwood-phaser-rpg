@@ -131,7 +131,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Run fail chats `You fail to get away!` and the enemy still gets a turn. — Conclusion: spawn (328,248) Between(0,99) return 70 fails; chats `You fail to get away!`; enemy still attacks; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1
 - [done] Player death shows `#dead-overlay` “You are dead”, `Hud.mode === 'dead'`, and combat level in the subtitle. — Conclusion: done — lose starts GameOverScene; `#dead-overlay` “You are dead”, `Hud.mode === 'dead'`, `#dead-text` Combat level N; retry returns to title; Phaser 3.90 keyboard off; Playwright 1/1 —
 - [done] Return to title stops scenes and shows `#title-overlay` again. — Conclusion: Return to title stops World/Battle/GameOver, only TitleScene + `#title-overlay`; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1
-- [verify] HP bars go green / amber / red at 65% and 35% and that ± floaters appear on hit/heal. — Conclusion: —
+- [done] HP bars go green / amber / red at 65% and 35% and that ± floaters appear on hit/heal. — Conclusion: Spawn (328,248) HUD+battle bars green ≥65% / amber ≥35% / red <35%; − hit and + heal floaters. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [verify] Worn sword/shield are **display-only** today; then apply weapon `damage` and shield `defence` to the hit formula. — Conclusion: —
 - [todo] Reconcile `levelHero` (combat XP / 40) with `gainSkillXp` / `maxHp = 10 * hitpoints` so one combat-level rule wins. — Conclusion: —
 - [todo] OSRS-like combat level from Attack, Strength, Defence, Hitpoints, Prayer, Ranged, Magic. — Conclusion: —
@@ -441,4 +441,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 68 | 2026-09-19 | Run fail chats You fail to get away! and the enemy still gets a turn | done — spawn (328,248) Between(0,99) return 70 fails; chats `You fail to get away!`; enemy still attacks; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 69 | 2026-09-19 | Player death shows #dead-overlay You are dead, Hud.mode dead, combat level subtitle | done — lose → GameOverScene `#dead-overlay` “You are dead”, Hud.mode dead, `#dead-text` Combat level N; retry → title; Phaser 3.90 keyboard off; Playwright 1/1 |
 | 70 | 2026-09-19 | Return to title stops scenes and shows #title-overlay again | done — Return to title stops World/Battle/GameOver, only TitleScene + `#title-overlay`; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 71 | 2026-09-19 | HP bars go green / amber / red at 65% and 35%; ± floaters on hit/heal | done — spawn (328,248) HUD+battle green ≥65% / amber ≥35% / red <35%; −/+ floaters; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 
