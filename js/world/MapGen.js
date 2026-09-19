@@ -71,8 +71,33 @@ var SCENERY_EXAMINE = {
     booth: 'A bank booth. The clerk is away.',
     dock: 'A weathered wooden dock. The tide slaps the pilings.',
     boat: 'A fishing boat, tied off and empty.',
-    tomb: 'A weathered tomb marker. The name is worn away.'
+    tomb: 'A weathered tomb marker. The name is worn away.',
+    gate: 'A wooden courtyard gate. The hinges still work.',
+    'door-bank': 'The bank door. Elise keeps the ledgers inside.',
+    'door-shop': 'The shop door. A faded sign hangs above it.',
+    'door-guild': 'The guild hall door. Bram drills the militia inside.'
 };
+
+var TOWN_DOOR_KINDS = ['door-bank', 'door-shop', 'door-guild'];
+
+function townHouseDoorTile(rect) {
+    return { x: rect.x + Math.floor(rect.w / 2), y: rect.y + rect.h - 1 };
+}
+
+function townDoorKindAt(tx, ty) {
+    var i;
+    for (i = 0; i < TOWN_HOUSES.length; i++) {
+        var door = townHouseDoorTile(TOWN_HOUSES[i]);
+        if (door.x === tx && door.y === ty) {
+            return TOWN_DOOR_KINDS[i] || null;
+        }
+    }
+    return null;
+}
+
+function isWalkableExamineKind(kind) {
+    return kind === 'gate' || kind === 'door-bank' || kind === 'door-shop' || kind === 'door-guild';
+}
 
 function tileCenter(tx, ty) {
     var size = typeof TILE_SIZE === 'number' ? TILE_SIZE : 16;
@@ -419,6 +444,18 @@ function sceneryKindAt(grid, tx, ty, opts) {
             return 'wall';
         }
         return 'rock';
+    }
+    if (index === TILE.PATH) {
+        if (opts.interior) {
+            return null;
+        }
+        if (opts.zoneId && opts.zoneId !== 'haven') {
+            return null;
+        }
+        if (tx === HAVEN_GATE_TILE.x && ty === HAVEN_GATE_TILE.y) {
+            return 'gate';
+        }
+        return townDoorKindAt(tx, ty);
     }
     return null;
 }

@@ -9414,6 +9414,171 @@ EmberwoodTests.add('world: examine on scenery tree, rock, shrine, water, house w
     });
 });
 
+EmberwoodTests.add('world: examine courtyard gate and house doors without changing walk-through', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        parkWorldBodies(world);
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.engageTarget = null;
+        world.talkTarget = null;
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        if (win.Hud.hideContextMenu) {
+            win.Hud.hideContextMenu();
+        }
+        assertEqual(spawn.x, 328, 'spawn x tile center');
+        assertEqual(spawn.y, 248, 'spawn y tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assertEqual(win.Hud.mode, 'world', 'world mode');
+        assert(String(win.Phaser.VERSION).indexOf('3.') === 0, 'Phaser 3');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(!world.cursors, 'WorldScene has no Phaser cursors');
+        assertEqual(typeof world.examineAt, 'function', 'examineAt exists');
+        assertEqual(typeof win.sceneryKindAt, 'function', 'sceneryKindAt exists');
+        assertEqual(typeof win.isWalkableExamineKind, 'function', 'isWalkableExamineKind exists');
+        assertEqual(win.examineSceneryText('gate'), 'A wooden courtyard gate. The hinges still work.', 'gate examine text');
+        assertEqual(win.examineSceneryText('door-bank'), 'The bank door. Elise keeps the ledgers inside.', 'bank door examine text');
+        assertEqual(win.examineSceneryText('door-shop'), 'The shop door. A faded sign hangs above it.', 'shop door examine text');
+        assertEqual(win.examineSceneryText('door-guild'), 'The guild hall door. Bram drills the militia inside.', 'guild door examine text');
+        assert(win.isWalkableExamineKind('gate'), 'gate is a walkable examine');
+        assert(win.isWalkableExamineKind('door-bank'), 'bank door is a walkable examine');
+        assert(!win.isWalkableExamineKind('wall'), 'house wall stays examine-only');
+
+        var gate = win.HAVEN_GATE_TILE;
+        var interiors = win.INTERIOR_LIST.filter(function (spec) {
+            return spec.id === 'bank' || spec.id === 'shop' || spec.id === 'guild';
+        });
+        assertEqual(interiors.length, 3, 'bank/shop/guild interiors exist');
+        assertEqual(world.tileGrid[gate.y][gate.x], win.TILE.PATH, 'courtyard gate stays PATH');
+        assertEqual(win.TILE.DOOR, 16, 'TILE.DOOR is unchanged');
+        var opts = { houseRects: win.housesForBiome('town'), zoneId: 'haven' };
+        assertEqual(win.sceneryKindAt(world.tileGrid, gate.x, gate.y, opts), 'gate', 'kind gate');
+        interiors.forEach(function (spec) {
+            assertEqual(world.tileGrid[spec.doorTy][spec.doorTx], win.TILE.PATH, spec.id + ' door stays PATH');
+            assertEqual(win.sceneryKindAt(world.tileGrid, spec.doorTx, spec.doorTy, opts), 'door-' + spec.id, spec.id + ' door kind');
+        });
+
+        function clickTile(tx, ty) {
+            var pt = win.tileCenter(tx, ty);
+            world.onClick({ worldX: pt.x, worldY: pt.y });
+            return pt;
+        }
+        function rightTile(tx, ty) {
+            var pt = win.tileCenter(tx, ty);
+            world.onClick({
+                worldX: pt.x,
+                worldY: pt.y,
+                button: 2,
+                rightButtonDown: function () { return true; },
+                event: { clientX: 48, clientY: 56 }
+            });
+            return pt;
+        }
+
+        var lastBefore = H.lastChat(win);
+        var gatePt = clickTile(gate.x, gate.y);
+        assert(world.walkTarget, 'left-click gate still walks through');
+        assertEqual(Math.round(world.walkTarget.x), Math.round(gatePt.x), 'gate walk x');
+        assertEqual(Math.round(world.walkTarget.y), Math.round(gatePt.y), 'gate walk y');
+        assertEqual(H.lastChat(win), lastBefore, 'left-click gate does not examine');
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        world.examineAt(gatePt.x, gatePt.y);
+        assertEqual(H.lastChat(win), 'A wooden courtyard gate. The hinges still work.', 'examineAt gate logs flavor');
+        assert(!world.walkTarget, 'examineAt gate does not walk');
+
+        interiors.forEach(function (spec) {
+            if (world.clearWalk) {
+                world.clearWalk();
+            }
+            lastBefore = H.lastChat(win);
+            var doorPt = clickTile(spec.doorTx, spec.doorTy);
+            assert(world.walkTarget, 'left-click ' + spec.id + ' door still walks through');
+            assertEqual(Math.round(world.walkTarget.x), Math.round(doorPt.x), spec.id + ' walk x');
+            assertEqual(Math.round(world.walkTarget.y), Math.round(doorPt.y), spec.id + ' walk y');
+            assertEqual(H.lastChat(win), lastBefore, 'left-click ' + spec.id + ' door does not examine');
+            if (world.clearWalk) {
+                world.clearWalk();
+            }
+            world.examineAt(doorPt.x, doorPt.y);
+            assertEqual(H.lastChat(win), win.examineSceneryText('door-' + spec.id), 'examineAt ' + spec.id + ' logs flavor');
+            assert(!world.walkTarget, 'examineAt ' + spec.id + ' does not walk');
+        });
+
+        var menu = win.document.getElementById('ctx-menu');
+        assert(menu, 'ctx-menu element exists');
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        win.Hud.hideContextMenu();
+        rightTile(gate.x, gate.y);
+        assert(!world.walkTarget, 'right-click gate does not walk immediately');
+        assert(!menu.hidden, 'right-click gate opens context menu');
+        var examBtn = menu.querySelector('[data-ctx="examine"]');
+        var walkBtn = menu.querySelector('[data-ctx="walk-here"]');
+        assert(examBtn, 'Examine action is listed on the gate');
+        assertEqual(examBtn.textContent, 'Examine', 'Examine label');
+        assert(walkBtn, 'Walk here remains listed on the gate');
+        H.mouseClick(win, examBtn);
+        assert(menu.hidden, 'Examine closes the menu');
+        assertEqual(H.lastChat(win), 'A wooden courtyard gate. The hinges still work.', 'Examine menu logs gate line');
+        assert(!world.walkTarget, 'Examine menu does not walk');
+
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        win.Hud.hideContextMenu();
+        rightTile(11, 10);
+        examBtn = menu.querySelector('[data-ctx="examine"]');
+        assert(examBtn, 'Examine action is listed on the bank door');
+        H.mouseClick(win, examBtn);
+        assertEqual(H.lastChat(win), 'The bank door. Elise keeps the ledgers inside.', 'Examine menu logs bank door');
+
+        H.enterZone(win, 'millfields');
+        world = H.world(win);
+        parkWorldBodies(world);
+        H.setAutoAttack(win, false);
+        world.encounterLock = false;
+        var locked = win.LOCKED_DOOR;
+        assertEqual(world.tileGrid[locked.ty][locked.tx], win.TILE.DOOR, 'farm door stays TILE.DOOR');
+        assertEqual(win.sceneryKindAt(world.tileGrid, locked.tx, locked.ty, {
+            houseRects: win.housesForBiome('farm'),
+            zoneId: 'millfields'
+        }), null, 'locked farm door is not examine scenery');
+
+        H.enterZone(win, 'haven');
+        world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = true;
+        lastBefore = H.lastChat(win);
+        clickTile(gate.x, gate.y);
+        assertEqual(H.lastChat(win), lastBefore, 'encounterLock ignores gate click');
+        assert(!world.walkTarget, 'encounterLock does not walk through the gate');
+        world.encounterLock = false;
+        win.Hud.mode = 'battle';
+        clickTile(11, 10);
+        assertEqual(H.lastChat(win), lastBefore, 'battle mode ignores house-door click');
+        assert(!world.walkTarget, 'battle mode does not walk through the bank door');
+        win.Hud.mode = 'world';
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        H.clearKeys(win);
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        assertEqual(Math.round(world.player.x), 328, 'restored spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'restored spawn y');
+    });
+});
+
 EmberwoodTests.add('world: Emberhaven stall, range, anvil, and bank booth are examine-only scenery', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');

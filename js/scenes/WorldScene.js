@@ -775,7 +775,7 @@ var WorldScene = new Phaser.Class({
             return;
         }
         var scenery = this.pickScenery(x, y);
-        if (scenery) {
+        if (scenery && !(typeof isWalkableExamineKind === 'function' && isWalkableExamineKind(scenery.kind))) {
             this.engageTarget = null;
             this.talkTarget = null;
             this.examineScenery(scenery);
@@ -821,7 +821,8 @@ var WorldScene = new Phaser.Class({
         var kind = typeof sceneryKindAt === 'function'
             ? sceneryKindAt(this.tileGrid, tile.tx, tile.ty, {
                 houseRects: this.houseRectsNow(),
-                interior: !!this.interiorId
+                interior: !!this.interiorId,
+                zoneId: this.zoneId
             })
             : null;
         if (!kind) {
