@@ -3722,6 +3722,123 @@ EmberwoodTests.add('npcs: flavor NPCs emit Name plus one of their lines', functi
     });
 });
 
+EmberwoodTests.add('npcs: Ned Corb Willa Kett tutor lines unlock fishing mining cows combat styles', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        var world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(typeof win.applyNpcTutor, 'function', 'applyNpcTutor exists');
+        assertEqual(H.hero(win).tutors && Object.keys(H.hero(win).tutors).length, 0, 'starter has no tutors');
+
+        var tutors = [
+            {
+                zone: 'southshore',
+                key: 'fisher',
+                name: 'Fisher Ned',
+                x: 220,
+                y: 160,
+                tutor: 'fishing',
+                needles: ['fishing', 'net']
+            },
+            {
+                zone: 'darkmine',
+                key: 'miner',
+                name: 'Miner Corb',
+                x: 210,
+                y: 200,
+                tutor: 'mining',
+                needles: ['mining', 'pickaxe']
+            },
+            {
+                zone: 'millfields',
+                key: 'farmer',
+                name: 'Farmer Willa',
+                x: 200,
+                y: 180,
+                tutor: 'cows',
+                needles: ['cow', 'hide']
+            },
+            {
+                zone: 'northwood',
+                key: 'ranger',
+                name: 'Ranger Kett',
+                x: 240,
+                y: 200,
+                tutor: 'combat',
+                needles: ['Accurate', 'Aggressive', 'Defensive']
+            }
+        ];
+
+        tutors.forEach(function (want) {
+            H.enterZone(win, want.zone);
+            world = H.world(win);
+            H.setAutoAttack(win, false);
+            var npc = H.findNpc(win, want.key);
+            assert(npc, want.name + ' spawned in ' + want.zone);
+            assertEqual(npc.npcDef.name, want.name, want.name + ' display name');
+            assertEqual(Math.round(npc.x), want.x, want.name + ' x');
+            assertEqual(Math.round(npc.y), want.y, want.name + ' y');
+            assertEqual(npc.npcDef.tutor, want.tutor, want.name + ' tutor key');
+            var lines = npc.npcDef.lines;
+            assert(lines && lines.length >= 4, want.name + ' has flavor plus tutor lines');
+            var joined = lines.join(' ');
+            want.needles.forEach(function (needle) {
+                assert(joined.indexOf(needle) !== -1, want.name + ' explains ' + needle);
+            });
+            assert(!H.hero(win).tutors[want.tutor], want.name + ' tutor locked before talk');
+
+            win.Hud.el.log.innerHTML = '';
+            world.tryTalk(npc);
+            assert(win.Hud.dialogueOpen(), want.name + ' opens dialogue');
+            assertEqual(H.lastChat(win), want.name + ': ' + lines[0], want.name + ' first page');
+            for (var idx = 1; idx < lines.length; idx++) {
+                win.Hud.advanceDialogue();
+                assertEqual(H.lastChat(win), want.name + ': ' + lines[idx], want.name + ' page ' + idx);
+            }
+            assertEqual(H.hero(win).tutors[want.tutor], true, want.name + ' unlocks ' + want.tutor);
+            win.Hud.advanceDialogue();
+            assert(!win.Hud.dialogueOpen(), want.name + ' dialogue closes after last page');
+            assert(!win.game.input.keyboard, 'Phaser keyboard off after ' + want.name);
+        });
+
+        H.enterZone(win, 'northwood');
+        world = H.world(win);
+        var kett = H.findNpc(win, 'ranger');
+        assert(kett, 'Kett still in Northwood for Talk option');
+        H.hero(win).tutors.combat = false;
+        win.game.registry.set('hero', H.hero(win));
+        world.dialogueNpc = kett;
+        world.chooseDialogueOption('talk');
+        assert(win.Hud.dialogueOpen(), 'Talk option opens Kett dialogue');
+        assertEqual(H.hero(win).tutors.combat, true, 'Talk option also unlocks combat');
+        win.Hud.hideDialogue();
+
+        var unlocked = H.hero(win).tutors;
+        assertEqual(unlocked.fishing, true, 'fishing stays unlocked');
+        assertEqual(unlocked.mining, true, 'mining stays unlocked');
+        assertEqual(unlocked.cows, true, 'cows stays unlocked');
+        assertEqual(unlocked.combat, true, 'combat stays unlocked');
+
+        H.enterZone(win, 'haven');
+        world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('npcs: click-to-continue pages through multi-line dialogue', function (win, H) {
     function hiddenCssRule(doc, id) {
         var needle = '#' + id + '[hidden]';

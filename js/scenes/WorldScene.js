@@ -1706,6 +1706,9 @@ var WorldScene = new Phaser.Class({
             }
         } else {
             pages = (def.lines || []).slice();
+            if (typeof applyNpcTutor === 'function' && applyNpcTutor(hero, def)) {
+                this.registry.set('hero', hero);
+            }
         }
         this.talkTarget = null;
         this.dialogueNpc = npc;
@@ -1738,6 +1741,10 @@ var WorldScene = new Phaser.Class({
         }
         if (id === 'talk') {
             this.talkTarget = null;
+            var talkHero = this.registry.get('hero');
+            if (typeof applyNpcTutor === 'function' && applyNpcTutor(talkHero, def)) {
+                this.registry.set('hero', talkHero);
+            }
             Hud.startDialogue(def.name, (def.lines || []).slice(), options);
             return;
         }

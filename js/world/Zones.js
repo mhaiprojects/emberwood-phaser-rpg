@@ -123,6 +123,18 @@ function examineNpcText(def) {
     return def.name ? "It's " + def.name + '.' : '';
 }
 
+function applyNpcTutor(hero, def) {
+    if (!hero || !def || !def.tutor) {
+        return false;
+    }
+    hero.tutors = hero.tutors || {};
+    if (hero.tutors[def.tutor]) {
+        return false;
+    }
+    hero.tutors[def.tutor] = true;
+    return true;
+}
+
 var QUEST_HEAD_STAR = 0x3aa0ff;
 var QUEST_HEAD_COMPASS = 0xf0c040;
 
@@ -148,13 +160,13 @@ var NPC_DEFS = {
         { key: 'shopkeep', name: 'Shopkeeper Mira', x: 376, y: 216, tint: 0xffffff, texture: 'npc-farmer', options: ['talk', 'trade'], examine: 'The town shopkeeper. She minds the general store.', lines: ['Fine wares if you have the coin.', 'Bones and spare food fetch a price.'] }
     ],
     northwood: [
-        { key: 'ranger', name: 'Ranger Kett', x: 240, y: 200, tint: 0xffffff, options: ['talk'], examine: 'A Northwood ranger. Goblin tracks stain her boots.', lines: ['Goblins nest in these trees.', 'Click a goblin to fight it, like the old days.'] }
+        { key: 'ranger', name: 'Ranger Kett', x: 240, y: 200, tint: 0xffffff, options: ['talk'], tutor: 'combat', examine: 'A Northwood ranger. Goblin tracks stain her boots.', lines: ['Goblins nest in these trees.', 'Click a goblin to fight it, like the old days.', 'Open Combat and pick Accurate, Aggressive, or Defensive.', 'Accurate trains Attack. Aggressive trains Strength. Defensive trains Defence.'] }
     ],
     millfields: [
-        { key: 'farmer', name: 'Farmer Willa', x: 200, y: 180, tint: 0xffffff, options: ['talk'], examine: 'A Millfields farmer. Cabbage stains her apron.', lines: ['Cows got into the cabbages again.', 'The mill road runs back to Emberhaven.'] }
+        { key: 'farmer', name: 'Farmer Willa', x: 200, y: 180, tint: 0xffffff, options: ['talk'], tutor: 'cows', examine: 'A Millfields farmer. Cabbage stains her apron.', lines: ['Cows got into the cabbages again.', 'The mill road runs back to Emberhaven.', 'Click a cow when you need hide and beef.', 'They kick, so keep a combat style ready.'] }
     ],
     southshore: [
-        { key: 'fisher', name: 'Fisher Ned', x: 220, y: 160, tint: 0xffffff, options: ['talk'], examine: 'An old shore fisher. Salt and rope have worn his hands.', lines: ['Crabs pinch harder than they look.', 'Ships used to stop here. Not anymore.'] }
+        { key: 'fisher', name: 'Fisher Ned', x: 220, y: 160, tint: 0xffffff, options: ['talk'], tutor: 'fishing', examine: 'An old shore fisher. Salt and rope have worn his hands.', lines: ['Crabs pinch harder than they look.', 'Ships used to stop here. Not anymore.', 'Cast a net at the fishing spots along the shore.', 'You will need a small fishing net first.'] }
     ],
     westmead: [
         { key: 'wanderer', name: 'Wanderer Sila', x: 180, y: 190, tint: 0xffffff, options: ['talk'], examine: 'A plains wanderer. Her cloak is dusted with Westmead grass.', lines: ['Plains look empty until they are not.', 'Graves lie north-west. Do not linger.'] }
@@ -163,7 +175,7 @@ var NPC_DEFS = {
         { key: 'ghost', name: 'Wisp', x: 200, y: 170, tint: 0xffffff, options: ['talk'], examine: 'A restless grave-wisp. Cold light pools where a face should be.', lines: ['The dead remember steel.', 'Turn back unless you seek bones.'] }
     ],
     darkmine: [
-        { key: 'miner', name: 'Miner Corb', x: 210, y: 200, tint: 0xffffff, options: ['talk'], examine: 'A Darkmine digger. He will not go down the lower shaft.', lines: ['Bats took the lower shaft.', 'Ore waits for someone braver than me.'] }
+        { key: 'miner', name: 'Miner Corb', x: 210, y: 200, tint: 0xffffff, options: ['talk'], tutor: 'mining', examine: 'A Darkmine digger. He will not go down the lower shaft.', lines: ['Bats took the lower shaft.', 'Ore waits for someone braver than me.', 'Prospect the rocks if you mean to start mining.', 'Bring a pickaxe. Copper and tin wait in the stone.'] }
     ],
     highlands: [
         { key: 'hermit', name: 'Hermit Ola', x: 240, y: 160, tint: 0xffffff, options: ['talk'], examine: 'A windrock hermit. Drake-scale grit is stuck in her cloak.', lines: ['Drakes nest on the windrock.', 'Bring a stout shield.'] }

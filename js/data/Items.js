@@ -45,6 +45,7 @@ function makeHero() {
             { id: 'bread', qty: 3 }
         ],
         bank: [],
+        tutors: {},
         skills: {
             attack: { level: 1, xp: 0 },
             strength: { level: 1, xp: 0 },
