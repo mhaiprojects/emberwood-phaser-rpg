@@ -193,7 +193,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [todo] Show skill total and a single derived combat level on the side HUD (replace the ambiguous `hero.level`). — Conclusion: —
 - [todo] Gate resources by level (e.g. copper/tin 1, iron 15) with a clear “You need level N” chat. — Conclusion: —
 - [todo] After the first six gathering skills work, add **one** extra that fits: Firemaking or Smithing (not a full 23-skill dump). — Conclusion: —
-- [verify] Skill icons resolve under `assets/svg/skills/{id}.svg`. — Conclusion: —
+- [done] Skill icons resolve under `assets/svg/skills/{id}.svg`. — Conclusion: From spawn (328,248) `skillIcon(id)` is `assets/svg/skills/{id}.svg`; all 12 Skills-tab icons + side HUD Hitpoints fetch 200 SVG and decode. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [todo] Keep unused stretch skills (Agility, Thieving, Slayer, Runecraft, Hunter, Farming, Herblore, Fletching, Construction) listed only as later backlog items — do not stub empty tabs. — Conclusion: —
 
 ## 7. Gathering / processing / skilling loops (20)
@@ -453,4 +453,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 80 | 2026-09-19 | Stacks merge by id and drop when qty hits 0 | done — spawn (328,248) addItem merges by id; takeItem/eat last qty drops the stack; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 81 | 2026-09-19 | gainSkillXp level curve 1 + floor(sqrt(xp / 50)); Hitpoints never below 10 | done — spawn (328,248) Attack 50→2, Strength 200→3; 1154 XP curves to 5 but Hitpoints stays ≥10; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 82 | 2026-09-19 | Hitpoints level-up sets maxHp = 10 * level and chats Skill increased to N | done — spawn (328,248) 5000 XP → 11 / 110 + `Hitpoints increased to 11.`; 6050 → 12 / 120; Attack chat does not change maxHp; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 83 | 2026-09-19 | Skill icons resolve under assets/svg/skills/{id}.svg | done — spawn (328,248) skillIcon + 12 Skills-tab icons + side HUD Hitpoints fetch 200 SVG and decode; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 

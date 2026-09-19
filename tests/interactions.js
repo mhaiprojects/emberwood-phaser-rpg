@@ -263,6 +263,69 @@ EmberwoodTests.add('hud: skills tab lists twelve skills with icons', function (w
     }));
 });
 
+EmberwoodTests.add('hud: skill icons resolve under assets/svg/skills/{id}.svg', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        world.placePlayer(spawn.x, spawn.y);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.') === 0, 'Phaser 3');
+        assertEqual(typeof win.skillIcon, 'function', 'skillIcon helper exists');
+        assert(win.SKILL_NAMES && win.SKILL_NAMES.length === 12, 'twelve SKILL_NAMES');
+
+        win.SKILL_NAMES.forEach(function (pair) {
+            assertEqual(win.skillIcon(pair[0]), 'assets/svg/skills/' + pair[0] + '.svg', pair[1] + ' skillIcon path');
+        });
+
+        var sideHp = win.document.getElementById('hud-hp').closest('.stat').querySelector('img.pix');
+        assert(sideHp, 'side HUD Hitpoints icon exists');
+        assertEqual(sideHp.getAttribute('src'), 'assets/svg/skills/hitpoints.svg', 'side HUD Hitpoints path');
+
+        H.click(win, '#tab-bar button[data-tab="skills"]');
+        assert(H.panelVisible(win, 'skills'), 'skills panel visible');
+        var rows = win.document.querySelectorAll('#skills-list .skill-row');
+        assertEqual(rows.length, 12, 'twelve skill rows');
+
+        win.SKILL_NAMES.forEach(function (pair, i) {
+            var img = rows[i].querySelector('img.pix');
+            assert(img, pair[1] + ' has icon');
+            assertEqual(img.getAttribute('src'), win.skillIcon(pair[0]), pair[1] + ' HUD src is skillIcon');
+        });
+
+        var imgs = win.document.querySelectorAll('#skills-list .skill-row img.pix');
+        return Promise.all(win.SKILL_NAMES.map(function (pair, i) {
+            var path = 'assets/svg/skills/' + pair[0] + '.svg';
+            return win.fetch(path).then(function (res) {
+                assert(res.ok, pair[1] + ' svg HTTP ' + res.status);
+                assertEqual(res.status, 200, pair[1] + ' svg status 200');
+                return res.text();
+            }).then(function (body) {
+                assert(body.indexOf('<svg') !== -1, pair[1] + ' body is SVG');
+                var img = imgs[i];
+                var ready = (img.complete && img.naturalWidth > 0)
+                    ? Promise.resolve()
+                    : new Promise(function (resolve, reject) {
+                        img.onload = function () { resolve(); };
+                        img.onerror = function () { reject(new Error(pair[1] + ' icon failed to load')); };
+                    });
+                return ready.then(function () {
+                    assert(img.complete, pair[1] + ' icon complete');
+                    assert(img.naturalWidth > 0, pair[1] + ' icon decoded');
+                });
+            });
+        }));
+    });
+});
+
 EmberwoodTests.add('hud: start skills Hitpoints 10 / 1154 XP / 100 HP; others 1 / 0', function (win, H) {
     var world = H.world(win);
     var hero = win.makeHero();
