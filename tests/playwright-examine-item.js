@@ -52,8 +52,8 @@
 
             var bonesLine = window.itemExamineText('bones');
             var ids = Object.keys(window.ITEM_DB);
-            if (ids.length !== 7) {
-                throw new Error('ITEM_DB count is ' + ids.length + ' not 7');
+            if (ids.length !== 8) {
+                throw new Error('ITEM_DB count is ' + ids.length + ' not 8');
             }
             var seen = {};
             ids.forEach(function (id) {

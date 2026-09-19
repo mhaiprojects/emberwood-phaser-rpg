@@ -2,6 +2,7 @@ var Hud = {
     mode: 'title',
     battle: null,
     selectingEnemy: false,
+    useOnId: null,
     tab: 'inv',
 
     init: function () {
@@ -368,6 +369,9 @@ var Hud = {
             if (event.code === 'Escape' && self.el.worldMap && !self.el.worldMap.hidden) {
                 self.hideWorldMap();
             }
+            if (event.code === 'Escape' && self.useOnId) {
+                self.clearUseOn();
+            }
             if (event.code === 'F9') {
                 if (window.Keys && Keys.typing(event)) {
                     return;
@@ -435,6 +439,15 @@ var Hud = {
             return;
         }
         if (this.mode === 'title' || this.mode === 'dead') {
+            return;
+        }
+        if (this.useOnId) {
+            if (this.useOnId === id) {
+                this.clearUseOn();
+                return;
+            }
+            this.log('Nothing interesting happens.');
+            this.clearUseOn();
             return;
         }
         var def = ITEM_DB[id];
@@ -570,6 +583,59 @@ var Hud = {
         return true;
     },
 
+    beginUseOn: function (id) {
+        var hero = this.hero();
+        if (!id || this.mode !== 'world' || !hero || !heroHasItem(hero, id)) {
+            this.clearUseOn();
+            return false;
+        }
+        this.hideContextMenu();
+        this.useOnId = id;
+        if (this.el && this.el.shell) {
+            this.el.shell.classList.add('is-use-on');
+        }
+        this.log('Use ' + itemName(id) + ' ->');
+        return true;
+    },
+
+    clearUseOn: function () {
+        this.useOnId = null;
+        if (this.el && this.el.shell) {
+            this.el.shell.classList.remove('is-use-on');
+        }
+    },
+
+    finishUseOn: function (kind) {
+        var id = this.useOnId;
+        var hero;
+        var result;
+        if (!id || this.mode !== 'world') {
+            this.clearUseOn();
+            return false;
+        }
+        if (!kind || typeof itemCanUseOn !== 'function' || !itemCanUseOn(id, kind)) {
+            this.log('Nothing interesting happens.');
+            this.clearUseOn();
+            return false;
+        }
+        hero = this.hero();
+        result = typeof useItemOnScenery === 'function' ? useItemOnScenery(hero, id, kind) : null;
+        if (!result) {
+            this.log('You do not have that.');
+            this.clearUseOn();
+            return false;
+        }
+        if (!result.ok) {
+            this.log('inventory full');
+            this.clearUseOn();
+            return false;
+        }
+        this.saveHero(hero);
+        this.log('You use the ' + itemName(id) + ' on the ' + itemUseTargetName(kind) + '.');
+        this.clearUseOn();
+        return true;
+    },
+
     showInvDropMenu: function (id, event) {
         if (this.mode !== 'world' || !id) {
             this.hideContextMenu();
@@ -584,6 +650,7 @@ var Hud = {
         } else if (verb === 'bury') {
             items.push({ label: 'Bury', action: 'bury' });
         }
+        items.push({ label: 'Use', action: 'use' });
         items.push({ label: 'Drop', action: 'drop' });
         items.push({ label: 'Examine', action: 'examine' });
         this.showContextMenu(items, {
@@ -627,6 +694,7 @@ var Hud = {
         this.hideDialogue();
         this.hideShop();
         this.hideBank();
+        this.clearUseOn();
         this.el.title.hidden = false;
         this.el.battle.hidden = true;
         this.el.dead.hidden = true;
@@ -649,6 +717,7 @@ var Hud = {
         this.hideDialogue();
         this.hideShop();
         this.hideBank();
+        this.clearUseOn();
         this.mode = 'dead';
         this.el.dead.hidden = false;
         document.getElementById('dead-text').textContent = text || 'You have been defeated.';
@@ -1132,6 +1201,10 @@ var Hud = {
             this.buryFromInventory(target.itemId);
             return;
         }
+        if (action === 'use') {
+            this.beginUseOn(target.itemId);
+            return;
+        }
         if (action === 'remove') {
             this.unequipWorn(target.slot);
             return;
@@ -1490,6 +1563,7 @@ var Hud = {
         this.hideDialogue();
         this.hideShop();
         this.hideBank();
+        this.clearUseOn();
         this.battle = battle;
         this.selectingEnemy = false;
         this.el.battle.hidden = false;

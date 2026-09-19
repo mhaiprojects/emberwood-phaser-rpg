@@ -287,6 +287,10 @@ canvas {
     display: block;
 }
 
+#shell.is-use-on canvas {
+    cursor: crosshair;
+}
+
 .panel {
     background: #4a3b2a;
     border: 1px solid #c9a227;

@@ -1,6 +1,7 @@
 var ITEM_DB = {
     coins: { name: 'Coins', icon: 'assets/svg/items/coins.svg', stack: true, examine: 'A small pile of copper and silver coins.' },
     shrimp: { name: 'Cooked shrimp', icon: 'assets/svg/items/shrimp.svg', heal: 12, stack: true, examine: 'A cooked shrimp, still warm enough to eat.' },
+    rawshrimp: { name: 'Raw shrimp', icon: 'assets/svg/items/rawshrimp.svg', stack: true, cook: 'shrimp', examine: 'A raw shrimp. It should be cooked.' },
     bread: { name: 'Bread', icon: 'assets/svg/items/bread.svg', heal: 20, stack: true, examine: 'A dense loaf baked for the road.' },
     sword: { name: 'Bronze sword', icon: 'assets/svg/items/sword.svg', slot: 'weapon', damage: 16, examine: 'A short bronze blade, nicked but serviceable.' },
     shield: { name: 'Wooden shield', icon: 'assets/svg/items/shield.svg', slot: 'shield', defence: 1, examine: 'A round wooden shield bound with iron.' },
@@ -220,6 +221,51 @@ function itemDefaultVerb(id) {
         return 'bury';
     }
     return 'drop';
+}
+
+function itemUseOnKinds(id) {
+    var def = ITEM_DB[id];
+    var kinds = [];
+    if (!def) {
+        return kinds;
+    }
+    if (def.cook) {
+        kinds.push('fire', 'range');
+    }
+    if (def.bury) {
+        kinds.push('shrine');
+    }
+    return kinds;
+}
+
+function itemCanUseOn(id, kind) {
+    if (!kind) {
+        return false;
+    }
+    var kinds = itemUseOnKinds(id);
+    return kinds.indexOf(kind) !== -1;
+}
+
+function itemUseTargetName(kind) {
+    if (kind === 'range' || kind === 'fire') {
+        return 'fire';
+    }
+    return kind || '';
+}
+
+function useItemOnScenery(hero, id, kind) {
+    var def = ITEM_DB[id];
+    if (!hero || !id || !def || !itemCanUseOn(id, kind)) {
+        return null;
+    }
+    if (!takeItem(hero, id, 1)) {
+        return null;
+    }
+    if (def.cook && !addItem(hero, def.cook, 1)) {
+        addItem(hero, id, 1);
+        return { ok: false, full: true };
+    }
+    return { ok: true, id: id, kind: kind, cooked: def.cook || null };
 }
 
 function buryItem(hero, id) {

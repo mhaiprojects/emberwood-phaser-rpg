@@ -1086,6 +1086,9 @@ var WorldScene = new Phaser.Class({
             if (Hud.hideContextMenu) {
                 Hud.hideContextMenu();
             }
+            if (Hud.clearUseOn) {
+                Hud.clearUseOn();
+            }
             return;
         }
         if (Hud.dialogueOpen && Hud.dialogueOpen()) {
@@ -1100,6 +1103,23 @@ var WorldScene = new Phaser.Class({
         }
         var x = pointer.worldX;
         var y = pointer.worldY;
+        if (Hud.useOnId) {
+            this.cancelLongPress();
+            if (Hud.hideContextMenu) {
+                Hud.hideContextMenu();
+            }
+            if (this.isRightClick(pointer)) {
+                if (Hud.clearUseOn) {
+                    Hud.clearUseOn();
+                }
+                return;
+            }
+            var useScenery = this.pickScenery(x, y);
+            if (Hud.finishUseOn) {
+                Hud.finishUseOn(useScenery && useScenery.kind);
+            }
+            return;
+        }
         if (this.isRightClick(pointer)) {
             this.cancelLongPress();
             var ev = pointer.event;
@@ -2434,6 +2454,9 @@ var WorldScene = new Phaser.Class({
             this.talkTarget = null;
             if (window.Hud && Hud.hideContextMenu) {
                 Hud.hideContextMenu();
+            }
+            if (window.Hud && Hud.clearUseOn) {
+                Hud.clearUseOn();
             }
         }
         if (move.left || move.right || move.up || move.down) {

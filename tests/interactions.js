@@ -840,6 +840,7 @@ EmberwoodTests.add('hud: inventory and ground Examine logs ITEM_DB flavor', func
         var expected = {
             coins: 'A small pile of copper and silver coins.',
             shrimp: 'A cooked shrimp, still warm enough to eat.',
+            rawshrimp: 'A raw shrimp. It should be cooked.',
             bread: 'A dense loaf baked for the road.',
             sword: 'A short bronze blade, nicked but serviceable.',
             shield: 'A round wooden shield bound with iron.',
@@ -847,7 +848,7 @@ EmberwoodTests.add('hud: inventory and ground Examine logs ITEM_DB flavor', func
             key: 'A heavy iron key with a worn bit.'
         };
         var ids = Object.keys(win.ITEM_DB);
-        assertEqual(ids.length, 7, 'seven ITEM_DB entries');
+        assertEqual(ids.length, 8, 'eight ITEM_DB entries');
         var seen = {};
         ids.forEach(function (id) {
             var def = win.ITEM_DB[id];
@@ -2439,6 +2440,158 @@ EmberwoodTests.add('hud: inventory Use is blocked while Hud.mode is battle', fun
         assertEqual(hero.hp, 82, 'world Use shrimp heals 12 after battle');
         assertEqual(stackQty(hero, 'shrimp'), 7, 'world Use consumes one shrimp after battle');
         assertEqual(H.lastChat(win), 'You eat Cooked shrimp and recover 12 HP.', 'world eat chat after battle');
+
+        world.clearLoot();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
+EmberwoodTests.add('hud: Use-on targets fire with raw shrimp and shrine with bones', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, true);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.clearLoot();
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        if (win.Hud.hideContextMenu) {
+            win.Hud.hideContextMenu();
+        }
+        if (win.Hud.clearUseOn) {
+            win.Hud.clearUseOn();
+        }
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof win.Hud.beginUseOn, 'function', 'beginUseOn helper');
+        assertEqual(typeof win.Hud.finishUseOn, 'function', 'finishUseOn helper');
+        assertEqual(typeof win.itemCanUseOn, 'function', 'itemCanUseOn helper');
+        assertEqual(typeof win.useItemOnScenery, 'function', 'useItemOnScenery helper');
+        assert(win.ITEM_DB.rawshrimp, 'raw shrimp exists');
+        assertEqual(win.ITEM_DB.rawshrimp.cook, 'shrimp', 'raw shrimp cooks to shrimp');
+        assertEqual(win.ITEM_DB.rawshrimp.buyPrice, undefined, 'no buyPrice this tick');
+        assertEqual(win.ITEM_DB.rawshrimp.sellPrice, undefined, 'no sellPrice this tick');
+        assertEqual(win.itemCanUseOn('rawshrimp', 'range'), true, 'raw uses on range');
+        assertEqual(win.itemCanUseOn('rawshrimp', 'fire'), true, 'raw uses on fire');
+        assertEqual(win.itemCanUseOn('bones', 'shrine'), true, 'bones use on shrine');
+        assertEqual(win.itemCanUseOn('bones', 'range'), false, 'bones do not cook');
+        assertEqual(win.itemCanUseOn('shrimp', 'range'), false, 'cooked shrimp is not raw');
+        assert(win.game.textures.exists('item-rawshrimp'), 'item-rawshrimp is loaded');
+        assertEqual(win.TOWN_PROPS.range.x, 16, 'haven range x');
+        assertEqual(win.TOWN_PROPS.range.y, 17, 'haven range y');
+        assertEqual(world.tileGrid[8][18], win.TILE.SHRINE, 'haven shrine tile');
+        assertEqual(world.tileGrid[17][16], win.TILE.RANGE, 'haven range tile');
+
+        function stackQty(hero, id) {
+            var stack = hero.inventory.filter(function (row) { return row.id === id; })[0];
+            return stack ? stack.qty : 0;
+        }
+        function clickTile(tx, ty) {
+            var pt = win.tileCenter(tx, ty);
+            world.onClick({ worldX: pt.x, worldY: pt.y });
+            return pt;
+        }
+        function rightInv(id) {
+            var slot = win.document.querySelector('#inv-grid [data-item="' + id + '"]');
+            slot.dispatchEvent(new win.MouseEvent('contextmenu', {
+                bubbles: true,
+                cancelable: true,
+                view: win,
+                button: 2,
+                clientX: 40,
+                clientY: 80
+            }));
+            return slot;
+        }
+
+        var hero = win.makeHero();
+        win.addItem(hero, 'bones', 3);
+        win.addItem(hero, 'rawshrimp', 2);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(stackQty(hero, 'bones'), 3, 'starter bones 3');
+        assertEqual(stackQty(hero, 'rawshrimp'), 2, 'starter raw shrimp 2');
+        assertEqual(stackQty(hero, 'shrimp'), 8, 'starter cooked shrimp');
+        assertEqual(hero.skills.prayer.xp, 0, 'Prayer XP starts 0');
+        assertEqual(hero.skills.cooking.xp, 0, 'Cooking XP starts 0');
+
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        var menu = win.document.getElementById('ctx-menu');
+        var shell = win.document.getElementById('shell');
+        assert(menu, 'ctx-menu exists');
+        win.Hud.hideContextMenu();
+        rightInv('bones');
+        assert(!menu.hidden, 'right-click bones opens menu');
+        var useBtn = menu.querySelector('[data-ctx="use"]');
+        assert(useBtn, 'Use is listed');
+        assertEqual(useBtn.textContent, 'Use', 'Use label');
+        H.mouseClick(win, useBtn);
+        assert(menu.hidden, 'Use closes the menu');
+        assertEqual(win.Hud.useOnId, 'bones', 'use-on id is bones');
+        assert(shell.classList.contains('is-use-on'), 'shell has use-on cursor class');
+        assertEqual(H.lastChat(win), 'Use Bones ->', 'use-on prompt chat');
+
+        clickTile(18, 8);
+        hero = H.hero(win);
+        assertEqual(stackQty(hero, 'bones'), 2, 'shrine consumes one bones');
+        assertEqual(hero.skills.prayer.xp, 0, 'shrine does not grant Prayer XP this tick');
+        assertEqual(H.lastChat(win), 'You use the Bones on the shrine.', 'bones-on-shrine chat');
+        assertEqual(win.Hud.useOnId, null, 'cursor clears after shrine');
+        assert(!shell.classList.contains('is-use-on'), 'shell class clears after shrine');
+        assert(!world.walkTarget, 'use-on shrine does not walk');
+
+        rightInv('rawshrimp');
+        useBtn = menu.querySelector('[data-ctx="use"]');
+        assert(useBtn, 'Use listed on raw shrimp');
+        H.mouseClick(win, useBtn);
+        assertEqual(win.Hud.useOnId, 'rawshrimp', 'use-on id is raw shrimp');
+        assertEqual(H.lastChat(win), 'Use Raw shrimp ->', 'raw use-on prompt');
+        clickTile(16, 17);
+        hero = H.hero(win);
+        assertEqual(stackQty(hero, 'rawshrimp'), 1, 'range consumes one raw shrimp');
+        assertEqual(stackQty(hero, 'shrimp'), 9, 'raw becomes cooked shrimp');
+        assertEqual(hero.skills.cooking.xp, 0, 'range does not grant Cooking XP this tick');
+        assertEqual(H.lastChat(win), 'You use the Raw shrimp on the fire.', 'raw-on-fire chat');
+        assertEqual(win.Hud.useOnId, null, 'cursor clears after fire');
+
+        rightInv('bones');
+        H.mouseClick(win, menu.querySelector('[data-ctx="use"]'));
+        assertEqual(win.Hud.useOnId, 'bones', 'use-on ready for miss');
+        clickTile(0, 2);
+        hero = H.hero(win);
+        assertEqual(stackQty(hero, 'bones'), 2, 'miss does not consume bones');
+        assertEqual(H.lastChat(win), 'Nothing interesting happens.', 'invalid target chat');
+        assertEqual(win.Hud.useOnId, null, 'miss clears cursor');
+
+        win.Hud.beginUseOn('bones');
+        assertEqual(win.Hud.useOnId, 'bones', 'Esc target armed');
+        H.key(win, 'Escape', 'Escape', 'keydown');
+        world.update();
+        assertEqual(win.Hud.useOnId, null, 'Esc cancels use-on');
+        assertEqual(stackQty(H.hero(win), 'bones'), 2, 'Esc does not consume');
+        H.key(win, 'Escape', 'Escape', 'keyup');
+        H.clearKeys(win);
+
+        world.encounterLock = true;
+        win.Hud.beginUseOn('bones');
+        clickTile(18, 8);
+        assertEqual(stackQty(H.hero(win), 'bones'), 2, 'encounterLock does not use-on');
+        assertEqual(win.Hud.useOnId, null, 'lock clears use-on');
+        world.encounterLock = false;
 
         world.clearLoot();
         world.placePlayer(spawn.x, spawn.y);
