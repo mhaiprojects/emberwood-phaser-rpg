@@ -8788,6 +8788,111 @@ EmberwoodTests.add('world: Emberhaven houses have a south-wall PATH door', funct
     });
 });
 
+EmberwoodTests.add('world: locked door blocks until the player has a key', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(spawn.x, 328, 'spawn x tile center');
+        assertEqual(spawn.y, 248, 'spawn y tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.') === 0, 'Phaser 3');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(win.TILE.DOOR, 16, 'DOOR tile index');
+        assertEqual(win.tileBlockedByTerrain(win.TILE.DOOR), true, 'Pathfind blocks locked doors');
+        assert(win.ITEM_DB.key, 'Iron key exists');
+        assertEqual(win.ITEM_DB.key.name, 'Iron key', 'key name');
+        assertEqual(typeof win.heroHasItem, 'function', 'heroHasItem exists');
+        assertEqual(typeof world.tryLockedDoor, 'function', 'tryLockedDoor exists');
+        assertEqual(typeof world.unlockDoor, 'function', 'unlockDoor exists');
+
+        var door = win.LOCKED_DOOR;
+        assert(door, 'LOCKED_DOOR def exists');
+        assertEqual(door.zoneId, 'millfields', 'locked door is in Millfields');
+        assertEqual(door.tx, 26, 'farm door tx');
+        assertEqual(door.ty, 17, 'farm door ty');
+        assertEqual(door.keyId, 'key', 'door wants the Iron key');
+
+        H.enterZone(win, 'millfields');
+        world = H.world(win);
+        H.setAutoAttack(win, false);
+        parkWorldBodies(world);
+        assertEqual(world.tileGrid[door.ty][door.tx], win.TILE.DOOR, 'farm south-wall door is TILE.DOOR');
+        var doorTile = world.ground.getTileAt(door.tx, door.ty);
+        assert(doorTile, 'locked door tile exists');
+        assertEqual(doorTile.index, win.TILE.DOOR, 'layer door is DOOR');
+        assertEqual(!!doorTile.collides, true, 'locked door collides');
+        assertEqual(world.tileGrid[door.ty][door.tx - 1], win.TILE.ROCK, 'west frame is ROCK');
+        assertEqual(world.tileGrid[door.ty][door.tx + 1], win.TILE.ROCK, 'east frame is ROCK');
+
+        var hero = H.hero(win);
+        assertEqual(win.heroHasItem(hero, 'key'), false, 'starter kit has no key');
+        var south = win.tileCenter(door.tx, door.ty + 1);
+        var insideY = door.ty * (win.TILE_SIZE || 16);
+        world.placePlayer(south.x, south.y);
+        world.player.body.setVelocity(0, 0);
+        world.clearWalk();
+        world.exitLock = true;
+        world.encounterLock = false;
+        H.clearKeys(win);
+        var blockedY = world.player.y;
+        return H.holdKey(win, 'KeyW', 'w', 500).then(function () {
+            H.clearKeys(win);
+            world = H.world(win);
+            world.player.body.setVelocity(0, 0);
+            var at = win.worldToTile(world.player.x, world.player.y);
+            assert(world.player.y > insideY, 'locked door blocks without a key, y=' + world.player.y);
+            assert(world.player.y > blockedY - 10, 'did not pass through the locked door');
+            assert(at.ty > door.ty, 'still south of the locked door, ty=' + at.ty);
+            assertEqual(world.tileGrid[door.ty][door.tx], win.TILE.DOOR, 'door stays TILE.DOOR without a key');
+            assert(H.chatHas(win, 'The door is locked.'), 'locked chat');
+            assert(!win.game.input.keyboard, 'Phaser keyboard off after locked bump');
+
+            hero = H.hero(win);
+            win.addItem(hero, 'key', 1);
+            win.game.registry.set('hero', hero);
+            assert(win.heroHasItem(hero, 'key'), 'test-granted Iron key');
+            world.placePlayer(south.x, south.y);
+            world.player.body.setVelocity(0, 0);
+            world.clearWalk();
+            world.exitLock = true;
+            world.encounterLock = false;
+            H.clearKeys(win);
+            H.key(win, 'KeyW', 'w', 'keydown');
+            return H.waitUntil(function () {
+                return H.world(win).player.y < insideY;
+            }, 1500, 'Keys.js W through unlocked door');
+        }).then(function () {
+            H.key(win, 'KeyW', 'w', 'keyup');
+            H.clearKeys(win);
+            world = H.world(win);
+            world.player.body.setVelocity(0, 0);
+            var at = win.worldToTile(world.player.x, world.player.y);
+            assert(world.player.y < insideY, 'walked north through the unlocked door, y=' + world.player.y);
+            assertEqual(at.tx, door.tx, 'door walk stayed on the opening column');
+            assert(at.ty <= door.ty, 'entered the farm house after unlocking');
+            assertEqual(world.tileGrid[door.ty][door.tx], win.TILE.PATH, 'unlocked door is PATH');
+            assertEqual(!!world.ground.getTileAt(door.tx, door.ty).collides, false, 'unlocked door does not collide');
+            assert(H.chatHas(win, 'You unlock the door.'), 'unlock chat');
+            assert(win.heroHasItem(H.hero(win), 'key'), 'key is kept after unlock');
+            assert(!win.game.input.keyboard, 'Phaser keyboard off after unlock');
+
+            H.enterZone(win, 'haven');
+            world = H.world(win);
+            world.placePlayer(spawn.x, spawn.y);
+            world.player.body.setVelocity(0, 0);
+            assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+            assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        });
+    });
+});
+
 EmberwoodTests.add('world: Emberhaven bank shop and guild doors enter one indoor tilemap', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');

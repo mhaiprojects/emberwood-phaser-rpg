@@ -58,9 +58,9 @@ def hash_n(x, y, seed):
     return (x * 374761393 + y * 668265263 + seed * 1274126177) & 0xFFFFFFFF
 
 
-# --- tiles 15 x 16x16 ---
+# --- tiles 16 x 16x16 ---
 TILE = 16
-TILE_COUNT = 15
+TILE_COUNT = 16
 
 K = (22, 16, 14, 255)
 SKIN = (236, 188, 132, 255)
@@ -266,6 +266,16 @@ def make_tiles():
     fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 4, 13, 8, 2, (90, 86, 80, 255))
     put(sheet, TILE * TILE_COUNT, ox + 7, 7, (190, 188, 180, 255), TILE)
     put(sheet, TILE * TILE_COUNT, ox + 8, 8, (190, 188, 180, 255), TILE)
+
+    # 15 closed / locked door (no open animation this tick)
+    ox = TILE * 15
+    fill_path_bg(ox)
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 3, 1, 10, 14, (96, 64, 32, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 4, 2, 8, 12, (122, 78, 40, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 4, 2, 8, 1, (74, 48, 24, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 7, 2, 1, 12, (90, 58, 28, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 4, 7, 8, 1, (90, 58, 28, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 10, 8, 2, 2, (212, 168, 48, 255))
     write_png(os.path.join(ASSETS, "tiles.png"), TILE * TILE_COUNT, TILE, sheet)
 
 

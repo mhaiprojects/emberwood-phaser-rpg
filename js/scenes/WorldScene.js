@@ -33,6 +33,8 @@ var WorldScene = new Phaser.Class({
         this.groundLoot = [];
         this.lootZoneState = {};
         this.mobZoneState = {};
+        this.unlockedDoors = {};
+        this.lockChatUntil = 0;
 
         this.marker = this.add.rectangle(0, 0, 6, 6, DEST_X_COLOR).setVisible(false).setDepth(8);
         this.destX = this.makeDestX();
@@ -124,7 +126,7 @@ var WorldScene = new Phaser.Class({
         this.ground.setCollision([
             TILE.WATER, TILE.TREE, TILE.ROCK, TILE.SHRINE,
             TILE.STALL, TILE.RANGE, TILE.ANVIL, TILE.BOOTH,
-            TILE.DOCK, TILE.BOAT, TILE.TOMB
+            TILE.DOCK, TILE.BOAT, TILE.TOMB, TILE.DOOR
         ]);
         this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
         this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
@@ -132,6 +134,95 @@ var WorldScene = new Phaser.Class({
         this.player.setCollideWorldBounds(true);
         this.player.setScale(PLAYER_WORLD_SCALE);
         applyPlayerWorldBody(this.player);
+        this.applyUnlockedDoors();
+    },
+
+    doorUnlockKey: function (tx, ty) {
+        return (this.zoneId || '') + ':' + tx + ',' + ty;
+    },
+
+    applyUnlockedDoors: function () {
+        this.unlockedDoors = this.unlockedDoors || {};
+        if (!this.tileGrid || !this.ground) {
+            return;
+        }
+        var prefix = (this.zoneId || '') + ':';
+        var key;
+        for (key in this.unlockedDoors) {
+            if (!this.unlockedDoors[key] || key.indexOf(prefix) !== 0) {
+                continue;
+            }
+            var parts = key.slice(prefix.length).split(',');
+            var tx = parseInt(parts[0], 10);
+            var ty = parseInt(parts[1], 10);
+            if (!this.tileGrid[ty] || this.tileGrid[ty][tx] !== TILE.DOOR) {
+                continue;
+            }
+            this.tileGrid[ty][tx] = TILE.PATH;
+            this.ground.putTileAt(TILE.PATH, tx, ty);
+        }
+    },
+
+    unlockDoor: function (tx, ty) {
+        if (!this.tileGrid || !this.tileGrid[ty] || this.tileGrid[ty][tx] !== TILE.DOOR) {
+            return false;
+        }
+        this.tileGrid[ty][tx] = TILE.PATH;
+        if (this.ground) {
+            this.ground.putTileAt(TILE.PATH, tx, ty);
+        }
+        this.unlockedDoors = this.unlockedDoors || {};
+        this.unlockedDoors[this.doorUnlockKey(tx, ty)] = true;
+        return true;
+    },
+
+    handleLockedDoor: function (tx, ty) {
+        var hero = this.registry.get('hero');
+        var keyId = (LOCKED_DOOR && LOCKED_DOOR.keyId) || 'key';
+        if (heroHasItem(hero, keyId)) {
+            if (this.unlockDoor(tx, ty)) {
+                Hud.log('You unlock the door.');
+            }
+            return;
+        }
+        var now = this.time ? this.time.now : 0;
+        if (now && now < this.lockChatUntil) {
+            return;
+        }
+        this.lockChatUntil = now + 800;
+        Hud.log('The door is locked.');
+    },
+
+    tryLockedDoor: function () {
+        if (this.encounterLock || this.interiorId || !this.tileGrid) {
+            return;
+        }
+        if (window.Hud && Hud.mode && Hud.mode !== 'world') {
+            return;
+        }
+        var flags = this.moveFlags();
+        var walking = flags.left || flags.right || flags.up || flags.down || !!this.walkTarget;
+        if (!walking) {
+            return;
+        }
+        var at = worldToTile(this.player.x, this.player.y);
+        var spots = [
+            { tx: at.tx, ty: at.ty },
+            { tx: at.tx, ty: at.ty - 1 },
+            { tx: at.tx, ty: at.ty + 1 },
+            { tx: at.tx - 1, ty: at.ty },
+            { tx: at.tx + 1, ty: at.ty }
+        ];
+        var i;
+        for (i = 0; i < spots.length; i++) {
+            var tx = spots[i].tx;
+            var ty = spots[i].ty;
+            if (!inBounds(tx, ty) || !this.tileGrid[ty] || this.tileGrid[ty][tx] !== TILE.DOOR) {
+                continue;
+            }
+            this.handleLockedDoor(tx, ty);
+            return;
+        }
     },
 
     lockExits: function () {
@@ -1495,6 +1586,7 @@ var WorldScene = new Phaser.Class({
         }
 
         this.wanderMobs();
+        this.tryLockedDoor();
         this.checkExits();
     }
 });

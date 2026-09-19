@@ -13,7 +13,8 @@ var TILE = {
     BOOTH: 12,
     DOCK: 13,
     BOAT: 14,
-    TOMB: 15
+    TOMB: 15,
+    DOOR: 16
 };
 
 var MAP_W = 36;
@@ -50,6 +51,12 @@ var TOWN_HOUSES = [
 var FARM_HOUSES = [
     { x: 24, y: 14, w: 5, h: 4 }
 ];
+var LOCKED_DOOR = {
+    zoneId: 'millfields',
+    tx: FARM_HOUSES[0].x + Math.floor(FARM_HOUSES[0].w / 2),
+    ty: FARM_HOUSES[0].y + FARM_HOUSES[0].h - 1,
+    keyId: 'key'
+};
 var MINE_SHAFT_HOUSE = { x: 6, y: 8, w: 6, h: 5 };
 var INTERIOR_ROOM = { x: 12, y: 8, w: 12, h: 13 };
 var SCENERY_EXAMINE = {
@@ -257,6 +264,7 @@ function generateMap(seed, biome, neighbors) {
         scatter(grid, TILE.FLOWER, 40, seed, true);
         scatter(grid, TILE.TREE, 10, seed + 3, true);
         house(grid, FARM_HOUSES[0].x, FARM_HOUSES[0].y, FARM_HOUSES[0].w, FARM_HOUSES[0].h);
+        setCell(grid, LOCKED_DOOR.tx, LOCKED_DOOR.ty, TILE.DOOR);
     } else if (biome === 'swamp') {
         scatter(grid, TILE.WATER, 28, seed, true);
         scatter(grid, TILE.TREE, 22, seed + 4, true);

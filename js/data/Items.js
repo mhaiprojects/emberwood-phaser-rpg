@@ -4,7 +4,8 @@ var ITEM_DB = {
     bread: { name: 'Bread', icon: 'assets/svg/items/bread.svg', heal: 20, stack: true },
     sword: { name: 'Bronze sword', icon: 'assets/svg/items/sword.svg', slot: 'weapon', damage: 16 },
     shield: { name: 'Wooden shield', icon: 'assets/svg/items/shield.svg', slot: 'shield', defence: 1 },
-    bones: { name: 'Bones', icon: 'assets/svg/items/bones.svg', stack: true }
+    bones: { name: 'Bones', icon: 'assets/svg/items/bones.svg', stack: true },
+    key: { name: 'Iron key', icon: 'assets/svg/items/key.svg' }
 };
 
 var SKILL_NAMES = [
@@ -75,6 +76,18 @@ function addItem(hero, id, qty) {
         }
     }
     hero.inventory.push({ id: id, qty: qty });
+}
+
+function heroHasItem(hero, id) {
+    if (!hero || !hero.inventory) {
+        return false;
+    }
+    for (var i = 0; i < hero.inventory.length; i++) {
+        if (hero.inventory[i].id === id && hero.inventory[i].qty > 0) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function takeItem(hero, id, qty) {

@@ -3,7 +3,8 @@ var PATH_LINE_COLOR = 0xaa66ff;
 function tileBlockedByTerrain(index) {
     return index === TILE.WATER || index === TILE.TREE || index === TILE.ROCK || index === TILE.SHRINE
         || index === TILE.STALL || index === TILE.RANGE || index === TILE.ANVIL || index === TILE.BOOTH
-        || index === TILE.DOCK || index === TILE.BOAT || index === TILE.TOMB;
+        || index === TILE.DOCK || index === TILE.BOAT || index === TILE.TOMB
+        || index === TILE.DOOR;
 }
 
 function worldToTile(wx, wy) {
