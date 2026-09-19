@@ -5430,6 +5430,80 @@ EmberwoodTests.add('hud: auto-attack toggle persists on the hero', function (win
     assert(H.chatHas(win, 'Auto-attack on'), 'toggle chat');
 });
 
+EmberwoodTests.add('hud: all three Auto-attack buttons stay in sync and log on/off', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, true);
+        world.placePlayer(spawn.x, spawn.y);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        var combatBtn = win.document.querySelector('#panel-combat [data-auto-attack]');
+        var settingsBtn = win.document.querySelector('#panel-settings [data-auto-attack]');
+        var battleBtn = win.document.querySelector('#battle-panel [data-auto-attack]');
+        assertEqual(win.document.querySelectorAll('[data-auto-attack]').length, 3, 'exactly three Auto-attack buttons');
+        assert(combatBtn && settingsBtn && battleBtn, 'Combat, Settings, and battle-panel buttons exist');
+
+        var assertSynced = function (on, label) {
+            var expected = on ? 'On' : 'Off';
+            assertEqual(H.hero(win).autoAttack, on, label + ' hero.autoAttack is ' + on);
+            assertEqual(win.game.registry.get('hero').autoAttack, on, label + ' registry persists ' + on);
+            [combatBtn, settingsBtn, battleBtn].forEach(function (btn, i) {
+                var where = ['combat', 'settings', 'battle panel'][i];
+                assertMatch(btn.textContent, expected, label + ' ' + where + ' label ' + expected);
+                assertEqual(btn.classList.contains('is-on'), on, label + ' ' + where + ' is-on ' + on);
+            });
+        };
+
+        H.click(win, '#tab-bar button[data-tab="combat"]');
+        assertSynced(true, 'default On');
+        var combatClicked = H.mouseClick(win, combatBtn);
+        assertSynced(false, 'Combat click Off');
+        assertEqual(H.lastChat(win), 'Auto-attack off.', 'Combat click logs off');
+        assert(win.document.activeElement !== combatClicked, 'Combat toggle blurs after click');
+
+        H.click(win, '#tab-bar button[data-tab="settings"]');
+        var settingsClicked = H.mouseClick(win, settingsBtn);
+        assertSynced(true, 'Settings click On');
+        assertEqual(H.lastChat(win), 'Auto-attack on.', 'Settings click logs on');
+        assert(win.document.activeElement !== settingsClicked, 'Settings toggle blurs after click');
+
+        H.setAutoAttack(win, false);
+        var chicken = H.findMob(win, 'Chicken');
+        chicken.mobDef.hp = 40;
+        return H.startFight(win, chicken).then(function () {
+            assertEqual(win.Hud.mode, 'battle', 'battle panel is open');
+            assertEqual(win.document.getElementById('battle-panel').hidden, false, 'battle panel visible');
+            assertSynced(false, 'battle starts Off');
+            var battleOn = H.mouseClick(win, battleBtn);
+            assertSynced(true, 'battle-panel click On');
+            assertEqual(H.lastChat(win), 'Auto-attack on.', 'battle-panel click logs on');
+            assert(win.document.activeElement !== battleOn, 'battle-panel toggle blurs after click');
+            var battleOff = H.mouseClick(win, battleBtn);
+            assertSynced(false, 'battle-panel click Off');
+            assertEqual(H.lastChat(win), 'Auto-attack off.', 'battle-panel click logs off');
+            assert(win.document.activeElement !== battleOff, 'battle-panel Off blurs after click');
+            assert(H.chatHas(win, 'Auto-attack on'), 'on log remains in chat');
+            assert(H.chatHas(win, 'Auto-attack off'), 'off log remains in chat');
+            assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+            return H.forceFlee(win);
+        }).then(function () {
+            assertSynced(false, 'after flee');
+            assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off after flee');
+        }).catch(function (err) {
+            return H.cleanupBattle(win).then(function () {
+                throw err;
+            });
+        });
+    });
+});
+
 EmberwoodTests.add('world: auto-attack engages a nearby mob', function (win, H) {
     return H.cleanupBattle(win).then(function () {
         H.enterZone(win, 'haven');
