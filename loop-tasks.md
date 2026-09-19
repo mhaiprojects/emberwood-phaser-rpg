@@ -284,7 +284,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Auto-pickup buttons on Combat and Settings stay in sync, log on/off, and blur after click. — Conclusion: Same UX as auto-attack; missing key renders On. `hud: auto-pickup toggle persists on the hero` pass.
 - [done] Side HUD: zone name, combat level, HP `cur / max`, HP fill %, gold, XP, task text. — Conclusion: From spawn (328,248) side HUD shows Emberhaven, combat 1, HP `100 / 100`, fill 100%, gold 8, XP 0, talk-to-Bram; Millfields + `55 / 110` (50%) + gold 25 / XP 40 / level 2 / goblin 3/5 update. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Quest tab copies the same quest string as the side Task panel. — Conclusion: From spawn (328,248) `#hud-quest` + `#hud-quest-tab` copy the same string at stages 0/1/2/3/4 (talk-to-Bram, 0/5, 3/5, return, complete); Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [verify] Chat appends lines, auto-scrolls, and drops the oldest after 40 lines. — Conclusion: —
+- [done] Chat appends lines, auto-scrolls, and drops the oldest after 40 lines. — Conclusion: From spawn (328,248) Hud.log appends `.chat-line`, pins scrollTop to the newest line, and drops the oldest after 40; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [verify] Title: **Click here to play** starts WorldScene in Emberhaven; Credits toggles `#credit-text`. — Conclusion: —
 - [verify] `#btn-start` stays disabled until `TitleScene` binds `Hud.setStartHandler`. — Conclusion: —
 - [verify] Death overlay + retry (already listed in Combat — here: HUD copy and focus). — Conclusion: —
@@ -472,4 +472,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 99 | 2026-09-19 | All three Auto-attack buttons stay in sync and log on/off | done — spawn (328,248) Combat/Settings/battle-panel sync On/Off + is-on, log Auto-attack on/off, blur; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 100 | 2026-09-19 | Side HUD: zone name, combat level, HP cur/max, HP fill %, gold, XP, task text | done — spawn (328,248) Emberhaven/1/100/100/100%/8/0/talk-to-Bram; Millfields 55/110 50% gold 25 XP 40 level 2 goblin 3/5; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 101 | 2026-09-19 | Quest tab copies the same quest string as the side Task panel | done — spawn (328,248) side Task + Quest tab copy the same string at stages 0/1/2/3/4; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 102 | 2026-09-19 | Chat appends lines, auto-scrolls, and drops the oldest after 40 lines | done — spawn (328,248) Hud.log appends `.chat-line`, auto-scrolls, drops oldest after 40; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 

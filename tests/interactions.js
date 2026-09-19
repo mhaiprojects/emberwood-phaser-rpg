@@ -651,6 +651,68 @@ EmberwoodTests.add('hud: Quest tab copies the same quest string as the side Task
     });
 });
 
+EmberwoodTests.add('hud: chat appends lines, auto-scrolls, and drops the oldest after 40 lines', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.placePlayer(spawn.x, spawn.y);
+        world.refreshHud();
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        var logEl = win.document.getElementById('chat-log');
+        assert(logEl && logEl === win.Hud.el.log, 'Hud.log writes #chat-log');
+        assertEqual(win.getComputedStyle(logEl).overflowY, 'auto', '#chat-log overflows so it can scroll');
+
+        while (logEl.firstChild) {
+            logEl.removeChild(logEl.firstChild);
+        }
+        assertEqual(logEl.children.length, 0, 'chat starts empty for this case');
+
+        win.Hud.log('alpha line');
+        assertEqual(logEl.children.length, 1, 'first log appends one line');
+        assertEqual(logEl.lastChild.className, 'chat-line', 'appended node is .chat-line');
+        assertEqual(logEl.lastChild.textContent, 'alpha line', 'appended text is the logged line');
+        assertEqual(H.lastChat(win), 'alpha line', 'lastChat is the appended line');
+
+        win.Hud.log('beta line');
+        assertEqual(logEl.children.length, 2, 'second log appends after the first');
+        assertEqual(logEl.firstChild.textContent, 'alpha line', 'older line stays first');
+        assertEqual(logEl.lastChild.textContent, 'beta line', 'newer line is last');
+
+        var i;
+        for (i = 1; i <= 40; i++) {
+            win.Hud.log('cap-' + i);
+        }
+        assertEqual(logEl.children.length, 40, 'chat keeps at most 40 lines');
+        assertEqual(logEl.firstChild.textContent, 'cap-1', 'oldest remaining is the first of the last 40');
+        assertEqual(logEl.lastChild.textContent, 'cap-40', 'newest line is last');
+        assert(!H.chatHas(win, 'alpha line'), 'oldest lines drop after 40');
+        assert(!H.chatHas(win, 'beta line'), 'pre-cap lines drop after 40');
+
+        logEl.style.height = '72px';
+        logEl.style.flex = 'none';
+        logEl.scrollTop = 0;
+        assertEqual(logEl.scrollTop, 0, 'can scroll away from the newest line');
+        win.Hud.log('cap-41');
+        assertEqual(logEl.children.length, 40, '41st line still keeps 40');
+        assertEqual(logEl.firstChild.textContent, 'cap-2', 'oldest (cap-1) is dropped');
+        assertEqual(logEl.lastChild.textContent, 'cap-41', 'newest is last after the drop');
+        assert(logEl.scrollHeight > logEl.clientHeight, '40 lines overflow a short chat box');
+        var maxScroll = logEl.scrollHeight - logEl.clientHeight;
+        assert(Math.abs(logEl.scrollTop - maxScroll) <= 1, 'new line auto-scrolls to the bottom');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off after chat log');
+    });
+});
+
 EmberwoodTests.add('skills: Hitpoints level-up sets maxHp to 10 * level and chats Skill increased to N', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         var world = H.world(win);
