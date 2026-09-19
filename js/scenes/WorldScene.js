@@ -494,6 +494,9 @@ var WorldScene = new Phaser.Class({
             sprite.mobDef = Object.assign({ id: zoneId + '-' + index }, def);
             sprite.aliveMob = true;
             sprite.respawnAt = 0;
+            if (isGiantMob(def.type)) {
+                self.physics.add.collider(self.player, sprite);
+            }
             var label = self.add.text(def.x, def.y - Math.round(8 * scale) - 6, def.type, {
                 fontSize: '8px',
                 fontFamily: 'Verdana, Geneva, sans-serif',
@@ -1020,6 +1023,14 @@ var WorldScene = new Phaser.Class({
                     occ[tx + ',' + ty] = true;
                 }
             }
+            var type = sprite.mobDef && sprite.mobDef.type;
+            if (isGiantMob(type)) {
+                var extra = giantFootprintTiles(sprite.x, sprite.y);
+                var i;
+                for (i = 0; i < extra.length; i++) {
+                    occ[extra[i].tx + ',' + extra[i].ty] = true;
+                }
+            }
         };
         if (this.npcs) {
             this.npcs.children.iterate(markSprite);
@@ -1497,6 +1508,8 @@ var WorldScene = new Phaser.Class({
     },
 
     wanderMobs: function () {
+        var grid = this.tileGrid;
+        var zoneId = this.zoneId;
         this.mobs.children.iterate(function (mob) {
             if (!mob || !mob.aliveMob || !mob.body) {
                 return;
@@ -1504,7 +1517,38 @@ var WorldScene = new Phaser.Class({
             if (Phaser.Math.Between(0, 80) !== 0) {
                 return;
             }
-            mob.body.setVelocity(Phaser.Math.Between(-20, 20), Phaser.Math.Between(-20, 20));
+            var vx = Phaser.Math.Between(-20, 20);
+            var vy = Phaser.Math.Between(-20, 20);
+            var type = mob.mobDef && mob.mobDef.type;
+            if (isGiantMob(type) && giantBlockedAt(grid, mob.x + vx, mob.y + vy, zoneId)) {
+                return;
+            }
+            mob.body.setVelocity(vx, vy);
+        });
+    },
+
+    constrainGiantMobs: function () {
+        var grid = this.tileGrid;
+        var zoneId = this.zoneId;
+        if (!grid) {
+            return;
+        }
+        this.mobs.children.iterate(function (mob) {
+            if (!mob || !mob.aliveMob || !mob.body) {
+                return;
+            }
+            var type = mob.mobDef && mob.mobDef.type;
+            if (!isGiantMob(type)) {
+                return;
+            }
+            var vx = mob.body.velocity.x;
+            var vy = mob.body.velocity.y;
+            var lookX = mob.x + vx * 0.2;
+            var lookY = mob.y + vy * 0.2;
+            if (giantBlockedAt(grid, mob.x, mob.y, zoneId) ||
+                ((vx || vy) && giantBlockedAt(grid, lookX, lookY, zoneId))) {
+                mob.body.setVelocity(0, 0);
+            }
         });
     },
 
@@ -1713,6 +1757,7 @@ var WorldScene = new Phaser.Class({
         }
 
         this.wanderMobs();
+        this.constrainGiantMobs();
         this.tryLockedDoor();
         this.updateDoors();
         this.checkExits();

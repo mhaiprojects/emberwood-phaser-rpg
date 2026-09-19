@@ -187,6 +187,30 @@ function isOneTileGapY(grid, tx, ty) {
         && !tileWalkable(grid, tx + 1, ty);
 }
 
+function isOneTileOpening(grid, tx, ty) {
+    return isOneTileGapX(grid, tx, ty) || isOneTileGapY(grid, tx, ty);
+}
+
+function giantBlockedAt(grid, wx, wy, zoneId) {
+    if (!grid) {
+        return false;
+    }
+    var tiles = typeof giantFootprintTiles === 'function'
+        ? giantFootprintTiles(wx, wy)
+        : [worldToTile(wx, wy)];
+    var i;
+    for (i = 0; i < tiles.length; i++) {
+        var tile = tiles[i];
+        if (isOneTileOpening(grid, tile.tx, tile.ty)) {
+            return true;
+        }
+        if (typeof interiorAtDoor === 'function' && interiorAtDoor(tile.tx, tile.ty, zoneId)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function overlapRange(a0, a1, b0, b1) {
     return Math.min(a1, b1) - Math.max(a0, b0);
 }

@@ -6270,6 +6270,112 @@ EmberwoodTests.add('world: diagonal W+D enters a 1-tile door without catching th
     });
 });
 
+EmberwoodTests.add('world: giant mobs block 2x2 and cannot enter 1-tile interiors', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        H.setAutoAttack(win, false);
+        H.enterZone(win, 'haven');
+        world.walkTarget = null;
+        world.engageTarget = null;
+        world.talkTarget = null;
+        world.encounterLock = false;
+        world.exitLock = true;
+        parkWorldBodies(world);
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        assertEqual(world.player.scaleX, 1, 'world player is 1 tile');
+        assert(world.player.body.width < 16, 'player body still fits 1-tile doors');
+        assertEqual(typeof win.isGiantMob, 'function', 'isGiantMob is global');
+        assertEqual(typeof win.giantFootprintTiles, 'function', 'giantFootprintTiles is global');
+        assertEqual(typeof win.giantBlockedAt, 'function', 'giantBlockedAt is global');
+        assert(win.isGiantMob('Drake'), 'Drake is a giant');
+        assert(!win.isGiantMob('Chicken'), 'chicken is not a giant');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(!world.cursors, 'WorldScene has no Phaser cursors');
+
+        var gate = win.HAVEN_GATE_TILE;
+        var tile = typeof win.TILE_SIZE === 'number' ? win.TILE_SIZE : 16;
+        var doorWest = gate.x * tile;
+        var doorEast = (gate.x + 1) * tile;
+        var stand = win.tileCenter(gate.x - 2, gate.y);
+        var origWander = world.wanderMobs;
+        world.wanderMobs = function () {};
+
+        var drake = spawnTestDrake(world, win, stand.x, stand.y);
+        assert(drake.body, 'drake has a body');
+        assertEqual(drake.body.width, 28, 'drake body width stays 28');
+        assertEqual(drake.body.height, 28, 'drake body height stays 28');
+        assert(drake.body.width > 16 && drake.body.height > 16, 'drake body is multi-tile');
+
+        world.mobs.children.iterate(function (mob) {
+            if (mob && mob !== drake) {
+                mob.aliveMob = false;
+            }
+        });
+        var occ = world.collectOccupiedTiles(-200, -200);
+        var footprint = win.giantFootprintTiles(drake.x, drake.y);
+        assertEqual(footprint.length, 4, 'giant footprint is 2x2 tiles');
+        var fi;
+        for (fi = 0; fi < footprint.length; fi++) {
+            var key = footprint[fi].tx + ',' + footprint[fi].ty;
+            assert(occ[key], 'occupied includes footprint tile ' + key);
+        }
+        assert(Object.keys(occ).length >= 4, 'giant occupies 2x2 or more, n=' + Object.keys(occ).length);
+        assert(win.giantBlockedAt(world.tileGrid, doorWest + 8, stand.y, 'haven'), '1-tile gate blocks giants');
+
+        var away = win.tileCenter(8, 22);
+        world.placePlayer(away.x, away.y);
+        world.player.body.setVelocity(0, 0);
+        var origX = drake.x;
+        drake.body.setVelocity(80, 0);
+        return H.sleep(800).then(function () {
+            drake.body.setVelocity(0, 0);
+            assert(drake.x < doorEast, 'drake cannot pass the 1-tile gate, x=' + drake.x);
+            assert(drake.x < origX + 80, 'drake did not free-run through the door');
+            assert(drake.x > origX - 8, 'drake stayed on the west approach');
+
+            var bank = win.interiorById('bank');
+            var doorPt = win.tileCenter(bank.doorTx, bank.doorTy);
+            var south = win.tileCenter(bank.doorTx, bank.doorTy + 2);
+            drake.setPosition(south.x, south.y);
+            drake.body.reset(south.x, south.y);
+            drake.body.setVelocity(0, -80);
+            var origY = drake.y;
+            return H.sleep(800).then(function () {
+                drake.body.setVelocity(0, 0);
+                assert(drake.y > doorPt.y - 8, 'drake cannot enter the 1-tile house door, y=' + drake.y);
+                assert(drake.y < origY + 8, 'drake did not bounce far south');
+                assert(world.interiorId == null, 'giant did not trigger an interior scene');
+
+                if (drake.body) {
+                    drake.body.enable = false;
+                    drake.body.setVelocity(0, 0);
+                }
+                drake.aliveMob = false;
+                drake.setPosition(24, 24);
+                world.placePlayer(spawn.x, spawn.y);
+                world.player.body.setVelocity(0, 0);
+                world.walkTarget = null;
+                return H.holdKey(win, 'KeyD', 'd', 700).then(function () {
+                    assert(world.player.x > doorEast, 'player still walks through the 1-tile door, x=' + world.player.x);
+                    assert(Math.abs(world.player.y - spawn.y) < 8, 'player door walk stays on the opening row');
+                    assert(!win.game.input.keyboard, 'Phaser keyboard still off after giant door check');
+                    world.wanderMobs = origWander;
+                    H.enterZone(win, 'haven');
+                    world.placePlayer(spawn.x, spawn.y);
+                    world.player.body.setVelocity(0, 0);
+                });
+            });
+        }).then(null, function (err) {
+            world.wanderMobs = origWander;
+            throw err;
+        });
+    });
+});
+
 EmberwoodTests.add('hud: auto-attack toggle persists on the hero', function (win, H) {
     H.setAutoAttack(win, true);
     H.click(win, '#tab-bar button[data-tab="combat"]');
@@ -8467,6 +8573,19 @@ function parkWorldBodies(world) {
     }
     park(world.npcs);
     park(world.mobs);
+}
+
+function spawnTestDrake(world, win, x, y) {
+    var sprite = world.physics.add.sprite(x, y, 'mob-drake', 0);
+    world.mobs.add(sprite);
+    sprite.setScale(win.mobScaleFor('Drake', 'world'));
+    win.applyMobWorldBody(sprite, 'Drake');
+    sprite.mobDef = { type: 'Drake', id: 'test-giant' };
+    sprite.aliveMob = true;
+    sprite.respawnAt = 0;
+    world.physics.add.collider(sprite, world.ground);
+    world.physics.add.collider(world.player, sprite);
+    return sprite;
 }
 
 function tileCollideIndexes(layer) {

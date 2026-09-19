@@ -18,9 +18,27 @@ var MOB_SCALES = {
 var GIANT_MOB_TYPES = {
     Drake: true
 };
+var GIANT_FOOTPRINT_TILES = 2;
 
 function isGiantMob(type) {
     return !!(type && GIANT_MOB_TYPES[type]);
+}
+
+function giantFootprintTiles(wx, wy) {
+    var size = typeof TILE_SIZE === 'number' ? TILE_SIZE : 16;
+    var n = GIANT_FOOTPRINT_TILES;
+    var half = Math.floor(n / 2);
+    var tx0 = Math.round(wx / size) - half;
+    var ty0 = Math.round(wy / size) - half;
+    var tiles = [];
+    var dy;
+    var dx;
+    for (dy = 0; dy < n; dy++) {
+        for (dx = 0; dx < n; dx++) {
+            tiles.push({ tx: tx0 + dx, ty: ty0 + dy });
+        }
+    }
+    return tiles;
 }
 
 function mobScaleFor(type, mode) {

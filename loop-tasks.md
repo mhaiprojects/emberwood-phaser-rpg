@@ -80,7 +80,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Door open/close animation. — Conclusion: From spawn (328,248) Millfields farm door (26,17) stays locked without a key; Iron key tweens a leaf open to PATH; walking away closes it; bump reopens (`You open the door.`). Phaser 3.90 keyboard off. Dedicated + Playwright 1/1.
 - [done] Examine door (flavor text on the courtyard gate and house doors). — Conclusion: From spawn (328,248) left-click courtyard gate (23,15) and bank/shop/guild doors still walk PATH; right-click Examine logs flavor; Millfields lock unchanged. Phaser 3.90 keyboard off. Dedicated + Playwright 1/1.
 - [done] Giant mobs (drake) occupy more than 1 tile (sprite + 28×28 body). — Conclusion: Drake world scale 2, display 48px, body 28×28; not required to fit 1-tile interiors. Suite 35/35.
-- [todo] Giant mobs block 2×2 (or more) and cannot enter 1-tile interiors. — Conclusion: —
+- [done] Giant mobs block 2×2 (or more) and cannot enter 1-tile interiors. — Conclusion: From spawn (328,248) Drake 2×2 occupancy + 28×28 body cannot pass courtyard gate or bank 1-tile door; player D still walks through (x≈390). Phaser 3.90 keyboard off. Dedicated + Playwright 1/1.
 - [todo] Agility shortcuts vs doors (level-gated squeeze / climb beside a locked door). — Conclusion: —
 - [todo] Collision debug overlay (toggle arcade body + colliding tiles). — Conclusion: —
 
@@ -498,4 +498,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 125 | 2026-09-19 | Closed/locked doors + keys | done — spawn (328,248) Millfields farm door (26,17) TILE.DOOR blocks W (`The door is locked.`); addItem key unlocks to PATH and W walks in; Phaser keyboard off; dedicated + Playwright 1/1 |
 | 126 | 2026-09-19 | Door open/close animation | done — spawn (328,248) farm door (26,17) locked without a key; Iron key tweens leaf open to PATH; walk-away closes; bump reopens; Phaser keyboard off; dedicated + Playwright 1/1 |
 | 127 | 2026-09-19 | Examine door (flavor text on the courtyard gate and house doors) | done — spawn (328,248) left-click gate/house doors still walk PATH; Examine logs flavor; Millfields lock unchanged; Phaser keyboard off; dedicated + Playwright 1/1 |
+| 128 | 2026-09-19 | Giant mobs block 2×2 and cannot enter 1-tile interiors | done — spawn (328,248) Drake 2×2 occupancy cannot pass gate/bank 1-tile doors; player D still walks through; Phaser keyboard off; dedicated + Playwright 1/1 |
 
