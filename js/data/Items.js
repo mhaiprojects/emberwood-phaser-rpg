@@ -706,6 +706,55 @@ function combatSkill(hero) {
     return 'attack';
 }
 
+function styleHitXp(mobXp, dealt, maxHp) {
+    var xp = typeof mobXp === 'number' && mobXp > 0 ? mobXp : 0;
+    var hp = typeof maxHp === 'number' && maxHp > 0 ? maxHp : 0;
+    var scored = typeof dealt === 'number' ? dealt : 0;
+    if (scored < 1 || hp < 1 || xp < 1) {
+        return 0;
+    }
+    if (scored > hp) {
+        scored = hp;
+    }
+    return Math.max(1, Math.round(xp * scored / hp));
+}
+
+function enemyMobXp(target) {
+    if (target && typeof target.xp === 'number') {
+        return target.xp;
+    }
+    var scene = target && target.scene;
+    var world = scene && scene.scene && typeof scene.scene.getScene === 'function'
+        ? scene.scene.getScene('WorldScene')
+        : null;
+    var def = world && world.lastFought && world.lastFought.mobDef;
+    if (def && typeof def.xp === 'number') {
+        return def.xp;
+    }
+    return 10;
+}
+
+function grantStyleHitXp(hero, target, dealt, hpBefore) {
+    if (!hero || !hero.skills) {
+        return 0;
+    }
+    var remaining = typeof hpBefore === 'number' ? hpBefore : (target && target.hp);
+    var scored = Math.min(dealt, remaining);
+    var amount = styleHitXp(enemyMobXp(target), scored, target && target.maxHp);
+    if (amount < 1) {
+        return 0;
+    }
+    var skill = combatSkill(hero);
+    gainSkillXp(hero, skill, amount);
+    if (target && target.scene && target.scene.registry) {
+        target.scene.registry.set('hero', hero);
+    }
+    if (typeof Hud !== 'undefined' && Hud.renderHero) {
+        Hud.renderHero(hero);
+    }
+    return amount;
+}
+
 function normalizeCombatClass(value) {
     if (value === 'ranged' || value === 'magic') {
         return value;

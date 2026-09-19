@@ -52,6 +52,7 @@ var BattleScene = new Phaser.Class({
         for (var i = 0; i < pending.enemies.length; i++) {
             var spec = pending.enemies[i];
             var enemy = new Enemy(this, slots[i].x, slots[i].y, spec.texture, spec.frame || 0, spec.type, spec.hp, spec.damage);
+            enemy.xp = typeof spec.xp === 'number' ? spec.xp : 10;
             enemy.combatClass = typeof mobCombatClass === 'function' ? mobCombatClass(spec) : 'melee';
             if (spec.tint && spec.tint !== 0xffffff && !isUniqueMobTexture(spec.texture)) {
                 enemy.setTint(spec.tint);

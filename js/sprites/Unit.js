@@ -112,7 +112,11 @@ var Unit = new Phaser.Class({
                 if (typeof triangleHit === 'function' && typeof combatClass === 'function') {
                     amount = triangleHit(amount, combatClass(self), combatClass(target));
                 }
+                var hpBefore = target.hp;
                 var dealt = target.takeDamage(amount);
+                if (self instanceof PlayerCharacter && typeof grantStyleHitXp === 'function') {
+                    grantStyleHitXp(unitHero(self), target, dealt, hpBefore);
+                }
                 if (self.scene && self.scene.events) {
                     var verb = self.type === 'You' ? ' hit ' : ' hits ';
                     self.scene.events.emit('Message', self.type + verb + target.type + ' for ' + dealt);
