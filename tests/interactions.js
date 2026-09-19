@@ -108,6 +108,56 @@ EmberwoodTests.add('title: click here to play starts WorldScene in Emberhaven an
     });
 });
 
+EmberwoodTests.add('title: #btn-start stays disabled until TitleScene binds Hud.setStartHandler', function (win, H) {
+    return H.waitReady(win).then(function () {
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(win.Hud.mode, 'title', 'hud starts on title');
+        assert(win.game.scene.isActive('TitleScene'), 'TitleScene active before play');
+        assert(!win.game.scene.isActive('WorldScene'), 'WorldScene stays off on title');
+
+        var start = win.document.getElementById('btn-start');
+        assert(start && start === win.Hud.el.start, '#btn-start is Hud.el.start');
+        assertEqual(typeof win.Hud.setStartHandler, 'function', 'Hud.setStartHandler exists');
+        assertEqual(typeof win.Hud._startHandler, 'function', 'TitleScene already bound the start handler');
+        assertEqual(start.disabled, false, '#btn-start enabled after TitleScene bind');
+
+        win.Hud._startHandler = null;
+        start.disabled = true;
+        assert(start.disabled, '#btn-start disabled without a bound handler');
+        H.click(win, '#btn-start');
+        win.Hud.onStart();
+        assert(win.game.scene.isActive('TitleScene'), 'unbound click stays on TitleScene');
+        assert(!win.game.scene.isActive('WorldScene'), 'WorldScene does not start before setStartHandler');
+        assertEqual(win.Hud.mode, 'title', 'mode stays title until bind');
+        assert(win.document.getElementById('title-overlay').hidden === false, 'title overlay stays');
+        assert(start.disabled, '#btn-start stays disabled until setStartHandler');
+
+        var title = win.game.scene.getScene('TitleScene');
+        win.Hud.setStartHandler(function () {
+            title.startGame();
+        });
+        assertEqual(typeof win.Hud._startHandler, 'function', 'setStartHandler stores the TitleScene callback');
+        assertEqual(start.disabled, false, 'setStartHandler enables #btn-start');
+
+        return H.startPlay(win);
+    }).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assert(win.game.scene.isActive('WorldScene'), 'bound start starts WorldScene');
+        assert(!win.game.scene.isActive('TitleScene'), 'TitleScene stops after play');
+        assertEqual(win.Hud.mode, 'world', 'hud mode world');
+        assertEqual(win.game.registry.get('zone'), 'haven', 'registry zone haven');
+        assertEqual(world.zoneId, 'haven', 'start zone');
+        assertEqual(win.document.getElementById('hud-zone').textContent, 'Emberhaven', 'zone heading');
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off after play');
+    });
+});
+
 EmberwoodTests.add('title: click here to play enters Emberhaven', function (win, H) {
     return H.startPlay(win).then(function () {
         var world = H.world(win);
