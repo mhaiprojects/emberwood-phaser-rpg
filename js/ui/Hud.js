@@ -352,14 +352,20 @@ var Hud = {
         if (!hero || !id) {
             return;
         }
-        if (this.mode === 'battle') {
-            this.log('Use Eat food on your combat turn.');
-            return;
-        }
         if (this.mode === 'title' || this.mode === 'dead') {
             return;
         }
         var def = ITEM_DB[id];
+        if (this.mode === 'battle') {
+            if (def && def.heal && this.battle && this.battle.isPlayerTurn() && this.battle.waitingForPlayer) {
+                this.selectingEnemy = false;
+                this.setActionsEnabled(false);
+                this.battle.receivePlayerSelection('heal', this.battle.targetIndex, id);
+                return;
+            }
+            this.log('Use Eat food on your combat turn.');
+            return;
+        }
         if (def && def.heal) {
             if (hero.hp >= hero.maxHp) {
                 this.log('You are already at full health.');

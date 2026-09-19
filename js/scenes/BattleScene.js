@@ -197,7 +197,7 @@ var BattleScene = new Phaser.Class({
         });
     },
 
-    receivePlayerSelection: function (action, targetIndex) {
+    receivePlayerSelection: function (action, targetIndex, itemId) {
         if (this.busy) {
             return;
         }
@@ -235,10 +235,10 @@ var BattleScene = new Phaser.Class({
                 Hud.setActionsEnabled(true);
                 return;
             }
-            var eaten = eatBestFood(hero);
+            var eaten = itemId ? eatItem(hero, itemId) : eatBestFood(hero);
             if (!eaten) {
                 this.waitingForPlayer = true;
-                this.events.emit('Message', 'You have no food.');
+                this.events.emit('Message', itemId ? 'You do not have that.' : 'You have no food.');
                 this.busy = false;
                 Hud.setActionsEnabled(true);
                 return;
