@@ -7,39 +7,39 @@ Do not paste `AGENT.md` or `loop-tasks.md` into the Task prompt.
 
 Pick **#1**. One spawned tick = one item. Refresh this file after commit.
 
-## 1. [verify] Click shrimp at full HP chats `already at full health` and does not consume.
+## 1. [verify] Click shrimp at low HP heals 12 (capped) and decrements the stack.
 
 - Section: 5. Inventory / equipment / bank (22)
 - Files: `js/data/Items.js`, `js/ui/Hud.js`, `js/scenes/BootScene.js`, `tests/interactions.js`
-- Test: `combat: Eat at full HP does not consume food and returns the turn`
+- Test: `hud: click shrimp at full HP does not consume`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
-## 2. [verify] Click shrimp at low HP heals 12 (capped) and decrements the stack.
-
-- Section: 5. Inventory / equipment / bank (22)
-- Files: `js/data/Items.js`, `js/ui/Hud.js`, `js/scenes/BootScene.js`, `tests/interactions.js`
-- Test: `add a dedicated case; nearest existing: title: click here to play enters Emberhaven`
-- URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
-
-## 3. [verify] Click bread heals 20 (capped) and decrements the stack.
+## 2. [verify] Click bread heals 20 (capped) and decrements the stack.
 
 - Section: 5. Inventory / equipment / bank (22)
 - Files: `js/data/Items.js`, `js/ui/Hud.js`, `js/scenes/BootScene.js`, `tests/interactions.js`
 - Test: `add a dedicated case; nearest existing: title: click here to play enters Emberhaven`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
-## 4. [verify] Click coins / sword / shield / bones only logs the item name (no crash).
+## 3. [verify] Click coins / sword / shield / bones only logs the item name (no crash).
 
 - Section: 5. Inventory / equipment / bank (22)
 - Files: `js/data/Items.js`, `js/ui/Hud.js`, `js/scenes/BootScene.js`, `tests/interactions.js`
 - Test: `add a dedicated case; nearest existing: hud: worn sword/shield are display-only`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
-## 5. [verify] `addItem('coins')` increments `hero.gold` and `syncCoins`; `takeItem('coins')` decrements both.
+## 4. [verify] `addItem('coins')` increments `hero.gold` and `syncCoins`; `takeItem('coins')` decrements both.
 
 - Section: 5. Inventory / equipment / bank (22)
 - Files: `js/data/Items.js`, `js/ui/Hud.js`, `js/scenes/BootScene.js`, `tests/interactions.js`
 - Test: `npcs: Fen Witch at 10+ gold heals and takeItem removes 10 coins`
+- URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
+
+## 5. [verify] Stacks merge by `id` and a stack is removed when `qty` hits 0.
+
+- Section: 5. Inventory / equipment / bank (22)
+- Files: `js/data/Items.js`, `js/ui/Hud.js`, `js/scenes/BootScene.js`, `tests/interactions.js`
+- Test: `add a dedicated case; nearest existing: hud: start skills Hitpoints 10 / 1154 XP / 100 HP; others 1 / 0`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
 After `done` + tests: commit, then `python3 tools/loop-next.py`.

@@ -357,6 +357,35 @@ EmberwoodTests.add('hud: minimap highlights Emberhaven', function (win, H) {
     assertEqual(win.document.querySelectorAll('#minimap .mm-cell').length, 9, 'nine minimap cells');
 });
 
+EmberwoodTests.add('hud: click shrimp at full HP does not consume', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(win.ITEM_DB.shrimp.heal, 12, 'cooked shrimp heals 12');
+        var hero = H.hero(win);
+        assertEqual(hero.hp, hero.maxHp, 'starts at full HP');
+        assertEqual(hero.hp, 100, 'starter HP is 100');
+        var shrimp = hero.inventory.filter(function (s) { return s.id === 'shrimp'; })[0];
+        assert(shrimp && shrimp.qty > 0, 'starter shrimp to refuse');
+        var qty = shrimp.qty;
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        H.click(win, '#inv-grid [data-item="shrimp"]');
+        hero = H.hero(win);
+        assert(H.chatHas(win, 'already at full health'), 'full-HP shrimp chat');
+        assertEqual(hero.inventory.filter(function (s) { return s.id === 'shrimp'; })[0].qty, qty, 'full HP does not consume shrimp');
+        assertEqual(hero.hp, 100, 'HP stays at max');
+        assertEqual(win.document.getElementById('hud-hp').textContent.replace(/\s+/g, ' ').trim(), '100 / 100', 'HUD HP unchanged');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('hud: eat food from inventory', function (win, H) {
     H.click(win, '#tab-bar button[data-tab="inv"]');
     H.click(win, '#inv-grid [data-item="shrimp"]');
