@@ -137,6 +137,98 @@ EmberwoodTests.add('hud: skills, worn, combat style, inventory', function (win, 
     assertMatch(inv.querySelector('[data-item="coins"]').textContent, '8', 'coin stack');
 });
 
+EmberwoodTests.add('hud: worn sword/shield are display-only', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+
+        var hero = H.hero(win);
+        assertEqual(hero.equipment.weapon, 'sword', 'starter wears bronze sword');
+        assertEqual(hero.equipment.shield, 'shield', 'starter wears wooden shield');
+        assertEqual(win.ITEM_DB.sword.damage, 16, 'ITEM_DB sword lists damage 16');
+        assertEqual(win.ITEM_DB.shield.defence, 1, 'ITEM_DB shield lists defence 1');
+        assertEqual(hero.damage, 16, 'starter hero.damage is 16 (same number as the unused sword field)');
+
+        H.click(win, '#tab-bar button[data-tab="equip"]');
+        var worn = win.document.getElementById('equip-grid').innerText;
+        assertMatch(worn, 'Bronze sword', 'equip tab shows bronze sword name');
+        assertMatch(worn, 'Wooden shield', 'equip tab shows wooden shield name');
+        assertEqual(worn.indexOf('16'), -1, 'equip tab does not show sword damage');
+        assertEqual(worn.toLowerCase().indexOf('defence'), -1, 'equip tab does not show shield defence');
+
+        var renderSrc = String(win.Hud.renderEquip);
+        assertEqual(renderSrc.indexOf('damage'), -1, 'renderEquip does not read item damage');
+        assertEqual(renderSrc.indexOf('defence'), -1, 'renderEquip does not read item defence');
+
+        hero.damage = 24;
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        worn = win.document.getElementById('equip-grid').innerText;
+        assertMatch(worn, 'Bronze sword', 'still worn after hero.damage change');
+        assertEqual(worn.indexOf('24'), -1, 'equip tab still hides combat numbers');
+
+        return H.startCustomFight(win, [
+            { type: 'Goblin', texture: 'slime', tint: 0x5aa33a, hp: 80, damage: 8, gold: 0, xp: 1 }
+        ]);
+    }).then(function () {
+        var battle = H.battle(win);
+        var you = battle.heroes[0];
+        var foe = battle.enemies[0];
+        var hero = H.hero(win);
+        assertEqual(hero.equipment.weapon, 'sword', 'still wearing sword in battle');
+        assertEqual(hero.equipment.shield, 'shield', 'still wearing shield in battle');
+        assertEqual(win.ITEM_DB.sword.damage, 16, 'ITEM_DB sword damage unused');
+        assertEqual(win.ITEM_DB.shield.defence, 1, 'ITEM_DB shield defence unused');
+        assertEqual(you.damage, 24, 'battle actor uses hero.damage, not ITEM_DB.sword.damage 16');
+
+        var orig = win.Phaser.Math.Between;
+        try {
+            win.Phaser.Math.Between = function (lo, hi) {
+                assertEqual(lo, -2, 'hit variance low is -2');
+                assertEqual(hi, 2, 'hit variance high is +2');
+                return 0;
+            };
+            var outgoing = foe.takeDamage(you.damage);
+            assertEqual(outgoing, 24, 'outgoing hit is hero.damage + 0, not worn sword 16');
+            var incoming = you.takeDamage(8);
+            assertEqual(incoming, 8, 'incoming hit is amount + 0, not reduced by worn shield defence 1');
+        } finally {
+            win.Phaser.Math.Between = orig;
+        }
+
+        hero.equipment.weapon = null;
+        hero.equipment.shield = null;
+        win.game.registry.set('hero', hero);
+        win.Hud.renderEquip(hero);
+        var empty = win.document.getElementById('equip-grid').innerText;
+        assertMatch(empty, 'None', 'unequipped HUD shows None');
+        orig = win.Phaser.Math.Between;
+        try {
+            win.Phaser.Math.Between = function () { return 0; };
+            assertEqual(foe.takeDamage(you.damage), 24, 'unequipped outgoing still hero.damage 24');
+            assertEqual(you.takeDamage(8), 8, 'unequipped incoming still unreduced');
+        } finally {
+            win.Phaser.Math.Between = orig;
+        }
+
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        return H.forceFlee(win);
+    }).then(function () {
+        H.enterZone(win, 'haven');
+    }).catch(function (err) {
+        return H.cleanupBattle(win).then(function () {
+            throw err;
+        });
+    });
+});
+
 EmberwoodTests.add('hud: skills tab lists twelve skills with icons', function (win, H) {
     var expected = [
         ['attack', 'Attack'],

@@ -7,35 +7,35 @@ Do not paste `AGENT.md` or `loop-tasks.md` into the Task prompt.
 
 Pick **#1**. One spawned tick = one item. Refresh this file after commit.
 
-## 1. [verify] Worn sword/shield are **display-only** today; then apply weapon `damage` and shield `defence` to the hit formula.
-
-- Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
-- Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
-- Test: `add a dedicated case; nearest existing: hud: skills, worn, combat style, inventory`
-- URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
-
-## 2. [verify] Dead overworld mob hides ~18s then respawns in place with label and body re-enabled.
+## 1. [verify] Dead overworld mob hides ~18s then respawns in place with label and body re-enabled.
 
 - Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
 - Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
 - Test: `add a dedicated case; nearest existing: npcs: every NPC_DEFS entry spawns at xy with a yellow name label`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
-## 3. [verify] Mob wander uses occasional small velocity and still collides with the ground layer.
+## 2. [verify] Mob wander uses occasional small velocity and still collides with the ground layer.
 
 - Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
 - Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
 - Test: `add a dedicated case; nearest existing: movement: opposite keys cancel and keyup clears velocity`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
-## 4. [verify] Click shrimp at full HP chats `already at full health` and does not consume.
+## 3. [verify] Click shrimp at full HP chats `already at full health` and does not consume.
 
 - Section: 5. Inventory / equipment / bank (22)
 - Files: `js/data/Items.js`, `js/ui/Hud.js`, `js/scenes/BootScene.js`, `tests/interactions.js`
 - Test: `combat: Eat at full HP does not consume food and returns the turn`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
-## 5. [verify] Click shrimp at low HP heals 12 (capped) and decrements the stack.
+## 4. [verify] Click shrimp at low HP heals 12 (capped) and decrements the stack.
+
+- Section: 5. Inventory / equipment / bank (22)
+- Files: `js/data/Items.js`, `js/ui/Hud.js`, `js/scenes/BootScene.js`, `tests/interactions.js`
+- Test: `add a dedicated case; nearest existing: title: click here to play enters Emberhaven`
+- URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
+
+## 5. [verify] Click bread heals 20 (capped) and decrements the stack.
 
 - Section: 5. Inventory / equipment / bank (22)
 - Files: `js/data/Items.js`, `js/ui/Hud.js`, `js/scenes/BootScene.js`, `tests/interactions.js`

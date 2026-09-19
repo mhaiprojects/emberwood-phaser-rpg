@@ -132,7 +132,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Player death shows `#dead-overlay` “You are dead”, `Hud.mode === 'dead'`, and combat level in the subtitle. — Conclusion: done — lose starts GameOverScene; `#dead-overlay` “You are dead”, `Hud.mode === 'dead'`, `#dead-text` Combat level N; retry returns to title; Phaser 3.90 keyboard off; Playwright 1/1 —
 - [done] Return to title stops scenes and shows `#title-overlay` again. — Conclusion: Return to title stops World/Battle/GameOver, only TitleScene + `#title-overlay`; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1
 - [done] HP bars go green / amber / red at 65% and 35% and that ± floaters appear on hit/heal. — Conclusion: Spawn (328,248) HUD+battle bars green ≥65% / amber ≥35% / red <35%; − hit and + heal floaters. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [verify] Worn sword/shield are **display-only** today; then apply weapon `damage` and shield `defence` to the hit formula. — Conclusion: —
+- [done] Worn sword/shield are **display-only** today; then apply weapon `damage` and shield `defence` to the hit formula. — Conclusion: Equip tab shows Bronze sword / Wooden shield names only; hit uses `hero.damage` + Between(-2,2) min 1, not `ITEM_DB.sword.damage` 16 or `shield.defence` 1. Spawn (328,248); Phaser 3.90 keyboard off; dedicated case + Playwright 1/1.
 - [todo] Reconcile `levelHero` (combat XP / 40) with `gainSkillXp` / `maxHp = 10 * hitpoints` so one combat-level rule wins. — Conclusion: —
 - [todo] OSRS-like combat level from Attack, Strength, Defence, Hitpoints, Prayer, Ranged, Magic. — Conclusion: —
 - [todo] Auto-retaliate as a setting **separate** from world auto-engage. — Conclusion: —
@@ -442,4 +442,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 69 | 2026-09-19 | Player death shows #dead-overlay You are dead, Hud.mode dead, combat level subtitle | done — lose → GameOverScene `#dead-overlay` “You are dead”, Hud.mode dead, `#dead-text` Combat level N; retry → title; Phaser 3.90 keyboard off; Playwright 1/1 |
 | 70 | 2026-09-19 | Return to title stops scenes and shows #title-overlay again | done — Return to title stops World/Battle/GameOver, only TitleScene + `#title-overlay`; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 71 | 2026-09-19 | HP bars go green / amber / red at 65% and 35%; ± floaters on hit/heal | done — spawn (328,248) HUD+battle green ≥65% / amber ≥35% / red <35%; −/+ floaters; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 72 | 2026-09-19 | Worn sword/shield are display-only today | done — HUD names only; hit uses hero.damage ±2 not ITEM_DB sword damage 16 or shield defence 1; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 
