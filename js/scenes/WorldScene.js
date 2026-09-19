@@ -1192,6 +1192,13 @@ var WorldScene = new Phaser.Class({
             this.tryFishSpot(scenery);
             return;
         }
+        if (scenery && scenery.kind === 'tree' && typeof woodcutTreeAt === 'function'
+                && woodcutTreeAt(scenery.tx, scenery.ty, this.zoneId, this.tileGrid)) {
+            this.engageTarget = null;
+            this.talkTarget = null;
+            this.tryChopTree(scenery);
+            return;
+        }
         if (scenery && !(typeof isWalkableExamineKind === 'function' && isWalkableExamineKind(scenery.kind))) {
             this.engageTarget = null;
             this.talkTarget = null;
@@ -1259,6 +1266,20 @@ var WorldScene = new Phaser.Class({
         }
         this.refreshHud();
         Hud.log('You fish at the fishing spot.');
+        return true;
+    },
+
+    tryChopTree: function (hit) {
+        var hero = this.registry.get('hero');
+        var result = typeof chopAtTree === 'function' ? chopAtTree(hero) : null;
+        if (!result || !result.ok) {
+            return this.examineScenery(hit);
+        }
+        if (Hud.saveHero) {
+            Hud.saveHero(hero);
+        }
+        this.refreshHud();
+        Hud.log('You chop the tree.');
         return true;
     },
 

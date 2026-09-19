@@ -9286,6 +9286,190 @@ EmberwoodTests.add('skills: Southshore fishing spots grant Fishing XP', function
     });
 });
 
+EmberwoodTests.add('skills: Northwood trees grant Woodcutting XP', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, true);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.clearLoot();
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        if (win.Hud.hideContextMenu) {
+            win.Hud.hideContextMenu();
+        }
+        if (win.Hud.clearUseOn) {
+            win.Hud.clearUseOn();
+        }
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof win.chopAtTree, 'function', 'chopAtTree helper');
+        assertEqual(typeof win.woodcutTreeAt, 'function', 'woodcutTreeAt helper');
+        assertEqual(typeof win.gainSkillXp, 'function', 'gainSkillXp helper');
+        assertEqual(win.WOODCUT_TREE_XP, 10, 'Northwood trees grant 10 Woodcutting XP');
+        assertEqual(typeof win.chopTree, 'undefined', 'chopTree helper is not this tick');
+        assertEqual(typeof win.woodcutTree, 'undefined', 'woodcutTree helper is not this tick');
+        assertEqual(typeof win.mineRock, 'undefined', 'Mining is not this tick');
+        assertEqual(typeof win.mineAtRock, 'undefined', 'Mining helper is not this tick');
+
+        function clickTile(tx, ty) {
+            var pt = win.tileCenter(tx, ty);
+            world.onClick({ worldX: pt.x, worldY: pt.y });
+            return pt;
+        }
+
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(hero.skills.woodcutting.xp, 0, 'Woodcutting XP starts 0');
+        assertEqual(hero.skills.woodcutting.level, 1, 'Woodcutting starts 1');
+        assertEqual(hero.skills.fishing.xp, 0, 'Fishing XP stays 0');
+        assertEqual(hero.skills.mining.xp, 0, 'Mining XP stays 0');
+        assertEqual(hero.level, 3, 'starter combat level 3');
+        assertEqual(world.tileGrid[2][0], win.TILE.TREE, 'haven west border is TREE');
+        assertEqual(win.woodcutTreeAt(0, 2, 'haven', world.tileGrid), null, 'woodcut trees are zone-gated');
+        assertEqual(win.examineSceneryText('tree'), "It's a tree.", 'tree examine text');
+
+        clickTile(0, 2);
+        hero = H.hero(win);
+        assertEqual(H.lastChat(win), "It's a tree.", 'haven tree still examines');
+        assertEqual(hero.skills.woodcutting.xp, 0, 'haven tree grants no Woodcutting XP');
+
+        H.enterZone(win, 'northwood');
+        world = H.world(win);
+        H.setAutoAttack(win, false);
+        world.encounterLock = false;
+        world.engageTarget = null;
+        world.talkTarget = null;
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        parkWorldBodies(world);
+        hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(world.tileGrid[2][0], win.TILE.TREE, 'northwood west border is TREE');
+        var tree = { x: 0, y: 2 };
+        var tree2 = null;
+        var flower = null;
+        var y;
+        var x;
+        for (y = 0; y < world.tileGrid.length; y++) {
+            for (x = 0; x < world.tileGrid[y].length; x++) {
+                if (!tree2 && world.tileGrid[y][x] === win.TILE.TREE && (x !== tree.x || y !== tree.y)) {
+                    tree2 = { x: x, y: y };
+                }
+                if (!flower && world.tileGrid[y][x] === win.TILE.FLOWER) {
+                    flower = { tx: x, ty: y };
+                }
+            }
+        }
+        assert(tree2, 'Northwood has a second TREE');
+        assertEqual(
+            win.sceneryKindAt(world.tileGrid, tree.x, tree.y, { zoneId: 'northwood' }),
+            'tree',
+            'northwood tree kind'
+        );
+        assertEqual(win.woodcutTreeAt(tree.x, tree.y, 'northwood', world.tileGrid).x, tree.x, 'woodcutTreeAt matches northwood');
+        assertEqual(win.woodcutTreeAt(tree.x, tree.y, 'haven', world.tileGrid), null, 'same tile is not woodcut outside northwood');
+
+        H.click(win, '#tab-bar button[data-tab="skills"]');
+        var dropsHost = win.Hud.ensureXpDrops();
+        assert(dropsHost && dropsHost.id === 'xp-drops', 'xp-drops host exists');
+        dropsHost.innerHTML = '';
+        win.Hud.el.log.innerHTML = '';
+
+        clickTile(tree.x, tree.y);
+        hero = H.hero(win);
+        assertEqual(H.lastChat(win), 'You chop the tree.', 'tree click chat');
+        assertEqual(hero.skills.woodcutting.xp, 10, 'tree click grants 10 Woodcutting XP');
+        assertEqual(hero.skills.woodcutting.level, 1, '10 XP does not level Woodcutting');
+        assertEqual(hero.skills.fishing.xp, 0, 'tree click does not grant Fishing XP');
+        assertEqual(hero.skills.mining.xp, 0, 'tree click does not grant Mining XP');
+        assertEqual(hero.level, 3, 'combat level unchanged at Woodcutting 1');
+        assertEqual(H.lootLive(win).length, 0, 'chop does not drop loot');
+        assert(!world.walkTarget, 'woodcutting does not walk');
+        var drops = win.document.querySelectorAll('#xp-drops .xp-drop');
+        assertEqual(drops.length, 1, 'one Woodcutting XP drop');
+        assertEqual(drops[0].getAttribute('data-skill'), 'woodcutting', 'drop skill is woodcutting');
+        assertEqual(drops[0].getAttribute('data-xp'), '10', 'drop amount is 10');
+        var woodIcon = drops[0].querySelector('img.pix');
+        assert(woodIcon && woodIcon.getAttribute('src').indexOf('assets/svg/skills/woodcutting.svg') !== -1, 'Woodcutting skill icon');
+
+        var woodRow = win.document.querySelector('#skills-list [data-skill="woodcutting"]');
+        assert(woodRow, 'Woodcutting Skills row exists');
+        assert(
+            String(woodRow.getAttribute('title') || '').indexOf('10 XP') !== -1,
+            'Skills tab shows Woodcutting XP'
+        );
+
+        dropsHost.innerHTML = '';
+        var helper = win.chopAtTree(hero);
+        assert(helper && helper.ok, 'helper chops a tree');
+        assertEqual(helper.xp, 10, 'helper grants 10 Woodcutting XP');
+        assertEqual(hero.skills.woodcutting.xp, 20, 'helper grants another 10 Woodcutting XP');
+        assertEqual(hero.skills.woodcutting.level, 1, '20 XP does not level Woodcutting');
+        assertEqual(hero.skills.mining.xp, 0, 'helper does not grant Mining XP');
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        drops = win.document.querySelectorAll('#xp-drops .xp-drop');
+        assertEqual(drops.length, 1, 'one helper Woodcutting XP drop');
+        assertEqual(drops[0].getAttribute('data-skill'), 'woodcutting', 'helper drop skill is woodcutting');
+        assertEqual(drops[0].getAttribute('data-xp'), '10', 'helper drop amount is 10');
+
+        H.click(win, '#tab-bar button[data-tab="skills"]');
+        woodRow = win.document.querySelector('#skills-list [data-skill="woodcutting"]');
+        assert(
+            String(woodRow.getAttribute('title') || '').indexOf('20 XP') !== -1,
+            'Skills tab shows helper Woodcutting XP'
+        );
+
+        dropsHost.innerHTML = '';
+        clickTile(tree2.x, tree2.y);
+        hero = H.hero(win);
+        assertEqual(hero.skills.woodcutting.xp, 30, 'second tree grants another 10 Woodcutting XP');
+        assertEqual(H.lastChat(win), 'You chop the tree.', 'second tree chat');
+
+        if (flower) {
+            clickTile(flower.tx, flower.ty);
+            hero = H.hero(win);
+            assertEqual(hero.skills.woodcutting.xp, 30, 'flower grants no Woodcutting XP');
+        }
+
+        world.encounterLock = true;
+        clickTile(tree.x, tree.y);
+        assertEqual(H.hero(win).skills.woodcutting.xp, 30, 'encounterLock grants no Woodcutting XP');
+        world.encounterLock = false;
+
+        H.enterZone(win, 'haven');
+        world = H.world(win);
+        world.encounterLock = false;
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        clickTile(0, 2);
+        hero = H.hero(win);
+        assertEqual(H.lastChat(win), "It's a tree.", 'haven tree still examines after chop');
+        assertEqual(hero.skills.woodcutting.xp, 30, 'haven tree still grants no Woodcutting XP');
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        assertEqual(typeof win.mineRock, 'undefined', 'Mining still not this tick');
+        assertEqual(typeof win.mineAtRock, 'undefined', 'Mining helper still not this tick');
+        assertEqual(H.hero(win).skills.mining.xp, 0, 'Mining XP still 0');
+    });
+});
+
 EmberwoodTests.add('combat: Attack auto-selects index 0 and rolls damage -2..+2 min 1', function (win, H) {
     H.enterZone(win, 'haven');
     H.setAutoAttack(win, false);

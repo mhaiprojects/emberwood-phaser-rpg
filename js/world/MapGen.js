@@ -435,6 +435,18 @@ function fishingSpotAt(tx, ty, zoneId) {
     return null;
 }
 
+function woodcutTreeAt(tx, ty, zoneId, grid) {
+    if (zoneId !== 'northwood' || !inBounds(tx, ty)) {
+        return null;
+    }
+    if (grid) {
+        if (!grid[ty] || grid[ty][tx] !== TILE.TREE) {
+            return null;
+        }
+    }
+    return { x: tx, y: ty };
+}
+
 function agilityShortcutAt(tx, ty, zoneId) {
     if (!AGILITY_SHORTCUT) {
         return null;

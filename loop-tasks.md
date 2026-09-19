@@ -187,7 +187,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Magic XP via Wind Strike (air + mind runes) from the Magic panel. — Conclusion: From spawn (328,248) Magic panel Wind Strike spends 1 air + 1 mind, Magic +5, chat `You cast Wind Strike.`; Skills + XP drop; no Cooking. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Cooking XP via raw food on a fire or range. — Conclusion: From spawn (328,248) Inv Use raw shrimp→haven range cooks qty −1, Cooking +30, chat `You use the Raw shrimp on the fire.`; fire kind +30 more; Skills + XP drop; no Fishing. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Fishing XP at Southshore spots. — Conclusion: From spawn (328,248) left-click Southshore fishing spots grant Fishing +10, chat `You fish at the fishing spot.`; helper +10 more; Skills + XP drop; no Woodcutting. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [todo] Woodcutting XP on Northwood trees. — Conclusion: —
+- [done] Woodcutting XP on Northwood trees. — Conclusion: From spawn (328,248) left-click Northwood trees grant Woodcutting +10, chat `You chop the tree.`; helper +10 more; Skills + XP drop; no Mining. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [todo] Mining XP on Darkmine rocks. — Conclusion: —
 - [todo] Crafting XP (cowhide → leather, or string + leather). — Conclusion: —
 - [todo] Show skill total and a single derived combat level on the side HUD (replace the ambiguous `hero.level`). — Conclusion: —
@@ -542,4 +542,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 170 | 2026-09-19 | Magic XP via Wind Strike from the Magic panel | done — spawn (328,248) Magic panel Wind Strike spends 1 air + 1 mind, Magic +5, chat You cast Wind Strike.; Skills + XP drop; no Cooking; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 171 | 2026-09-19 | Cooking XP via raw food on a fire or range | done — spawn (328,248) Use-on raw shrimp→range Cooking +30; fire helper +30; Skills + XP drop; no Fishing; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 172 | 2026-09-19 | Fishing XP at Southshore spots | done — spawn (328,248) left-click Southshore spots Fishing +10; helper +10; Skills + XP drop; no Woodcutting; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
+| 173 | 2026-09-19 | Woodcutting XP on Northwood trees | done — spawn (328,248) left-click Northwood trees Woodcutting +10; helper +10; Skills + XP drop; no Mining; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 

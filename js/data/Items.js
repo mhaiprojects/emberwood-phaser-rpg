@@ -16,6 +16,7 @@ var ITEM_DB = {
 var WIND_STRIKE_XP = 5;
 var WIND_STRIKE_DAMAGE = 2;
 var FISH_SPOT_XP = 10;
+var WOODCUT_TREE_XP = 10;
 
 var SKILL_NAMES = [
     ['attack', 'Attack'],
@@ -343,6 +344,14 @@ function fishAtSpot(hero) {
     }
     gainSkillXp(hero, 'fishing', FISH_SPOT_XP);
     return { ok: true, xp: FISH_SPOT_XP };
+}
+
+function chopAtTree(hero) {
+    if (!hero || !hero.skills || !hero.skills.woodcutting) {
+        return null;
+    }
+    gainSkillXp(hero, 'woodcutting', WOODCUT_TREE_XP);
+    return { ok: true, xp: WOODCUT_TREE_XP };
 }
 
 function buryItem(hero, id) {
