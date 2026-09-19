@@ -139,7 +139,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [todo] After flee, push the player off the mob and extend `engageGrace` so auto-attack does not instantly re-aggro. — Conclusion: —
 - [todo] Eat-from-inventory in combat (choose shrimp vs bread) instead of only `eatBestFood`. — Conclusion: —
 - [done] Each mob type’s world/battle scale (chicken/crab/bat 0.75, goblin/skeleton/slime 1, cow 1.25, giant drake multi-tile) and `PLAYER_BATTLE_SCALE` 3. — Conclusion: World player is 1 tile; drake body 28×28; battle player stays 3. Suite 35/35.
-- [verify] Dead overworld mob hides ~18s then respawns in place with label and body re-enabled. — Conclusion: —
+- [done] Dead overworld mob hides ~18s then respawns in place with label and body re-enabled. — Conclusion: spawn (328,248) haven chicken hides body+label+body.enable; 18000ms timer still dead ~400ms early, then respawns in place with label+body; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1.
 - [verify] Mob wander uses occasional small velocity and still collides with the ground layer. — Conclusion: —
 - [todo] Hit-splats and a 0.6s tick later; until then keep turns but document the 900ms queue. — Conclusion: —
 - [todo] Death rules: gravestone or safe-death keep items; respawn in Emberhaven at low HP instead of wiping to title (title retry can remain as “abandon”). — Conclusion: —
@@ -443,4 +443,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 70 | 2026-09-19 | Return to title stops scenes and shows #title-overlay again | done — Return to title stops World/Battle/GameOver, only TitleScene + `#title-overlay`; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 71 | 2026-09-19 | HP bars go green / amber / red at 65% and 35%; ± floaters on hit/heal | done — spawn (328,248) HUD+battle green ≥65% / amber ≥35% / red <35%; −/+ floaters; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 72 | 2026-09-19 | Worn sword/shield are display-only today | done — HUD names only; hit uses hero.damage ±2 not ITEM_DB sword damage 16 or shield defence 1; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 73 | 2026-09-19 | Dead overworld mob hides ~18s then respawns in place with label and body re-enabled | done — spawn (328,248) chicken hides body+label+body.enable; 18000ms timer still dead ~400ms early, then respawns in place; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 

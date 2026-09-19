@@ -2823,6 +2823,99 @@ EmberwoodTests.add('combat: Attack auto-hits the only foe and winning loots', fu
     });
 });
 
+EmberwoodTests.add('combat: dead overworld mob hides ~18s then respawns in place', function (win, H) {
+    function clockBags(clock) {
+        return [clock._active, clock._pendingInsertion, clock.list].filter(function (bag) {
+            return bag && (bag.length || bag.size);
+        });
+    }
+
+    function findRespawnTimer(clock) {
+        var bags = clockBags(clock);
+        for (var i = 0; i < bags.length; i++) {
+            var bag = bags[i];
+            var list = typeof bag.forEach === 'function' && !Array.isArray(bag)
+                ? (function (set) {
+                    var out = [];
+                    set.forEach(function (item) { out.push(item); });
+                    return out;
+                }(bag))
+                : Array.prototype.slice.call(bag);
+            for (var j = 0; j < list.length; j++) {
+                if (list[j] && list[j].delay === 18000) {
+                    return list[j];
+                }
+            }
+        }
+        return null;
+    }
+
+    function remainingOf(timer) {
+        if (timer.getRemaining) {
+            return timer.getRemaining();
+        }
+        return timer.delay - (timer.elapsed || 0);
+    }
+
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        var chicken = H.findMob(win, 'Chicken');
+        assert(chicken && chicken.aliveMob, 'living chicken in haven');
+        var atX = chicken.x;
+        var atY = chicken.y;
+        assertEqual(chicken.visible, true, 'living body visible');
+        assertEqual(chicken.body.enable, true, 'living body enabled');
+        assert(chicken.nameLabel, 'living name label exists');
+        assertEqual(chicken.nameLabel.visible, true, 'living label visible');
+
+        return H.startFight(win, chicken).then(function () {
+            win.Hud.tryAttack();
+            return H.waitWorld(win);
+        }).then(function () {
+            world = H.world(win);
+            assertEqual(chicken.aliveMob, false, 'dead mob flagged');
+            assertEqual(chicken.visible, false, 'dead body hidden');
+            assertEqual(chicken.body.enable, false, 'dead body disabled');
+            assertEqual(chicken.nameLabel.visible, false, 'dead label hidden');
+            assertEqual(Math.round(chicken.x), Math.round(atX), 'stays at death x');
+            assertEqual(Math.round(chicken.y), Math.round(atY), 'stays at death y');
+
+            var timer = findRespawnTimer(world.time);
+            assert(timer, '18000ms respawn timer is queued');
+            var remain = remainingOf(timer);
+            assert(remain > 16000 && remain <= 18000, '~18s remaining (got ' + remain + 'ms)');
+
+            world.time.update(world.time.now, remain - 400);
+            assertEqual(chicken.aliveMob, false, 'still hidden ~400ms before respawn');
+            assertEqual(chicken.visible, false, 'body still hidden before 18s');
+            assertEqual(chicken.body.enable, false, 'body still disabled before 18s');
+            assertEqual(chicken.nameLabel.visible, false, 'label still hidden before 18s');
+
+            world.time.update(world.time.now, 800);
+            assertEqual(chicken.aliveMob, true, 'respawned alive');
+            assertEqual(chicken.visible, true, 'body re-enabled');
+            assertEqual(chicken.body.enable, true, 'physics body re-enabled');
+            assertEqual(chicken.nameLabel.visible, true, 'label re-enabled');
+            assertEqual(Math.round(chicken.x), Math.round(atX), 'respawned in place x');
+            assertEqual(Math.round(chicken.y), Math.round(atY), 'respawned in place y');
+            assertEqual(Math.round(world.player.x), 328, 'player still at spawn x');
+            assertEqual(Math.round(world.player.y), 248, 'player still at spawn y');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        });
+    });
+});
+
 EmberwoodTests.add('combat: Accurate Attack XP, Aggressive Strength XP, Defensive Defence XP on win', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         var world = H.world(win);
