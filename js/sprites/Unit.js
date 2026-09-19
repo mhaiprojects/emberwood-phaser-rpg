@@ -47,18 +47,31 @@ var Unit = new Phaser.Class({
     },
 
     showFloater: function (text, color) {
-        var label = this.scene.add.text(this.x, this.y - 24, text, {
+        var kind = String(text).charAt(0) === '+' ? 'heal' : 'hit';
+        var fill = kind === 'heal' ? 0x1e4a32 : 0x7a1c1c;
+        var stroke = kind === 'heal' ? 0x7dffb3 : 0xff6b6b;
+        var y = this.y - 24;
+        var disc = this.scene.add.circle(this.x, y, 11, fill, 0.92);
+        disc.setStrokeStyle(2, stroke);
+        disc.setDepth(29);
+        disc.isHitSplat = true;
+        disc.splatKind = kind;
+        var label = this.scene.add.text(this.x, y, text, {
             fontSize: '10px',
             fontFamily: '"Courier New", Courier, monospace',
             color: color
         }).setOrigin(0.5);
+        label.setDepth(30);
+        label.isHitSplat = true;
+        label.splatKind = kind;
         this.scene.tweens.add({
-            targets: label,
-            y: label.y - 16,
+            targets: [disc, label],
+            y: y - 16,
             alpha: 0,
             duration: 700,
             ease: 'Quad.easeOut',
             onComplete: function () {
+                disc.destroy();
                 label.destroy();
             }
         });

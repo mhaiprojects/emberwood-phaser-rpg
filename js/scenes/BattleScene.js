@@ -1,3 +1,7 @@
+// Combat stays turn-based. Attack/enemy turns queue the next actor at 900ms.
+// A 0.6s real-time tick is deferred (see Stretch: overworld hits).
+var BATTLE_TURN_QUEUE_MS = 900;
+
 var BattleScene = new Phaser.Class({
     Extends: Phaser.Scene,
 
@@ -136,6 +140,14 @@ var BattleScene = new Phaser.Class({
         if (this.tweens) {
             this.tweens.killAll();
         }
+        if (this.children && this.children.list) {
+            var leftover = this.children.list.slice();
+            for (var s = 0; s < leftover.length; s++) {
+                if (leftover[s] && leftover[s].isHitSplat) {
+                    leftover[s].destroy();
+                }
+            }
+        }
         if (this.turnTimer) {
             this.turnTimer.remove(false);
             this.turnTimer = null;
@@ -182,7 +194,7 @@ var BattleScene = new Phaser.Class({
             this.busy = true;
             var target = this.heroes[0];
             unit.attack(target);
-            this.queueTurn(900);
+            this.queueTurn(BATTLE_TURN_QUEUE_MS);
         }
     },
 
@@ -222,7 +234,7 @@ var BattleScene = new Phaser.Class({
             this.targetIndex = targetIndex;
             this.refreshTargetMarker();
             actor.attack(target);
-            this.queueTurn(900);
+            this.queueTurn(BATTLE_TURN_QUEUE_MS);
             return;
         }
         this.busy = true;

@@ -7574,6 +7574,88 @@ EmberwoodTests.add('combat: HP bars go green amber red at 65 and 35 and floaters
     });
 });
 
+EmberwoodTests.add('combat: hit-splats reuse floaters and attack queues 900ms turns not a 0.6s tick', function (win, H) {
+    function findMarked(battle, kind, type) {
+        var list = battle.children.list;
+        for (var i = list.length - 1; i >= 0; i--) {
+            var obj = list[i];
+            if (obj && obj.isHitSplat && obj.splatKind === kind && (!type || obj.type === type)) {
+                return obj;
+            }
+        }
+        return null;
+    }
+
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        world.placePlayer(spawn.x, spawn.y);
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard stays off');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+        assertEqual(win.BATTLE_TURN_QUEUE_MS, 900, 'named 900ms turn queue');
+        assertEqual(typeof win.BATTLE_TURN_QUEUE_MS, 'number', 'queue is a number not a 0.6s ticker');
+        return H.startCustomFight(win, [
+            { type: 'Goblin', texture: 'slime', tint: 0x5aa33a, hp: 80, damage: 1, gold: 0, xp: 1 }
+        ]);
+    }).then(function () {
+        var battle = H.battle(win);
+        var hero = battle.heroes[0];
+        var foe = battle.enemies[0];
+        assert(battle.waitingForPlayer, 'still turn-based player turn');
+        assertEqual(battle.busy, false, 'not busy before attack');
+        assert(!battle.combatTick, 'no 0.6s combat tick');
+        assert(!battle.tickMs, 'no tickMs field');
+
+        var orig = win.Phaser.Math.Between;
+        win.Phaser.Math.Between = function () { return 0; };
+        try {
+            foe.hp = 80;
+            foe.refreshHpBar();
+            assertEqual(foe.takeDamage(7), 7, 'hit deals 7');
+            var hitDisc = findMarked(battle, 'hit', 'Arc');
+            var hitText = findMarked(battle, 'hit', 'Text');
+            assert(hitDisc, 'hit splat disc');
+            assertEqual(hitDisc.fillColor, 0x7a1c1c, 'hit splat fill');
+            assert(hitText, 'hit splat reuses minus floater');
+            assertEqual(hitText.text, '-7', 'hit floater text');
+            assertEqual(String(hitText.style.color).toLowerCase(), '#ff6b6b', 'hit floater color');
+
+            hero.hp = 50;
+            hero.refreshHpBar();
+            assertEqual(hero.heal(12), 12, 'heal restores 12');
+            var healDisc = findMarked(battle, 'heal', 'Arc');
+            var healText = findMarked(battle, 'heal', 'Text');
+            assert(healDisc, 'heal splat disc');
+            assertEqual(healDisc.fillColor, 0x1e4a32, 'heal splat fill');
+            assert(healText, 'heal splat reuses plus floater');
+            assertEqual(healText.text, '+12', 'heal floater text');
+            assertEqual(String(healText.style.color).toLowerCase(), '#7dffb3', 'heal floater color');
+
+            battle.receivePlayerSelection('attack', 0);
+            assertEqual(battle.busy, true, 'attack marks busy');
+            assert(battle.turnTimer, 'attack queues next turn');
+            assertEqual(battle.turnTimer.delay, 900, 'attack queues 900ms not 600');
+            assertEqual(battle.turnTimer.delay, win.BATTLE_TURN_QUEUE_MS, 'timer uses named queue');
+        } finally {
+            win.Phaser.Math.Between = orig;
+        }
+
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        return H.forceFlee(win);
+    }).then(function () {
+        H.enterZone(win, 'haven');
+    }).catch(function (err) {
+        return H.cleanupBattle(win).then(function () {
+            throw err;
+        });
+    });
+});
+
 EmberwoodTests.add('combat: goblin kill advances the militia quest', function (win, H) {
     return H.cleanupBattle(win).then(function () {
         H.enterZone(win, 'northwood');

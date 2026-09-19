@@ -141,7 +141,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Each mob type’s world/battle scale (chicken/crab/bat 0.75, goblin/skeleton/slime 1, cow 1.25, giant drake multi-tile) and `PLAYER_BATTLE_SCALE` 3. — Conclusion: World player is 1 tile; drake body 28×28; battle player stays 3. Suite 35/35.
 - [done] Dead overworld mob hides ~18s then respawns in place with label and body re-enabled. — Conclusion: spawn (328,248) haven chicken hides body+label+body.enable; 18000ms timer still dead ~400ms early, then respawns in place with label+body; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1.
 - [done] Mob wander uses occasional small velocity and still collides with the ground layer. — Conclusion: From spawn (328,248) wanderMobs rolls Between(0,80); miss leaves vx=vy=0; hit sets small vx/vy in −20..20; chicken still blocked by ground TREE. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [todo] Hit-splats and a 0.6s tick later; until then keep turns but document the 900ms queue. — Conclusion: —
+- [done] Hit-splats and a 0.6s tick later; until then keep turns but document the 900ms queue. — Conclusion: From spawn (328,248) hit/heal reuse ± floaters as splat discs; Attack still queues 900ms turns (0.6s tick deferred). Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [todo] Death rules: gravestone or safe-death keep items; respawn in Emberhaven at low HP instead of wiping to title (title retry can remain as “abandon”). — Conclusion: —
 - [todo] Disable Attack / Eat / Run while `busy` or not player-turn (already intended — verify no double-queue). — Conclusion: —
 - [todo] A simple combat triangle hook (melee vs the unused Ranged/Magic skills) without adding Phaser 4. — Conclusion: —
@@ -516,4 +516,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 144 | 2026-09-19 | Auto-retaliate as a setting separate from world auto-engage | done — spawn (328,248) autoRetaliate independent of autoAttack; world still engages with retaliate off; in-battle auto Attack uses retaliate only; Phaser 3.90 keyboard off; dedicated + Playwright 2/2 |
 | 145 | 2026-09-19 | After flee, push the player off the mob and extend engageGrace | done — spawn (328,248) flee from a 10px chicken pushes 32px off and extends grace ~1100ms; auto-attack does not instantly re-aggro; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 146 | 2026-09-19 | Eat-from-inventory in combat chooses shrimp vs bread | done — spawn (328,248) Inv click bread eats bread (shrimp left), then shrimp; Eat food still eatBestFood; Phaser 3.90 keyboard off; dedicated + existing eat case + Playwright 2/2 |
+| 147 | 2026-09-19 | Hit-splats reuse floaters; keep 900ms turn queue (0.6s tick later) | done — spawn (328,248) hit/heal splat discs + ± floaters; Attack queues 900ms; no 0.6s tick; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 
