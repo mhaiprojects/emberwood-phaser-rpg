@@ -515,8 +515,13 @@ var WorldScene = new Phaser.Class({
                 }
                 return;
             }
+            var items = [];
+            if (this.pickScenery(x, y)) {
+                items.push({ label: 'Examine', action: 'examine' });
+            }
+            items.push({ label: 'Walk here', action: 'walk-here' });
             if (Hud.showContextMenu) {
-                Hud.showContextMenu([{ label: 'Walk here', action: 'walk-here' }], {
+                Hud.showContextMenu(items, {
                     worldX: x,
                     worldY: y,
                     clientX: ev && ev.clientX != null ? ev.clientX : 16,
@@ -548,6 +553,13 @@ var WorldScene = new Phaser.Class({
             this.setWalk(hit.x, hit.y, { allowEnd: true });
             return;
         }
+        var scenery = this.pickScenery(x, y);
+        if (scenery) {
+            this.engageTarget = null;
+            this.talkTarget = null;
+            this.examineScenery(scenery);
+            return;
+        }
         this.engageTarget = null;
         this.talkTarget = null;
         if (Phaser.Math.Distance.Between(x, y, this.player.x, this.player.y) < 10) {
@@ -573,6 +585,44 @@ var WorldScene = new Phaser.Class({
             }
         }
         return best;
+    },
+
+    houseRectsNow: function () {
+        if (this.interiorId) {
+            return typeof INTERIOR_ROOM !== 'undefined' ? [INTERIOR_ROOM] : [];
+        }
+        var zone = ZONES[this.zoneId];
+        return typeof housesForBiome === 'function' ? housesForBiome(zone && zone.biome) : [];
+    },
+
+    pickScenery: function (x, y) {
+        var tile = worldToTile(x, y);
+        var kind = typeof sceneryKindAt === 'function'
+            ? sceneryKindAt(this.tileGrid, tile.tx, tile.ty, {
+                houseRects: this.houseRectsNow(),
+                interior: !!this.interiorId
+            })
+            : null;
+        if (!kind) {
+            return null;
+        }
+        return { tx: tile.tx, ty: tile.ty, kind: kind };
+    },
+
+    examineScenery: function (hit) {
+        if (!hit || !hit.kind) {
+            return false;
+        }
+        var line = typeof examineSceneryText === 'function' ? examineSceneryText(hit.kind) : '';
+        if (!line) {
+            return false;
+        }
+        Hud.log(line);
+        return true;
+    },
+
+    examineAt: function (x, y) {
+        return this.examineScenery(this.pickScenery(x, y));
     },
 
     pickLoot: function (x, y, range) {

@@ -381,14 +381,20 @@ var Hud = {
     chooseContext: function (action) {
         var target = this.ctxTarget;
         this.hideContextMenu();
-        if (action !== 'walk-here' || !target) {
-            return;
-        }
-        if (this.mode !== 'world') {
+        if (this.mode !== 'world' || !target) {
             return;
         }
         var world = window.game && window.game.scene.getScene('WorldScene');
-        if (!world || !world.setWalk || world.encounterLock) {
+        if (!world || world.encounterLock) {
+            return;
+        }
+        if (action === 'examine') {
+            if (world.examineAt) {
+                world.examineAt(target.worldX, target.worldY);
+            }
+            return;
+        }
+        if (action !== 'walk-here' || !world.setWalk) {
             return;
         }
         world.engageTarget = null;

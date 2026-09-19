@@ -13,6 +13,22 @@ var MAP_W = 36;
 var MAP_H = 28;
 var HAVEN_GATE_TILE = { x: 23, y: 15 };
 var INTERIOR_EXIT_TILE = { x: 18, y: 20 };
+var TOWN_HOUSES = [
+    { x: 8, y: 6, w: 6, h: 5 },
+    { x: 22, y: 7, w: 7, h: 5 },
+    { x: 12, y: 16, w: 6, h: 5 }
+];
+var FARM_HOUSES = [
+    { x: 24, y: 14, w: 5, h: 4 }
+];
+var INTERIOR_ROOM = { x: 12, y: 8, w: 12, h: 13 };
+var SCENERY_EXAMINE = {
+    tree: "It's a tree.",
+    rock: "It's a rock.",
+    shrine: 'A weathered stone shrine.',
+    water: "It's water.",
+    wall: "It's a house wall."
+};
 
 function tileCenter(tx, ty) {
     var size = typeof TILE_SIZE === 'number' ? TILE_SIZE : 16;
@@ -172,9 +188,10 @@ function generateMap(seed, biome, neighbors) {
     if (neighbors.w) { carveOpening(grid, 'w'); }
 
     if (biome === 'town') {
-        house(grid, 8, 6, 6, 5);
-        house(grid, 22, 7, 7, 5);
-        house(grid, 12, 16, 6, 5);
+        var hi;
+        for (hi = 0; hi < TOWN_HOUSES.length; hi++) {
+            house(grid, TOWN_HOUSES[hi].x, TOWN_HOUSES[hi].y, TOWN_HOUSES[hi].w, TOWN_HOUSES[hi].h);
+        }
         var px;
         var py;
         for (py = 10; py <= 18; py++) {
@@ -198,7 +215,7 @@ function generateMap(seed, biome, neighbors) {
     } else if (biome === 'farm') {
         scatter(grid, TILE.FLOWER, 40, seed, true);
         scatter(grid, TILE.TREE, 10, seed + 3, true);
-        house(grid, 24, 14, 5, 4);
+        house(grid, FARM_HOUSES[0].x, FARM_HOUSES[0].y, FARM_HOUSES[0].w, FARM_HOUSES[0].h);
     } else if (biome === 'swamp') {
         scatter(grid, TILE.WATER, 28, seed, true);
         scatter(grid, TILE.TREE, 22, seed + 4, true);
@@ -226,10 +243,10 @@ function generateMap(seed, biome, neighbors) {
 
 function generateInterior(kind) {
     var grid = makeGrid(TILE.ROCK);
-    var x0 = 12;
-    var y0 = 8;
-    var w = 12;
-    var h = 13;
+    var x0 = INTERIOR_ROOM.x;
+    var y0 = INTERIOR_ROOM.y;
+    var w = INTERIOR_ROOM.w;
+    var h = INTERIOR_ROOM.h;
     var ix;
     var iy;
     for (iy = y0; iy < y0 + h; iy++) {
@@ -264,4 +281,60 @@ function flattenMap(grid) {
         data.push(grid[y].slice());
     }
     return data;
+}
+
+function housesForBiome(biome) {
+    if (biome === 'town') {
+        return TOWN_HOUSES;
+    }
+    if (biome === 'farm') {
+        return FARM_HOUSES;
+    }
+    return [];
+}
+
+function isHouseWallAt(grid, tx, ty, rects) {
+    if (!inBounds(tx, ty) || !grid || !grid[ty] || grid[ty][tx] !== TILE.ROCK) {
+        return false;
+    }
+    rects = rects || [];
+    var i;
+    for (i = 0; i < rects.length; i++) {
+        var rect = rects[i];
+        if (tx < rect.x || ty < rect.y || tx >= rect.x + rect.w || ty >= rect.y + rect.h) {
+            continue;
+        }
+        if (tx === rect.x || ty === rect.y || tx === rect.x + rect.w - 1 || ty === rect.y + rect.h - 1) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function sceneryKindAt(grid, tx, ty, opts) {
+    opts = opts || {};
+    if (!inBounds(tx, ty) || !grid || !grid[ty]) {
+        return null;
+    }
+    var index = grid[ty][tx];
+    if (index === TILE.TREE) {
+        return 'tree';
+    }
+    if (index === TILE.WATER) {
+        return 'water';
+    }
+    if (index === TILE.SHRINE) {
+        return 'shrine';
+    }
+    if (index === TILE.ROCK) {
+        if (opts.interior || isHouseWallAt(grid, tx, ty, opts.houseRects)) {
+            return 'wall';
+        }
+        return 'rock';
+    }
+    return null;
+}
+
+function examineSceneryText(kind) {
+    return (SCENERY_EXAMINE && SCENERY_EXAMINE[kind]) || '';
 }
