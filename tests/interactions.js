@@ -7315,6 +7315,153 @@ EmberwoodTests.add('combat: Run fail chats You fail to get away and the enemy st
     });
 });
 
+EmberwoodTests.add('combat: Attack Eat Run no-op while busy or not player-turn', function (win, H) {
+    function actionButtons() {
+        return {
+            attack: win.document.querySelector('#battle-actions [data-action="attack"]'),
+            eat: win.document.querySelector('#battle-actions [data-action="heal"]'),
+            run: win.document.querySelector('#battle-actions [data-action="flee"]')
+        };
+    }
+
+    function shrimpQty(hero) {
+        var stack = (hero.inventory || []).filter(function (s) { return s && s.id === 'shrimp'; })[0];
+        return stack ? stack.qty : 0;
+    }
+
+    function spamActions(battle) {
+        win.Hud.tryAttack();
+        win.Hud.setActionsEnabled(true);
+        var buttons = actionButtons();
+        buttons.attack.click();
+        buttons.eat.click();
+        buttons.run.click();
+        battle.receivePlayerSelection('attack', 0);
+        battle.receivePlayerSelection('heal');
+        battle.receivePlayerSelection('flee');
+    }
+
+    var origBetween = win.Phaser.Math.Between;
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        world.placePlayer(spawn.x, spawn.y);
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard stays off');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+        return H.startCustomFight(win, [
+            { type: 'Goblin', texture: 'slime', tint: 0x5aa33a, hp: 80, damage: 1, gold: 0, xp: 1 }
+        ]);
+    }).then(function () {
+        var battle = H.battle(win);
+        var hero = H.hero(win);
+        var buttons = actionButtons();
+        assert(battle.waitingForPlayer, 'player turn before first Attack');
+        assert(!battle.busy, 'not busy before first Attack');
+        assert(battle.isPlayerTurn(), 'isPlayerTurn before first Attack');
+        assert(win.Hud.canBattleAct(), 'canBattleAct on player turn');
+        assert(!buttons.attack.disabled, 'Attack enabled on player turn');
+        assert(!buttons.eat.disabled, 'Eat enabled on player turn');
+        assert(!buttons.run.disabled, 'Run enabled on player turn');
+
+        battle.heroes[0].hp = 50;
+        hero.hp = 50;
+        win.game.registry.set('hero', hero);
+        var foodBefore = shrimpQty(hero);
+        assert(foodBefore > 0, 'starter shrimp so Eat would consume if it queued');
+
+        var swings = 0;
+        var origAttack = battle.heroes[0].attack;
+        battle.heroes[0].attack = function () {
+            swings += 1;
+            return origAttack.apply(this, arguments);
+        };
+        win.Phaser.Math.Between = function (lo, hi) {
+            if (lo === 0 && hi === 99) {
+                return 0;
+            }
+            return origBetween.apply(this, arguments);
+        };
+
+        buttons.attack.click();
+        battle = H.battle(win);
+        buttons = actionButtons();
+        assertEqual(swings, 1, 'first Attack spends the turn');
+        assert(battle.busy, 'Attack marks busy');
+        assert(!battle.waitingForPlayer, 'Attack spends waitingForPlayer');
+        assert(!battle.isPlayerTurn(), 'not player-turn while busy');
+        assert(!win.Hud.canBattleAct(), 'canBattleAct false while busy');
+        assert(buttons.attack.disabled, 'Attack disabled while busy');
+        assert(buttons.eat.disabled, 'Eat disabled while busy');
+        assert(buttons.run.disabled, 'Run disabled while busy');
+        var queued = battle.turnTimer;
+        assert(queued, 'Attack queues next turn');
+        assertEqual(queued.delay, 900, 'Attack queues 900ms');
+
+        spamActions(battle);
+        battle = H.battle(win);
+        hero = H.hero(win);
+        buttons = actionButtons();
+        assertEqual(swings, 1, 'second Attack does not swing again');
+        assert(battle.turnTimer === queued, 'busy spam does not replace the turn timer');
+        assertEqual(battle.turnTimer.delay, 900, 'Eat/Run do not replace 900ms with 800ms');
+        assertEqual(shrimpQty(hero), foodBefore, 'Eat while busy does not consume food');
+        assertEqual(battle.heroes[0].hp, 50, 'Eat while busy does not heal');
+        assert(battle.outcome !== 'flee', 'Run while busy does not flee');
+        assert(win.game.scene.isActive('BattleScene'), 'still in battle after busy spam');
+        assert(battle.busy, 'still busy after no-op spam');
+        assert(!battle.waitingForPlayer, 'still not waiting after no-op spam');
+        assert(buttons.attack.disabled, 'Attack still disabled after no-op');
+        assert(buttons.eat.disabled, 'Eat still disabled after no-op');
+        assert(buttons.run.disabled, 'Run still disabled after no-op');
+
+        queued.remove(false);
+        battle.turnTimer = null;
+        battle.nextTurn();
+        battle = H.battle(win);
+        buttons = actionButtons();
+        assert(battle.busy, 'enemy turn marks busy');
+        assert(!battle.waitingForPlayer, 'enemy turn is not player-turn');
+        assert(!battle.isPlayerTurn(), 'isPlayerTurn false on enemy turn');
+        assert(!win.Hud.canBattleAct(), 'canBattleAct false on enemy turn');
+        assert(buttons.attack.disabled, 'Attack disabled on enemy turn');
+        assert(buttons.eat.disabled, 'Eat disabled on enemy turn');
+        assert(buttons.run.disabled, 'Run disabled on enemy turn');
+        var enemyQueue = battle.turnTimer;
+        assert(enemyQueue, 'enemy turn queues the next actor');
+
+        spamActions(battle);
+        battle = H.battle(win);
+        hero = H.hero(win);
+        buttons = actionButtons();
+        assertEqual(swings, 1, 'Attack on enemy turn does not swing');
+        assert(battle.turnTimer === enemyQueue, 'enemy-turn spam does not replace the queue');
+        assertEqual(shrimpQty(hero), foodBefore, 'Eat on enemy turn does not consume food');
+        assert(battle.outcome !== 'flee', 'Run on enemy turn does not flee');
+        assert(win.game.scene.isActive('BattleScene'), 'still in battle after enemy-turn spam');
+        assert(battle.busy, 'still busy after enemy-turn no-op');
+        assert(!battle.waitingForPlayer, 'still not player-turn after enemy-turn no-op');
+        assert(buttons.attack.disabled, 'Attack still disabled after enemy-turn no-op');
+        assert(buttons.eat.disabled, 'Eat still disabled after enemy-turn no-op');
+        assert(buttons.run.disabled, 'Run still disabled after enemy-turn no-op');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+
+        win.Phaser.Math.Between = origBetween;
+        return H.forceFlee(win);
+    }).then(function () {
+        H.enterZone(win, 'haven');
+    }).catch(function (err) {
+        win.Phaser.Math.Between = origBetween;
+        return H.cleanupBattle(win).then(function () {
+            throw err;
+        });
+    });
+});
+
 EmberwoodTests.add('combat: manual list click hits the chosen foe', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.setAutoAttack(win, false);

@@ -361,7 +361,7 @@ var Hud = {
         }
         var def = ITEM_DB[id];
         if (this.mode === 'battle') {
-            if (def && def.heal && this.battle && this.battle.isPlayerTurn() && this.battle.waitingForPlayer) {
+            if (def && def.heal && this.canBattleAct()) {
                 this.selectingEnemy = false;
                 this.setActionsEnabled(false);
                 this.battle.receivePlayerSelection('heal', this.battle.targetIndex, id);
@@ -1171,8 +1171,13 @@ var Hud = {
         return this.battle ? this.battle.livingEnemyIndexes() : [];
     },
 
+    canBattleAct: function () {
+        var battle = this.battle;
+        return !!(battle && battle.isPlayerTurn() && battle.waitingForPlayer);
+    },
+
     tryAttack: function () {
-        if (!this.battle || this.battle.busy) {
+        if (!this.canBattleAct()) {
             return;
         }
         var index = this.battle.autoSelectTarget();
@@ -1194,8 +1199,8 @@ var Hud = {
         this.battle.targetIndex = index;
         this.battle.refreshTargetMarker();
         this.renderBattle();
-        var canStrike = this.battle.isPlayerTurn() && !fromSprite;
-        if (fromSprite && this.selectingEnemy && this.battle.pickReady && this.battle.isPlayerTurn()) {
+        var canStrike = this.canBattleAct() && !fromSprite;
+        if (fromSprite && this.selectingEnemy && this.battle.pickReady && this.canBattleAct()) {
             canStrike = true;
         }
         if (canStrike) {
@@ -1205,7 +1210,7 @@ var Hud = {
             return;
         }
         this.battleLog('Target: ' + this.battle.enemies[index].type + '.');
-        if (this.battle.isPlayerTurn()) {
+        if (this.canBattleAct()) {
             this.setActionsEnabled(true);
         }
     },
@@ -1240,6 +1245,9 @@ var Hud = {
     },
 
     setActionsEnabled: function (on) {
+        if (on && !this.canBattleAct()) {
+            on = false;
+        }
         var buttons = this.el.actions.querySelectorAll('button[data-action]');
         for (var i = 0; i < buttons.length; i++) {
             buttons[i].disabled = !on;
@@ -1252,6 +1260,9 @@ var Hud = {
             var btn = event.target.closest('[data-action]');
             var action = btn && btn.getAttribute('data-action');
             if (!action || !self.battle) {
+                return;
+            }
+            if (!self.canBattleAct()) {
                 return;
             }
             if (action === 'attack') {

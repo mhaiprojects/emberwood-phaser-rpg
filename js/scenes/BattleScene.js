@@ -192,6 +192,7 @@ var BattleScene = new Phaser.Class({
             this.events.emit('PlayerSelect', this.index);
         } else {
             this.busy = true;
+            Hud.setActionsEnabled(false);
             var target = this.heroes[0];
             unit.attack(target);
             this.queueTurn(BATTLE_TURN_QUEUE_MS);
@@ -210,7 +211,7 @@ var BattleScene = new Phaser.Class({
     },
 
     receivePlayerSelection: function (action, targetIndex, itemId) {
-        if (this.busy) {
+        if (this.busy || this.outcome || !this.waitingForPlayer) {
             return;
         }
         var actor = this.units && this.units[this.index];
@@ -218,6 +219,7 @@ var BattleScene = new Phaser.Class({
             return;
         }
         this.waitingForPlayer = false;
+        Hud.setActionsEnabled(false);
         if (action === 'attack') {
             if (targetIndex == null) {
                 targetIndex = this.autoSelectTarget();

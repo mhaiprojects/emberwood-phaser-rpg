@@ -143,7 +143,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Mob wander uses occasional small velocity and still collides with the ground layer. — Conclusion: From spawn (328,248) wanderMobs rolls Between(0,80); miss leaves vx=vy=0; hit sets small vx/vy in −20..20; chicken still blocked by ground TREE. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Hit-splats and a 0.6s tick later; until then keep turns but document the 900ms queue. — Conclusion: From spawn (328,248) hit/heal reuse ± floaters as splat discs; Attack still queues 900ms turns (0.6s tick deferred). Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Death rules: gravestone or safe-death keep items; respawn in Emberhaven at low HP instead of wiping to title (title retry can remain as “abandon”). — Conclusion: From spawn (328,248) lose keeps items (safe-death); `#btn-respawn` Emberhaven at HP max/10; title retry stays abandon; Phaser 3.90 keyboard off; dedicated + Playwright 1/1.
-- [todo] Disable Attack / Eat / Run while `busy` or not player-turn (already intended — verify no double-queue). — Conclusion: —
+- [done] Disable Attack / Eat / Run while `busy` or not player-turn (already intended — verify no double-queue). — Conclusion: From spawn (328,248) Attack/Eat/Run disable while busy or not player-turn; a second action does not replace the 900ms queue. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [todo] A simple combat triangle hook (melee vs the unused Ranged/Magic skills) without adding Phaser 4. — Conclusion: —
 
 ## 5. Inventory / equipment / bank (22)
