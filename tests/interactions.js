@@ -128,6 +128,76 @@ EmberwoodTests.add('hud: F1–F8 switch panels', function (win, H) {
     });
 });
 
+EmberwoodTests.add('hud: tab bar clicks match F-keys and only one panel is visible', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        var map = [
+            ['F1', 'combat'], ['F2', 'skills'], ['F3', 'quest'], ['F4', 'inv'],
+            ['F5', 'equip'], ['F6', 'prayer'], ['F7', 'magic'], ['F8', 'settings']
+        ];
+        var visiblePanels = function () {
+            return Array.prototype.filter.call(win.document.querySelectorAll('.tab-panel'), function (panel) {
+                return !panel.hidden;
+            });
+        };
+        var snapshot = function () {
+            var shown = visiblePanels();
+            var onTabs = win.document.querySelectorAll('#tab-bar button.is-on');
+            return {
+                tab: win.Hud.tab,
+                panelId: shown[0] ? shown[0].id : null,
+                panelCount: shown.length,
+                onCount: onTabs.length,
+                onTab: onTabs[0] ? onTabs[0].getAttribute('data-tab') : null
+            };
+        };
+        map.forEach(function (pair) {
+            var other = pair[1] === 'inv' ? 'combat' : 'inv';
+            win.dispatchEvent(new win.KeyboardEvent('keydown', {
+                key: pair[0], code: pair[0], bubbles: true, cancelable: true
+            }));
+            var afterKey = snapshot();
+            assertEqual(afterKey.panelCount, 1, pair[0] + ' leaves only one .tab-panel visible');
+            assertEqual(afterKey.tab, pair[1], pair[0] + ' sets hud.tab ' + pair[1]);
+            assertEqual(afterKey.panelId, 'panel-' + pair[1], pair[0] + ' shows panel-' + pair[1]);
+            assertEqual(afterKey.onCount, 1, pair[0] + ' leaves only one tab is-on');
+            assertEqual(afterKey.onTab, pair[1], pair[0] + ' is-on matches ' + pair[1]);
+
+            H.click(win, '#tab-bar button[data-tab="' + other + '"]');
+            assertEqual(win.Hud.tab, other, 'switched away to ' + other + ' before ' + pair[1] + ' click');
+            assertEqual(visiblePanels().length, 1, 'still one .tab-panel after switching away from ' + pair[0]);
+
+            H.click(win, '#tab-bar button[data-tab="' + pair[1] + '"]');
+            var afterClick = snapshot();
+            assertEqual(afterClick.panelCount, 1, pair[1] + ' click leaves only one .tab-panel visible');
+            assertEqual(afterClick.tab, afterKey.tab, pair[1] + ' click matches ' + pair[0] + ' hud.tab');
+            assertEqual(afterClick.panelId, afterKey.panelId, pair[1] + ' click matches ' + pair[0] + ' panel');
+            assertEqual(afterClick.onCount, afterKey.onCount, pair[1] + ' click matches ' + pair[0] + ' is-on count');
+            assertEqual(afterClick.onTab, afterKey.onTab, pair[1] + ' click matches ' + pair[0] + ' is-on');
+            assert(H.panelVisible(win, pair[1]), pair[1] + ' panel visible after click');
+            var hiddenOthers = Array.prototype.filter.call(win.document.querySelectorAll('.tab-panel'), function (panel) {
+                return panel.id !== 'panel-' + pair[1];
+            });
+            hiddenOthers.forEach(function (panel) {
+                assert(panel.hidden, panel.id + ' stays hidden while ' + pair[1] + ' is open');
+            });
+        });
+        assertEqual(win.document.querySelectorAll('.tab-panel').length, 8, 'eight tab panels exist');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off after tab clicks');
+    });
+});
+
 EmberwoodTests.add('hud: skills, worn, combat style, inventory', function (win, H) {
     H.click(win, '#tab-bar button[data-tab="skills"]');
     var skillsText = win.document.getElementById('skills-list').innerText;
