@@ -254,7 +254,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [todo] A short “only you see this” timer even in single-player (teaches the RS rule). — Conclusion: —
 - [todo] Pickup all nearby on a dedicated key later (not Area-loot until tested); for now walk-over is enough — verify it does not vacuum the whole map. — Conclusion: —
 - [done] Auto-pickup loot toggle (Settings, on by default): ON keeps walk-near/overlap pickup; OFF disables walk-vacuum (click-to-take still works); chat still logs `You pick up…`; do not vacuum the whole map. — Conclusion: `hero.autoPickup` default true; missing registry key = on; Combat+Settings buttons sync, blur, log; persisted on hero like auto-attack. Dedicated suite cases pass.
-- [verify] Prune + pickup do not throw if a sprite was already destroyed. — Conclusion: —
+- [done] Prune + pickup do not throw if a sprite was already destroyed. — Conclusion: From spawn (328,248) tryPickup, collectNearbyLoot, and pruneLoot (expired + taken) stay silent if sprite.destroy already ran; gold/bones still take. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 
 ## 10. Quests / diary / progression (16)
 
@@ -460,4 +460,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 87 | 2026-09-19 | Loot expires at until = now + 20000 and the sprite is destroyed | done — spawn (328,248) spawnLoot until = now + 20000; prune at until keeps sprites, past until destroys them; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 88 | 2026-09-19 | clearLoot on zone change wipes ground loot | done — spawn (328,248) enterZone + Keys.js W wipe loot sprites and empty groundLoot; return does not persist; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 89 | 2026-09-19 | Pickup during encounterLock is blocked or deferred | done — spawn (328,248) lock/battle keep tryPickup+walk-over+click silent; unlock defers collectNearbyLoot; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 90 | 2026-09-19 | Prune + pickup do not throw if a sprite was already destroyed | done — spawn (328,248) tryPickup/collectNearbyLoot/pruneLoot stay silent after sprite.destroy; gold/bones still take; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 

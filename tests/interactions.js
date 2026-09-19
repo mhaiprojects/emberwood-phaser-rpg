@@ -4148,6 +4148,105 @@ EmberwoodTests.add('loot: expires at until = now + 20000 and the sprite is destr
     });
 });
 
+EmberwoodTests.add('loot: prune and pickup do not throw if a sprite was already destroyed', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.clearLoot();
+        world.encounterLock = false;
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(typeof world.tryPickup, 'function', 'tryPickup helper');
+        assertEqual(typeof world.pruneLoot, 'function', 'pruneLoot helper');
+        assertEqual(typeof world.collectNearbyLoot, 'function', 'collectNearbyLoot helper');
+
+        function destroySpriteKeepRef(drop) {
+            assert(drop && drop.sprite, 'drop has a sprite to destroy');
+            drop.sprite.destroy();
+            assert(isDestroyedGo(drop.sprite), 'sprite already destroyed, drop still holds the ref');
+            assert(drop.sprite, 'stale sprite ref remains');
+        }
+
+        function assertNoThrow(fn, label) {
+            try {
+                fn();
+            } catch (err) {
+                throw new Error(label + ' threw: ' + (err && err.message ? err.message : err));
+            }
+        }
+
+        world.spawnLoot(spawn.x, spawn.y, [{ id: 'coins', qty: 2 }]);
+        var pickDrop = H.lootLive(win)[0];
+        destroySpriteKeepRef(pickDrop);
+        var gold = H.hero(win).gold;
+        var picked = false;
+        assertNoThrow(function () {
+            picked = world.tryPickup(pickDrop);
+        }, 'tryPickup after sprite.destroy');
+        assertEqual(picked, true, 'tryPickup still takes the drop');
+        assertEqual(H.hero(win).gold, gold + 2, 'gold looted after destroyed-sprite pickup');
+        assert(H.chatHas(win, 'You pick up'), 'pickup chat after destroyed sprite');
+        assertEqual(pickDrop.sprite, null, 'tryPickup nulls the stale sprite');
+
+        world.clearLoot();
+        H.setAutoPickup(win, true);
+        world.spawnLoot(spawn.x, spawn.y, [{ id: 'bones', qty: 1 }]);
+        var walkDrop = H.lootLive(win)[0];
+        destroySpriteKeepRef(walkDrop);
+        var bonesBefore = (H.hero(win).inventory.filter(function (s) { return s.id === 'bones'; })[0] || { qty: 0 }).qty;
+        assertNoThrow(function () {
+            world.collectNearbyLoot();
+        }, 'collectNearbyLoot after sprite.destroy');
+        assertEqual((H.hero(win).inventory.filter(function (s) { return s.id === 'bones'; })[0] || { qty: 0 }).qty, bonesBefore + 1, 'walk-over pickup after destroyed sprite');
+
+        world.clearLoot();
+        H.setAutoPickup(win, false);
+        world.spawnLoot(80, 80, [{ id: 'coins', qty: 1 }]);
+        var expireDrop = H.lootLive(win)[0];
+        var expireSprite = expireDrop.sprite;
+        var savedNow = world.time.now;
+        destroySpriteKeepRef(expireDrop);
+        world.time.now = expireDrop.until + 1;
+        if (world.time.now <= expireDrop.until && typeof world.time.update === 'function') {
+            world.time.update(expireDrop.until + 1, 20001);
+        }
+        assert(world.time.now > expireDrop.until, 'clock is past until');
+        assertNoThrow(function () {
+            world.pruneLoot();
+        }, 'pruneLoot after sprite.destroy');
+        assertEqual((world.groundLoot || []).length, 0, 'expired destroyed sprite is removed');
+        assert(isDestroyedGo(expireSprite), 'stale expire sprite stays destroyed');
+
+        world.time.now = savedNow;
+        world.clearLoot();
+        world.spawnLoot(80, 80, [{ id: 'shrimp', qty: 1 }]);
+        var takenDrop = H.lootLive(win)[0];
+        var takenSprite = takenDrop.sprite;
+        destroySpriteKeepRef(takenDrop);
+        takenDrop.taken = true;
+        assertNoThrow(function () {
+            world.pruneLoot();
+        }, 'pruneLoot taken path after sprite.destroy');
+        assertEqual((world.groundLoot || []).length, 0, 'taken destroyed sprite is removed');
+        assert(isDestroyedGo(takenSprite), 'stale taken sprite stays destroyed');
+
+        world.time.now = savedNow;
+        world.clearLoot();
+        world.placePlayer(spawn.x, spawn.y);
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('loot: clearLoot on zone change wipes ground loot', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');
