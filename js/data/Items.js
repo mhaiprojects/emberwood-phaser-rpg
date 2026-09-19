@@ -56,7 +56,8 @@ function makeHero() {
             fishing: { level: 1, xp: 0 },
             woodcutting: { level: 1, xp: 0 },
             mining: { level: 1, xp: 0 },
-            crafting: { level: 1, xp: 0 }
+            crafting: { level: 1, xp: 0 },
+            agility: { level: 1, xp: 0 }
         }
     };
 }
@@ -125,6 +126,17 @@ function syncCoins(hero) {
     }
 }
 
+function heroSkillLevel(hero, skill) {
+    if (!hero || !hero.skills || !hero.skills[skill]) {
+        return 1;
+    }
+    var level = hero.skills[skill].level;
+    if (typeof level !== 'number' || level < 1) {
+        return 1;
+    }
+    return level;
+}
+
 function gainSkillXp(hero, skill, amount) {
     var s = hero.skills[skill];
     if (!s) {
@@ -140,7 +152,10 @@ function gainSkillXp(hero, skill, amount) {
         if (skill === 'hitpoints') {
             hero.maxHp = 10 * s.level;
         }
-        Hud.log(SKILL_NAMES.filter(function (n) { return n[0] === skill; })[0][1] + ' increased to ' + s.level + '.');
+        var named = SKILL_NAMES.filter(function (n) { return n[0] === skill; })[0];
+        if (named) {
+            Hud.log(named[1] + ' increased to ' + s.level + '.');
+        }
     }
 }
 

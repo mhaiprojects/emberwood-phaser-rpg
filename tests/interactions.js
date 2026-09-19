@@ -9146,6 +9146,143 @@ EmberwoodTests.add('world: door open/close animation on the Millfields farm door
     });
 });
 
+EmberwoodTests.add('world: agility shortcut squeezes beside the locked farm door', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(spawn.x, 328, 'spawn x tile center');
+        assertEqual(spawn.y, 248, 'spawn y tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.') === 0, 'Phaser 3');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(typeof win.heroSkillLevel, 'function', 'heroSkillLevel exists');
+        assertEqual(typeof world.tryAgilityShortcut, 'function', 'tryAgilityShortcut exists');
+        assertEqual(typeof world.handleAgilityShortcut, 'function', 'handleAgilityShortcut exists');
+
+        var door = win.LOCKED_DOOR;
+        var gap = win.AGILITY_SHORTCUT;
+        assert(door, 'LOCKED_DOOR def exists');
+        assert(gap, 'AGILITY_SHORTCUT def exists');
+        assertEqual(door.zoneId, 'millfields', 'locked door is in Millfields');
+        assertEqual(door.tx, 26, 'farm door tx');
+        assertEqual(door.ty, 17, 'farm door ty');
+        assertEqual(gap.zoneId, 'millfields', 'shortcut is in Millfields');
+        assertEqual(gap.tx, 25, 'shortcut is west of the farm door');
+        assertEqual(gap.ty, 17, 'shortcut shares the door row');
+        assertEqual(gap.level, 5, 'shortcut wants Agility 5');
+        assertEqual(gap.skill, 'agility', 'shortcut skill is agility');
+        assertEqual(win.agilityShortcutAt(gap.tx, gap.ty, 'millfields'), gap, 'agilityShortcutAt matches');
+        assertEqual(win.agilityShortcutAt(gap.tx, gap.ty, 'haven'), null, 'shortcut is zone-gated');
+
+        var fresh = win.makeHero();
+        assertEqual(win.heroSkillLevel(fresh, 'agility'), 1, 'starter Agility is 1');
+        assertEqual(win.heroHasItem(fresh, 'key'), false, 'starter kit has no key');
+
+        H.enterZone(win, 'millfields');
+        world = H.world(win);
+        H.setAutoAttack(win, false);
+        parkWorldBodies(world);
+        assertEqual(world.tileGrid[door.ty][door.tx], win.TILE.DOOR, 'farm door stays TILE.DOOR');
+        assertEqual(world.tileGrid[gap.ty][gap.tx], win.TILE.ROCK, 'shortcut tile stays ROCK');
+        assertEqual(win.tileBlockedByTerrain(world.tileGrid[gap.ty][gap.tx]), true, 'Pathfind still blocks the squeeze');
+        assertEqual(win.sceneryKindAt(world.tileGrid, gap.tx, gap.ty, {
+            houseRects: world.houseRectsNow(),
+            zoneId: 'millfields'
+        }), 'shortcut', 'shortcut examine kind');
+        assertEqual(win.examineSceneryText('shortcut'), 'A narrow gap beside the locked door. You might squeeze through.', 'shortcut examine text');
+
+        var hero = H.hero(win);
+        hero.skills.agility = hero.skills.agility || { level: 1, xp: 0 };
+        hero.skills.agility.level = 1;
+        win.game.registry.set('hero', hero);
+        assertEqual(win.heroHasItem(hero, 'key'), false, 'no Iron key yet');
+        assertEqual(win.heroSkillLevel(hero, 'agility'), 1, 'Agility starts at 1');
+
+        var doorSouth = win.tileCenter(door.tx, door.ty + 1);
+        var gapSouth = win.tileCenter(gap.tx, gap.ty + 1);
+        var insideY = gap.ty * (win.TILE_SIZE || 16);
+        world.placePlayer(doorSouth.x, doorSouth.y);
+        world.player.body.setVelocity(0, 0);
+        world.clearWalk();
+        world.exitLock = true;
+        world.encounterLock = false;
+        H.clearKeys(win);
+        return H.holdKey(win, 'KeyW', 'w', 500).then(function () {
+            H.clearKeys(win);
+            world = H.world(win);
+            world.player.body.setVelocity(0, 0);
+            assert(world.player.y > insideY, 'locked door blocks without a key, y=' + world.player.y);
+            assertEqual(world.tileGrid[door.ty][door.tx], win.TILE.DOOR, 'door stays TILE.DOOR without a key');
+            assert(H.chatHas(win, 'The door is locked.'), 'locked chat');
+            assert(!win.game.input.keyboard, 'Phaser keyboard off after locked bump');
+
+            world.placePlayer(gapSouth.x, gapSouth.y);
+            world.player.body.setVelocity(0, 0);
+            world.clearWalk();
+            world.exitLock = true;
+            world.encounterLock = false;
+            H.clearKeys(win);
+            return H.holdKey(win, 'KeyW', 'w', 500);
+        }).then(function () {
+            H.clearKeys(win);
+            world = H.world(win);
+            world.player.body.setVelocity(0, 0);
+            var at = win.worldToTile(world.player.x, world.player.y);
+            assert(world.player.y > insideY, 'low Agility cannot squeeze, y=' + world.player.y);
+            assert(at.ty > gap.ty, 'still south of the shortcut, ty=' + at.ty);
+            assert(H.chatHas(win, 'You need Agility level 5 to squeeze through.'), 'need-level chat');
+            assertEqual(world.tileGrid[door.ty][door.tx], win.TILE.DOOR, 'failed squeeze does not unlock the door');
+            assertEqual(win.heroHasItem(H.hero(win), 'key'), false, 'failed squeeze does not grant a key');
+            assert(!win.game.input.keyboard, 'Phaser keyboard off after failed squeeze');
+
+            hero = H.hero(win);
+            hero.skills.agility = hero.skills.agility || { level: 1, xp: 0 };
+            hero.skills.agility.level = 5;
+            win.game.registry.set('hero', hero);
+            assertEqual(win.heroSkillLevel(hero, 'agility'), 5, 'test-set Agility 5');
+            world.placePlayer(gapSouth.x, gapSouth.y);
+            world.player.body.setVelocity(0, 0);
+            world.clearWalk();
+            world.exitLock = true;
+            world.encounterLock = false;
+            world.shortcutLockUntil = 0;
+            H.clearKeys(win);
+            H.key(win, 'KeyW', 'w', 'keydown');
+            return H.waitUntil(function () {
+                return H.world(win).player.y < insideY;
+            }, 1500, 'Keys.js W through agility squeeze');
+        }).then(function () {
+            H.key(win, 'KeyW', 'w', 'keyup');
+            H.clearKeys(win);
+            world = H.world(win);
+            world.player.body.setVelocity(0, 0);
+            var at = win.worldToTile(world.player.x, world.player.y);
+            assert(world.player.y < insideY, 'squeezed north through the gap, y=' + world.player.y);
+            assertEqual(at.tx, gap.tx, 'squeeze stayed on the shortcut column');
+            assert(at.ty < gap.ty, 'landed inside the farm house');
+            assert(H.chatHas(win, 'You squeeze through the gap.'), 'squeeze chat');
+            assertEqual(world.tileGrid[door.ty][door.tx], win.TILE.DOOR, 'door stays locked after the squeeze');
+            assertEqual(!!world.ground.getTileAt(door.tx, door.ty).collides, true, 'locked door still collides');
+            assertEqual(win.heroHasItem(H.hero(win), 'key'), false, 'squeeze does not consume or grant a key');
+            assert(!win.game.input.keyboard, 'Phaser keyboard off after squeeze');
+
+            H.enterZone(win, 'haven');
+            world = H.world(win);
+            world.placePlayer(spawn.x, spawn.y);
+            world.player.body.setVelocity(0, 0);
+            assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+            assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        });
+    });
+});
+
 EmberwoodTests.add('world: Emberhaven bank shop and guild doors enter one indoor tilemap', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');

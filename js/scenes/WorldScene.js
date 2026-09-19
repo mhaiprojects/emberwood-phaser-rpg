@@ -38,6 +38,8 @@ var WorldScene = new Phaser.Class({
         this.unlockedDoors = {};
         this.doorFx = {};
         this.lockChatUntil = 0;
+        this.shortcutChatUntil = 0;
+        this.shortcutLockUntil = 0;
 
         this.marker = this.add.rectangle(0, 0, 6, 6, DEST_X_COLOR).setVisible(false).setDepth(8);
         this.destX = this.makeDestX();
@@ -346,6 +348,89 @@ var WorldScene = new Phaser.Class({
                 continue;
             }
             this.handleLockedDoor(tx, ty);
+            return;
+        }
+    },
+
+    handleAgilityShortcut: function (shortcut) {
+        if (!shortcut || !this.player) {
+            return;
+        }
+        var now = this.time ? this.time.now : 0;
+        if (now && now < this.shortcutLockUntil) {
+            return;
+        }
+        var at = worldToTile(this.player.x, this.player.y);
+        var flags = this.moveFlags();
+        var towardNorth = flags.up || !!(this.walkTarget && this.walkTarget.y < this.player.y - 2);
+        var towardSouth = flags.down || !!(this.walkTarget && this.walkTarget.y > this.player.y + 2);
+        if (at.ty > shortcut.ty && !towardNorth) {
+            return;
+        }
+        if (at.ty < shortcut.ty && !towardSouth) {
+            return;
+        }
+        if (at.tx !== shortcut.tx) {
+            return;
+        }
+        var hero = this.registry.get('hero');
+        var need = shortcut.level || 1;
+        var have = typeof heroSkillLevel === 'function'
+            ? heroSkillLevel(hero, shortcut.skill || 'agility')
+            : 1;
+        if (have < need) {
+            if (now && now < this.shortcutChatUntil) {
+                return;
+            }
+            this.shortcutChatUntil = now + 800;
+            Hud.log('You need Agility level ' + need + ' to squeeze through.');
+            return;
+        }
+        var landTy = at.ty > shortcut.ty ? shortcut.ty - 1 : shortcut.ty + 1;
+        var land = tileCenter(shortcut.tx, landTy);
+        this.placePlayer(land.x, land.y);
+        this.player.body.setVelocity(0, 0);
+        this.clearWalk();
+        this.shortcutLockUntil = now + 250;
+        Hud.log('You squeeze through the gap.');
+    },
+
+    tryAgilityShortcut: function () {
+        if (this.encounterLock || this.interiorId || !this.tileGrid) {
+            return;
+        }
+        if (window.Hud && Hud.mode && Hud.mode !== 'world') {
+            return;
+        }
+        var shortcut = typeof agilityShortcutAt === 'function'
+            ? agilityShortcutAt(
+                AGILITY_SHORTCUT && AGILITY_SHORTCUT.tx,
+                AGILITY_SHORTCUT && AGILITY_SHORTCUT.ty,
+                this.zoneId
+            )
+            : (AGILITY_SHORTCUT && AGILITY_SHORTCUT.zoneId === this.zoneId ? AGILITY_SHORTCUT : null);
+        if (!shortcut) {
+            return;
+        }
+        var flags = this.moveFlags();
+        var walking = flags.left || flags.right || flags.up || flags.down || !!this.walkTarget;
+        if (!walking) {
+            return;
+        }
+        var at = worldToTile(this.player.x, this.player.y);
+        var spots = [
+            { tx: at.tx, ty: at.ty },
+            { tx: at.tx, ty: at.ty - 1 },
+            { tx: at.tx, ty: at.ty + 1 },
+            { tx: at.tx - 1, ty: at.ty },
+            { tx: at.tx + 1, ty: at.ty }
+        ];
+        var i;
+        for (i = 0; i < spots.length; i++) {
+            if (spots[i].tx !== shortcut.tx || spots[i].ty !== shortcut.ty) {
+                continue;
+            }
+            this.handleAgilityShortcut(shortcut);
             return;
         }
     },
@@ -1759,6 +1844,7 @@ var WorldScene = new Phaser.Class({
         this.wanderMobs();
         this.constrainGiantMobs();
         this.tryLockedDoor();
+        this.tryAgilityShortcut();
         this.updateDoors();
         this.checkExits();
     }

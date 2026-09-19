@@ -57,6 +57,14 @@ var LOCKED_DOOR = {
     ty: FARM_HOUSES[0].y + FARM_HOUSES[0].h - 1,
     keyId: 'key'
 };
+var AGILITY_SHORTCUT = {
+    zoneId: 'millfields',
+    tx: LOCKED_DOOR.tx - 1,
+    ty: LOCKED_DOOR.ty,
+    skill: 'agility',
+    level: 5,
+    verb: 'squeeze'
+};
 var MINE_SHAFT_HOUSE = { x: 6, y: 8, w: 6, h: 5 };
 var INTERIOR_ROOM = { x: 12, y: 8, w: 12, h: 13 };
 var SCENERY_EXAMINE = {
@@ -72,6 +80,7 @@ var SCENERY_EXAMINE = {
     dock: 'A weathered wooden dock. The tide slaps the pilings.',
     boat: 'A fishing boat, tied off and empty.',
     tomb: 'A weathered tomb marker. The name is worn away.',
+    shortcut: 'A narrow gap beside the locked door. You might squeeze through.',
     gate: 'A wooden courtyard gate. The hinges still work.',
     'door-bank': 'The bank door. Elise keeps the ledgers inside.',
     'door-shop': 'The shop door. A faded sign hangs above it.',
@@ -403,10 +412,26 @@ function isHouseWallAt(grid, tx, ty, rects) {
     return false;
 }
 
+function agilityShortcutAt(tx, ty, zoneId) {
+    if (!AGILITY_SHORTCUT) {
+        return null;
+    }
+    if (zoneId && AGILITY_SHORTCUT.zoneId && zoneId !== AGILITY_SHORTCUT.zoneId) {
+        return null;
+    }
+    if (tx !== AGILITY_SHORTCUT.tx || ty !== AGILITY_SHORTCUT.ty) {
+        return null;
+    }
+    return AGILITY_SHORTCUT;
+}
+
 function sceneryKindAt(grid, tx, ty, opts) {
     opts = opts || {};
     if (!inBounds(tx, ty) || !grid || !grid[ty]) {
         return null;
+    }
+    if (agilityShortcutAt(tx, ty, opts.zoneId)) {
+        return 'shortcut';
     }
     var index = grid[ty][tx];
     if (index === TILE.TREE) {
