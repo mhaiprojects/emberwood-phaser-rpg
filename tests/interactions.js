@@ -3994,6 +3994,125 @@ EmberwoodTests.add('npcs: dialogue option buttons Talk Trade Bank Quest where th
     });
 });
 
+EmberwoodTests.add('npcs: walk-away closes dialogue and TREE/ROCK walls block talk', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        var world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(win.Hud.mode, 'world', 'world mode');
+
+        var overlay = win.document.getElementById('dialogue-overlay');
+        assert(overlay && overlay === win.Hud.el.dialogue, '#dialogue-overlay is Hud.el.dialogue');
+        assert(overlay.hidden, 'dialogue starts hidden');
+
+        var rowan = H.findNpc(win, 'guard');
+        assert(rowan, 'Rowan is in Emberhaven');
+        assertEqual(Math.round(rowan.x), 252, 'Rowan x');
+        assertEqual(Math.round(rowan.y), 168, 'Rowan y');
+
+        win.Hud.el.log.innerHTML = '';
+        world.placePlayer(rowan.x + 16, rowan.y);
+        world.player.body.setVelocity(0, 0);
+        world.tryTalk(rowan);
+        assert(win.Hud.dialogueOpen(), 'adjacent talk still opens dialogue');
+        assertEqual(win.document.getElementById('dialogue-text').textContent, rowan.npcDef.lines[0], 'first page before walk-away');
+        assertEqual(win.Hud.mode, 'world', 'dialogue keeps Hud.mode world');
+
+        world.scene.pause();
+        try {
+            H.key(win, 'KeyD', 'd', 'keydown');
+            assert(win.Keys.down.KeyD, 'D via Keys.js');
+            world.update();
+            assert(!win.Hud.dialogueOpen(), 'WASD walk-away closes #dialogue-overlay');
+            assert(overlay.hidden, 'overlay hidden after D');
+            assertEqual(world.dialogueNpc, null, 'walk-away clears dialogueNpc');
+            assert(!win.game.input.keyboard, 'Phaser keyboard off after D');
+        } finally {
+            H.clearKeys(win);
+            world.scene.resume();
+        }
+
+        win.Hud.el.log.innerHTML = '';
+        world.placePlayer(rowan.x + 16, rowan.y);
+        world.player.body.setVelocity(0, 0);
+        world.tryTalk(rowan);
+        assert(win.Hud.dialogueOpen(), 'talk again before distance walk-away');
+        world.placePlayer(rowan.x + 80, rowan.y);
+        world.player.body.setVelocity(0, 0);
+        world.update();
+        assert(!win.Hud.dialogueOpen(), 'standing 80px away closes dialogue');
+        assert(overlay.hidden, 'overlay hidden after distance walk-away');
+
+        var mid = win.worldToTile(rowan.x + 12, rowan.y);
+        assertEqual(mid.tx, 16, 'wall tile is between Rowan and the east stand');
+        assertEqual(mid.ty, 10, 'wall tile y matches Rowan');
+        var saved = world.tileGrid[mid.ty][mid.tx];
+        assert(saved !== win.TILE.TREE && saved !== win.TILE.ROCK, 'courtyard mid starts walkable');
+
+        function assertWallBlocks(kind, tileId) {
+            world.tileGrid[mid.ty][mid.tx] = tileId;
+            world.placePlayer(rowan.x + 24, rowan.y);
+            world.player.body.setVelocity(0, 0);
+            if (world.clearWalk) {
+                world.clearWalk();
+            }
+            world.talkTarget = null;
+            win.Hud.hideDialogue();
+            win.Hud.el.log.innerHTML = '';
+            var lastBefore = H.lastChat(win);
+            world.tryTalk(rowan);
+            assert(!win.Hud.dialogueOpen(), kind + ' wall blocks tryTalk');
+            assertEqual(H.lastChat(win), lastBefore, kind + ' wall does not log talk');
+
+            world.scene.pause();
+            try {
+                H.clearKeys(win);
+                H.key(win, 'Space', ' ', 'keydown');
+                world.update();
+                assert(!win.Hud.dialogueOpen(), kind + ' wall blocks Space talk');
+                assertEqual(H.lastChat(win), lastBefore, kind + ' Space stays silent');
+            } finally {
+                H.clearKeys(win);
+                world.scene.resume();
+            }
+
+            world.talkTarget = rowan;
+            world.update();
+            assert(world.talkTarget === rowan, kind + ' walk-in does not freeze on a walled NPC');
+            assert(!win.Hud.dialogueOpen(), kind + ' walk-in does not talk through the wall');
+        }
+
+        assertWallBlocks('ROCK', win.TILE.ROCK);
+        assertWallBlocks('TREE', win.TILE.TREE);
+
+        world.tileGrid[mid.ty][mid.tx] = saved;
+        world.placePlayer(rowan.x + 24, rowan.y);
+        world.player.body.setVelocity(0, 0);
+        win.Hud.el.log.innerHTML = '';
+        world.tryTalk(rowan);
+        assert(win.Hud.dialogueOpen(), 'clear LOS still talks at 24px');
+        assert(H.chatHas(win, 'Guard Rowan:'), 'Rowan speaks once the wall is gone');
+        win.Hud.hideDialogue();
+
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('npcs: Shopkeeper Mira Trade window opens shop-overlay', function (win, H) {
     function hiddenCssRule(doc, id) {
         var needle = '#' + id + '[hidden]';

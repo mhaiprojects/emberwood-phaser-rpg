@@ -10,6 +10,8 @@ var LONG_PRESS_SLOP = 8;
 var MOB_RESPAWN_MS = 18000;
 var DOOR_ANIM_MS = 220;
 var DOOR_OPEN_SCALE_X = 0.18;
+var TALK_AWAY_PX = 40;
+var TALK_WALL_PX = 48;
 var COLLIDE_TILES = [
     TILE.WATER, TILE.TREE, TILE.ROCK, TILE.SHRINE,
     TILE.STALL, TILE.RANGE, TILE.ANVIL, TILE.BOOTH,
@@ -1614,8 +1616,58 @@ var WorldScene = new Phaser.Class({
         this.pathGfx.strokePath();
     },
 
+    talkBlockedByWall: function (npc) {
+        if (!npc || !this.player || !this.tileGrid) {
+            return false;
+        }
+        var x0 = this.player.x;
+        var y0 = this.player.y;
+        var x1 = npc.x;
+        var y1 = npc.y;
+        var dist = Phaser.Math.Distance.Between(x0, y0, x1, y1);
+        if (!(dist > 0) || dist > TALK_WALL_PX) {
+            return false;
+        }
+        var start = worldToTile(x0, y0);
+        var end = worldToTile(x1, y1);
+        var steps = Math.max(2, Math.ceil(dist / 4));
+        var i;
+        for (i = 1; i < steps; i++) {
+            var t = i / steps;
+            var tile = worldToTile(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t);
+            if ((tile.tx === start.tx && tile.ty === start.ty) ||
+                (tile.tx === end.tx && tile.ty === end.ty)) {
+                continue;
+            }
+            var row = this.tileGrid[tile.ty];
+            if (!row) {
+                continue;
+            }
+            var index = row[tile.tx];
+            if (index === TILE.TREE || index === TILE.ROCK) {
+                return true;
+            }
+        }
+        return false;
+    },
+
+    closeDialogueIfAway: function () {
+        if (!this.player || !this.dialogueNpc || !Hud.dialogueOpen || !Hud.dialogueOpen()) {
+            return;
+        }
+        var away = Phaser.Math.Distance.Between(
+            this.player.x, this.player.y, this.dialogueNpc.x, this.dialogueNpc.y
+        );
+        if (away > TALK_AWAY_PX && Hud.hideDialogue) {
+            Hud.hideDialogue();
+        }
+    },
+
     tryTalk: function (npc) {
-        if (this.encounterLock || Hud.mode === 'battle') {
+        if (!npc || this.encounterLock || Hud.mode === 'battle') {
+            return;
+        }
+        if (this.talkBlockedByWall(npc)) {
             return;
         }
         var def = npc.npcDef;
@@ -2131,6 +2183,9 @@ var WorldScene = new Phaser.Class({
         if (move.left || move.right || move.up || move.down) {
             this.clearWalk();
             this.talkTarget = null;
+            if (Hud.dialogueOpen && Hud.dialogueOpen() && Hud.hideDialogue) {
+                Hud.hideDialogue();
+            }
             if (move.left && !move.right) { vx = -speed; }
             else if (move.right && !move.left) { vx = speed; }
             if (move.up && !move.down) { vy = -speed; }
@@ -2215,7 +2270,8 @@ var WorldScene = new Phaser.Class({
             return;
         }
         if (this.talkTarget) {
-            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.talkTarget.x, this.talkTarget.y) < 22) {
+            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.talkTarget.x, this.talkTarget.y) < 22 &&
+                !this.talkBlockedByWall(this.talkTarget)) {
                 this.player.body.setVelocity(0);
                 this.clearWalk();
                 this.tryTalk(this.talkTarget);
@@ -2224,10 +2280,12 @@ var WorldScene = new Phaser.Class({
 
         if (Keys.justPressed('Space') && Hud.mode !== 'battle') {
             var nearNpc = this.pickSprite(this.npcs, this.player.x, this.player.y, 28);
-            if (nearNpc) {
+            if (nearNpc && !this.talkBlockedByWall(nearNpc)) {
                 this.tryTalk(nearNpc);
             }
         }
+
+        this.closeDialogueIfAway();
 
         this.wanderMobs();
         this.constrainGiantMobs();

@@ -105,7 +105,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] A Shopkeeper in Emberhaven and a Trade window (see Shops). — Conclusion: From spawn (328,248) Shopkeeper Mira (376,216) Talk+Trade opens HTML `#shop-overlay`; Buy/sell stubbed (gold unchanged); Elise stays heal/Bank; Phaser 3.90 keyboard off. Dedicated + Playwright 1/1.
 - [done] Convert Elise from heal-only to a **bank booth** (deposit / withdraw); keep free heal as a separate Nurse or a bank option. — Conclusion: From spawn (328,248) Elise Bank opens HTML `#bank-overlay`; deposit/withdraw move coins+items with gold/stack in sync; Heal option restores HP for 0 gp. Talk is flavor. Phaser 3.90 keyboard off. Dedicated + Playwright 1/1.
 - [done] Quest-giver head icons (blue star / gold compass) over Bram until the militia task is done. — Conclusion: From spawn (328,248) Bram shows a blue star at stage 0 and a gold compass at 1–2; the icon hides at stage 3+; accept still updates journal. Phaser 3.90 keyboard off. Dedicated + existing stage 0 + Playwright 2/2.
-- [todo] Walk-away to close dialogue; do not talk through TREE/ROCK walls. — Conclusion: —
+- [done] Walk-away to close dialogue; do not talk through TREE/ROCK walls. — Conclusion: From spawn (328,248) Rowan talk opens `#dialogue-overlay`; Keys.js D and 80px walk-away close it; TREE/ROCK between player and Rowan block tryTalk/Space; clear LOS still talks. Phaser 3.90 keyboard off. Dedicated + Playwright 1/1.
 - [todo] Give Fisher Ned / Miner Corb / Farmer Willa / Ranger Kett tutor lines that unlock or explain fishing, mining, cows, and combat styles. — Conclusion: —
 - [todo] NPC idle facing and a tiny wander leash so they are not statues. — Conclusion: —
 - [todo] Add a cook / priest / shopkeeper as original CC0 SVGs (extend `tools/generate_svgs.py`, do not use commercial packs). — Conclusion: —
@@ -507,4 +507,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 134 | 2026-09-19 | A Shopkeeper in Emberhaven and a Trade window (see Shops) | done — spawn (328,248) Mira (376,216) Talk+Trade opens `#shop-overlay`; Buy/sell stubbed; Elise stays Bank; Phaser keyboard off; dedicated + Playwright 1/1 |
 | 135 | 2026-09-19 | Convert Elise from heal-only to a bank booth (deposit / withdraw) | done — spawn (328,248) Bank opens `#bank-overlay`; deposit/withdraw gold+items; Heal option free; Talk is flavor; Phaser keyboard off; dedicated + Playwright 1/1 |
 | 136 | 2026-09-19 | Quest-giver head icons (blue star / gold compass) over Bram | done — spawn (328,248) blue star at stage 0, gold compass at 1–2, hide at 3+; accept still updates journal; Phaser keyboard off; dedicated + existing stage 0 + Playwright 2/2 |
+| 137 | 2026-09-19 | Walk-away to close dialogue; do not talk through TREE/ROCK walls | done — spawn (328,248) D/80px close `#dialogue-overlay`; TREE/ROCK block talk; Phaser keyboard off; dedicated + Playwright 1/1 |
 
