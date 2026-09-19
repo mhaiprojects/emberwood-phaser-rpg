@@ -176,7 +176,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Skills tab lists Attack, Strength, Defence, Hitpoints, Ranged, Prayer, Magic, Cooking, Fishing, Woodcutting, Mining, Crafting with icons. — Conclusion: Live Skills tab shows all 12 names with loaded `assets/svg/skills/{id}.svg` icons (32px); dedicated suite case pass. Phaser 3.90 keyboard off.
 - [done] Start: Hitpoints 10 / 1154 XP / 100 HP; every other skill 1 / 0 XP. — Conclusion: From spawn (328,248) makeHero Hitpoints 10/1154 XP, HP 100/100, other 11 skills 1/0; Skills tab + side HUD match. Phaser 3.90 keyboard off. Dedicated case pass; suite 52/52.
 - [done] `gainSkillXp` level curve `1 + floor(sqrt(xp / 50))` and Hitpoints never below 10. — Conclusion: From spawn (328,248) `gainSkillXp` is `1 + floor(sqrt(xp / 50))`; Attack 50→2, Strength 200→3; 1154 XP curves to 5 but Hitpoints stays ≥10. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [verify] A Hitpoints level-up sets `hero.maxHp = 10 * level` and chats `{Skill} increased to N.` — Conclusion: —
+- [done] A Hitpoints level-up sets `hero.maxHp = 10 * level` and chats `{Skill} increased to N.` — Conclusion: From spawn (328,248) Hitpoints 10/1154/100; 5000 XP → 11, maxHp 110, chat `Hitpoints increased to 11.`; 6050 → 12 / 120; Attack 2 chats `Attack increased to 2.` without changing maxHp. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [todo] Show current XP and XP-to-next on skill-row hover or click. — Conclusion: —
 - [todo] An XP drop floater (OSRS-style number + skill icon) on gain. — Conclusion: —
 - [todo] A level-up modal / fanfare in chat (not only one log line). — Conclusion: —
@@ -452,4 +452,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 79 | 2026-09-19 | addItem coins increments gold and syncCoins; takeItem decrements both | done — spawn (328,248) addItem +5/+1 and takeItem −3/−1 keep gold, stack, HUD in sync; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 80 | 2026-09-19 | Stacks merge by id and drop when qty hits 0 | done — spawn (328,248) addItem merges by id; takeItem/eat last qty drops the stack; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 81 | 2026-09-19 | gainSkillXp level curve 1 + floor(sqrt(xp / 50)); Hitpoints never below 10 | done — spawn (328,248) Attack 50→2, Strength 200→3; 1154 XP curves to 5 but Hitpoints stays ≥10; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 82 | 2026-09-19 | Hitpoints level-up sets maxHp = 10 * level and chats Skill increased to N | done — spawn (328,248) 5000 XP → 11 / 110 + `Hitpoints increased to 11.`; 6050 → 12 / 120; Attack chat does not change maxHp; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 

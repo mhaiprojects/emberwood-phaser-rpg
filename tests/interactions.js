@@ -312,6 +312,70 @@ EmberwoodTests.add('hud: start skills Hitpoints 10 / 1154 XP / 100 HP; others 1 
     });
 });
 
+EmberwoodTests.add('skills: Hitpoints level-up sets maxHp to 10 * level and chats Skill increased to N', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        world.placePlayer(spawn.x, spawn.y);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.') === 0, 'Phaser 3');
+        assertEqual(typeof win.gainSkillXp, 'function', 'gainSkillXp exists');
+
+        hero = H.hero(win);
+        assertEqual(hero.skills.hitpoints.level, 10, 'Hitpoints starts 10');
+        assertEqual(hero.skills.hitpoints.xp, 1154, 'Hitpoints starts 1154 XP');
+        assertEqual(hero.maxHp, 100, 'start maxHp 100');
+        assertEqual(hero.hp, 100, 'start hp 100');
+        assertEqual(hero.skills.attack.level, 1, 'Attack starts 1');
+
+        win.gainSkillXp(hero, 'hitpoints', 3845);
+        assertEqual(hero.skills.hitpoints.xp, 4999, 'Hitpoints 4999 is still below level 11');
+        assertEqual(hero.skills.hitpoints.level, 10, 'Hitpoints stays 10 below 5000 XP');
+        assertEqual(hero.maxHp, 100, 'maxHp stays 100 before the level-up');
+        assert(!H.chatHas(win, 'Hitpoints increased'), 'no Hitpoints level-up chat below the curve');
+
+        win.gainSkillXp(hero, 'attack', 50);
+        assertEqual(hero.skills.attack.level, 2, 'Attack levels to 2');
+        assert(H.chatHas(win, 'Attack increased to 2.'), 'Attack chats {Skill} increased to N.');
+        assertEqual(hero.maxHp, 100, 'Attack level-up does not change maxHp');
+
+        win.gainSkillXp(hero, 'hitpoints', 1);
+        assertEqual(hero.skills.hitpoints.xp, 5000, 'Hitpoints reaches 5000 XP');
+        assertEqual(hero.skills.hitpoints.level, 11, 'Hitpoints levels to 1 + floor(sqrt(5000/50))');
+        assertEqual(hero.maxHp, 110, 'maxHp is 10 * Hitpoints 11');
+        assertEqual(hero.hp, 100, 'current HP is not filled on a Hitpoints level-up');
+        assert(H.chatHas(win, 'Hitpoints increased to 11.'), 'Hitpoints chats {Skill} increased to N.');
+
+        win.gainSkillXp(hero, 'hitpoints', 1050);
+        assertEqual(hero.skills.hitpoints.xp, 6050, 'Hitpoints reaches 6050 XP');
+        assertEqual(hero.skills.hitpoints.level, 12, 'Hitpoints levels to 12');
+        assertEqual(hero.maxHp, 120, 'maxHp is 10 * Hitpoints 12');
+        assert(H.chatHas(win, 'Hitpoints increased to 12.'), 'second Hitpoints level chats the new N');
+
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        assertEqual(win.document.getElementById('hud-hp').textContent, '100 / 120', 'side HUD uses new maxHp');
+        H.click(win, '#tab-bar button[data-tab="skills"]');
+        var rows = win.document.querySelectorAll('#skills-list .skill-row');
+        var byName = {};
+        for (var i = 0; i < rows.length; i++) {
+            byName[rows[i].querySelector('span').textContent] = rows[i].querySelector('strong').textContent;
+        }
+        assertEqual(byName.Hitpoints, '12', 'Skills tab Hitpoints is 12');
+        assertEqual(byName.Attack, '2', 'Skills tab Attack is 2');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('skills: gainSkillXp uses 1 + floor(sqrt(xp / 50)) and Hitpoints never below 10', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         var world = H.world(win);
