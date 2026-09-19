@@ -5107,6 +5107,65 @@ EmberwoodTests.add('combat: goblin kill advances the militia quest', function (w
     });
 });
 
+EmberwoodTests.add('combat: any Goblin type kill counts in Northwood and Westmead', function (win, H) {
+    function fightAndWin(zoneId, type) {
+        H.enterZone(win, zoneId);
+        H.setAutoAttack(win, false);
+        var mob = H.findMob(win, type);
+        assert(mob, type + ' lives in ' + zoneId);
+        assertEqual(mob.mobDef.type, type, zoneId + ' mob type is ' + type);
+        mob.mobDef.hp = 8;
+        return H.startFight(win, mob).then(function () {
+            win.Hud.tryAttack();
+            return H.waitWorld(win);
+        });
+    }
+
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        world.placePlayer(spawn.x, spawn.y);
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        var northGoblins = (win.MOB_DEFS.northwood || []).filter(function (def) {
+            return def.type === 'Goblin';
+        });
+        var westGoblins = (win.MOB_DEFS.westmead || []).filter(function (def) {
+            return def.type === 'Goblin';
+        });
+        assert(northGoblins.length > 0, 'Northwood has Goblin defs');
+        assert(westGoblins.length > 0, 'Westmead has Goblin defs');
+
+        win.game.registry.set('quest', { id: 'goblins', stage: 1, progress: 0, goal: 5 });
+        world.refreshHud();
+        assertEqual(win.document.getElementById('hud-quest').textContent, 'Kill goblins in Northwood (0/5).', 'HUD names Northwood');
+
+        return fightAndWin('northwood', 'Goblin');
+    }).then(function () {
+        assertEqual(H.quest(win).progress, 1, 'Northwood Goblin kill counts');
+        assertEqual(H.quest(win).stage, 1, 'still hunting after first kill');
+        assertEqual(win.document.getElementById('hud-quest').textContent, 'Kill goblins in Northwood (1/5).', 'HUD after Northwood kill');
+        return fightAndWin('westmead', 'Goblin');
+    }).then(function () {
+        assertEqual(H.quest(win).progress, 2, 'Westmead Goblin also counts — any def.type === Goblin');
+        assertEqual(H.quest(win).stage, 1, 'still hunting after Westmead kill');
+        assertEqual(win.document.getElementById('hud-quest').textContent, 'Kill goblins in Northwood (2/5).', 'HUD still says Northwood after Westmead kill');
+        assertEqual(win.document.getElementById('hud-quest-tab').textContent, 'Kill goblins in Northwood (2/5).', 'journal tracks any Goblin');
+        return fightAndWin('haven', 'Chicken');
+    }).then(function () {
+        assertEqual(H.quest(win).progress, 2, 'non-Goblin kill does not count');
+        assertEqual(H.quest(win).stage, 1, 'chicken does not advance stage');
+        H.enterZone(win, 'haven');
+    }).catch(function (err) {
+        return H.cleanupBattle(win).then(function () {
+            throw err;
+        });
+    });
+});
+
 EmberwoodTests.add('world: player is one tile and mobs scale by type', function (win, H) {
     H.enterZone(win, 'haven');
     var world = H.world(win);
