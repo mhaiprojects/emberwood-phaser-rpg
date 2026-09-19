@@ -98,6 +98,14 @@
             if (dropsHost) {
                 dropsHost.innerHTML = '';
             }
+            var near = window.nearestWalkableTile(world.tileGrid, spot.x, spot.y);
+            if (!near) {
+                throw new Error('no walkable tile beside first spot');
+            }
+            var stand = window.tileCenter(near.tx, near.ty);
+            world.placePlayer(stand.x, stand.y);
+            world.player.body.setVelocity(0, 0);
+            world.fishTarget = null;
             var pt = window.tileCenter(spot.x, spot.y);
             world.onClick({ worldX: pt.x, worldY: pt.y });
             hero = window.game.registry.get('hero');

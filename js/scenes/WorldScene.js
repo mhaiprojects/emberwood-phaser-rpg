@@ -12,6 +12,7 @@ var DOOR_ANIM_MS = 220;
 var DOOR_OPEN_SCALE_X = 0.18;
 var TALK_AWAY_PX = 40;
 var TALK_WALL_PX = 48;
+var FISH_RANGE = 28;
 var NPC_WANDER_CHANCE = 80;
 var NPC_WANDER_SPEED = 12;
 var NPC_LEASH_PX = 16;
@@ -45,6 +46,7 @@ var WorldScene = new Phaser.Class({
         this.tileGrid = null;
         this.engageTarget = null;
         this.talkTarget = null;
+        this.fishTarget = null;
         this.dialogueNpc = null;
         this.exitLock = false;
         this.encounterLock = false;
@@ -114,6 +116,7 @@ var WorldScene = new Phaser.Class({
         this.lastFought = null;
         this.engageTarget = null;
         this.talkTarget = null;
+        this.fishTarget = null;
         if (this.interiorId || this.zoneId !== 'haven') {
             this.enterZone('haven', null);
         } else {
@@ -682,6 +685,7 @@ var WorldScene = new Phaser.Class({
         this.clearDoorFx();
         this.engageTarget = null;
         this.talkTarget = null;
+        this.fishTarget = null;
         this.dialogueNpc = null;
         this.tileGrid = null;
         if (this.groundCollider) {
@@ -1147,8 +1151,15 @@ var WorldScene = new Phaser.Class({
                 });
                 return;
             }
+            var scenery = this.pickScenery(x, y);
             var items = [];
-            if (this.pickScenery(x, y)) {
+            var primary = scenery && typeof sceneryPrimaryAction === 'function'
+                ? sceneryPrimaryAction(scenery.kind)
+                : (scenery && scenery.kind === 'fishspot' ? { label: 'Fish', action: 'fish' } : null);
+            if (primary) {
+                items.push(primary);
+            }
+            if (scenery) {
                 items.push({ label: 'Examine', action: 'examine' });
             }
             items.push({ label: 'Walk here', action: 'walk-here' });
@@ -1168,6 +1179,7 @@ var WorldScene = new Phaser.Class({
         this.armLongPress(pointer);
         var loot = this.pickLoot(x, y, 18);
         if (loot) {
+            this.fishTarget = null;
             this.tryPickup(loot);
             return;
         }
@@ -1175,6 +1187,7 @@ var WorldScene = new Phaser.Class({
         if (hit && hit.aliveMob) {
             this.engageTarget = hit;
             this.talkTarget = null;
+            this.fishTarget = null;
             this.setWalk(hit.x, hit.y, { allowEnd: true });
             Hud.log('You target the ' + hit.mobDef.type + '.');
             return;
@@ -1183,20 +1196,20 @@ var WorldScene = new Phaser.Class({
         if (hit) {
             this.talkTarget = hit;
             this.engageTarget = null;
+            this.fishTarget = null;
             this.setWalk(hit.x, hit.y, { allowEnd: true });
             return;
         }
         var scenery = this.pickScenery(x, y);
         if (scenery && scenery.kind === 'fishspot') {
-            this.engageTarget = null;
-            this.talkTarget = null;
-            this.tryFishSpot(scenery);
+            this.clickFishSpot(scenery);
             return;
         }
         if (scenery && scenery.kind === 'tree' && typeof woodcutTreeAt === 'function'
                 && woodcutTreeAt(scenery.tx, scenery.ty, this.zoneId, this.tileGrid)) {
             this.engageTarget = null;
             this.talkTarget = null;
+            this.fishTarget = null;
             this.tryChopTree(scenery);
             return;
         }
@@ -1207,17 +1220,20 @@ var WorldScene = new Phaser.Class({
                 })) {
             this.engageTarget = null;
             this.talkTarget = null;
+            this.fishTarget = null;
             this.tryMineRock(scenery);
             return;
         }
         if (scenery && !(typeof isWalkableExamineKind === 'function' && isWalkableExamineKind(scenery.kind))) {
             this.engageTarget = null;
             this.talkTarget = null;
+            this.fishTarget = null;
             this.examineScenery(scenery);
             return;
         }
         this.engageTarget = null;
         this.talkTarget = null;
+        this.fishTarget = null;
         if (Phaser.Math.Distance.Between(x, y, this.player.x, this.player.y) < 10) {
             this.clearWalk();
             return;
@@ -1266,9 +1282,77 @@ var WorldScene = new Phaser.Class({
         return { tx: tile.tx, ty: tile.ty, kind: kind };
     },
 
+    sceneryWorldPos: function (hit) {
+        if (!hit) {
+            return null;
+        }
+        if (hit.x != null && hit.y != null) {
+            return { x: hit.x, y: hit.y };
+        }
+        return typeof tileCenter === 'function' ? tileCenter(hit.tx, hit.ty) : null;
+    },
+
+    fishSpotInRange: function (hit) {
+        if (!hit || !this.player) {
+            return false;
+        }
+        var spot = this.sceneryWorldPos(hit);
+        if (spot && Phaser.Math.Distance.Between(this.player.x, this.player.y, spot.x, spot.y) < FISH_RANGE) {
+            return true;
+        }
+        var near = typeof nearestWalkableTile === 'function'
+            ? nearestWalkableTile(this.tileGrid, hit.tx, hit.ty)
+            : null;
+        if (!near) {
+            return false;
+        }
+        var dest = tileCenter(near.tx, near.ty);
+        return Phaser.Math.Distance.Between(this.player.x, this.player.y, dest.x, dest.y) < 10;
+    },
+
+    clickFishSpot: function (hit) {
+        this.engageTarget = null;
+        this.talkTarget = null;
+        if (!hit || hit.kind !== 'fishspot') {
+            return false;
+        }
+        var pos = this.sceneryWorldPos(hit);
+        if (pos) {
+            hit.x = pos.x;
+            hit.y = pos.y;
+        }
+        this.fishTarget = hit;
+        if (this.fishSpotInRange(hit)) {
+            return this.tryFishSpot(hit);
+        }
+        var near = typeof nearestWalkableTile === 'function'
+            ? nearestWalkableTile(this.tileGrid, hit.tx, hit.ty)
+            : null;
+        if (!near) {
+            this.fishTarget = null;
+            return this.examineScenery(hit);
+        }
+        var dest = tileCenter(near.tx, near.ty);
+        this.setWalk(dest.x, dest.y, { allowEnd: true });
+        return true;
+    },
+
+    tryCompleteFish: function () {
+        if (!this.fishTarget) {
+            return false;
+        }
+        if (!this.fishSpotInRange(this.fishTarget)) {
+            return false;
+        }
+        this.player.body.setVelocity(0);
+        this.clearWalk();
+        return this.tryFishSpot(this.fishTarget);
+    },
+
     tryFishSpot: function (hit) {
         var hero = this.registry.get('hero');
         var result = typeof fishAtSpot === 'function' ? fishAtSpot(hero) : null;
+        this.fishTarget = null;
         if (!result || !result.ok) {
             return this.examineScenery(hit);
         }
@@ -1462,6 +1546,7 @@ var WorldScene = new Phaser.Class({
         }
         this.talkTarget = null;
         this.engageTarget = null;
+        this.fishTarget = null;
         this.showNpcExamineMenu(npc, pos);
     },
 
@@ -1578,6 +1663,7 @@ var WorldScene = new Phaser.Class({
         var dest = this.exitWalkPoint(dir);
         this.engageTarget = null;
         this.talkTarget = null;
+        this.fishTarget = null;
         this.setWalk(dest.x, dest.y);
     },
 
@@ -2529,6 +2615,7 @@ var WorldScene = new Phaser.Class({
         if (Keys.justPressed('Escape')) {
             this.clearWalk();
             this.talkTarget = null;
+            this.fishTarget = null;
             if (window.Hud && Hud.hideContextMenu) {
                 Hud.hideContextMenu();
             }
@@ -2539,6 +2626,7 @@ var WorldScene = new Phaser.Class({
         if (move.left || move.right || move.up || move.down) {
             this.clearWalk();
             this.talkTarget = null;
+            this.fishTarget = null;
             if (Hud.dialogueOpen && Hud.dialogueOpen() && Hud.hideDialogue) {
                 Hud.hideDialogue();
             }
@@ -2633,6 +2721,7 @@ var WorldScene = new Phaser.Class({
                 this.tryTalk(this.talkTarget);
             }
         }
+        this.tryCompleteFish();
 
         if (Keys.justPressed('Space') && Hud.mode !== 'battle') {
             var nearNpc = this.pickSprite(this.npcs, this.player.x, this.player.y, 28);

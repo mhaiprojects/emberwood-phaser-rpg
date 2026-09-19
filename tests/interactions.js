@@ -9253,6 +9253,18 @@ EmberwoodTests.add('skills: Southshore fishing spots grant Fishing XP', function
             world.clearWalk();
         }
         parkWorldBodies(world);
+        function standBy(tx, ty) {
+            var near = win.nearestWalkableTile(world.tileGrid, tx, ty);
+            assert(near, 'walkable tile beside fishing spot');
+            var pt = win.tileCenter(near.tx, near.ty);
+            world.placePlayer(pt.x, pt.y);
+            world.player.body.setVelocity(0, 0);
+            if (world.clearWalk) {
+                world.clearWalk();
+            }
+            world.fishTarget = null;
+            return pt;
+        }
         hero = win.makeHero();
         win.game.registry.set('hero', hero);
         world.refreshHud();
@@ -9276,6 +9288,7 @@ EmberwoodTests.add('skills: Southshore fishing spots grant Fishing XP', function
         dropsHost.innerHTML = '';
         win.Hud.el.log.innerHTML = '';
 
+        standBy(spot.x, spot.y);
         clickTile(spot.x, spot.y);
         hero = H.hero(win);
         assertEqual(H.lastChat(win), 'You fish at the fishing spot.', 'spot click chat');
@@ -9322,6 +9335,7 @@ EmberwoodTests.add('skills: Southshore fishing spots grant Fishing XP', function
         );
 
         dropsHost.innerHTML = '';
+        standBy(spot2.x, spot2.y);
         clickTile(spot2.x, spot2.y);
         hero = H.hero(win);
         assertEqual(hero.skills.fishing.xp, 30, 'second spot grants another 10 Fishing XP');
@@ -9370,6 +9384,212 @@ EmberwoodTests.add('skills: Southshore fishing spots grant Fishing XP', function
         assertEqual(typeof win.catchFish, 'undefined', 'catchFish still not this tick');
         assertEqual(typeof win.chopTree, 'undefined', 'Woodcutting still not this tick');
         assertEqual(H.hero(win).skills.woodcutting.xp, 0, 'Woodcutting XP still 0');
+    });
+});
+
+EmberwoodTests.add('gather: clickable Southshore spots and Fisher Ned explains the net', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, true);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.clearLoot();
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        if (win.Hud.hideContextMenu) {
+            win.Hud.hideContextMenu();
+        }
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof win.clickFishSpot, 'undefined', 'clickFishSpot lives on WorldScene');
+        assertEqual(typeof world.clickFishSpot, 'function', 'WorldScene.clickFishSpot');
+        assertEqual(typeof world.tryCompleteFish, 'function', 'WorldScene.tryCompleteFish');
+        assertEqual(typeof win.sceneryPrimaryAction, 'function', 'sceneryPrimaryAction helper');
+        assertEqual(win.FISH_RANGE, 28, 'FISH_RANGE is 28px');
+        var fishAction = win.sceneryPrimaryAction('fishspot');
+        assert(fishAction, 'fishspot has a primary action');
+        assertEqual(fishAction.label, 'Fish', 'primary label is Fish');
+        assertEqual(fishAction.action, 'fish', 'primary action is fish');
+        assertEqual(win.sceneryPrimaryAction('tree'), null, 'trees are not this tick');
+        assertEqual(win.sceneryPrimaryAction('rock'), null, 'rocks are not this tick');
+        assertEqual(typeof win.catchFish, 'undefined', 'catchFish is not this tick');
+        assert(!win.ITEM_DB.net && !win.ITEM_DB.smallnet, 'net item is not this tick');
+
+        function clickTile(tx, ty) {
+            var pt = win.tileCenter(tx, ty);
+            world.onClick({ worldX: pt.x, worldY: pt.y });
+            return pt;
+        }
+        function rightTile(tx, ty) {
+            var pt = win.tileCenter(tx, ty);
+            world.onClick({
+                worldX: pt.x,
+                worldY: pt.y,
+                button: 2,
+                rightButtonDown: function () { return true; },
+                event: { clientX: 48, clientY: 56 }
+            });
+            return pt;
+        }
+        function invQty(hero, id) {
+            var stack = hero.inventory.filter(function (row) { return row.id === id; })[0];
+            return stack ? stack.qty : 0;
+        }
+        function standBy(tx, ty) {
+            var near = win.nearestWalkableTile(world.tileGrid, tx, ty);
+            assert(near, 'walkable tile beside fishing spot');
+            var pt = win.tileCenter(near.tx, near.ty);
+            world.placePlayer(pt.x, pt.y);
+            world.player.body.setVelocity(0, 0);
+            if (world.clearWalk) {
+                world.clearWalk();
+            }
+            return pt;
+        }
+
+        H.enterZone(win, 'southshore');
+        world = H.world(win);
+        H.setAutoAttack(win, false);
+        world.encounterLock = false;
+        world.engageTarget = null;
+        world.talkTarget = null;
+        world.fishTarget = null;
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        var ned = H.findNpc(win, 'fisher');
+        assert(ned, 'Fisher Ned spawned in Southshore');
+        assertEqual(ned.npcDef.name, 'Fisher Ned', 'Ned display name');
+        assertEqual(Math.round(ned.x), 220, 'Ned x');
+        assertEqual(Math.round(ned.y), 160, 'Ned y');
+        assertEqual(ned.npcDef.tutor, 'fishing', 'Ned fishing tutor');
+        var lines = ned.npcDef.lines;
+        assert(lines && lines.length >= 4, 'Ned has flavor plus tutor lines');
+        var joined = lines.join(' ');
+        assert(joined.indexOf('fishing') !== -1, 'Ned mentions fishing');
+        assert(joined.indexOf('net') !== -1, 'Ned explains the net');
+        assert(joined.indexOf('small fishing net') !== -1, 'Ned names the small fishing net');
+        assert(joined.indexOf('Click the fishing spots') !== -1, 'Ned says to click the spots');
+
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assert(!hero.tutors.fishing, 'fishing tutor locked before talk');
+        win.Hud.el.log.innerHTML = '';
+        world.tryTalk(ned);
+        assert(win.Hud.dialogueOpen(), 'Ned opens dialogue');
+        assertEqual(H.lastChat(win), 'Fisher Ned: ' + lines[0], 'Ned first page');
+        var page;
+        for (page = 1; page < lines.length; page++) {
+            win.Hud.advanceDialogue();
+            assertEqual(H.lastChat(win), 'Fisher Ned: ' + lines[page], 'Ned page ' + page);
+        }
+        assertEqual(H.hero(win).tutors.fishing, true, 'Ned unlocks fishing');
+        win.Hud.hideDialogue();
+
+        parkWorldBodies(world);
+        var shore = win.SHORE_PROPS;
+        assert(shore && shore.spots && shore.spots[0], 'SHORE_PROPS.spots exist');
+        var spot = shore.spots[0];
+        assertEqual(spot.x, 16, 'first fishing spot x');
+        assertEqual(spot.y, 24, 'first fishing spot y');
+        assertEqual(
+            win.sceneryKindAt(world.tileGrid, spot.x, spot.y, { zoneId: 'southshore' }),
+            'fishspot',
+            'southshore spot kind'
+        );
+
+        hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(hero.skills.fishing.xp, 0, 'Fishing XP starts 0');
+        assertEqual(invQty(hero, 'rawshrimp'), 0, 'no raw shrimp to start');
+        var cookedStart = invQty(hero, 'shrimp');
+
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        world.fishTarget = null;
+        win.Hud.el.log.innerHTML = '';
+        clickTile(spot.x, spot.y);
+        hero = H.hero(win);
+        assert(world.fishTarget, 'far click sets fishTarget');
+        assert(world.walkTarget, 'far click walks to the shore');
+        assertEqual(hero.skills.fishing.xp, 0, 'far click does not grant Fishing XP yet');
+        assertEqual(invQty(hero, 'rawshrimp'), 0, 'far click does not catch shrimp');
+
+        standBy(spot.x, spot.y);
+        assert(world.tryCompleteFish(), 'in-range completes Fish');
+        hero = H.hero(win);
+        assertEqual(H.lastChat(win), 'You fish at the fishing spot.', 'complete-fish chat');
+        assertEqual(hero.skills.fishing.xp, 10, 'in-range Fish grants 10 Fishing XP');
+        assert(!world.fishTarget, 'complete-fish clears fishTarget');
+        assertEqual(invQty(hero, 'rawshrimp'), 0, 'Fish does not catch raw shrimp this tick');
+        assertEqual(invQty(hero, 'shrimp'), cookedStart, 'Fish does not consume cooked shrimp');
+
+        var menu = win.document.getElementById('ctx-menu');
+        assert(menu, 'ctx-menu element exists');
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        win.Hud.hideContextMenu();
+        rightTile(spot.x, spot.y);
+        assert(!menu.hidden, 'right-click spot opens context menu');
+        var fishBtn = menu.querySelector('[data-ctx="fish"]');
+        var examBtn = menu.querySelector('[data-ctx="examine"]');
+        var walkBtn = menu.querySelector('[data-ctx="walk-here"]');
+        assert(fishBtn, 'Fish action is listed');
+        assertEqual(fishBtn.textContent, 'Fish', 'Fish label');
+        assertEqual(menu.querySelector('button').getAttribute('data-ctx'), 'fish', 'Fish is first');
+        assert(examBtn, 'Examine remains listed');
+        assert(walkBtn, 'Walk here remains listed');
+        standBy(spot.x, spot.y);
+        H.mouseClick(win, fishBtn);
+        assert(menu.hidden, 'Fish closes the menu');
+        hero = H.hero(win);
+        assertEqual(H.lastChat(win), 'You fish at the fishing spot.', 'menu Fish chats');
+        assertEqual(hero.skills.fishing.xp, 20, 'menu Fish grants another 10 Fishing XP');
+        assertEqual(invQty(hero, 'rawshrimp'), 0, 'menu Fish does not catch shrimp');
+        assert(!world.walkTarget, 'in-range menu Fish does not walk');
+
+        win.Hud.hideContextMenu();
+        rightTile(spot.x, spot.y);
+        examBtn = menu.querySelector('[data-ctx="examine"]');
+        H.mouseClick(win, examBtn);
+        assertEqual(H.lastChat(win), 'A fishing spot. Fish dart beneath the surface.', 'Examine still logs fishspot');
+        assertEqual(H.hero(win).skills.fishing.xp, 20, 'Examine does not grant Fishing XP');
+
+        standBy(spot.x, spot.y);
+        clickTile(spot.x, spot.y);
+        hero = H.hero(win);
+        assertEqual(hero.skills.fishing.xp, 30, 'in-range left-click still fishes');
+        assertEqual(H.lastChat(win), 'You fish at the fishing spot.', 'in-range left-click chat');
+        assert(!world.walkTarget, 'in-range left-click does not walk');
+        assertEqual(invQty(hero, 'rawshrimp'), 0, 'left-click does not catch shrimp');
+
+        H.enterZone(win, 'haven');
+        world = H.world(win);
+        world.encounterLock = false;
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        assertEqual(typeof win.catchFish, 'undefined', 'catchFish still not this tick');
+        assert(!win.ITEM_DB.net, 'net still not this tick');
     });
 });
 

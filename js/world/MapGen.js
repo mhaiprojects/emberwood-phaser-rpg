@@ -603,3 +603,10 @@ function sceneryKindAt(grid, tx, ty, opts) {
 function examineSceneryText(kind) {
     return (SCENERY_EXAMINE && SCENERY_EXAMINE[kind]) || '';
 }
+
+function sceneryPrimaryAction(kind) {
+    if (kind === 'fishspot') {
+        return { label: 'Fish', action: 'fish' };
+    }
+    return null;
+}

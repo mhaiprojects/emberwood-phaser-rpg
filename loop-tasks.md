@@ -198,7 +198,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 
 ## 7. Gathering / processing / skilling loops (20)
 
-- [todo] Clickable fishing spots in Southshore; Fisher Ned explains the net. — Conclusion: —
+- [done] Clickable fishing spots in Southshore; Fisher Ned explains the net. — Conclusion: From spawn (328,248) Ned explains click-the-spots + small fishing net; far-click walks to shore then Fish; right-click Fish first; in-range Fishing +10, no shrimp/net. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [todo] Catch raw shrimp (or equivalent) with a success roll, Fishing XP, and a 3–5s action that cancels on walk/combat. — Conclusion: —
 - [todo] Require a small fishing net (shop or starter) and chat `You need a fishing net` without one. — Conclusion: —
 - [todo] Clickable trees in Northwood; chop with a bronze axe for logs + Woodcutting XP; tree respawns. — Conclusion: —
@@ -548,4 +548,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 176 | 2026-09-19 | Gate resources by level (copper/tin 1, iron 15) | done — spawn (328,248) copper/tin mine at Mining 1; iron chats You need level 15. until Mining 15; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 177 | 2026-09-19 | Add one extra skill that fits: Firemaking (not Smithing) | done — spawn (328,248) Skills lists Firemaking with icon; firemakeAt/lightFire +10 XP; Use-on fire still Cooking; no Smithing/logs; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 178 | 2026-09-19 | Keep unused stretch skills backlog-only; do not stub empty tabs | done — spawn (328,248) Skills 13 rows (Firemaking extra); nine stretch skills stay Stretch with no empty tabs; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
+| 179 | 2026-09-19 | Clickable fishing spots in Southshore; Fisher Ned explains the net | done — spawn (328,248) Ned explains click + small net; far-click walks to shore then Fish; right-click Fish first; in-range Fishing +10, no shrimp/net; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 

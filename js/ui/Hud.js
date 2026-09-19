@@ -1462,11 +1462,21 @@ var Hud = {
             this.unequipWorn(target.slot);
             return;
         }
+        if (action === 'fish') {
+            if (world.clickFishSpot) {
+                var fishHit = world.pickScenery(target.worldX, target.worldY);
+                if (fishHit && fishHit.kind === 'fishspot') {
+                    world.clickFishSpot(fishHit);
+                }
+            }
+            return;
+        }
         if (action !== 'walk-here' || !world.setWalk) {
             return;
         }
         world.engageTarget = null;
         world.talkTarget = null;
+        world.fishTarget = null;
         world.setWalk(target.worldX, target.worldY);
     },
 
