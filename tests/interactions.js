@@ -2413,6 +2413,49 @@ EmberwoodTests.add('quests: after accept HUD is Kill goblins in Northwood (N/5) 
     });
 });
 
+EmberwoodTests.add('quests: fifth goblin sets stage 2 and chats to return to Bram', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.setAutoAttack(win, false);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        var world = H.world(win);
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        win.game.registry.set('quest', { id: 'goblins', stage: 1, progress: 4, goal: 5 });
+        H.enterZone(win, 'haven');
+        world.placePlayer(spawn.x, spawn.y);
+        world.refreshHud();
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(H.quest(win).stage, 1, 'starts one kill short of the goal');
+        assertEqual(H.quest(win).progress, 4, 'progress is 4 of 5');
+        assertEqual(win.document.getElementById('hud-quest').textContent, 'Kill goblins in Northwood (4/5).', 'side HUD at 4/5');
+        assertEqual(win.document.getElementById('hud-quest-tab').textContent, 'Kill goblins in Northwood (4/5).', 'journal at 4/5');
+        H.enterZone(win, 'northwood');
+        var goblin = H.findMob(win, 'Goblin');
+        assert(goblin, 'Northwood has a Goblin');
+        goblin.mobDef.hp = 8;
+        return H.startFight(win, goblin);
+    }).then(function () {
+        win.Hud.tryAttack();
+        return H.waitWorld(win);
+    }).then(function () {
+        assertEqual(H.quest(win).progress, 5, 'fifth kill fills the goal');
+        assertEqual(H.quest(win).stage, 2, 'fifth goblin sets stage 2');
+        assertEqual(H.lastChat(win), 'That should be enough goblins. Return to Bram.', 'return-to-Bram chat');
+        assertEqual(win.document.getElementById('hud-quest').textContent, 'Return to Guildmaster Bram for your reward.', 'side HUD after fifth');
+        assertEqual(win.document.getElementById('hud-quest-tab').textContent, 'Return to Guildmaster Bram for your reward.', 'journal after fifth');
+        H.enterZone(win, 'haven');
+    }).catch(function (err) {
+        return H.cleanupBattle(win).then(function () {
+            throw err;
+        });
+    });
+});
+
 EmberwoodTests.add('npcs: Guildmaster Bram quest', function (win, H) {
     H.enterZone(win, 'haven');
     var bram = H.findNpc(win, 'guild');

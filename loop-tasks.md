@@ -261,7 +261,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Side Task + Quest tab start as `Talk to Guildmaster Bram in Emberhaven.` — Conclusion: From spawn (328,248) side Task + Quest tab start as `Talk to Guildmaster Bram in Emberhaven.`; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Stage 1 text `Kill goblins in Northwood (N/5)` and journal `0/5` after accept. — Conclusion: From spawn (328,248) accept Bram → HUD+journal `Kill goblins in Northwood (0/5).`; N is progress. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Any `def.type === 'Goblin'` kill counts (Northwood and Westmead) — document that rule or restrict to Northwood. — Conclusion: From spawn (328,248) any `def.type === 'Goblin'` kill counts (Northwood +1, Westmead +1); chicken does not; HUD still says Northwood. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [verify] Fifth goblin sets stage 2 and chats to return to Bram. — Conclusion: —
+- [done] Fifth goblin sets stage 2 and chats to return to Bram. — Conclusion: From spawn (328,248) fifth Northwood goblin (4→5) sets stage 2, chats `That should be enough goblins. Return to Bram.`, and HUD+journal `Return to Guildmaster Bram for your reward.`; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [todo] A quest-complete banner (not only chat) when Bram pays. — Conclusion: —
 - [todo] Quest points (militia task = 1 QP) shown on the Quest tab. — Conclusion: —
 - [todo] Quest journal as a staged checklist (talk / kill 5 / return) not a single sentence. — Conclusion: —
@@ -464,4 +464,6 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 91 | 2026-09-19 | Side Task + Quest tab start as Talk to Guildmaster Bram in Emberhaven | done — spawn (328,248) `#hud-quest` + `#hud-quest-tab` start as `Talk to Guildmaster Bram in Emberhaven.`; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 92 | 2026-09-19 | Stage 1 HUD Kill goblins in Northwood (N/5) and journal 0/5 after accept | done — spawn (328,248) accept Bram → HUD+journal `Kill goblins in Northwood (0/5).`; N is progress; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 93 | 2026-09-19 | Any def.type Goblin kill counts (Northwood and Westmead) | done — spawn (328,248) Northwood +1 and Westmead +1; chicken does not; HUD still Northwood; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 94 | 2026-09-19 | Fifth goblin sets stage 2 and chats to return to Bram | done — spawn (328,248) fifth kill 4→5 sets stage 2, chats `That should be enough goblins. Return to Bram.`, HUD+journal return-to-Bram; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 94 | 2026-09-19 | Fifth goblin sets stage 2 and chats to return to Bram | done — spawn (328,248) fifth kill 4→5 sets stage 2, chats `That should be enough goblins. Return to Bram.`, HUD+journal return-to-Bram; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 
