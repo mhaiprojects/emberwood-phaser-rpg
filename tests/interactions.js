@@ -372,7 +372,7 @@ EmberwoodTests.add('hud: Accurate Aggressive Defensive highlight and persist on 
     });
 });
 
-EmberwoodTests.add('hud: worn sword/shield are display-only', function (win, H) {
+EmberwoodTests.add('hud: wear/wield/remove sword and shield refresh worn tab', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         var world = H.world(win);
         var spawn = win.defaultWorldSpawn();
@@ -383,29 +383,143 @@ EmberwoodTests.add('hud: worn sword/shield are display-only', function (win, H) 
         world.placePlayer(spawn.x, spawn.y);
         assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
         assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof win.equipItem, 'function', 'equipItem helper');
+        assertEqual(typeof win.unequipItem, 'function', 'unequipItem helper');
+        assertEqual(win.itemEquipVerb('sword'), 'wield', 'sword verb is wield');
+        assertEqual(win.itemEquipVerb('shield'), 'wear', 'shield verb is wear');
+        assertEqual(win.ITEM_DB.sword.slot, 'weapon', 'sword is a weapon');
+        assertEqual(win.ITEM_DB.shield.slot, 'shield', 'shield is a shield');
+        assertEqual(win.ITEM_DB.sword.damage, 16, 'ITEM_DB sword lists damage 16');
+        assertEqual(win.ITEM_DB.shield.defence, 1, 'ITEM_DB shield lists defence 1');
+
+        function stackQty(hero, id) {
+            var stack = hero.inventory.filter(function (row) { return row.id === id; })[0];
+            return stack ? stack.qty : 0;
+        }
+        function wornText() {
+            return win.document.getElementById('equip-grid').innerText;
+        }
+        function openInvMenu(id) {
+            var slot = win.document.querySelector('#inv-grid [data-item="' + id + '"]');
+            assert(slot, id + ' inv slot');
+            slot.dispatchEvent(new win.MouseEvent('contextmenu', {
+                bubbles: true,
+                cancelable: true,
+                view: win,
+                button: 2,
+                clientX: 40,
+                clientY: 80
+            }));
+            return win.document.getElementById('ctx-menu');
+        }
 
         var hero = H.hero(win);
         assertEqual(hero.equipment.weapon, 'sword', 'starter wears bronze sword');
         assertEqual(hero.equipment.shield, 'shield', 'starter wears wooden shield');
-        assertEqual(win.ITEM_DB.sword.damage, 16, 'ITEM_DB sword lists damage 16');
-        assertEqual(win.ITEM_DB.shield.defence, 1, 'ITEM_DB shield lists defence 1');
-        assertEqual(hero.damage, 16, 'starter hero.damage is 16 (same number as the unused sword field)');
+        assertEqual(stackQty(hero, 'sword'), 1, 'starter sword still in inventory');
+        assertEqual(stackQty(hero, 'shield'), 1, 'starter shield still in inventory');
+        assertEqual(hero.damage, 16, 'starter hero.damage is 16');
 
         H.click(win, '#tab-bar button[data-tab="equip"]');
-        var worn = win.document.getElementById('equip-grid').innerText;
+        var worn = wornText();
         assertMatch(worn, 'Bronze sword', 'equip tab shows bronze sword name');
         assertMatch(worn, 'Wooden shield', 'equip tab shows wooden shield name');
         assertEqual(worn.indexOf('16'), -1, 'equip tab does not show sword damage');
         assertEqual(worn.toLowerCase().indexOf('defence'), -1, 'equip tab does not show shield defence');
-
         var renderSrc = String(win.Hud.renderEquip);
         assertEqual(renderSrc.indexOf('damage'), -1, 'renderEquip does not read item damage');
         assertEqual(renderSrc.indexOf('defence'), -1, 'renderEquip does not read item defence');
 
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        H.click(win, '#inv-grid [data-item="sword"]');
+        assertEqual(H.lastChat(win), 'Bronze sword.', 'left-click sword still only logs the name');
+
+        var menu = openInvMenu('sword');
+        assert(!menu.hidden, 'right-click sword opens menu');
+        assert(menu.querySelector('[data-ctx="wield"]'), 'Wield action is listed');
+        assertEqual(menu.querySelector('[data-ctx="wield"]').textContent, 'Wield', 'Wield label');
+        assert(menu.querySelector('[data-ctx="drop"]'), 'Drop stays on sword');
+        H.mouseClick(win, menu.querySelector('[data-ctx="wield"]'));
+        hero = H.hero(win);
+        assertEqual(hero.equipment.weapon, 'sword', 'wield keeps the bronze sword equipped');
+        assertEqual(stackQty(hero, 'sword'), 0, 'wield takes the inventory sword');
+        assertEqual(H.lastChat(win), 'You wield the Bronze sword.', 'wield chat');
+        H.click(win, '#tab-bar button[data-tab="equip"]');
+        worn = wornText();
+        assertMatch(worn, 'Bronze sword', 'worn tab still shows bronze sword after wield');
+        assert(!win.document.querySelector('#inv-grid [data-item="sword"]'), 'inv sword slot empty after wield');
+
+        var wornSword = win.document.querySelector('#equip-grid [data-equip-slot="weapon"]');
+        assert(wornSword, 'worn sword is clickable');
+        wornSword.dispatchEvent(new win.MouseEvent('contextmenu', {
+            bubbles: true,
+            cancelable: true,
+            view: win,
+            button: 2,
+            clientX: 48,
+            clientY: 90
+        }));
+        menu = win.document.getElementById('ctx-menu');
+        assert(!menu.hidden, 'right-click worn sword opens Remove');
+        var removeBtn = menu.querySelector('[data-ctx="remove"]');
+        assert(removeBtn, 'Remove action is listed');
+        assertEqual(removeBtn.textContent, 'Remove', 'Remove label');
+        H.mouseClick(win, removeBtn);
+        hero = H.hero(win);
+        assertEqual(hero.equipment.weapon, null, 'remove clears the weapon slot');
+        assertEqual(stackQty(hero, 'sword'), 1, 'removed sword returns to inventory');
+        assertEqual(H.lastChat(win), 'You remove the Bronze sword.', 'remove sword chat');
+        worn = wornText();
+        assertEqual(worn.indexOf('Bronze sword'), -1, 'worn tab dropped the sword name');
+        assertMatch(worn, 'None', 'weapon slot shows None');
+        assertMatch(worn, 'Wooden shield', 'shield stays worn');
+
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        menu = openInvMenu('sword');
+        H.mouseClick(win, menu.querySelector('[data-ctx="wield"]'));
+        hero = H.hero(win);
+        assertEqual(hero.equipment.weapon, 'sword', 'wield from inv equips the sword');
+        assertEqual(stackQty(hero, 'sword'), 0, 'second wield empties inv sword');
+        H.click(win, '#tab-bar button[data-tab="equip"]');
+        assertMatch(wornText(), 'Bronze sword', 'worn tab shows bronze sword after re-wield');
+
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        menu = openInvMenu('shield');
+        assert(menu.querySelector('[data-ctx="wear"]'), 'Wear action is listed');
+        assertEqual(menu.querySelector('[data-ctx="wear"]').textContent, 'Wear', 'Wear label');
+        H.mouseClick(win, menu.querySelector('[data-ctx="wear"]'));
+        hero = H.hero(win);
+        assertEqual(hero.equipment.shield, 'shield', 'wear keeps the wooden shield equipped');
+        assertEqual(stackQty(hero, 'shield'), 0, 'wear takes the inventory shield');
+        assertEqual(H.lastChat(win), 'You wear the Wooden shield.', 'wear chat');
+        H.click(win, '#tab-bar button[data-tab="equip"]');
+        assertMatch(wornText(), 'Wooden shield', 'worn tab still shows wooden shield after wear');
+
+        H.click(win, '#equip-grid [data-equip-slot="shield"]');
+        hero = H.hero(win);
+        assertEqual(hero.equipment.shield, null, 'left-click worn shield removes it');
+        assertEqual(stackQty(hero, 'shield'), 1, 'removed shield returns to inventory');
+        assertEqual(H.lastChat(win), 'You remove the Wooden shield.', 'remove shield chat');
+        worn = wornText();
+        assertEqual(worn.indexOf('Wooden shield'), -1, 'worn tab dropped the shield name');
+        assertMatch(worn, 'Bronze sword', 'sword stays worn');
+        assertMatch(worn, 'None', 'shield slot shows None');
+
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        menu = openInvMenu('shield');
+        H.mouseClick(win, menu.querySelector('[data-ctx="wear"]'));
+        hero = H.hero(win);
+        assertEqual(hero.equipment.shield, 'shield', 'wear from inv equips the shield');
+        assertEqual(stackQty(hero, 'shield'), 0, 'second wear empties inv shield');
+        H.click(win, '#tab-bar button[data-tab="equip"]');
+        worn = wornText();
+        assertMatch(worn, 'Bronze sword', 'worn tab shows sword after re-wear');
+        assertMatch(worn, 'Wooden shield', 'worn tab shows shield after re-wear');
+
         hero.damage = 24;
         win.game.registry.set('hero', hero);
         world.refreshHud();
-        worn = win.document.getElementById('equip-grid').innerText;
+        worn = wornText();
         assertMatch(worn, 'Bronze sword', 'still worn after hero.damage change');
         assertEqual(worn.indexOf('24'), -1, 'equip tab still hides combat numbers');
 
@@ -434,21 +548,6 @@ EmberwoodTests.add('hud: worn sword/shield are display-only', function (win, H) 
             assertEqual(outgoing, 24, 'outgoing hit is hero.damage + 0, not worn sword 16');
             var incoming = you.takeDamage(8);
             assertEqual(incoming, 8, 'incoming hit is amount + 0, not reduced by worn shield defence 1');
-        } finally {
-            win.Phaser.Math.Between = orig;
-        }
-
-        hero.equipment.weapon = null;
-        hero.equipment.shield = null;
-        win.game.registry.set('hero', hero);
-        win.Hud.renderEquip(hero);
-        var empty = win.document.getElementById('equip-grid').innerText;
-        assertMatch(empty, 'None', 'unequipped HUD shows None');
-        orig = win.Phaser.Math.Between;
-        try {
-            win.Phaser.Math.Between = function () { return 0; };
-            assertEqual(foe.takeDamage(you.damage), 24, 'unequipped outgoing still hero.damage 24');
-            assertEqual(you.takeDamage(8), 8, 'unequipped incoming still unreduced');
         } finally {
             win.Phaser.Math.Between = orig;
         }

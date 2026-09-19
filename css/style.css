@@ -218,8 +218,18 @@ img.pix {
 .equip-row {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     background: #2b2418;
     padding: 4px 6px;
+}
+
+.equip-row button.equip-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+    font-weight: bold;
 }
 
 #style-row {

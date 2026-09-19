@@ -201,6 +201,24 @@ var Hud = {
             }
             self.showInvDropMenu(slot.getAttribute('data-item'), event);
         });
+        if (this.el.equip) {
+            this.el.equip.addEventListener('click', function (event) {
+                var slotEl = event.target.closest('[data-equip-slot]');
+                if (!slotEl) {
+                    return;
+                }
+                self.hideContextMenu();
+                self.unequipWorn(slotEl.getAttribute('data-equip-slot'));
+            });
+            this.el.equip.addEventListener('contextmenu', function (event) {
+                event.preventDefault();
+                var slotEl = event.target.closest('[data-equip-slot]');
+                if (!slotEl) {
+                    return;
+                }
+                self.showEquipRemoveMenu(slotEl.getAttribute('data-equip-slot'), event);
+            });
+        }
         if (this.el.ctx) {
             this.el.ctx.addEventListener('click', function (event) {
                 var btn = event.target.closest('[data-ctx]');
@@ -419,6 +437,60 @@ var Hud = {
         this.log(itemName(id) + '.');
     },
 
+    equipFromInventory: function (id) {
+        var hero = this.hero();
+        if (!hero || !id || this.mode !== 'world') {
+            return false;
+        }
+        var world = window.game && window.game.scene.getScene('WorldScene');
+        if (!world || world.encounterLock) {
+            return false;
+        }
+        var verb = typeof itemEquipVerb === 'function' ? itemEquipVerb(id) : null;
+        if (!verb) {
+            this.log(itemName(id) + '.');
+            return false;
+        }
+        var slot = itemEquipSlot(id);
+        var already = !!(hero.equipment && hero.equipment[slot] === id);
+        var had = heroHasItem(hero, id);
+        if (!equipItem(hero, id)) {
+            if (already && !had) {
+                this.log('You already have a ' + itemName(id) + ' equipped.');
+            } else if (!had) {
+                this.log('You do not have that.');
+            } else {
+                this.log('inventory full');
+            }
+            return false;
+        }
+        this.saveHero(hero);
+        this.log('You ' + verb + ' the ' + itemName(id) + '.');
+        return true;
+    },
+
+    unequipWorn: function (slot) {
+        var hero = this.hero();
+        if (!hero || !slot || this.mode !== 'world') {
+            return false;
+        }
+        var world = window.game && window.game.scene.getScene('WorldScene');
+        if (!world || world.encounterLock) {
+            return false;
+        }
+        var id = hero.equipment && hero.equipment[slot];
+        if (!id) {
+            return false;
+        }
+        if (!unequipItem(hero, slot)) {
+            this.log('inventory full');
+            return false;
+        }
+        this.saveHero(hero);
+        this.log('You remove the ' + itemName(id) + '.');
+        return true;
+    },
+
     dropItem: function (id, qty) {
         var world = window.game && window.game.scene.getScene('WorldScene');
         if (!world || !world.dropFromInventory) {
@@ -432,9 +504,30 @@ var Hud = {
             this.hideContextMenu();
             return;
         }
-        this.showContextMenu([{ label: 'Drop', action: 'drop' }], {
+        var items = [];
+        var verb = typeof itemEquipVerb === 'function' ? itemEquipVerb(id) : null;
+        if (verb === 'wield') {
+            items.push({ label: 'Wield', action: 'wield' });
+        } else if (verb === 'wear') {
+            items.push({ label: 'Wear', action: 'wear' });
+        }
+        items.push({ label: 'Drop', action: 'drop' });
+        this.showContextMenu(items, {
             kind: 'inv',
             itemId: id,
+            clientX: event && event.clientX != null ? event.clientX : 16,
+            clientY: event && event.clientY != null ? event.clientY : 16
+        });
+    },
+
+    showEquipRemoveMenu: function (slot, event) {
+        if (this.mode !== 'world' || !slot) {
+            this.hideContextMenu();
+            return;
+        }
+        this.showContextMenu([{ label: 'Remove', action: 'remove' }], {
+            kind: 'equip',
+            slot: slot,
             clientX: event && event.clientX != null ? event.clientX : 16,
             clientY: event && event.clientY != null ? event.clientY : 16
         });
@@ -888,6 +981,14 @@ var Hud = {
             this.dropItem(target.itemId);
             return;
         }
+        if (action === 'wield' || action === 'wear') {
+            this.equipFromInventory(target.itemId);
+            return;
+        }
+        if (action === 'remove') {
+            this.unequipWorn(target.slot);
+            return;
+        }
         if (action !== 'walk-here' || !world.setWalk) {
             return;
         }
@@ -1090,8 +1191,15 @@ var Hud = {
         var html = '';
         for (var i = 0; i < slots.length; i++) {
             var id = hero.equipment && hero.equipment[slots[i][0]];
-            html += '<div class="equip-row"><span>' + slots[i][1] + '</span><strong>' +
-                (id ? '<img class="pix" src="' + itemIcon(id) + '" alt=""> ' + itemName(id) : 'None') + '</strong></div>';
+            html += '<div class="equip-row"><span>' + slots[i][1] + '</span>';
+            if (id) {
+                html += '<button type="button" class="equip-item" data-equip-slot="' + slots[i][0] +
+                    '" data-item="' + id + '" title="Remove">' +
+                    '<img class="pix" src="' + itemIcon(id) + '" alt=""> ' + itemName(id) + '</button>';
+            } else {
+                html += '<strong>None</strong>';
+            }
+            html += '</div>';
         }
         this.el.equip.innerHTML = html;
     },

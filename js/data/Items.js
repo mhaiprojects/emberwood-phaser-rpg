@@ -132,6 +132,80 @@ function heroHasItem(hero, id) {
     return false;
 }
 
+function itemEquipSlot(id) {
+    var def = ITEM_DB[id];
+    return def && def.slot ? def.slot : null;
+}
+
+function itemEquipVerb(id) {
+    var slot = itemEquipSlot(id);
+    if (slot === 'weapon') {
+        return 'wield';
+    }
+    if (slot === 'shield') {
+        return 'wear';
+    }
+    return null;
+}
+
+function equipItem(hero, id) {
+    if (!hero || !id) {
+        return false;
+    }
+    var slot = itemEquipSlot(id);
+    if (!slot) {
+        return false;
+    }
+    if (!hero.equipment) {
+        hero.equipment = {};
+    }
+    var current = hero.equipment[slot] || null;
+    if (current === id) {
+        if (heroHasItem(hero, id)) {
+            return takeItem(hero, id, 1);
+        }
+        return false;
+    }
+    if (!heroHasItem(hero, id)) {
+        return false;
+    }
+    if (!takeItem(hero, id, 1)) {
+        return false;
+    }
+    if (current) {
+        if (!canAddItem(hero, current)) {
+            addItem(hero, id, 1);
+            return false;
+        }
+        addItem(hero, current, 1);
+    }
+    hero.equipment[slot] = id;
+    return true;
+}
+
+function unequipItem(hero, slot) {
+    if (!hero || !slot) {
+        return false;
+    }
+    if (!hero.equipment) {
+        hero.equipment = {};
+    }
+    var id = hero.equipment[slot];
+    if (!id) {
+        return false;
+    }
+    if (heroHasItem(hero, id)) {
+        hero.equipment[slot] = null;
+        return true;
+    }
+    if (!canAddItem(hero, id)) {
+        return false;
+    }
+    addItem(hero, id, 1);
+    hero.equipment[slot] = null;
+    return true;
+}
+
 function takeItem(hero, id, qty) {
     qty = qty || 1;
     for (var i = 0; i < hero.inventory.length; i++) {

@@ -158,7 +158,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] A hard 28-stack inventory cap: loot / shop buy / gather refuse with `inventory full`. — Conclusion: From spawn (328,248) 28-stack cap refuses new loot / shop buy / gather with `inventory full` (loot stays); existing stacks still merge. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Drop-to-ground from inventory (creates `groundLoot` at the player). — Conclusion: From spawn (328,248) Inv right-click Drop puts bones/bread/coins on groundLoot at the player; auto-pickup does not vacuum; click still takes. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Shift-click drop once a Settings toggle exists (OSRS default). — Conclusion: From spawn (328,248) Settings Shift-click drop defaults On (OSRS); shift-click bones/bread drop to groundLoot; Off keeps use-on-click; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [todo] Wear / Wield / Remove for `sword` (weapon) and `shield` (shield) and refresh the Worn tab. — Conclusion: —
+- [done] Wear / Wield / Remove for `sword` (weapon) and `shield` (shield) and refresh the Worn tab. — Conclusion: From spawn (328,248) Inv Wield/Wear take sword/shield onto Worn; Remove returns them and refreshes None; hits still use hero.damage not ITEM_DB; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [todo] Apply equipped weapon `damage` and shield `defence` in `Unit.attack` / `takeDamage`. — Conclusion: —
 - [todo] Expand worn slots toward OSRS: head, cape, neck, ammo, weapon, body, shield, legs, hands, feet, ring (empty slots OK). — Conclusion: —
 - [todo] An equipment-stats readout (melee +defence at minimum). — Conclusion: —
@@ -521,4 +521,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 149 | 2026-09-19 | Simple combat triangle hook melee vs unused Ranged/Magic skills | done — spawn (328,248) melee beats ranged 16→20, weak to magic 16→12; stance hooks Ranged/Magic XP; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 150 | 2026-09-19 | A hard 28-stack inventory cap: loot / shop buy / gather refuse with inventory full | done — spawn (328,248) new stacks refuse `inventory full`; merge still works; loot stays; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 151 | 2026-09-19 | Drop-to-ground from inventory creates groundLoot at the player | done — spawn (328,248) Inv right-click Drop puts bones/bread/coins at the player; auto-pickup does not vacuum; click still takes; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
+| 152 | 2026-09-19 | Wear / Wield / Remove sword and shield refresh the Worn tab | done — spawn (328,248) Inv Wield/Wear take sword/shield onto Worn; Remove returns them and refreshes None; hits still hero.damage not ITEM_DB; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 
