@@ -1215,6 +1215,88 @@ EmberwoodTests.add('hud: start skills Hitpoints 10 / 1154 XP / 100 HP; others 1 
     });
 });
 
+EmberwoodTests.add('skills: skill-row hover or click shows current XP and XP-to-next', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assertEqual(win.Hud.mode, 'world', 'world mode');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(typeof win.xpForNextSkillLevel, 'function', 'xpForNextSkillLevel exists');
+        assertEqual(typeof win.skillXpToNext, 'function', 'skillXpToNext exists');
+        assertEqual(typeof win.skillXpText, 'function', 'skillXpText exists');
+        assertEqual(typeof win.Hud.showSkillXp, 'function', 'showSkillXp exists');
+        assertEqual(typeof win.xpDropFloater, 'undefined', 'XP drop floater is not this tick');
+
+        assertEqual(win.xpForNextSkillLevel(1), 50, 'level 1 next total is 50');
+        assertEqual(win.xpForNextSkillLevel(2), 200, 'level 2 next total is 200');
+        assertEqual(win.xpForNextSkillLevel(10), 5000, 'level 10 next total is 5000');
+        assertEqual(win.skillXpToNext({ level: 1, xp: 0 }), 50, '0 XP at 1 needs 50');
+        assertEqual(win.skillXpToNext({ level: 10, xp: 1154 }), 3846, 'Hitpoints 1154 needs 3846');
+
+        hero = H.hero(win);
+        assertEqual(hero.skills.hitpoints.level, 10, 'Hitpoints starts 10');
+        assertEqual(hero.skills.hitpoints.xp, 1154, 'Hitpoints starts 1154 XP');
+        assertEqual(hero.skills.attack.level, 1, 'Attack starts 1');
+        assertEqual(hero.skills.attack.xp, 0, 'Attack starts 0 XP');
+
+        var hpHint = win.skillXpText('Hitpoints', hero.skills.hitpoints);
+        var atkHint = win.skillXpText('Attack', hero.skills.attack);
+        assertEqual(hpHint, 'Hitpoints: 1154 XP (3846 XP to next level)', 'Hitpoints hover text');
+        assertEqual(atkHint, 'Attack: 0 XP (50 XP to next level)', 'Attack hover text');
+
+        H.click(win, '#tab-bar button[data-tab="skills"]');
+        assert(H.panelVisible(win, 'skills'), 'skills panel visible');
+        var rows = win.document.querySelectorAll('#skills-list .skill-row');
+        assertEqual(rows.length, 12, 'twelve skill rows');
+        var byId = {};
+        for (var i = 0; i < rows.length; i++) {
+            byId[rows[i].getAttribute('data-skill')] = rows[i];
+        }
+        assert(byId.hitpoints && byId.attack, 'Hitpoints and Attack rows exist');
+        assertEqual(byId.hitpoints.getAttribute('title'), hpHint, 'Hitpoints title is current XP and XP-to-next');
+        assertEqual(byId.attack.getAttribute('title'), atkHint, 'Attack title is current XP and XP-to-next');
+        byId.hitpoints.dispatchEvent(new win.MouseEvent('mouseover', { bubbles: true }));
+        assertEqual(byId.hitpoints.getAttribute('title'), hpHint, 'hover keeps Hitpoints XP title');
+
+        win.Hud.el.log.innerHTML = '';
+        H.click(win, byId.hitpoints);
+        assertEqual(H.lastChat(win), hpHint, 'click chats Hitpoints XP and XP-to-next');
+        H.click(win, byId.attack);
+        assertEqual(H.lastChat(win), atkHint, 'click chats Attack XP and XP-to-next');
+
+        win.gainSkillXp(hero, 'attack', 50);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        H.click(win, '#tab-bar button[data-tab="skills"]');
+        var attackRow = win.document.querySelector('#skills-list .skill-row[data-skill="attack"]');
+        var after = win.skillXpText('Attack', H.hero(win).skills.attack);
+        assertEqual(after, 'Attack: 50 XP (150 XP to next level)', 'Attack 50 XP is 150 to next');
+        assertEqual(attackRow.getAttribute('title'), after, 'title updates after XP gain');
+        win.Hud.el.log.innerHTML = '';
+        H.click(win, attackRow);
+        assertEqual(H.lastChat(win), after, 'click chats updated Attack XP');
+        assert(!H.chatHas(win, 'XP drop'), 'no XP drop floater this tick');
+
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('hud: side HUD shows zone combat level HP fill gold XP and task', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         var world = H.world(win);

@@ -591,6 +591,25 @@ function gainSkillXp(hero, skill, amount) {
     applyCombatLevel(hero, true);
 }
 
+function xpForNextSkillLevel(level) {
+    var n = typeof level === 'number' && level >= 1 ? Math.floor(level) : 1;
+    return 50 * n * n;
+}
+
+function skillXpToNext(skill) {
+    var xp = skill && typeof skill.xp === 'number' ? skill.xp : 0;
+    var level = skill && typeof skill.level === 'number' && skill.level >= 1
+        ? Math.floor(skill.level)
+        : 1;
+    var remain = xpForNextSkillLevel(level) - xp;
+    return remain > 0 ? remain : 0;
+}
+
+function skillXpText(name, skill) {
+    var xp = skill && typeof skill.xp === 'number' ? skill.xp : 0;
+    return name + ': ' + xp + ' XP (' + skillXpToNext(skill) + ' XP to next level)';
+}
+
 function itemName(id) {
     return (ITEM_DB[id] && ITEM_DB[id].name) || id;
 }

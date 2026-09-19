@@ -208,6 +208,15 @@ var Hud = {
             }
             self.showInvDropMenu(slot.getAttribute('data-item'), event);
         });
+        if (this.el.skills) {
+            this.el.skills.addEventListener('click', function (event) {
+                var row = event.target.closest('.skill-row[data-skill]');
+                if (!row) {
+                    return;
+                }
+                self.showSkillXp(row.getAttribute('data-skill'));
+            });
+        }
         if (this.el.equip) {
             this.el.equip.addEventListener('click', function (event) {
                 var slotEl = event.target.closest('[data-equip-slot]');
@@ -579,6 +588,20 @@ var Hud = {
         if (!line) {
             return false;
         }
+        this.log(line);
+        return true;
+    },
+
+    showSkillXp: function (id) {
+        var named = typeof SKILL_NAMES !== 'undefined'
+            ? SKILL_NAMES.filter(function (n) { return n[0] === id; })[0]
+            : null;
+        if (!named) {
+            return false;
+        }
+        var hero = this.hero();
+        var skill = hero && hero.skills && hero.skills[id];
+        var line = typeof skillXpText === 'function' ? skillXpText(named[1], skill) : named[1];
         this.log(line);
         return true;
     },
@@ -1397,7 +1420,9 @@ var Hud = {
         SKILL_NAMES.forEach(function (pair) {
             var skill = hero.skills && hero.skills[pair[0]];
             var level = skill ? skill.level : 1;
-            html += '<div class="skill-row"><img class="pix" src="' + skillIcon(pair[0]) + '" alt="">' +
+            var hint = typeof skillXpText === 'function' ? skillXpText(pair[1], skill) : pair[1];
+            html += '<div class="skill-row" data-skill="' + pair[0] + '" title="' + hint + '">' +
+                '<img class="pix" src="' + skillIcon(pair[0]) + '" alt="">' +
                 '<span>' + pair[1] + '</span><strong>' + level + '</strong></div>';
         });
         this.el.skills.innerHTML = html;

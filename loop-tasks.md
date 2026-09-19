@@ -177,7 +177,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Start: Hitpoints 10 / 1154 XP / 100 HP; every other skill 1 / 0 XP. — Conclusion: From spawn (328,248) makeHero Hitpoints 10/1154 XP, HP 100/100, other 11 skills 1/0; Skills tab + side HUD match. Phaser 3.90 keyboard off. Dedicated case pass; suite 52/52.
 - [done] `gainSkillXp` level curve `1 + floor(sqrt(xp / 50))` and Hitpoints never below 10. — Conclusion: From spawn (328,248) `gainSkillXp` is `1 + floor(sqrt(xp / 50))`; Attack 50→2, Strength 200→3; 1154 XP curves to 5 but Hitpoints stays ≥10. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] A Hitpoints level-up sets `hero.maxHp = 10 * level` and chats `{Skill} increased to N.` — Conclusion: From spawn (328,248) Hitpoints 10/1154/100; 5000 XP → 11, maxHp 110, chat `Hitpoints increased to 11.`; 6050 → 12 / 120; Attack 2 chats `Attack increased to 2.` without changing maxHp. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [todo] Show current XP and XP-to-next on skill-row hover or click. — Conclusion: —
+- [done] Show current XP and XP-to-next on skill-row hover or click. — Conclusion: From spawn (328,248) Skills tab hover title + click chat current XP and XP-to-next (Hitpoints 1154 / 3846, Attack 0 / 50); no XP drop floater. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [todo] An XP drop floater (OSRS-style number + skill icon) on gain. — Conclusion: —
 - [todo] A level-up modal / fanfare in chat (not only one log line). — Conclusion: —
 - [todo] Train Attack / Strength / Defence from **hits**, not only kills (partial XP per successful attack). — Conclusion: —
