@@ -3262,6 +3262,71 @@ EmberwoodTests.add('combat: Run succeeds on Between(0,99) < 70 and flees without
     });
 });
 
+EmberwoodTests.add('combat: Run fail chats You fail to get away and the enemy still gets a turn', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        world.placePlayer(spawn.x, spawn.y);
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+        var chicken = H.findMob(win, 'Chicken');
+        var orig = win.Phaser.Math.Between;
+        var fleeArgs = null;
+        win.Phaser.Math.Between = function (lo, hi) {
+            if (lo === 0 && hi === 99) {
+                fleeArgs = [lo, hi];
+                return 70;
+            }
+            return orig.apply(this, arguments);
+        };
+        return H.startFight(win, chicken).then(function () {
+            var battle = H.battle(win);
+            assert(battle.waitingForPlayer, 'player turn before run');
+            assert(!battle.busy, 'not busy before run');
+            var hpBefore = battle.heroes[0].hp;
+            win.document.querySelector('#battle-actions [data-action="flee"]').click();
+            battle = H.battle(win);
+            assert(fleeArgs, 'Run rolls Between(0,99)');
+            assertEqual(fleeArgs[0], 0, 'Between lo is 0');
+            assertEqual(fleeArgs[1], 99, 'Between hi is 99');
+            assert(H.chatHas(win, 'You fail to get away!') || win.document.getElementById('battle-message').textContent.indexOf('You fail to get away!') !== -1, 'fail chat');
+            assert(!H.chatHas(win, 'You run from the fight.'), 'not the succeed chat');
+            assert(battle.outcome !== 'flee', 'outcome is not flee');
+            assert(!battle.waitingForPlayer, 'fail spends the turn');
+            assert(battle.busy, 'fail queues the next turn');
+            assert(win.game.scene.isActive('BattleScene'), 'still in battle after fail');
+            assertEqual(win.Hud.mode, 'battle', 'HUD stays in battle');
+            return H.waitPlayerTurn(win).then(function () {
+                return { hpBefore: hpBefore };
+            });
+        }).then(function (state) {
+            win.Phaser.Math.Between = orig;
+            var battle = H.battle(win);
+            assert(win.game.scene.isActive('BattleScene'), 'still in battle after enemy turn');
+            assertEqual(win.Hud.mode, 'battle', 'HUD still battle after enemy turn');
+            assert(H.chatHas(win, 'hits You') || win.document.getElementById('battle-message').textContent.indexOf('hits You') !== -1, 'enemy attack chat');
+            assert(battle.heroes[0].hp < state.hpBefore, 'enemy turn damaged the hero');
+            assert(battle.waitingForPlayer, 'player turn after enemy');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+            return H.forceFlee(win);
+        }).catch(function (err) {
+            win.Phaser.Math.Between = orig;
+            throw err;
+        });
+    }).then(function () {
+        H.enterZone(win, 'haven');
+    }).catch(function (err) {
+        return H.cleanupBattle(win).then(function () {
+            throw err;
+        });
+    });
+});
+
 EmberwoodTests.add('combat: manual list click hits the chosen foe', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.setAutoAttack(win, false);
