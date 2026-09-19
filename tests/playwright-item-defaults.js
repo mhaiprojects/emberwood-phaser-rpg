@@ -119,8 +119,8 @@
             if (lastChat() !== 'You bury the bones.') {
                 throw new Error('bury chat was ' + lastChat());
             }
-            if (hero.skills.prayer.xp !== 0) {
-                throw new Error('bury granted Prayer XP this tick');
+            if (hero.skills.prayer.xp !== 4) {
+                throw new Error('bury Prayer XP is ' + hero.skills.prayer.xp + ' not 4');
             }
 
             document.querySelector('#inv-grid [data-item="coins"]').click();

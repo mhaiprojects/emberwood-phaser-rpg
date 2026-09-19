@@ -183,7 +183,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Train Attack / Strength / Defence from **hits**, not only kills (partial XP per successful attack). — Conclusion: From spawn (328,248) Accurate/Aggressive/Defensive hits grant Attack/Strength/Defence `max(1, round(mobXp * dealt / maxHp))` before the kill (goblin 16/80 → +2); flee keeps that XP; Hitpoints stay on win. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Train Hitpoints on each successful melee hit, not only on win. — Conclusion: From spawn (328,248) melee hits grant Hitpoints `ceil(styleHitXp / 3)` min 1 (goblin 16/80 → +1) before the kill; flee keeps it; chicken one-shot still +2 with no double on win. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Ranged: shortbow + bronze arrows, ammo slot, Ranged XP, ammo consume. — Conclusion: From spawn (328,248) Inv wields Shortbow / wears Bronze arrows x50; Bat 16/80 grants Ranged +2 and Hitpoints +1 and consumes 1 arrow (x49); dry-fire logs no ammo; no Magic. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [todo] Prayer XP by burying bones from inventory (see Gathering / Prayer). — Conclusion: —
+- [done] Prayer XP by burying bones from inventory (see Gathering / Prayer). — Conclusion: From spawn (328,248) Inv left-click buries bones: qty −1, Prayer +4, chat `You bury the bones.`; Skills tab and XP drop show +4; no Magic. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [todo] Magic XP via Wind Strike (air + mind runes) from the Magic panel. — Conclusion: —
 - [todo] Cooking XP via raw food on a fire or range. — Conclusion: —
 - [todo] Fishing XP at Southshore spots. — Conclusion: —
@@ -538,4 +538,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 166 | 2026-09-19 | Train Attack / Strength / Defence from hits, not only kills | done — spawn (328,248) style hits grant max(1, round(mobXp * dealt / maxHp)) before the kill (goblin 16/80 → +2); flee keeps XP; Hitpoints stay on win; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 167 | 2026-09-19 | Train Hitpoints on each successful melee hit, not only on win | done — spawn (328,248) melee hits grant Hitpoints ceil(styleHitXp / 3) min 1 (goblin 16/80 → +1); flee keeps XP; chicken one-shot still +2 with no double on win; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 168 | 2026-09-19 | Ranged: shortbow + bronze arrows, ammo slot, Ranged XP, ammo consume | done — spawn (328,248) Shortbow + Bronze arrows x50; Bat 16/80 Ranged +2 / HP +1 / ammo x49; dry-fire no ammo; no Magic; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
+| 169 | 2026-09-19 | Prayer XP by burying bones from inventory | done — spawn (328,248) Inv bury qty −1, Prayer +4, chat You bury the bones.; Skills + XP drop; no Magic; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 

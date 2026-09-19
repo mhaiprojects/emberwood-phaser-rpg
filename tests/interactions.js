@@ -2538,7 +2538,7 @@ EmberwoodTests.add('hud: left-click eats food, wields gear, buries bones, drops 
         assertEqual(stackQty(hero, 'key'), 1, 'iron key in inventory');
         assertEqual(hero.equipment.weapon, 'sword', 'starter wears bronze sword');
         assertEqual(hero.equipment.shield, 'shield', 'starter wears wooden shield');
-        assertEqual(hero.skills.prayer.xp, 0, 'Prayer XP still 0 this tick');
+        assertEqual(hero.skills.prayer.xp, 0, 'Prayer XP starts 0');
 
         H.click(win, '#tab-bar button[data-tab="inv"]');
         assert(win.document.querySelector('#inv-grid [data-item="coins"]'), 'coins slot');
@@ -2582,7 +2582,7 @@ EmberwoodTests.add('hud: left-click eats food, wields gear, buries bones, drops 
         assertEqual(stackQty(hero, 'bones'), 1, 'bury takes one bones');
         assertEqual(H.lastChat(win), 'You bury the bones.', 'bury chat');
         assertEqual(H.lootLive(win).length, 0, 'bury does not drop bones');
-        assertEqual(hero.skills.prayer.xp, 0, 'bury does not grant Prayer XP this tick');
+        assertEqual(hero.skills.prayer.xp, 4, 'bury grants 4 Prayer XP');
         assert(!H.chatHas(win, 'Use'), 'left-click bones is not use-with');
 
         H.click(win, '#inv-grid [data-item="coins"]');
@@ -8686,6 +8686,121 @@ EmberwoodTests.add('combat: shortbow and bronze arrows grant Ranged XP and consu
         return H.cleanupBattle(win).then(function () {
             throw err;
         });
+    });
+});
+
+EmberwoodTests.add('skills: burying inventory bones grants Prayer XP', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, true);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.clearLoot();
+        if (win.Hud.hideContextMenu) {
+            win.Hud.hideContextMenu();
+        }
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof win.buryItem, 'function', 'buryItem helper');
+        assertEqual(typeof win.gainSkillXp, 'function', 'gainSkillXp helper');
+        assert(win.ITEM_DB.bones.bury, 'bones are buryable');
+        assertEqual(win.ITEM_DB.bones.buryXp, 4, 'bones bury for 4 Prayer XP');
+        assertEqual(win.itemDefaultVerb('bones'), 'bury', 'bones default is bury');
+        assertEqual(typeof win.windStrike, 'undefined', 'Magic is not this tick');
+        assert(!win.ITEM_DB.airrune && !win.ITEM_DB.mindrune, 'no Wind Strike runes this tick');
+
+        function stackQty(hero, id) {
+            var stack = hero.inventory.filter(function (row) { return row.id === id; })[0];
+            return stack ? stack.qty : 0;
+        }
+
+        var hero = win.makeHero();
+        win.addItem(hero, 'bones', 2);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(stackQty(hero, 'bones'), 2, 'starter bones 2');
+        assertEqual(hero.skills.prayer.xp, 0, 'Prayer XP starts 0');
+        assertEqual(hero.skills.prayer.level, 1, 'Prayer starts 1');
+        assertEqual(hero.skills.magic.xp, 0, 'Magic XP stays 0');
+        assertEqual(hero.level, 3, 'starter combat level 3');
+
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        assert(win.document.querySelector('#inv-grid [data-item="bones"]'), 'bones slot');
+        var dropsHost = win.Hud.ensureXpDrops();
+        assert(dropsHost && dropsHost.id === 'xp-drops', 'xp-drops host exists');
+        dropsHost.innerHTML = '';
+        win.Hud.el.log.innerHTML = '';
+
+        H.click(win, '#inv-grid [data-item="bones"]');
+        hero = H.hero(win);
+        assertEqual(stackQty(hero, 'bones'), 1, 'bury takes one bones');
+        assertEqual(H.lastChat(win), 'You bury the bones.', 'bury chat');
+        assertEqual(hero.skills.prayer.xp, 4, 'first bury grants 4 Prayer XP');
+        assertEqual(hero.skills.prayer.level, 1, '4 XP does not level Prayer');
+        assertEqual(hero.skills.magic.xp, 0, 'bury does not grant Magic XP');
+        assertEqual(hero.skills.cooking.xp, 0, 'bury does not grant Cooking XP');
+        assertEqual(hero.level, 3, 'combat level unchanged at Prayer 1');
+        assertEqual(H.lootLive(win).length, 0, 'bury does not drop bones');
+        var drops = win.document.querySelectorAll('#xp-drops .xp-drop');
+        assertEqual(drops.length, 1, 'one Prayer XP drop');
+        assertEqual(drops[0].getAttribute('data-skill'), 'prayer', 'drop skill is prayer');
+        assertEqual(drops[0].getAttribute('data-xp'), '4', 'drop amount is 4');
+        var prayIcon = drops[0].querySelector('img.pix');
+        assert(prayIcon && prayIcon.getAttribute('src').indexOf('assets/svg/skills/prayer.svg') !== -1, 'Prayer skill icon');
+
+        H.click(win, '#tab-bar button[data-tab="skills"]');
+        var prayerRow = win.document.querySelector('#skills-list [data-skill="prayer"]');
+        assert(prayerRow, 'Prayer Skills row exists');
+        assert(
+            String(prayerRow.getAttribute('title') || '').indexOf('4 XP') !== -1,
+            'Skills tab shows Prayer bury XP'
+        );
+
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        H.click(win, '#inv-grid [data-item="bones"]');
+        hero = H.hero(win);
+        assertEqual(stackQty(hero, 'bones'), 0, 'second bury takes the last bones');
+        assertEqual(hero.skills.prayer.xp, 8, 'second bury grants another 4 Prayer XP');
+        assertEqual(H.lastChat(win), 'You bury the bones.', 'second bury chat');
+        assert(!win.document.querySelector('#inv-grid [data-item="bones"]'), 'bones slot gone');
+
+        assertEqual(win.buryItem(hero, 'bones'), false, 'empty stack does not bury');
+        assertEqual(hero.skills.prayer.xp, 8, 'failed bury grants no more Prayer XP');
+        assertEqual(win.buryItem(hero, 'shrimp'), false, 'food is not buryable');
+        assertEqual(hero.skills.prayer.xp, 8, 'non-bones grant no Prayer XP');
+
+        world.encounterLock = true;
+        win.addItem(hero, 'bones', 1);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        H.click(win, '#inv-grid [data-item="bones"]');
+        assertEqual(stackQty(H.hero(win), 'bones'), 1, 'encounterLock does not bury');
+        assertEqual(H.hero(win).skills.prayer.xp, 8, 'encounterLock grants no Prayer XP');
+        world.encounterLock = false;
+
+        win.Hud.mode = 'battle';
+        H.click(win, '#inv-grid [data-item="bones"]');
+        assertEqual(H.lastChat(win), 'Use Eat food on your combat turn.', 'battle blocks bury');
+        assertEqual(stackQty(H.hero(win), 'bones'), 1, 'battle does not bury');
+        assertEqual(H.hero(win).skills.prayer.xp, 8, 'battle grants no Prayer XP');
+        win.Hud.mode = 'world';
+
+        world.clearLoot();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        assertEqual(typeof win.windStrike, 'undefined', 'Magic still not this tick');
     });
 });
 

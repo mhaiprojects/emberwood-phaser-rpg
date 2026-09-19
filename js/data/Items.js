@@ -7,7 +7,7 @@ var ITEM_DB = {
     shortbow: { name: 'Shortbow', icon: 'assets/svg/items/shortbow.svg', slot: 'weapon', damage: 16, combatClass: 'ranged', value: 32, examine: 'A yew shortbow, light enough for bronze arrows.' },
     arrow: { name: 'Bronze arrows', icon: 'assets/svg/items/arrow.svg', slot: 'ammo', stack: true, value: 1, examine: 'A sheaf of bronze arrows with grey-goose fletching.' },
     shield: { name: 'Wooden shield', icon: 'assets/svg/items/shield.svg', slot: 'shield', defence: 1, value: 20, examine: 'A round wooden shield bound with iron.' },
-    bones: { name: 'Bones', icon: 'assets/svg/items/bones.svg', stack: true, bury: true, value: 1, examine: 'Dry bones. Someone should bury them.' },
+    bones: { name: 'Bones', icon: 'assets/svg/items/bones.svg', stack: true, bury: true, buryXp: 4, value: 1, examine: 'Dry bones. Someone should bury them.' },
     key: { name: 'Iron key', icon: 'assets/svg/items/key.svg', value: 1, examine: 'A heavy iron key with a worn bit.' }
 };
 
@@ -326,10 +326,18 @@ function useItemOnScenery(hero, id, kind) {
 
 function buryItem(hero, id) {
     var def = ITEM_DB[id];
+    var xp;
     if (!hero || !id || !def || !def.bury) {
         return false;
     }
-    return takeItem(hero, id, 1);
+    if (!takeItem(hero, id, 1)) {
+        return false;
+    }
+    xp = typeof def.buryXp === 'number' ? def.buryXp : 0;
+    if (xp > 0) {
+        gainSkillXp(hero, 'prayer', xp);
+    }
+    return true;
 }
 
 function equippedWeaponDamage(hero, fallback) {
