@@ -5,6 +5,7 @@ var RUN_DRAIN_PER_SEC = 25;
 var RUN_RESTORE_PER_SEC = 15;
 var DEST_X_COLOR = 0xf8ff38;
 var DEST_X_ARM = 8;
+var MOB_RESPAWN_MS = 18000;
 
 var WorldScene = new Phaser.Class({
     Extends: Phaser.Scene,
@@ -29,6 +30,7 @@ var WorldScene = new Phaser.Class({
         this.lastFought = null;
         this.lastFacing = 'down';
         this.groundLoot = [];
+        this.mobZoneState = {};
 
         this.marker = this.add.rectangle(0, 0, 6, 6, DEST_X_COLOR).setVisible(false).setDepth(8);
         this.destX = this.makeDestX();
@@ -115,6 +117,11 @@ var WorldScene = new Phaser.Class({
         var zone = ZONES[zoneId];
         if (!zone) {
             return;
+        }
+        if (fromDir && this.zoneId && this.zoneId !== zoneId) {
+            this.snapshotMobs();
+        } else if (!fromDir) {
+            this.clearMobZoneState();
         }
         this.zoneId = zoneId;
         this.registry.set('zone', zoneId);
@@ -204,6 +211,7 @@ var WorldScene = new Phaser.Class({
             applyMobWorldBody(sprite, def.type);
             sprite.mobDef = Object.assign({ id: zoneId + '-' + index }, def);
             sprite.aliveMob = true;
+            sprite.respawnAt = 0;
             var label = self.add.text(def.x, def.y - Math.round(8 * scale) - 6, def.type, {
                 fontSize: '8px',
                 fontFamily: 'Verdana, Geneva, sans-serif',
@@ -214,6 +222,177 @@ var WorldScene = new Phaser.Class({
             sprite.nameLabel = label;
             self.floatLabels.push(label);
             self.physics.add.collider(sprite, self.ground);
+            self.restoreMobState(sprite, zoneId, scale);
+        });
+    },
+
+    remainingOfTimer: function (timer) {
+        if (!timer) {
+            return 0;
+        }
+        if (timer.getRemaining) {
+            return timer.getRemaining();
+        }
+        return Math.max(0, timer.delay - (timer.elapsed || 0));
+    },
+
+    findMobById: function (id) {
+        var found = null;
+        this.mobs.children.iterate(function (mob) {
+            if (mob && mob.mobDef && mob.mobDef.id === id) {
+                found = mob;
+            }
+        });
+        return found;
+    },
+
+    rememberMob: function (mob, extra) {
+        if (!mob || !mob.mobDef) {
+            return null;
+        }
+        if (!this.mobZoneState) {
+            this.mobZoneState = {};
+        }
+        var zoneId = extra && extra.zoneId != null ? extra.zoneId : this.zoneId;
+        if (!this.mobZoneState[zoneId]) {
+            this.mobZoneState[zoneId] = {};
+        }
+        var bag = this.mobZoneState[zoneId];
+        var prev = bag[mob.mobDef.id] || {};
+        var row = {
+            alive: extra && extra.alive != null ? extra.alive : !!mob.aliveMob,
+            respawnAt: extra && extra.respawnAt != null ? extra.respawnAt : (mob.respawnAt || prev.respawnAt || 0),
+            x: extra && extra.x != null ? extra.x : mob.x,
+            y: extra && extra.y != null ? extra.y : mob.y,
+            timer: extra && extra.timer !== undefined ? extra.timer : (mob.respawnTimer || prev.timer || null)
+        };
+        bag[mob.mobDef.id] = row;
+        return row;
+    },
+
+    clearMobZoneState: function () {
+        var self = this;
+        Object.keys(this.mobZoneState || {}).forEach(function (zoneId) {
+            var bag = self.mobZoneState[zoneId] || {};
+            Object.keys(bag).forEach(function (id) {
+                if (bag[id] && bag[id].timer) {
+                    bag[id].timer.remove(false);
+                    bag[id].timer = null;
+                }
+            });
+        });
+        this.mobZoneState = {};
+    },
+
+    snapshotMobs: function () {
+        if (!this.mobZoneState) {
+            this.mobZoneState = {};
+        }
+        var self = this;
+        this.mobs.children.iterate(function (mob) {
+            self.rememberMob(mob);
+        });
+    },
+
+    restoreMobState: function (sprite, zoneId, scale) {
+        var bag = this.mobZoneState && this.mobZoneState[zoneId];
+        var saved = bag && sprite.mobDef && bag[sprite.mobDef.id];
+        if (!saved) {
+            return;
+        }
+        var x = saved.x;
+        var y = saved.y;
+        if (x != null && y != null) {
+            sprite.setPosition(x, y);
+            if (sprite.body) {
+                sprite.body.reset(x, y);
+            }
+            if (sprite.nameLabel) {
+                sprite.nameLabel.setPosition(x, y - Math.round(8 * scale) - 6);
+            }
+        }
+        var remain = this.remainingOfTimer(saved.timer);
+        var stillDead = !saved.alive && remain > 0;
+        if (stillDead) {
+            this.hideMob(sprite);
+            sprite.respawnAt = saved.respawnAt || 0;
+            sprite.respawnTimer = saved.timer;
+        }
+    },
+
+    hideMob: function (mob) {
+        if (!mob) {
+            return;
+        }
+        mob.aliveMob = false;
+        mob.setVisible(false);
+        if (mob.body) {
+            mob.body.enable = false;
+            mob.body.setVelocity(0, 0);
+        }
+        if (mob.nameLabel) {
+            mob.nameLabel.setVisible(false);
+        }
+    },
+
+    reviveMob: function (mob) {
+        if (!mob || !mob.active) {
+            return;
+        }
+        mob.aliveMob = true;
+        mob.respawnAt = 0;
+        if (mob.respawnTimer) {
+            mob.respawnTimer.remove(false);
+            mob.respawnTimer = null;
+        }
+        mob.setVisible(true);
+        if (mob.body) {
+            mob.body.enable = true;
+        }
+        if (mob.nameLabel) {
+            mob.nameLabel.setVisible(true);
+        }
+    },
+
+    scheduleMobRespawn: function (mob, delay) {
+        var self = this;
+        if (!mob || !mob.mobDef) {
+            return;
+        }
+        if (mob.respawnTimer) {
+            mob.respawnTimer.remove(false);
+            mob.respawnTimer = null;
+        }
+        var wait = Math.max(0, delay);
+        var zoneId = this.zoneId;
+        var id = mob.mobDef.id;
+        mob.respawnAt = this.time.now + wait;
+        if (wait <= 0) {
+            this.rememberMob(mob, { alive: true, respawnAt: 0, timer: null, zoneId: zoneId });
+            this.reviveMob(mob);
+            return;
+        }
+        mob.respawnTimer = this.time.delayedCall(wait, function () {
+            var bag = self.mobZoneState && self.mobZoneState[zoneId];
+            if (bag && bag[id]) {
+                bag[id].alive = true;
+                bag[id].respawnAt = 0;
+                bag[id].timer = null;
+            }
+            var live = self.zoneId === zoneId ? self.findMobById(id) : null;
+            if (live) {
+                live.respawnTimer = null;
+                self.reviveMob(live);
+            } else if (mob && mob.active) {
+                mob.respawnTimer = null;
+                self.reviveMob(mob);
+            }
+        });
+        this.rememberMob(mob, {
+            alive: false,
+            respawnAt: mob.respawnAt,
+            timer: mob.respawnTimer,
+            zoneId: zoneId
         });
     },
 
@@ -864,24 +1043,8 @@ var WorldScene = new Phaser.Class({
                 }
             }
             this.spawnLoot(this.lastFought.x, this.lastFought.y, lootForMob(def));
-            this.lastFought.aliveMob = false;
-            this.lastFought.setVisible(false);
-            this.lastFought.body.enable = false;
-            if (this.lastFought.nameLabel) {
-                this.lastFought.nameLabel.setVisible(false);
-            }
-            var dead = this.lastFought;
-            this.time.delayedCall(18000, function () {
-                if (!dead) {
-                    return;
-                }
-                dead.aliveMob = true;
-                dead.setVisible(true);
-                dead.body.enable = true;
-                if (dead.nameLabel) {
-                    dead.nameLabel.setVisible(true);
-                }
-            });
+            this.hideMob(this.lastFought);
+            this.scheduleMobRespawn(this.lastFought, MOB_RESPAWN_MS);
         } else if (outcome === 'flee') {
             Hud.log('You break away from the fight.');
         }

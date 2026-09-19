@@ -7,39 +7,39 @@ Do not paste `AGENT.md` or `loop-tasks.md` into the Task prompt.
 
 Pick **#1**. One spawned tick = one item. Refresh this file after commit.
 
-## 1. [verify] Click shrimp at low HP heals 12 (capped) and decrements the stack.
+## 1. [todo] Persist ground loot when leaving a zone (currently `clearLoot` wipes it).
 
-- Section: 5. Inventory / equipment / bank (22)
-- Files: `js/data/Items.js`, `js/ui/Hud.js`, `js/scenes/BootScene.js`, `tests/interactions.js`
-- Test: `hud: click shrimp at full HP does not consume`
+- Section: 2. World / zones / collision / map (32)
+- Files: `js/world/MapGen.js`, `js/world/Zones.js`, `js/scenes/WorldScene.js`, `js/data/Scales.js`
+- Test: `loot: clearLoot on zone change wipes ground loot`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
-## 2. [verify] Click bread heals 20 (capped) and decrements the stack.
+## 2. [todo] Enterable interiors (bank, shop, guild hall) as a second tilemap or indoor scene.
 
-- Section: 5. Inventory / equipment / bank (22)
-- Files: `js/data/Items.js`, `js/ui/Hud.js`, `js/scenes/BootScene.js`, `tests/interactions.js`
-- Test: `add a dedicated case; nearest existing: title: click here to play enters Emberhaven`
+- Section: 2. World / zones / collision / map (32)
+- Files: `js/world/MapGen.js`, `js/world/Zones.js`, `js/scenes/WorldScene.js`, `tests/interactions.js`
+- Test: `add a dedicated case; nearest existing: hud: shop-overlay and bank overlay use hidden CSS like title/dead not a Phaser text menu`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
-## 3. [verify] Click coins / sword / shield / bones only logs the item name (no crash).
+## 3. [todo] Examine on scenery: tree, rock, shrine, water, house wall.
 
-- Section: 5. Inventory / equipment / bank (22)
-- Files: `js/data/Items.js`, `js/ui/Hud.js`, `js/scenes/BootScene.js`, `tests/interactions.js`
-- Test: `add a dedicated case; nearest existing: hud: worn sword/shield are display-only`
+- Section: 2. World / zones / collision / map (32)
+- Files: `js/world/MapGen.js`, `js/world/Zones.js`, `js/scenes/WorldScene.js`, `tests/interactions.js`
+- Test: `world: WATER/TREE/ROCK/SHRINE collide; GRASS/GRASS2/PATH/FLOWER do not`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
-## 4. [verify] `addItem('coins')` increments `hero.gold` and `syncCoins`; `takeItem('coins')` decrements both.
+## 4. [todo] Darkmine “lower shaft” as a second mine room (Miner Corb already mentions it).
 
-- Section: 5. Inventory / equipment / bank (22)
-- Files: `js/data/Items.js`, `js/ui/Hud.js`, `js/scenes/BootScene.js`, `tests/interactions.js`
-- Test: `npcs: Fen Witch at 10+ gold heals and takeItem removes 10 coins`
+- Section: 2. World / zones / collision / map (32)
+- Files: `js/world/MapGen.js`, `js/world/Zones.js`, `js/scenes/WorldScene.js`, `tests/interactions.js`
+- Test: `add a dedicated case; nearest existing: world: biome scatter still looks like forest trees, mine rocks, swamp water, shore band, grave rocks, farm flowers`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
-## 5. [verify] Stacks merge by `id` and a stack is removed when `qty` hits 0.
+## 5. [todo] Add interactable town props in Emberhaven: stall, range, anvil, bank booth (even if some start as examine-only).
 
-- Section: 5. Inventory / equipment / bank (22)
-- Files: `js/data/Items.js`, `js/ui/Hud.js`, `js/scenes/BootScene.js`, `tests/interactions.js`
-- Test: `add a dedicated case; nearest existing: hud: start skills Hitpoints 10 / 1154 XP / 100 HP; others 1 / 0`
+- Section: 2. World / zones / collision / map (32)
+- Files: `js/world/MapGen.js`, `js/world/Zones.js`, `js/scenes/WorldScene.js`, `tests/interactions.js`
+- Test: `add a dedicated case; nearest existing: title: click here to play starts WorldScene in Emberhaven and credits toggle #credit-text`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
 After `done` + tests: commit, then `python3 tools/loop-next.py`.
