@@ -3801,6 +3801,156 @@ EmberwoodTests.add('npcs: dialogue option buttons Talk Trade Bank Quest where th
     });
 });
 
+EmberwoodTests.add('npcs: right-click Examine on NPCs logs a flavor sentence', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.engageTarget = null;
+        world.talkTarget = null;
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        if (win.Hud.hideContextMenu) {
+            win.Hud.hideContextMenu();
+        }
+        if (win.Hud.hideDialogue) {
+            win.Hud.hideDialogue();
+        }
+        assertEqual(spawn.x, 328, 'spawn x tile center');
+        assertEqual(spawn.y, 248, 'spawn y tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assertEqual(win.Hud.mode, 'world', 'world mode');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(!world.cursors, 'WorldScene has no Phaser cursors');
+        assertEqual(typeof win.examineNpcText, 'function', 'examineNpcText exists');
+        assertEqual(typeof world.examineNpc, 'function', 'examineNpc exists');
+        assertEqual(typeof world.longPressAt, 'function', 'longPressAt exists');
+
+        var seen = {};
+        var counted = 0;
+        Object.keys(win.NPC_DEFS).forEach(function (zoneId) {
+            (win.NPC_DEFS[zoneId] || []).forEach(function (def) {
+                counted += 1;
+                var line = win.examineNpcText(def);
+                assert(line && line.length > 8, def.name + ' has a flavor sentence');
+                assert(line.indexOf('.') !== -1, def.name + ' examine is a sentence');
+                assert(!seen[line], def.name + ' examine is unique');
+                seen[line] = def.name;
+            });
+        });
+        assert(counted >= 11, 'every named NPC has examine text, n=' + counted);
+        assertEqual(win.examineNpcText(win.NPC_DEFS.haven[0]), 'A scarred militia captain. He still drills the courtyard.', 'Bram examine text');
+        assertEqual(win.examineNpcText(win.NPC_DEFS.haven[2]), 'A watchful town guard. He knows every path from the gate.', 'Rowan examine text');
+
+        var bram = H.findNpc(win, 'guild');
+        var rowan = H.findNpc(win, 'guard');
+        assert(bram && rowan, 'Bram and Rowan are in Emberhaven');
+        var bramLine = win.examineNpcText(bram.npcDef);
+        var rowanLine = win.examineNpcText(rowan.npcDef);
+
+        win.Hud.el.log.innerHTML = '';
+        world.onClick({ worldX: bram.x, worldY: bram.y });
+        assert(world.talkTarget === bram, 'left-click still targets Bram');
+        assert(world.walkTarget, 'left-click still walks in');
+        assertEqual(H.lastChat(win), '', 'left-click does not examine');
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        world.talkTarget = null;
+
+        var menu = win.document.getElementById('ctx-menu');
+        assert(menu, 'ctx-menu element exists');
+        win.Hud.hideContextMenu();
+        world.onClick({
+            worldX: bram.x,
+            worldY: bram.y,
+            button: 2,
+            rightButtonDown: function () { return true; },
+            event: { clientX: 48, clientY: 56 }
+        });
+        assert(!world.walkTarget, 'right-click NPC does not walk immediately');
+        assert(world.talkTarget === null, 'right-click NPC does not talk-target');
+        assert(!menu.hidden, 'right-click NPC opens context menu');
+        var examBtn = menu.querySelector('[data-ctx="examine"]');
+        var walkBtn = menu.querySelector('[data-ctx="walk-here"]');
+        assert(examBtn, 'Examine action is listed');
+        assertEqual(examBtn.textContent, 'Examine', 'Examine label');
+        assert(!walkBtn, 'Walk here is not listed on an NPC');
+        assert(!menu.querySelector('[data-ctx="talk"]'), 'Talk-to is not this tick');
+        assert(!menu.querySelector('[data-ctx="trade"]'), 'Trade is not this tick');
+        assert(!menu.querySelector('[data-ctx="bank"]'), 'Bank is not this tick');
+        H.mouseClick(win, examBtn);
+        assert(menu.hidden, 'Examine closes the menu');
+        assertEqual(H.lastChat(win), bramLine, 'Examine menu logs Bram flavor');
+        assert(!world.walkTarget, 'Examine menu does not walk');
+        assert(!win.Hud.dialogueOpen(), 'Examine does not open dialogue');
+
+        win.Hud.hideContextMenu();
+        world.longPressAt(rowan.x, rowan.y, { clientX: 64, clientY: 72 });
+        assert(!world.walkTarget, 'long-press NPC does not walk');
+        assert(world.talkTarget === null, 'long-press NPC does not talk-target');
+        assert(!menu.hidden, 'long-press NPC opens context menu');
+        examBtn = menu.querySelector('[data-ctx="examine"]');
+        assert(examBtn, 'long-press lists Examine');
+        H.mouseClick(win, examBtn);
+        assertEqual(H.lastChat(win), rowanLine, 'long-press Examine logs Rowan flavor');
+        assert(!win.Hud.dialogueOpen(), 'long-press Examine does not open dialogue');
+
+        world.encounterLock = true;
+        world.onClick({
+            worldX: bram.x,
+            worldY: bram.y,
+            button: 2,
+            rightButtonDown: function () { return true; },
+            event: { clientX: 48, clientY: 56 }
+        });
+        assert(menu.hidden, 'encounterLock ignores NPC right-click');
+        world.longPressAt(bram.x, bram.y, { clientX: 48, clientY: 56 });
+        assert(menu.hidden, 'encounterLock ignores NPC long-press');
+        world.encounterLock = false;
+        win.Hud.mode = 'battle';
+        world.onClick({
+            worldX: bram.x,
+            worldY: bram.y,
+            button: 2,
+            rightButtonDown: function () { return true; },
+            event: { clientX: 48, clientY: 56 }
+        });
+        assert(menu.hidden, 'battle mode ignores NPC right-click');
+        win.Hud.mode = 'world';
+
+        var destX = spawn.x - 64;
+        var destY = spawn.y;
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        win.Hud.hideContextMenu();
+        world.onClick({
+            worldX: destX,
+            worldY: destY,
+            button: 2,
+            rightButtonDown: function () { return true; },
+            event: { clientX: 48, clientY: 56 }
+        });
+        assert(!menu.hidden, 'ground right-click still opens a menu');
+        assert(menu.querySelector('[data-ctx="walk-here"]'), 'ground still lists Walk here');
+        win.Hud.hideContextMenu();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        assert(!win.document.getElementById('shop-overlay') || win.document.getElementById('shop-overlay').hidden, 'no shop UI');
+        assert(!win.document.getElementById('bank-overlay') || win.document.getElementById('bank-overlay').hidden, 'no bank UI');
+    });
+});
+
 EmberwoodTests.add('npcs: every NPC_DEFS entry spawns at xy with a yellow name label', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');

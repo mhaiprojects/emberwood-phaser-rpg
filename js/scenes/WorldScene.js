@@ -5,6 +5,8 @@ var RUN_DRAIN_PER_SEC = 25;
 var RUN_RESTORE_PER_SEC = 15;
 var DEST_X_COLOR = 0xf8ff38;
 var DEST_X_ARM = 8;
+var LONG_PRESS_MS = 450;
+var LONG_PRESS_SLOP = 8;
 var MOB_RESPAWN_MS = 18000;
 var DOOR_ANIM_MS = 220;
 var DOOR_OPEN_SCALE_X = 0.18;
@@ -73,7 +75,12 @@ var WorldScene = new Phaser.Class({
         this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
         this.cameras.main.roundPixels = true;
 
+        this.longPressTimer = null;
+        this.longPressPtr = null;
         this.input.on('pointerdown', this.onClick, this);
+        this.input.on('pointerup', this.cancelLongPress, this);
+        this.input.on('pointerupoutside', this.cancelLongPress, this);
+        this.input.on('pointermove', this.onLongPressMove, this);
         if (this.input.mouse && this.input.mouse.disableContextMenu) {
             this.input.mouse.disableContextMenu();
         }
@@ -520,6 +527,10 @@ var WorldScene = new Phaser.Class({
         if (Hud.hideDialogue) {
             Hud.hideDialogue();
         }
+        this.cancelLongPress();
+        if (Hud.hideContextMenu) {
+            Hud.hideContextMenu();
+        }
         var leavingInterior = !!this.interiorId;
         if (!leavingInterior) {
             if (fromDir && this.zoneId && this.zoneId !== zoneId) {
@@ -555,6 +566,10 @@ var WorldScene = new Phaser.Class({
         if (!spec || this.interiorId === interiorId) {
             return;
         }
+        this.cancelLongPress();
+        if (Hud.hideContextMenu) {
+            Hud.hideContextMenu();
+        }
         if (!this.interiorId) {
             this.snapshotMobs();
             this.snapshotLoot();
@@ -576,6 +591,10 @@ var WorldScene = new Phaser.Class({
         var zone = ZONES[this.zoneId];
         if (!spec || !zone) {
             return;
+        }
+        this.cancelLongPress();
+        if (Hud.hideContextMenu) {
+            Hud.hideContextMenu();
         }
         this.interiorId = null;
         this.clearWorldObjects();
@@ -879,12 +898,14 @@ var WorldScene = new Phaser.Class({
 
     onClick: function (pointer) {
         if (this.encounterLock || Hud.mode === 'battle' || Hud.mode === 'title') {
+            this.cancelLongPress();
             if (Hud.hideContextMenu) {
                 Hud.hideContextMenu();
             }
             return;
         }
         if (Hud.dialogueOpen && Hud.dialogueOpen()) {
+            this.cancelLongPress();
             if (Hud.hideContextMenu) {
                 Hud.hideContextMenu();
             }
@@ -896,14 +917,22 @@ var WorldScene = new Phaser.Class({
         var x = pointer.worldX;
         var y = pointer.worldY;
         if (this.isRightClick(pointer)) {
+            this.cancelLongPress();
             var ev = pointer.event;
             var onLoot = this.pickLoot(x, y, 18);
             var onMob = this.pickSprite(this.mobs, x, y, 18);
             var onNpc = this.pickSprite(this.npcs, x, y, 18);
-            if (onLoot || (onMob && onMob.aliveMob) || onNpc) {
+            if (onLoot || (onMob && onMob.aliveMob)) {
                 if (Hud.hideContextMenu) {
                     Hud.hideContextMenu();
                 }
+                return;
+            }
+            if (onNpc) {
+                this.showNpcExamineMenu(onNpc, {
+                    clientX: ev && ev.clientX != null ? ev.clientX : 16,
+                    clientY: ev && ev.clientY != null ? ev.clientY : 16
+                });
                 return;
             }
             var items = [];
@@ -924,6 +953,7 @@ var WorldScene = new Phaser.Class({
         if (Hud.hideContextMenu) {
             Hud.hideContextMenu();
         }
+        this.armLongPress(pointer);
         var loot = this.pickLoot(x, y, 18);
         if (loot) {
             this.tryPickup(loot);
@@ -1013,8 +1043,104 @@ var WorldScene = new Phaser.Class({
         return true;
     },
 
+    examineNpc: function (npc) {
+        var def = npc && npc.npcDef;
+        var line = typeof examineNpcText === 'function' ? examineNpcText(def) : (def && def.examine) || '';
+        if (!line) {
+            return false;
+        }
+        Hud.log(line);
+        return true;
+    },
+
     examineAt: function (x, y) {
+        var npc = this.pickSprite(this.npcs, x, y, 18);
+        if (npc) {
+            return this.examineNpc(npc);
+        }
         return this.examineScenery(this.pickScenery(x, y));
+    },
+
+    showNpcExamineMenu: function (npc, pos) {
+        if (!npc) {
+            return;
+        }
+        if (Hud.showContextMenu) {
+            Hud.showContextMenu([{ label: 'Examine', action: 'examine' }], {
+                worldX: npc.x,
+                worldY: npc.y,
+                clientX: pos && pos.clientX != null ? pos.clientX : 16,
+                clientY: pos && pos.clientY != null ? pos.clientY : 16
+            });
+        }
+    },
+
+    armLongPress: function (pointer) {
+        this.cancelLongPress();
+        if (!pointer || this.isRightClick(pointer) || !pointer.event) {
+            return;
+        }
+        var x = pointer.worldX;
+        var y = pointer.worldY;
+        if (!this.pickSprite(this.npcs, x, y, 18)) {
+            return;
+        }
+        var ev = pointer.event;
+        this.longPressPtr = {
+            x: x,
+            y: y,
+            clientX: ev.clientX != null ? ev.clientX : 16,
+            clientY: ev.clientY != null ? ev.clientY : 16
+        };
+        this.longPressTimer = this.time.delayedCall(LONG_PRESS_MS, this.fireLongPress, [], this);
+    },
+
+    onLongPressMove: function (pointer) {
+        if (!this.longPressPtr || !pointer) {
+            return;
+        }
+        var dx = pointer.worldX - this.longPressPtr.x;
+        var dy = pointer.worldY - this.longPressPtr.y;
+        if ((dx * dx) + (dy * dy) > LONG_PRESS_SLOP * LONG_PRESS_SLOP) {
+            this.cancelLongPress();
+        }
+    },
+
+    cancelLongPress: function () {
+        if (this.longPressTimer) {
+            this.longPressTimer.remove(false);
+            this.longPressTimer = null;
+        }
+        this.longPressPtr = null;
+    },
+
+    fireLongPress: function () {
+        var saved = this.longPressPtr;
+        this.longPressTimer = null;
+        this.longPressPtr = null;
+        if (!saved) {
+            return;
+        }
+        this.longPressAt(saved.x, saved.y, saved);
+    },
+
+    longPressAt: function (x, y, pos) {
+        if (this.encounterLock || Hud.mode === 'battle' || Hud.mode === 'title') {
+            if (Hud.hideContextMenu) {
+                Hud.hideContextMenu();
+            }
+            return;
+        }
+        var npc = this.pickSprite(this.npcs, x, y, 18);
+        if (!npc) {
+            return;
+        }
+        if (this.clearWalk) {
+            this.clearWalk();
+        }
+        this.talkTarget = null;
+        this.engageTarget = null;
+        this.showNpcExamineMenu(npc, pos);
     },
 
     pickLoot: function (x, y, range) {

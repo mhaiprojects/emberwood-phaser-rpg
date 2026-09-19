@@ -113,35 +113,45 @@ function npcDialogueOptions(def) {
     return out;
 }
 
+function examineNpcText(def) {
+    if (!def) {
+        return '';
+    }
+    if (def.examine) {
+        return def.examine;
+    }
+    return def.name ? "It's " + def.name + '.' : '';
+}
+
 var NPC_DEFS = {
     haven: [
-        { key: 'guild', name: 'Guildmaster Bram', x: 210, y: 150, tint: 0xffffff, options: ['talk', 'quest'], lines: ['Welcome to Emberhaven, adventurer.', 'Goblins from Northwood raid our stores.', 'Slay 5 goblins and return. The militia will pay.'] },
-        { key: 'banker', name: 'Banker Elise', x: 160, y: 130, tint: 0xffffff, options: ['talk', 'bank'], lines: ['Your coin is safe with me.', 'Rest here if the roads were cruel.'] },
-        { key: 'guard', name: 'Guard Rowan', x: 252, y: 168, tint: 0xffffff, options: ['talk'], lines: ['Keep to the paths.', 'North is woods. East is farms. South is the sea.'] }
+        { key: 'guild', name: 'Guildmaster Bram', x: 210, y: 150, tint: 0xffffff, options: ['talk', 'quest'], examine: 'A scarred militia captain. He still drills the courtyard.', lines: ['Welcome to Emberhaven, adventurer.', 'Goblins from Northwood raid our stores.', 'Slay 5 goblins and return. The militia will pay.'] },
+        { key: 'banker', name: 'Banker Elise', x: 160, y: 130, tint: 0xffffff, options: ['talk', 'bank'], examine: 'The town banker. Her ledgers never leave her sight.', lines: ['Your coin is safe with me.', 'Rest here if the roads were cruel.'] },
+        { key: 'guard', name: 'Guard Rowan', x: 252, y: 168, tint: 0xffffff, options: ['talk'], examine: 'A watchful town guard. He knows every path from the gate.', lines: ['Keep to the paths.', 'North is woods. East is farms. South is the sea.'] }
     ],
     northwood: [
-        { key: 'ranger', name: 'Ranger Kett', x: 240, y: 200, tint: 0xffffff, options: ['talk'], lines: ['Goblins nest in these trees.', 'Click a goblin to fight it, like the old days.'] }
+        { key: 'ranger', name: 'Ranger Kett', x: 240, y: 200, tint: 0xffffff, options: ['talk'], examine: 'A Northwood ranger. Goblin tracks stain her boots.', lines: ['Goblins nest in these trees.', 'Click a goblin to fight it, like the old days.'] }
     ],
     millfields: [
-        { key: 'farmer', name: 'Farmer Willa', x: 200, y: 180, tint: 0xffffff, options: ['talk'], lines: ['Cows got into the cabbages again.', 'The mill road runs back to Emberhaven.'] }
+        { key: 'farmer', name: 'Farmer Willa', x: 200, y: 180, tint: 0xffffff, options: ['talk'], examine: 'A Millfields farmer. Cabbage stains her apron.', lines: ['Cows got into the cabbages again.', 'The mill road runs back to Emberhaven.'] }
     ],
     southshore: [
-        { key: 'fisher', name: 'Fisher Ned', x: 220, y: 160, tint: 0xffffff, options: ['talk'], lines: ['Crabs pinch harder than they look.', 'Ships used to stop here. Not anymore.'] }
+        { key: 'fisher', name: 'Fisher Ned', x: 220, y: 160, tint: 0xffffff, options: ['talk'], examine: 'An old shore fisher. Salt and rope have worn his hands.', lines: ['Crabs pinch harder than they look.', 'Ships used to stop here. Not anymore.'] }
     ],
     westmead: [
-        { key: 'wanderer', name: 'Wanderer Sila', x: 180, y: 190, tint: 0xffffff, options: ['talk'], lines: ['Plains look empty until they are not.', 'Graves lie north-west. Do not linger.'] }
+        { key: 'wanderer', name: 'Wanderer Sila', x: 180, y: 190, tint: 0xffffff, options: ['talk'], examine: 'A plains wanderer. Her cloak is dusted with Westmead grass.', lines: ['Plains look empty until they are not.', 'Graves lie north-west. Do not linger.'] }
     ],
     graves: [
-        { key: 'ghost', name: 'Wisp', x: 200, y: 170, tint: 0xffffff, options: ['talk'], lines: ['The dead remember steel.', 'Turn back unless you seek bones.'] }
+        { key: 'ghost', name: 'Wisp', x: 200, y: 170, tint: 0xffffff, options: ['talk'], examine: 'A restless grave-wisp. Cold light pools where a face should be.', lines: ['The dead remember steel.', 'Turn back unless you seek bones.'] }
     ],
     darkmine: [
-        { key: 'miner', name: 'Miner Corb', x: 210, y: 200, tint: 0xffffff, options: ['talk'], lines: ['Bats took the lower shaft.', 'Ore waits for someone braver than me.'] }
+        { key: 'miner', name: 'Miner Corb', x: 210, y: 200, tint: 0xffffff, options: ['talk'], examine: 'A Darkmine digger. He will not go down the lower shaft.', lines: ['Bats took the lower shaft.', 'Ore waits for someone braver than me.'] }
     ],
     highlands: [
-        { key: 'hermit', name: 'Hermit Ola', x: 240, y: 160, tint: 0xffffff, options: ['talk'], lines: ['Drakes nest on the windrock.', 'Bring a stout shield.'] }
+        { key: 'hermit', name: 'Hermit Ola', x: 240, y: 160, tint: 0xffffff, options: ['talk'], examine: 'A windrock hermit. Drake-scale grit is stuck in her cloak.', lines: ['Drakes nest on the windrock.', 'Bring a stout shield.'] }
     ],
     mire: [
-        { key: 'witch', name: 'Fen Witch', x: 200, y: 180, tint: 0xffffff, options: ['talk'], lines: ['The fen drinks the lost.', 'I can stitch wounds... for a price.'] }
+        { key: 'witch', name: 'Fen Witch', x: 200, y: 180, tint: 0xffffff, options: ['talk'], examine: 'A fen healer. Marsh-light clings to her sleeves.', lines: ['The fen drinks the lost.', 'I can stitch wounds... for a price.'] }
     ]
 };
 
