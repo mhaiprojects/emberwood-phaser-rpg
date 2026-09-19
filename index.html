@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="assets/svg/ui/combat.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/style.css?v=opt1">
+    <link rel="stylesheet" href="css/style.css?v=shop1">
 </head>
 <body>
     <div id="shell">
@@ -159,14 +159,27 @@
         </div>
     </div>
 
+    <div id="shop-overlay" hidden>
+        <div class="title-card" id="shop-card">
+            <h1 id="shop-title">Trade</h1>
+            <p id="shop-speaker"></p>
+            <p id="shop-copy">The shelves are still being stocked.</p>
+            <div id="shop-actions">
+                <button type="button" data-shop-action="buy">Buy</button>
+                <button type="button" data-shop-action="sell">Sell</button>
+            </div>
+            <button type="button" id="btn-shop-close" data-shop-action="close">Close</button>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
     <script src="js/input/Keys.js?v=run1"></script>
     <script src="js/data/Items.js?v=agil1"></script>
     <script src="js/data/Scales.js?v=giant1"></script>
-    <script src="js/ui/Hud.js?v=opt1"></script>
+    <script src="js/ui/Hud.js?v=shop1"></script>
     <script src="js/world/MapGen.js?v=agil1"></script>
     <script src="js/world/Pathfind.js?v=giant1"></script>
-    <script src="js/world/Zones.js?v=npc1"></script>
+    <script src="js/world/Zones.js?v=shop1"></script>
     <script src="js/sprites/Unit.js"></script>
     <script src="js/sprites/PlayerCharacter.js"></script>
     <script src="js/sprites/Enemy.js"></script>
@@ -174,7 +187,7 @@
     <script src="js/ui/Message.js"></script>
     <script src="js/scenes/BootScene.js"></script>
     <script src="js/scenes/TitleScene.js?v=move4"></script>
-    <script src="js/scenes/WorldScene.js?v=npc1"></script>
+    <script src="js/scenes/WorldScene.js?v=shop1"></script>
     <script src="js/scenes/BattleScene.js"></script>
     <script src="js/scenes/UIScene.js"></script>
     <script src="js/scenes/GameOverScene.js"></script>

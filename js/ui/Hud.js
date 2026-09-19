@@ -40,7 +40,11 @@ var Hud = {
             dialogueSpeaker: document.getElementById('dialogue-speaker'),
             dialogueText: document.getElementById('dialogue-text'),
             dialogueOptions: document.getElementById('dialogue-options'),
-            dialogueContinue: document.getElementById('dialogue-continue')
+            dialogueContinue: document.getElementById('dialogue-continue'),
+            shop: document.getElementById('shop-overlay'),
+            shopSpeaker: document.getElementById('shop-speaker'),
+            shopCopy: document.getElementById('shop-copy'),
+            shopClose: document.getElementById('btn-shop-close')
         };
         this.ctxTarget = null;
         this.dialogue = null;
@@ -195,6 +199,25 @@ var Hud = {
                 self.hideWorldMap();
             });
         }
+        if (this.el.shop) {
+            this.el.shop.addEventListener('click', function (event) {
+                var btn = event.target && event.target.closest && event.target.closest('[data-shop-action]');
+                if (!btn) {
+                    return;
+                }
+                event.preventDefault();
+                event.stopPropagation();
+                btn.blur();
+                var action = btn.getAttribute('data-shop-action');
+                if (action === 'close') {
+                    self.hideShop();
+                    return;
+                }
+                if (action === 'buy' || action === 'sell') {
+                    self.log('The shelves are still being stocked.');
+                }
+            });
+        }
         if (this.el.dialogue) {
             this.el.dialogue.addEventListener('click', function (event) {
                 var btn = event.target && event.target.closest && event.target.closest('[data-dialogue-option]');
@@ -210,6 +233,10 @@ var Hud = {
             });
         }
         window.addEventListener('keydown', function (event) {
+            if (event.code === 'Escape' && self.el.shop && !self.el.shop.hidden) {
+                self.hideShop();
+                return;
+            }
             if (event.code === 'Escape' && self.el.worldMap && !self.el.worldMap.hidden) {
                 self.hideWorldMap();
             }
@@ -236,7 +263,7 @@ var Hud = {
 
     bindHudBlur: function () {
         document.addEventListener('mouseup', function (event) {
-            if (event.target && event.target.closest && event.target.closest('#title-overlay, #dead-overlay, #world-map-overlay, #dialogue-overlay')) {
+            if (event.target && event.target.closest && event.target.closest('#title-overlay, #dead-overlay, #world-map-overlay, #dialogue-overlay, #shop-overlay')) {
                 return;
             }
             var btn = event.target && event.target.closest && event.target.closest('#shell button');
@@ -322,6 +349,7 @@ var Hud = {
         this.hideContextMenu();
         this.hideWorldMap();
         this.hideDialogue();
+        this.hideShop();
         this.el.title.hidden = false;
         this.el.battle.hidden = true;
         this.el.dead.hidden = true;
@@ -342,6 +370,7 @@ var Hud = {
         this.hideContextMenu();
         this.hideWorldMap();
         this.hideDialogue();
+        this.hideShop();
         this.mode = 'dead';
         this.el.dead.hidden = false;
         document.getElementById('dead-text').textContent = text || 'You have been defeated.';
@@ -435,6 +464,7 @@ var Hud = {
                 : [];
         }
         this.hideContextMenu();
+        this.hideShop();
         this.dialogue = { speaker: speaker || '', pages: clean, index: 0, options: options };
         this.renderDialogue(true);
     },
@@ -541,6 +571,38 @@ var Hud = {
         if (world) {
             world.dialogueNpc = null;
         }
+    },
+
+    showShop: function (def) {
+        if (!this.el || !this.el.shop || this.mode !== 'world') {
+            return;
+        }
+        this.hideContextMenu();
+        this.hideWorldMap();
+        this.hideDialogue();
+        var name = def && def.name ? def.name : 'Shopkeeper';
+        if (this.el.shopSpeaker) {
+            this.el.shopSpeaker.textContent = name;
+        }
+        if (this.el.shopCopy) {
+            this.el.shopCopy.textContent = 'The shelves are still being stocked.';
+        }
+        this.el.shop.hidden = false;
+        this.el.shop.setAttribute('data-shop', def && def.key ? def.key : 'shop');
+    },
+
+    hideShop: function () {
+        if (this.el && this.el.shop) {
+            this.el.shop.hidden = true;
+            this.el.shop.removeAttribute('data-shop');
+            if (this.el.shopClose) {
+                this.el.shopClose.blur();
+            }
+        }
+    },
+
+    shopOpen: function () {
+        return !!(this.el && this.el.shop && !this.el.shop.hidden);
     },
 
     chooseContext: function (action) {
@@ -856,6 +918,7 @@ var Hud = {
         this.hideContextMenu();
         this.hideWorldMap();
         this.hideDialogue();
+        this.hideShop();
         this.battle = battle;
         this.selectingEnemy = false;
         this.el.battle.hidden = false;

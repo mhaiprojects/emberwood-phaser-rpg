@@ -527,6 +527,9 @@ var WorldScene = new Phaser.Class({
         if (Hud.hideDialogue) {
             Hud.hideDialogue();
         }
+        if (Hud.hideShop) {
+            Hud.hideShop();
+        }
         this.cancelLongPress();
         if (Hud.hideContextMenu) {
             Hud.hideContextMenu();
@@ -570,6 +573,9 @@ var WorldScene = new Phaser.Class({
         if (Hud.hideContextMenu) {
             Hud.hideContextMenu();
         }
+        if (Hud.hideShop) {
+            Hud.hideShop();
+        }
         if (!this.interiorId) {
             this.snapshotMobs();
             this.snapshotLoot();
@@ -595,6 +601,9 @@ var WorldScene = new Phaser.Class({
         this.cancelLongPress();
         if (Hud.hideContextMenu) {
             Hud.hideContextMenu();
+        }
+        if (Hud.hideShop) {
+            Hud.hideShop();
         }
         this.interiorId = null;
         this.clearWorldObjects();
@@ -1576,7 +1585,9 @@ var WorldScene = new Phaser.Class({
             return;
         }
         if (id === 'trade') {
-            Hud.log(def.name + ': I have nothing to trade yet.');
+            if (Hud.showShop) {
+                Hud.showShop(def);
+            }
         }
     },
 
@@ -1599,6 +1610,9 @@ var WorldScene = new Phaser.Class({
         this.lastFought = mob;
         if (Hud.hideDialogue) {
             Hud.hideDialogue();
+        }
+        if (Hud.hideShop) {
+            Hud.hideShop();
         }
         this.clearWalk();
         this.player.body.setVelocity(0);

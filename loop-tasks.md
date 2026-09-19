@@ -102,7 +102,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Click-to-continue multi-page dialogue instead of a single chat line. — Conclusion: From spawn (328,248) Rowan talk opens HTML `#dialogue-overlay` page 1; click / world-click pages through `lines` then closes; Bram special line stays one page; no Talk/Trade buttons. Phaser 3.90 keyboard off. Dedicated + Playwright 1/1.
 - [done] Dialogue option buttons (Talk / Trade / Bank / Quest) where the NPC supports them. — Conclusion: From spawn (328,248) Rowan shows Talk only; Bram Talk+Quest (Quest reports 0/5); Elise Talk+Bank stubs the vault (no shop/bank UI); Witch Talk only; no Trade. Phaser 3.90 keyboard off. Dedicated + Playwright 1/1.
 - [done] Examine on NPCs (right-click or long-press) with a short flavor sentence each. — Conclusion: From spawn (328,248) left-click Bram still talks; right-click Examine logs flavor; long-press Rowan Examine too; lock/battle ignore; no shop/bank; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [todo] A Shopkeeper in Emberhaven and a Trade window (see Shops). — Conclusion: —
+- [done] A Shopkeeper in Emberhaven and a Trade window (see Shops). — Conclusion: From spawn (328,248) Shopkeeper Mira (376,216) Talk+Trade opens HTML `#shop-overlay`; Buy/sell stubbed (gold unchanged); Elise stays heal/Bank; Phaser 3.90 keyboard off. Dedicated + Playwright 1/1.
 - [todo] Convert Elise from heal-only to a **bank booth** (deposit / withdraw); keep free heal as a separate Nurse or a bank option. — Conclusion: —
 - [todo] Quest-giver head icons (blue star / gold compass) over Bram until the militia task is done. — Conclusion: —
 - [todo] Walk-away to close dialogue; do not talk through TREE/ROCK walls. — Conclusion: —
@@ -504,4 +504,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 131 | 2026-09-19 | Click-to-continue multi-page dialogue instead of a single chat line | done — spawn (328,248) Rowan pages via HTML `#dialogue-overlay`; click/world-click continue; Bram stays one page; Phaser keyboard off; dedicated + Playwright 1/1 |
 | 132 | 2026-09-19 | Dialogue option buttons Talk / Trade / Bank / Quest where the NPC supports them | done — spawn (328,248) Rowan Talk; Bram Talk+Quest; Elise Talk+Bank stub (no shop/bank UI); Witch Talk; no Trade; Phaser keyboard off; dedicated + Playwright 1/1 |
 | 133 | 2026-09-19 | Examine on NPCs (right-click or long-press) with a flavor sentence each | done — spawn (328,248) left-click Bram still talks; right-click Examine logs flavor; long-press Rowan Examine too; lock/battle ignore; Phaser keyboard off; dedicated + Playwright 1/1 |
+| 134 | 2026-09-19 | A Shopkeeper in Emberhaven and a Trade window (see Shops) | done — spawn (328,248) Mira (376,216) Talk+Trade opens `#shop-overlay`; Buy/sell stubbed; Elise stays Bank; Phaser keyboard off; dedicated + Playwright 1/1 |
 

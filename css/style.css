@@ -438,9 +438,17 @@ button.ghost {
     font-size: 12px;
 }
 
+#shop-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 8px 0;
+}
+
 #title-overlay,
 #dead-overlay,
-#world-map-overlay {
+#world-map-overlay,
+#shop-overlay {
     position: fixed;
     inset: 0;
     background: rgba(8, 6, 10, 0.82);
@@ -453,6 +461,7 @@ button.ghost {
 #title-overlay[hidden],
 #dead-overlay[hidden],
 #world-map-overlay[hidden],
+#shop-overlay[hidden],
 #dialogue-overlay[hidden],
 #dialogue-options[hidden],
 #battle-panel[hidden],

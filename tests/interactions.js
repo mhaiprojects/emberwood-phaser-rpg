@@ -987,26 +987,35 @@ EmberwoodTests.add('hud: shop-overlay and bank overlay use hidden CSS like title
         assert(dead.hidden, 'hideDead sets dead.hidden');
         assertEqual(win.getComputedStyle(dead).display, 'none', 'hideDead computed none');
 
-        ['shop-overlay', 'bank-overlay'].forEach(function (id) {
+        var shop = win.document.getElementById('shop-overlay');
+        assert(shop && shop === win.Hud.el.shop, '#shop-overlay is Hud.el.shop');
+        assertEqual(shop.tagName, 'DIV', 'shop overlay is an HTML div');
+        assertHtmlOverlayHiddenPattern(win.document, 'shop-overlay', shop);
+        assert(shop.hidden, 'shop overlay starts hidden in world');
+        assertEqual(typeof win.Hud.showShop, 'function', 'Hud.showShop is an HTML overlay helper');
+        assertEqual(typeof win.Hud.hideShop, 'function', 'Hud.hideShop is an HTML overlay helper');
+        win.Hud.showShop({ key: 'shopkeep', name: 'Shopkeeper Mira' });
+        assertEqual(shop.hidden, false, 'showShop clears shop.hidden');
+        assertEqual(win.Hud.mode, 'world', 'showShop keeps Hud.mode world');
+        assertEqual(win.getComputedStyle(shop).display, 'flex', 'visible shop uses flex CSS, not Phaser text');
+        win.Hud.hideShop();
+        assert(shop.hidden, 'hideShop sets shop.hidden');
+        assertEqual(win.getComputedStyle(shop).display, 'none', 'hideShop computed none');
+
+        ['bank-overlay'].forEach(function (id) {
             var el = win.document.getElementById(id);
             if (!el) {
                 return;
             }
             assertHtmlOverlayHiddenPattern(win.document, id, el);
             el.hidden = true;
-            assert(el.hidden, '#' + id + ' stub stays hidden until a shop/bank UI is added');
+            assert(el.hidden, '#' + id + ' stub stays hidden until a bank UI is added');
         });
-        assert(
-            !win.document.getElementById('shop-overlay') || win.document.getElementById('shop-overlay').hidden,
-            'shop overlay stub, if present, stays hidden'
-        );
         assert(
             !win.document.getElementById('bank-overlay') || win.document.getElementById('bank-overlay').hidden,
             'bank overlay stub, if present, stays hidden'
         );
-        assert(!win.Hud.el.shop, 'Hud has no shop element yet (shop UI not implemented)');
         assert(!win.Hud.el.bank, 'Hud has no bank element yet (bank UI not implemented)');
-        assertEqual(typeof win.Hud.showShop, 'undefined', 'Hud.showShop is not a Phaser text menu');
         assertEqual(typeof win.Hud.showBank, 'undefined', 'Hud.showBank is not a Phaser text menu');
 
         assertNoPhaserShopBankMenu(win);
@@ -3798,6 +3807,122 @@ EmberwoodTests.add('npcs: dialogue option buttons Talk Trade Bank Quest where th
         assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
         assert(!win.game.input.keyboard, 'Phaser keyboard still off');
         noShopBank(win, 'return to spawn');
+    });
+});
+
+EmberwoodTests.add('npcs: Shopkeeper Mira Trade window opens shop-overlay', function (win, H) {
+    function hiddenCssRule(doc, id) {
+        var needle = '#' + id + '[hidden]';
+        var sheets = doc.styleSheets;
+        for (var s = 0; s < sheets.length; s++) {
+            var rules;
+            try {
+                rules = sheets[s].cssRules;
+            } catch (err) {
+                continue;
+            }
+            if (!rules) {
+                continue;
+            }
+            for (var r = 0; r < rules.length; r++) {
+                var sel = rules[r].selectorText || '';
+                if (sel.indexOf(needle) !== -1) {
+                    return rules[r];
+                }
+            }
+        }
+        return null;
+    }
+
+    function optionIds(overlay) {
+        var btns = overlay.querySelectorAll('[data-dialogue-option]');
+        var ids = [];
+        for (var i = 0; i < btns.length; i++) {
+            ids.push(btns[i].getAttribute('data-dialogue-option'));
+        }
+        return ids.join(',');
+    }
+
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        var world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(win.Hud.mode, 'world', 'world mode');
+
+        var shop = win.document.getElementById('shop-overlay');
+        var overlay = win.document.getElementById('dialogue-overlay');
+        assert(shop && shop === win.Hud.el.shop, '#shop-overlay is Hud.el.shop');
+        assert(shop.hidden, 'shop overlay starts hidden');
+        var shopHidden = hiddenCssRule(win.document, 'shop-overlay');
+        assert(shopHidden, '#shop-overlay[hidden] CSS exists like title/dead');
+        assertEqual(shopHidden.style.getPropertyValue('display'), 'none', '#shop-overlay[hidden] is display:none');
+
+        var mira = H.findNpc(win, 'shopkeep');
+        assert(mira, 'Shopkeeper Mira is in Emberhaven');
+        assertEqual(mira.npcDef.name, 'Shopkeeper Mira', 'shopkeeper name');
+        assertEqual(Math.round(mira.x), 376, 'Mira courtyard x');
+        assertEqual(Math.round(mira.y), 216, 'Mira courtyard y');
+        assert(mira.x !== spawn.x || mira.y !== spawn.y, 'Mira is not on the spawn tile');
+        assertEqual(win.npcDialogueOptions(mira.npcDef).map(function (opt) { return opt.id; }).join(','), 'talk,trade', 'Mira supports Talk and Trade');
+
+        var elise = H.findNpc(win, 'banker');
+        assert(elise, 'Elise is still in Emberhaven');
+        assertEqual(elise.npcDef.name, 'Banker Elise', 'Elise is not converted this tick');
+        assertEqual(win.npcDialogueOptions(elise.npcDef).map(function (opt) { return opt.id; }).join(','), 'talk,bank', 'Elise stays Talk and Bank');
+
+        win.Hud.el.log.innerHTML = '';
+        world.tryTalk(mira);
+        assert(win.Hud.dialogueOpen(), 'Mira talk opens dialogue');
+        assertEqual(optionIds(overlay), 'talk,trade', 'Mira shows Talk and Trade');
+        assert(overlay.querySelector('[data-dialogue-option="trade"]'), 'Mira has a Trade button');
+        assert(!overlay.querySelector('[data-dialogue-option="bank"]'), 'Mira has no Bank');
+        assert(shop.hidden, 'talk does not open the shop yet');
+        assertEqual(H.hero(win).gold, 8, 'starter gold is 8');
+
+        H.click(win, overlay.querySelector('[data-dialogue-option="talk"]'));
+        assertEqual(win.document.getElementById('dialogue-text').textContent, mira.npcDef.lines[0], 'Talk shows Mira flavor');
+        assert(shop.hidden, 'Talk does not open shop');
+
+        H.click(win, overlay.querySelector('[data-dialogue-option="trade"]'));
+        assert(!win.Hud.dialogueOpen(), 'Trade closes dialogue');
+        assert(win.Hud.shopOpen(), 'Trade opens the shop overlay');
+        assertEqual(shop.hidden, false, 'shop overlay is visible');
+        assertEqual(win.getComputedStyle(shop).display, 'flex', 'visible shop uses flex CSS, not Phaser text');
+        assertEqual(win.Hud.mode, 'world', 'shop keeps Hud.mode world');
+        assertEqual(shop.getAttribute('data-shop'), 'shopkeep', 'shop overlay is Mira');
+        assertEqual(win.document.getElementById('shop-speaker').textContent, 'Shopkeeper Mira', 'shop names Mira');
+        assertEqual(win.document.getElementById('shop-title').textContent, 'Trade', 'window title is Trade');
+        var gold = H.hero(win).gold;
+        var hp = H.hero(win).hp;
+        H.click(win, shop.querySelector('[data-shop-action="buy"]'));
+        assertEqual(H.lastChat(win), 'The shelves are still being stocked.', 'Buy is stubbed');
+        assertEqual(H.hero(win).gold, gold, 'Buy stub does not take gold');
+        assertEqual(H.hero(win).hp, hp, 'Buy stub does not change HP');
+        assert(win.Hud.shopOpen(), 'Buy stub keeps the shop open');
+        H.click(win, shop.querySelector('[data-shop-action="sell"]'));
+        assertEqual(H.lastChat(win), 'The shelves are still being stocked.', 'Sell is stubbed');
+        assertEqual(H.hero(win).gold, gold, 'Sell stub does not change gold');
+        H.click(win, win.document.getElementById('btn-shop-close'));
+        assert(shop.hidden, 'Close hides the shop overlay');
+        assert(!win.Hud.shopOpen(), 'shopOpen is false after Close');
+        assertEqual(win.Hud.mode, 'world', 'Close keeps Hud.mode world');
+        assert(!win.document.getElementById('bank-overlay') || win.document.getElementById('bank-overlay').hidden, 'bank UI stays closed');
+
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
     });
 });
 
