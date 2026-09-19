@@ -356,6 +356,65 @@ var WorldScene = new Phaser.Class({
         this.drawPathLine();
     },
 
+    dirTowardZone: function (here, target) {
+        if (!here || !target) {
+            return null;
+        }
+        var dx = target.gx - here.gx;
+        var dy = target.gy - here.gy;
+        var horiz = dx === 0 ? null : (dx > 0 ? 'e' : 'w');
+        var vert = dy === 0 ? null : (dy > 0 ? 's' : 'n');
+        var horizOk = horiz && neighborId(here, horiz);
+        var vertOk = vert && neighborId(here, vert);
+        if (horizOk && vertOk) {
+            return Math.abs(dx) >= Math.abs(dy) ? horiz : vert;
+        }
+        if (horizOk) {
+            return horiz;
+        }
+        if (vertOk) {
+            return vert;
+        }
+        return null;
+    },
+
+    exitWalkPoint: function (dir) {
+        var cx = Math.floor(MAP_W / 2);
+        var cy = Math.floor(MAP_H / 2);
+        if (dir === 'n') {
+            return tileCenter(cx, 0);
+        }
+        if (dir === 's') {
+            return tileCenter(cx, MAP_H - 1);
+        }
+        if (dir === 'w') {
+            return tileCenter(0, cy);
+        }
+        if (dir === 'e') {
+            return tileCenter(MAP_W - 1, cy);
+        }
+        return tileCenter(cx, cy);
+    },
+
+    walkTowardZone: function (zoneId) {
+        if (this.encounterLock || Hud.mode === 'battle' || Hud.mode === 'title' || Hud.mode === 'dead') {
+            return;
+        }
+        var here = ZONES[this.zoneId];
+        var target = ZONES[zoneId];
+        if (!here || !target || target.id === here.id) {
+            return;
+        }
+        var dir = this.dirTowardZone(here, target);
+        if (!dir) {
+            return;
+        }
+        var dest = this.exitWalkPoint(dir);
+        this.engageTarget = null;
+        this.talkTarget = null;
+        this.setWalk(dest.x, dest.y);
+    },
+
     clearWalk: function () {
         this.walkTarget = null;
         this.walkPath = null;

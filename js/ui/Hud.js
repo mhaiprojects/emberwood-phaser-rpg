@@ -147,6 +147,16 @@ var Hud = {
             }
             self.hideContextMenu();
         });
+        if (this.el.minimap) {
+            this.el.minimap.addEventListener('click', function (event) {
+                var cell = event.target.closest('.mm-cell');
+                var zoneId = cell && cell.getAttribute('data-zone');
+                if (!zoneId) {
+                    return;
+                }
+                self.clickMinimap(zoneId);
+            });
+        }
         window.addEventListener('keydown', function (event) {
             var tabs = {
                 F1: 'combat', F2: 'skills', F3: 'quest', F4: 'inv',
@@ -331,6 +341,18 @@ var Hud = {
         world.engageTarget = null;
         world.talkTarget = null;
         world.setWalk(target.worldX, target.worldY);
+    },
+
+    clickMinimap: function (zoneId) {
+        this.hideContextMenu();
+        if (this.mode !== 'world') {
+            return;
+        }
+        var world = window.game && window.game.scene.getScene('WorldScene');
+        if (!world || !world.walkTowardZone || world.encounterLock) {
+            return;
+        }
+        world.walkTowardZone(zoneId);
     },
 
     log: function (line) {

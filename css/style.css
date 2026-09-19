@@ -310,7 +310,7 @@ canvas {
     color: #d8c8a4;
     border: 1px solid #6a5638;
     padding: 6px 2px;
-    cursor: default;
+    cursor: pointer;
 }
 
 .mm-cell.is-here {

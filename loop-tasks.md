@@ -42,7 +42,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Click pathfinding around TREE / ROCK / WATER / SHRINE instead of sliding along collision. — Conclusion: Tile A* in Pathfind.js; 8-dir no corner-cut; same solids as arcade. Soft-avoid NPC/mob tiles; purple 2px line. Suite 49/49.
 - [done] Click-to-walk pathing: A* (or equivalent) to the clicked tile; thin purple line along the path; avoid TREE/ROCK/WATER/SHRINE plus NPC/mob bodies when possible; thread 1-tile doors/entrances; line updates while walking and clears on arrive or WASD/Esc cancel. — Conclusion: walkPath + pathGfx 0xaa66ff; gate (23,15) and house door (11,10); WASD hides line. Suite 49/49.
 - [done] Right-click “Walk here” on the ground (context menu; left-click stays walk). — Conclusion: From spawn (328,248) left-click still walks; right-click ground opens HTML Walk here (no immediate walk); choosing it sets walkTarget + yellow marker + purple A* line; lock/battle ignore; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [todo] Minimap cell click starts a purple walk path toward that land / the matching zone exit. — Conclusion: —
+- [done] Minimap cell click starts a purple walk path toward that land / the matching zone exit. — Conclusion: From spawn (328,248) Millfields/Northwood/Graves minimap clicks set walkTarget + yellow marker + purple A* line toward the east/north/west exits; current cell no-ops; lock/battle/title ignore; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [todo] If a mob parks on the only corridor, wait or stop adjacent instead of walking through them. — Conclusion: —
 - [todo] Keep `game.input.keyboard === false` after any input change; add a regression test for it. — Conclusion: —
 - [todo] A visible destination X (OSRS yellow X) instead of / in addition to the tiny rectangle marker. — Conclusion: —
@@ -481,4 +481,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 108 | 2026-09-19 | Esc / click-self to cancel walk (OSRS-style cancel) | done — spawn (328,248) Esc via Keys.js + click-self clear walk/path/marker; nearby ground still walks; Phaser keyboard off; dedicated + WASD cancel 1/1 |
 | 109 | 2026-09-19 | Walk vs run toggle and run-energy bar | done — spawn (328,248) Ctrl/HUD run 180 vs walk 90; energy drains/restores; Phaser keyboard off; dedicated + WASD cancel 1/1 |
 | 110 | 2026-09-19 | Right-click Walk here on the ground | done — spawn (328,248) left-click still walks; right-click opens HTML Walk here; choose sets path+marker; Phaser keyboard off; Playwright 1/1 |
+| 111 | 2026-09-19 | Minimap cell click starts a purple walk path toward that land / matching zone exit | done — spawn (328,248) Millfields/Northwood/Graves clicks walk toward east/north/west exits + purple line; current cell no-ops; lock/battle/title ignore; Phaser keyboard off; dedicated + Playwright 1/1 |
 

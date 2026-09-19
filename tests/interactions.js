@@ -6368,6 +6368,110 @@ EmberwoodTests.add('movement: click path walks a far tile and draws a purple lin
     });
 });
 
+EmberwoodTests.add('movement: minimap cell click walks toward that land and draws a purple line', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.engageTarget = null;
+        world.talkTarget = null;
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        world.mobs.children.iterate(function (mob) {
+            if (!mob) {
+                return;
+            }
+            mob.setPosition(80, 80);
+            if (mob.body) {
+                mob.body.reset(80, 80);
+            }
+        });
+        assertEqual(spawn.x, 328, 'spawn x tile center');
+        assertEqual(spawn.y, 248, 'spawn y tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assertEqual(win.Hud.mode, 'world', 'world mode');
+        assert(String(win.Phaser.VERSION).indexOf('3.') === 0, 'Phaser 3');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(!world.cursors, 'WorldScene has no Phaser cursors');
+        assertEqual(typeof world.walkTowardZone, 'function', 'walkTowardZone exists');
+
+        var east = win.tileCenter(win.MAP_W - 1, Math.floor(win.MAP_H / 2));
+        var north = win.tileCenter(Math.floor(win.MAP_W / 2), 0);
+        var west = win.tileCenter(0, Math.floor(win.MAP_H / 2));
+        var mill = win.document.querySelector('#minimap .mm-cell[data-zone="millfields"]');
+        var wood = win.document.querySelector('#minimap .mm-cell[data-zone="northwood"]');
+        var graves = win.document.querySelector('#minimap .mm-cell[data-zone="graves"]');
+        var here = win.document.querySelector('#minimap .mm-cell[data-zone="haven"]');
+        assert(mill && wood && graves && here, 'minimap cells exist');
+
+        H.click(win, here);
+        assert(!world.walkTarget, 'current-land cell does not start a walk');
+        assert(!world.pathGfx.visible, 'current-land cell does not draw a path');
+
+        H.click(win, mill);
+        assert(world.walkTarget, 'millfields cell sets walkTarget');
+        assertEqual(Math.round(world.walkTarget.x), Math.round(east.x), 'walk x is the east exit');
+        assertEqual(Math.round(world.walkTarget.y), Math.round(east.y), 'walk y is the east exit');
+        assert(world.marker.visible, 'yellow marker at the east exit');
+        assert(world.walkPath && world.walkPath.length, 'A* path toward Millfields');
+        assert(world.pathGfx && world.pathGfx.visible, 'purple path visible toward Millfields');
+        assertEqual(win.PATH_LINE_COLOR, 0xaa66ff, 'path color is purple');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off after minimap click');
+
+        var startX = world.player.x;
+        return H.sleep(400).then(function () {
+            assert(world.player.x > startX + 12, 'walks east toward Millfields, x=' + world.player.x);
+            assert(world.walkTarget, 'still pathing toward Millfields');
+            assert(world.pathGfx.visible, 'purple line stays while walking to the exit');
+            world.clearWalk();
+            world.placePlayer(spawn.x, spawn.y);
+            world.player.body.setVelocity(0, 0);
+
+            H.click(win, wood);
+            assert(world.walkTarget, 'northwood cell sets walkTarget');
+            assertEqual(Math.round(world.walkTarget.x), Math.round(north.x), 'walk x is the north exit');
+            assertEqual(Math.round(world.walkTarget.y), Math.round(north.y), 'walk y is the north exit');
+            assert(world.pathGfx.visible, 'purple line toward Northwood');
+            world.clearWalk();
+
+            H.click(win, graves);
+            assert(world.walkTarget, 'diagonal Graves cell sets walkTarget');
+            assertEqual(Math.round(world.walkTarget.x), Math.round(west.x), 'Graves hop uses the west exit');
+            assertEqual(Math.round(world.walkTarget.y), Math.round(west.y), 'Graves hop y is the west exit');
+            assert(world.pathGfx.visible, 'purple line toward Graves via Westmead');
+            world.clearWalk();
+
+            world.encounterLock = true;
+            H.click(win, mill);
+            assert(!world.walkTarget, 'encounterLock ignores minimap click');
+            assert(!world.pathGfx.visible, 'no purple line under lock');
+            world.encounterLock = false;
+
+            win.Hud.mode = 'battle';
+            H.click(win, mill);
+            assert(!world.walkTarget, 'battle mode ignores minimap click');
+            win.Hud.mode = 'world';
+
+            win.Hud.showTitle();
+            H.click(win, mill);
+            assert(!world.walkTarget, 'title ignores minimap click');
+            win.Hud.hideTitle();
+            assertEqual(win.Hud.mode, 'world', 'world restored after title');
+
+            world.placePlayer(spawn.x, spawn.y);
+            world.player.body.setVelocity(0, 0);
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        });
+    });
+});
+
 EmberwoodTests.add('movement: click path goes through the courtyard gate', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');
