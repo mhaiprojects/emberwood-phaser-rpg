@@ -239,6 +239,10 @@ var Hud = {
                     return;
                 }
                 if (action === 'buy' || action === 'sell') {
+                    if (action === 'buy' && typeof canAddItem === 'function' && !canAddItem(self.hero())) {
+                        self.log('inventory full');
+                        return;
+                    }
                     self.log('The shelves are still being stocked.');
                 }
             });
@@ -802,6 +806,10 @@ var Hud = {
             return;
         }
         if (action === 'withdraw') {
+            if (typeof canAddItem === 'function' && !canAddItem(hero, id)) {
+                this.log('inventory full');
+                return;
+            }
             if (!withdrawItem(hero, id, 1)) {
                 this.log('The bank is empty.');
                 return;
@@ -994,7 +1002,7 @@ var Hud = {
     renderInventory: function (hero) {
         var html = '';
         var i;
-        for (i = 0; i < 28; i++) {
+        for (i = 0; i < INVENTORY_CAP; i++) {
             var stack = hero.inventory[i];
             if (stack) {
                 var def = ITEM_DB[stack.id] || { name: stack.id, icon: '?' };

@@ -78,21 +78,41 @@ function autoRetaliateOn(hero) {
     return !!hero.autoRetaliate;
 }
 
+var INVENTORY_CAP = 28;
+
+function canAddItem(hero, id) {
+    if (!hero || !hero.inventory) {
+        return false;
+    }
+    if (id && findStack(hero.inventory, id)) {
+        return true;
+    }
+    if (id === 'coins' && hero.gold > 0) {
+        return true;
+    }
+    return hero.inventory.length < INVENTORY_CAP;
+}
+
 function addItem(hero, id, qty) {
     qty = qty || 1;
+    if (!hero || !id) {
+        return false;
+    }
+    if (!canAddItem(hero, id)) {
+        return false;
+    }
     if (id === 'coins') {
         hero.gold += qty;
         syncCoins(hero);
-        return;
+        return true;
     }
-    var i;
-    for (i = 0; i < hero.inventory.length; i++) {
-        if (hero.inventory[i].id === id) {
-            hero.inventory[i].qty += qty;
-            return;
-        }
+    var stack = findStack(hero.inventory, id);
+    if (stack) {
+        stack.qty += qty;
+        return true;
     }
     hero.inventory.push({ id: id, qty: qty });
+    return true;
 }
 
 function heroHasItem(hero, id) {
@@ -172,6 +192,9 @@ function withdrawItem(hero, id, qty) {
     if (!stack || stack.qty < qty) {
         return false;
     }
+    if (!canAddItem(hero, id)) {
+        return false;
+    }
     stack.qty -= qty;
     if (stack.qty <= 0) {
         bank.splice(bank.indexOf(stack), 1);
@@ -192,7 +215,7 @@ function syncCoins(hero) {
             break;
         }
     }
-    if (!found && hero.gold > 0) {
+    if (!found && hero.gold > 0 && hero.inventory.length < INVENTORY_CAP) {
         hero.inventory.unshift({ id: 'coins', qty: hero.gold });
     }
 }

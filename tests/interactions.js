@@ -1910,6 +1910,155 @@ EmberwoodTests.add('inv: stacks merge by id and drop when qty hits 0', function 
     });
 });
 
+EmberwoodTests.add('inv: 28-stack cap refuses loot shop buy and gather with inventory full', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, true);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.clearLoot();
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(win.INVENTORY_CAP, 28, 'hard inventory cap is 28 stacks');
+        assertEqual(typeof win.canAddItem, 'function', 'canAddItem helper');
+        assertEqual(typeof win.addItem, 'function', 'addItem respects the cap');
+        assertEqual(typeof world.tryPickup, 'function', 'tryPickup is loot');
+        assertEqual(typeof world.collectNearbyLoot, 'function', 'collectNearbyLoot is gather');
+
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(hero.inventory.length, 5, 'starter has five stacks');
+        assertEqual(win.canAddItem(hero, 'bones'), true, 'new bones stack has room');
+        assertEqual(win.canAddItem(hero, 'shrimp'), true, 'existing shrimp can merge');
+        assertEqual(win.addItem(hero, 'bones', 1), true, 'addItem bones succeeds with room');
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(hero.inventory.length, 6, 'bones opened a sixth stack');
+
+        win.takeItem(hero, 'bones', 1);
+        var n = 0;
+        while (hero.inventory.length < win.INVENTORY_CAP) {
+            hero.inventory.push({ id: 'pad-' + n, qty: 1 });
+            n += 1;
+        }
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(hero.inventory.length, 28, 'bag filled to 28 stacks');
+        assertEqual(win.canAddItem(hero, 'bones'), false, 'new bones stack is refused');
+        assertEqual(win.canAddItem(hero, 'shrimp'), true, 'shrimp still merges at 28');
+        assertEqual(win.canAddItem(hero), false, 'shop new-stack buy is refused at 28');
+        assertEqual(win.addItem(hero, 'bones', 1), false, 'addItem bones fails at cap');
+        assertEqual(hero.inventory.filter(function (row) { return row.id === 'bones'; }).length, 0, 'bones never added');
+        var shrimp = hero.inventory.filter(function (row) { return row.id === 'shrimp'; })[0];
+        var shrimpQty = shrimp.qty;
+        assertEqual(win.addItem(hero, 'shrimp', 1), true, 'addItem shrimp merges at cap');
+        assertEqual(shrimp.qty, shrimpQty + 1, 'shrimp qty grew');
+        assertEqual(hero.inventory.length, 28, 'merge does not grow past 28');
+        var gold = hero.gold;
+        assertEqual(win.addItem(hero, 'coins', 3), true, 'addItem coins merges at cap');
+        assertEqual(hero.gold, gold + 3, 'gold still increases when coins exist');
+        assertEqual(hero.inventory.length, 28, 'coins merge stays at 28');
+
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        var inv = win.document.getElementById('inv-grid');
+        assertEqual(inv.querySelectorAll('.inv-slot').length, 28, 'HUD still has 28 slots');
+        assertEqual(inv.querySelectorAll('.inv-slot[data-item]').length, 28, 'all 28 slots filled');
+
+        win.Hud.el.log.innerHTML = '';
+        world.spawnLoot(spawn.x, spawn.y, [{ id: 'bones', qty: 1 }]);
+        var live = (world.groundLoot || []).filter(function (entry) { return entry && !entry.taken && entry.sprite; });
+        assertEqual(live.length, 1, 'bones pile spawned');
+        var drop = live[0];
+        assertEqual(world.tryPickup(drop), false, 'loot pickup refuses a new stack');
+        assertEqual(drop.taken, false, 'loot stays on the ground');
+        assert(drop.sprite, 'loot sprite is not destroyed');
+        assertEqual(H.lastChat(win), 'inventory full', 'loot chats inventory full');
+        assertEqual(H.hero(win).inventory.length, 28, 'loot did not add a stack');
+        assertEqual(H.hero(win).inventory.filter(function (row) { return row.id === 'bones'; }).length, 0, 'no bones from refused loot');
+
+        world.collectNearbyLoot();
+        assert(!drop.taken, 'gather leaves the pile');
+        assert(drop.sprite, 'gather does not destroy the sprite');
+        assertEqual(H.hero(win).inventory.length, 28, 'gather did not add a stack');
+        assert(H.chatHas(win, 'inventory full'), 'gather refuse is inventory full');
+
+        var shop = win.document.getElementById('shop-overlay');
+        gold = H.hero(win).gold;
+        win.Hud.showShop({ key: 'shopkeep', name: 'Shopkeeper Mira' });
+        assert(win.Hud.shopOpen(), 'shop opens while bag is full');
+        H.click(win, shop.querySelector('[data-shop-action="buy"]'));
+        assertEqual(H.lastChat(win), 'inventory full', 'shop buy chats inventory full');
+        assertEqual(H.hero(win).gold, gold, 'shop buy does not take gold when full');
+        assertEqual(H.hero(win).inventory.length, 28, 'shop buy does not add a stack');
+        assert(win.Hud.shopOpen(), 'shop stays open after refuse');
+        H.click(win, win.document.getElementById('btn-shop-close'));
+        assert(!win.Hud.shopOpen(), 'shop closed');
+
+        hero = H.hero(win);
+        hero.inventory = hero.inventory.filter(function (row) { return row.id !== 'pad-0'; });
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(hero.inventory.length, 27, 'one pad stack removed');
+        assertEqual(win.canAddItem(hero, 'bones'), true, 'bones has room again');
+        win.Hud.el.log.innerHTML = '';
+        assertEqual(world.tryPickup(drop), true, 'loot pickup succeeds with room');
+        assert(drop.taken, 'bones pile taken');
+        assert(H.chatHas(win, 'You pick up'), 'pickup chat after room');
+        hero = H.hero(win);
+        assertEqual(hero.inventory.filter(function (row) { return row.id === 'bones'; })[0].qty, 1, 'bones entered the bag');
+
+        world.clearLoot();
+        world.spawnLoot(spawn.x, spawn.y, [{ id: 'key', qty: 1 }]);
+        live = (world.groundLoot || []).filter(function (entry) { return entry && !entry.taken && entry.sprite; });
+        drop = live[0];
+        n = 0;
+        hero = H.hero(win);
+        while (hero.inventory.length < win.INVENTORY_CAP) {
+            hero.inventory.push({ id: 'fill-' + n, qty: 1 });
+            n += 1;
+        }
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        win.Hud.el.log.innerHTML = '';
+        world.placePlayer(spawn.x, spawn.y);
+        world.collectNearbyLoot();
+        assert(!drop.taken, 'gather refuses a new key stack');
+        assertEqual(H.lastChat(win), 'inventory full', 'gather chats inventory full');
+        assertEqual(H.hero(win).inventory.filter(function (row) { return row.id === 'key'; }).length, 0, 'no key from refused gather');
+
+        hero = H.hero(win);
+        hero.inventory = hero.inventory.filter(function (row) {
+            return String(row.id).indexOf('pad-') !== 0 && String(row.id).indexOf('fill-') !== 0;
+        });
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        win.Hud.showShop({ key: 'shopkeep', name: 'Shopkeeper Mira' });
+        H.click(win, shop.querySelector('[data-shop-action="buy"]'));
+        assertEqual(H.lastChat(win), 'The shelves are still being stocked.', 'Buy stays stubbed when there is room');
+        H.click(win, win.document.getElementById('btn-shop-close'));
+
+        world.clearLoot();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('hud: eat food from inventory', function (win, H) {
     H.click(win, '#tab-bar button[data-tab="inv"]');
     H.click(win, '#inv-grid [data-item="shrimp"]');

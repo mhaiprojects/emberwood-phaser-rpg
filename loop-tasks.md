@@ -155,7 +155,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Click coins / sword / shield / bones only logs the item name (no crash). — Conclusion: From spawn (328,248) Inv click coins/sword/shield/bones logs Coins./Bronze sword./Wooden shield./Bones.; qty/HP/gold unchanged; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] `addItem('coins')` increments `hero.gold` and `syncCoins`; `takeItem('coins')` decrements both. — Conclusion: From spawn (328,248) addItem coins +5/+1 and takeItem −3/−1 keep hero.gold, syncCoins stack, and HUD gold in sync. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Stacks merge by `id` and a stack is removed when `qty` hits 0. — Conclusion: From spawn (328,248) addItem merges shrimp/bones by id (one stack); takeItem last bones and eat last shrimp/bread drop the stack; last coins drop too. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [todo] A hard 28-stack inventory cap: loot / shop buy / gather refuse with `inventory full`. — Conclusion: —
+- [done] A hard 28-stack inventory cap: loot / shop buy / gather refuse with `inventory full`. — Conclusion: From spawn (328,248) 28-stack cap refuses new loot / shop buy / gather with `inventory full` (loot stays); existing stacks still merge. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [todo] Drop-to-ground from inventory (creates `groundLoot` at the player). — Conclusion: —
 - [todo] Shift-click drop once a Settings toggle exists (OSRS default). — Conclusion: —
 - [todo] Wear / Wield / Remove for `sword` (weapon) and `shield` (shield) and refresh the Worn tab. — Conclusion: —
@@ -519,4 +519,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 147 | 2026-09-19 | Hit-splats reuse floaters; keep 900ms turn queue (0.6s tick later) | done — spawn (328,248) hit/heal splat discs + ± floaters; Attack queues 900ms; no 0.6s tick; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 148 | 2026-09-19 | Death rules: gravestone or safe-death keep items; respawn in Emberhaven at low HP | done — spawn (328,248) lose keeps items; `#btn-respawn` Emberhaven at HP max/10; title retry stays abandon; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 149 | 2026-09-19 | Simple combat triangle hook melee vs unused Ranged/Magic skills | done — spawn (328,248) melee beats ranged 16→20, weak to magic 16→12; stance hooks Ranged/Magic XP; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
+| 150 | 2026-09-19 | A hard 28-stack inventory cap: loot / shop buy / gather refuse with inventory full | done — spawn (328,248) new stacks refuse `inventory full`; merge still works; loot stays; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 

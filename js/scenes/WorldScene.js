@@ -1940,7 +1940,13 @@ var WorldScene = new Phaser.Class({
             return false;
         }
         var hero = this.registry.get('hero');
-        addItem(hero, drop.id, drop.qty);
+        if (!addItem(hero, drop.id, drop.qty)) {
+            if (!drop.fullTold) {
+                Hud.log('inventory full');
+                drop.fullTold = true;
+            }
+            return false;
+        }
         this.registry.set('hero', hero);
         drop.taken = true;
         if (drop.sprite) {
