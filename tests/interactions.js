@@ -4761,6 +4761,163 @@ EmberwoodTests.add('npcs: player-NPC arcade collider is immovable and does not s
     });
 });
 
+EmberwoodTests.add('npcs: idle facing and a tiny wander leash so they are not statues', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        var world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.exitLock = true;
+        world.encounterLock = false;
+        world.clearWalk();
+        world.engageTarget = null;
+        world.talkTarget = null;
+        world.dialogueNpc = null;
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(typeof world.wanderNpcs, 'function', 'wanderNpcs exists');
+        assertEqual(typeof world.applyNpcFacing, 'function', 'applyNpcFacing exists');
+
+        var groupDefaults = world.npcs.defaults || {};
+        assert(groupDefaults.immovable === true || groupDefaults.setImmovable === true, 'NPC physics group defaults immovable');
+        var npcCollider = findPlayerNpcCollider(world);
+        assert(npcCollider && npcCollider.active, 'player-NPC arcade collider is active');
+
+        var rowan = H.findNpc(win, 'guard');
+        assert(rowan && rowan.body, 'Guard Rowan spawned');
+        assertEqual(Math.round(rowan.x), 252, 'Rowan x');
+        assertEqual(Math.round(rowan.y), 168, 'Rowan y');
+        assertEqual(rowan.homeX, 252, 'Rowan homeX is spawn x');
+        assertEqual(rowan.homeY, 168, 'Rowan homeY is spawn y');
+        assertEqual(rowan.body.immovable, true, 'Rowan body is immovable');
+        assertEqual(rowan.body.moves, true, 'Rowan body still participates in collision');
+        assert(['down', 'left', 'right', 'up'].indexOf(rowan.lastFacing) !== -1, 'Rowan has an idle facing');
+        assertEqual(rowan.flipX, rowan.lastFacing === 'right', 'spawn idle flipX matches lastFacing');
+
+        parkMobsOnly(world);
+        world.npcs.getChildren().forEach(function (npc) {
+            if (npc !== rowan && npc.body) {
+                npc.body.enable = false;
+                npc.body.setVelocity(0, 0);
+            }
+        });
+        rowan.body.setVelocity(0, 0);
+        rowan.lastFacing = 'down';
+        rowan.flipX = true;
+        world.applyNpcFacing(rowan);
+        assertEqual(rowan.flipX, false, 'idle down does not flipX');
+
+        var orig = win.Phaser.Math.Between;
+        try {
+            var calls = [];
+            win.Phaser.Math.Between = function (lo, hi) {
+                calls.push([lo, hi]);
+                return 1;
+            };
+            world.wanderNpcs();
+            assertEqual(calls.length, 1, 'occasional roll happens once per enabled NPC');
+            assertEqual(calls[0][0], 0, 'wander chance low is 0');
+            assertEqual(calls[0][1], 80, 'wander chance high is 80');
+            assertEqual(rowan.body.velocity.x, 0, 'no wander vx when roll is not 0');
+            assertEqual(rowan.body.velocity.y, 0, 'no wander vy when roll is not 0');
+            assertEqual(rowan.lastFacing, 'down', 'miss keeps idle facing');
+            assertEqual(rowan.flipX, false, 'miss idle flipX stays down');
+
+            var seq = [0, 8, 0];
+            var i = 0;
+            calls = [];
+            win.Phaser.Math.Between = function (lo, hi) {
+                calls.push([lo, hi]);
+                var value = seq[i];
+                i += 1;
+                return value;
+            };
+            world.wanderNpcs();
+            assertEqual(calls.length, 3, 'roll then vx then vy');
+            assertEqual(calls[1][0], -12, 'vx low is -12');
+            assertEqual(calls[1][1], 12, 'vx high is 12');
+            assertEqual(calls[2][0], -12, 'vy low is -12');
+            assertEqual(calls[2][1], 12, 'vy high is 12');
+            assertEqual(Math.round(rowan.body.velocity.x), 8, 'small wander vx');
+            assertEqual(Math.round(rowan.body.velocity.y), 0, 'small wander vy');
+            assert(Math.abs(rowan.body.velocity.x) <= 12 && Math.abs(rowan.body.velocity.y) <= 12, 'wander velocity stays tiny');
+            assertEqual(rowan.lastFacing, 'right', 'wander east sets idle facing right');
+            assertEqual(rowan.flipX, true, 'right facing uses flipX');
+            assertEqual(rowan.body.immovable, true, 'Rowan stays immovable while wandering');
+
+            seq = [0, -8, 0];
+            i = 0;
+            world.wanderNpcs();
+            assertEqual(Math.round(rowan.body.velocity.x), -8, 'small wander vx west');
+            assertEqual(rowan.lastFacing, 'left', 'wander west sets idle facing left');
+            assertEqual(rowan.flipX, false, 'left facing does not flipX');
+
+            rowan.body.setVelocity(0, 0);
+            rowan.body.reset(rowan.homeX + 24, rowan.homeY);
+            rowan.setPosition(rowan.homeX + 24, rowan.homeY);
+            calls = [];
+            win.Phaser.Math.Between = function (lo, hi) {
+                calls.push([lo, hi]);
+                return 0;
+            };
+            world.wanderNpcs();
+            assertEqual(calls.length, 0, 'leash pull does not roll a new wander');
+            assert(rowan.body.velocity.x < 0, 'leash pulls back toward home x');
+            assertEqual(Math.round(rowan.body.velocity.y), 0, 'leash pull along x has no vy');
+            assert(Math.abs(rowan.body.velocity.x) <= 12, 'leash pull stays tiny');
+            assertEqual(rowan.lastFacing, 'left', 'leash pull west keeps left facing');
+            assertEqual(rowan.body.immovable, true, 'leash pull keeps the body immovable');
+
+            rowan.body.setVelocity(0, 0);
+            rowan.body.reset(rowan.homeX, rowan.homeY);
+            rowan.setPosition(rowan.homeX, rowan.homeY);
+            world.placePlayer(rowan.x - 18, rowan.y);
+            world.player.body.setVelocity(0, 0);
+            calls = [];
+            win.Phaser.Math.Between = function (lo, hi) {
+                calls.push([lo, hi]);
+                return 0;
+            };
+            world.wanderNpcs();
+            assertEqual(calls.length, 0, 'nearby player skips the wander roll');
+            assertEqual(rowan.body.velocity.x, 0, 'nearby player does not wander vx');
+            assertEqual(rowan.body.velocity.y, 0, 'nearby player does not wander vy');
+            assertEqual(Math.round(rowan.x), 252, 'nearby player does not shove Rowan x');
+            assertEqual(Math.round(rowan.y), 168, 'nearby player does not shove Rowan y');
+            assertEqual(rowan.body.immovable, true, 'nearby player leaves Rowan immovable');
+        } finally {
+            win.Phaser.Math.Between = orig;
+            world.npcs.getChildren().forEach(function (npc) {
+                if (npc && npc.body) {
+                    npc.body.enable = true;
+                    npc.body.setVelocity(0, 0);
+                }
+            });
+            world.mobs.getChildren().forEach(function (mob) {
+                if (mob && mob.body && mob.mobDef) {
+                    mob.body.enable = true;
+                    mob.aliveMob = true;
+                }
+            });
+        }
+
+        H.enterZone(win, 'haven');
+        world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('npcs: talking never starts during battle or encounterLock', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');

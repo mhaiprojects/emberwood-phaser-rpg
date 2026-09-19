@@ -12,6 +12,11 @@ var DOOR_ANIM_MS = 220;
 var DOOR_OPEN_SCALE_X = 0.18;
 var TALK_AWAY_PX = 40;
 var TALK_WALL_PX = 48;
+var NPC_WANDER_CHANCE = 80;
+var NPC_WANDER_SPEED = 12;
+var NPC_LEASH_PX = 16;
+var NPC_BUSY_PX = 32;
+var NPC_FACE_ORDER = ['down', 'left', 'right', 'up'];
 var COLLIDE_TILES = [
     TILE.WATER, TILE.TREE, TILE.ROCK, TILE.SHRINE,
     TILE.STALL, TILE.RANGE, TILE.ANVIL, TILE.BOOTH,
@@ -142,6 +147,24 @@ var WorldScene = new Phaser.Class({
             this.player.setFrame(0);
             this.player.flipX = false;
         }
+    },
+
+    applyNpcFacing: function (npc) {
+        if (!npc) {
+            return;
+        }
+        var vx = npc.body ? npc.body.velocity.x : 0;
+        var vy = npc.body ? npc.body.velocity.y : 0;
+        if (vx < -4) {
+            npc.lastFacing = 'left';
+        } else if (vx > 4) {
+            npc.lastFacing = 'right';
+        } else if (vy < -4) {
+            npc.lastFacing = 'up';
+        } else if (vy > 4) {
+            npc.lastFacing = 'down';
+        }
+        npc.flipX = (npc.lastFacing === 'right');
     },
 
     applyTilemap: function (grid) {
@@ -660,7 +683,7 @@ var WorldScene = new Phaser.Class({
 
     spawnPeople: function (zoneId) {
         var self = this;
-        (NPC_DEFS[zoneId] || []).forEach(function (def) {
+        (NPC_DEFS[zoneId] || []).forEach(function (def, index) {
             var sprite = self.npcs.create(def.x, def.y, def.texture || ('npc-' + def.key));
             if (def.tint && def.tint !== 0xffffff && !isUniqueMobTexture(def.texture || ('npc-' + def.key))) {
                 sprite.setTint(def.tint);
@@ -668,6 +691,11 @@ var WorldScene = new Phaser.Class({
             sprite.setImmovable(true);
             sprite.body.setSize(12, 12);
             sprite.npcDef = def;
+            sprite.homeX = def.x;
+            sprite.homeY = def.y;
+            sprite.lastFacing = NPC_FACE_ORDER[index % NPC_FACE_ORDER.length];
+            self.applyNpcFacing(sprite);
+            self.physics.add.collider(sprite, self.ground);
             var label = self.add.text(def.x, def.y - 14, def.name, {
                 fontSize: '8px',
                 fontFamily: 'Verdana, Geneva, sans-serif',
@@ -2059,6 +2087,44 @@ var WorldScene = new Phaser.Class({
         });
     },
 
+    wanderNpcs: function () {
+        var self = this;
+        var player = this.player;
+        this.npcs.children.iterate(function (npc) {
+            if (!npc || !npc.body || !npc.body.enable) {
+                return;
+            }
+            var busy = npc === self.dialogueNpc || npc === self.talkTarget;
+            if (!busy && player && player.body) {
+                busy = Phaser.Math.Distance.Between(player.x, player.y, npc.x, npc.y) < NPC_BUSY_PX;
+            }
+            if (busy) {
+                npc.body.setVelocity(0, 0);
+                self.applyNpcFacing(npc);
+                return;
+            }
+            var homeX = npc.homeX != null ? npc.homeX : npc.x;
+            var homeY = npc.homeY != null ? npc.homeY : npc.y;
+            var dist = Phaser.Math.Distance.Between(npc.x, npc.y, homeX, homeY);
+            if (dist > NPC_LEASH_PX) {
+                var dx = homeX - npc.x;
+                var dy = homeY - npc.y;
+                var len = dist || 1;
+                npc.body.setVelocity((dx / len) * NPC_WANDER_SPEED, (dy / len) * NPC_WANDER_SPEED);
+                self.applyNpcFacing(npc);
+                return;
+            }
+            if (Phaser.Math.Between(0, NPC_WANDER_CHANCE) !== 0) {
+                self.applyNpcFacing(npc);
+                return;
+            }
+            var vx = Phaser.Math.Between(-NPC_WANDER_SPEED, NPC_WANDER_SPEED);
+            var vy = Phaser.Math.Between(-NPC_WANDER_SPEED, NPC_WANDER_SPEED);
+            npc.body.setVelocity(vx, vy);
+            self.applyNpcFacing(npc);
+        });
+    },
+
     constrainGiantMobs: function () {
         var grid = this.tileGrid;
         var zoneId = this.zoneId;
@@ -2169,6 +2235,17 @@ var WorldScene = new Phaser.Class({
             if (mob && mob.nameLabel) {
                 var lift = 8 + Math.round((mob.displayHeight || 16) / 2);
                 mob.nameLabel.setPosition(mob.x, mob.y - lift);
+            }
+        });
+        this.npcs.children.iterate(function (npc) {
+            if (!npc) {
+                return;
+            }
+            if (npc.nameLabel) {
+                npc.nameLabel.setPosition(npc.x, npc.y - 14);
+            }
+            if (npc.questIcon) {
+                npc.questIcon.setPosition(npc.x, npc.y - 24);
             }
         });
 
@@ -2295,6 +2372,7 @@ var WorldScene = new Phaser.Class({
         this.closeDialogueIfAway();
 
         this.wanderMobs();
+        this.wanderNpcs();
         this.constrainGiantMobs();
         this.tryLockedDoor();
         this.tryAgilityShortcut();
