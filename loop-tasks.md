@@ -258,7 +258,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 
 ## 10. Quests / diary / progression (16)
 
-- [verify] Side Task + Quest tab start as `Talk to Guildmaster Bram in Emberhaven.` — Conclusion: —
+- [done] Side Task + Quest tab start as `Talk to Guildmaster Bram in Emberhaven.` — Conclusion: From spawn (328,248) side Task + Quest tab start as `Talk to Guildmaster Bram in Emberhaven.`; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [verify] Stage 1 text `Kill goblins in Northwood (N/5)` and journal `0/5` after accept. — Conclusion: —
 - [verify] Any `def.type === 'Goblin'` kill counts (Northwood and Westmead) — document that rule or restrict to Northwood. — Conclusion: —
 - [verify] Fifth goblin sets stage 2 and chats to return to Bram. — Conclusion: —
@@ -461,4 +461,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 88 | 2026-09-19 | clearLoot on zone change wipes ground loot | done — spawn (328,248) enterZone + Keys.js W wipe loot sprites and empty groundLoot; return does not persist; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 89 | 2026-09-19 | Pickup during encounterLock is blocked or deferred | done — spawn (328,248) lock/battle keep tryPickup+walk-over+click silent; unlock defers collectNearbyLoot; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 90 | 2026-09-19 | Prune + pickup do not throw if a sprite was already destroyed | done — spawn (328,248) tryPickup/collectNearbyLoot/pruneLoot stay silent after sprite.destroy; gold/bones still take; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 91 | 2026-09-19 | Side Task + Quest tab start as Talk to Guildmaster Bram in Emberhaven | done — spawn (328,248) `#hud-quest` + `#hud-quest-tab` start as `Talk to Guildmaster Bram in Emberhaven.`; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 

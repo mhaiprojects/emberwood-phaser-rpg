@@ -2345,6 +2345,34 @@ EmberwoodTests.add('npcs: Bram stage 3+ uses the post-quest line only', function
     });
 });
 
+EmberwoodTests.add('quests: side Task and Quest tab start as Talk to Guildmaster Bram', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        var world = H.world(win);
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        win.game.registry.set('quest', { id: 'goblins', stage: 0, progress: 0, goal: 5 });
+        world.placePlayer(spawn.x, spawn.y);
+        world.refreshHud();
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(H.quest(win).stage, 0, 'new game quest is unaccepted');
+        var startLine = 'Talk to Guildmaster Bram in Emberhaven.';
+        assertEqual(win.document.getElementById('hud-quest').textContent, startLine, 'side Task starts as talk-to-Bram');
+        assertEqual(win.document.getElementById('hud-quest-tab').textContent, startLine, 'Quest tab starts as talk-to-Bram');
+        H.click(win, '#tab-bar button[data-tab="quest"]');
+        assert(H.panelVisible(win, 'quest'), 'Quest tab panel is visible');
+        assertEqual(win.document.getElementById('hud-quest-tab').textContent, startLine, 'open Quest tab still talks-to-Bram');
+        assertEqual(win.document.getElementById('hud-quest').textContent, startLine, 'side Task stays talk-to-Bram while Quest is open');
+    });
+});
+
 EmberwoodTests.add('npcs: Guildmaster Bram quest', function (win, H) {
     H.enterZone(win, 'haven');
     var bram = H.findNpc(win, 'guild');
