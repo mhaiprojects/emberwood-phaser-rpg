@@ -126,7 +126,7 @@ function examineNpcText(def) {
 var NPC_DEFS = {
     haven: [
         { key: 'guild', name: 'Guildmaster Bram', x: 210, y: 150, tint: 0xffffff, options: ['talk', 'quest'], examine: 'A scarred militia captain. He still drills the courtyard.', lines: ['Welcome to Emberhaven, adventurer.', 'Goblins from Northwood raid our stores.', 'Slay 5 goblins and return. The militia will pay.'] },
-        { key: 'banker', name: 'Banker Elise', x: 160, y: 130, tint: 0xffffff, options: ['talk', 'bank'], examine: 'The town banker. Her ledgers never leave her sight.', lines: ['Your coin is safe with me.', 'Rest here if the roads were cruel.'] },
+        { key: 'banker', name: 'Banker Elise', x: 160, y: 130, tint: 0xffffff, options: ['talk', 'bank'], examine: 'The town banker. Her ledgers never leave her sight.', lines: ['Your coin is safe with me.', 'Deposit what you cannot carry.'] },
         { key: 'guard', name: 'Guard Rowan', x: 252, y: 168, tint: 0xffffff, options: ['talk'], examine: 'A watchful town guard. He knows every path from the gate.', lines: ['Keep to the paths.', 'North is woods. East is farms. South is the sea.'] },
         { key: 'shopkeep', name: 'Shopkeeper Mira', x: 376, y: 216, tint: 0xffffff, texture: 'npc-farmer', options: ['talk', 'trade'], examine: 'The town shopkeeper. She minds the general store.', lines: ['Fine wares if you have the coin.', 'Bones and spare food fetch a price.'] }
     ],

@@ -1002,21 +1002,21 @@ EmberwoodTests.add('hud: shop-overlay and bank overlay use hidden CSS like title
         assert(shop.hidden, 'hideShop sets shop.hidden');
         assertEqual(win.getComputedStyle(shop).display, 'none', 'hideShop computed none');
 
-        ['bank-overlay'].forEach(function (id) {
-            var el = win.document.getElementById(id);
-            if (!el) {
-                return;
-            }
-            assertHtmlOverlayHiddenPattern(win.document, id, el);
-            el.hidden = true;
-            assert(el.hidden, '#' + id + ' stub stays hidden until a bank UI is added');
-        });
-        assert(
-            !win.document.getElementById('bank-overlay') || win.document.getElementById('bank-overlay').hidden,
-            'bank overlay stub, if present, stays hidden'
-        );
-        assert(!win.Hud.el.bank, 'Hud has no bank element yet (bank UI not implemented)');
-        assertEqual(typeof win.Hud.showBank, 'undefined', 'Hud.showBank is not a Phaser text menu');
+        var bank = win.document.getElementById('bank-overlay');
+        assert(bank && bank === win.Hud.el.bank, '#bank-overlay is Hud.el.bank');
+        assertEqual(bank.tagName, 'DIV', 'bank overlay is an HTML div');
+        assertHtmlOverlayHiddenPattern(win.document, 'bank-overlay', bank);
+        assert(bank.hidden, 'bank overlay starts hidden in world');
+        assertEqual(typeof win.Hud.showBank, 'function', 'Hud.showBank is an HTML overlay helper');
+        assertEqual(typeof win.Hud.hideBank, 'function', 'Hud.hideBank is an HTML overlay helper');
+        win.Hud.showBank({ key: 'banker', name: 'Banker Elise' });
+        assertEqual(bank.hidden, false, 'showBank clears bank.hidden');
+        assertEqual(win.Hud.mode, 'world', 'showBank keeps Hud.mode world');
+        assertEqual(win.getComputedStyle(bank).display, 'flex', 'visible bank uses flex CSS, not Phaser text');
+        assert(shop.hidden, 'showBank hides the shop overlay');
+        win.Hud.hideBank();
+        assert(bank.hidden, 'hideBank sets bank.hidden');
+        assertEqual(win.getComputedStyle(bank).display, 'none', 'hideBank computed none');
 
         assertNoPhaserShopBankMenu(win);
         assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off after overlay check');
@@ -3308,7 +3308,16 @@ EmberwoodTests.add('npcs: Banker Elise heals for free', function (win, H) {
         var gold = H.hero(win).gold;
         var xp = H.hero(win).xp;
         world.tryTalk(elise);
-        assertEqual(H.hero(win).hp, 100, 'restores HP to max');
+        assertEqual(H.hero(win).hp, 40, 'tryTalk no longer auto-heals');
+        assertEqual(H.lastChat(win), 'Banker Elise: Your coin is safe with me.', 'Talk is bank flavor');
+        var overlay = win.document.getElementById('dialogue-overlay');
+        H.click(win, overlay.querySelector('[data-dialogue-option="bank"]'));
+        var bank = win.document.getElementById('bank-overlay');
+        assert(bank && bank === win.Hud.el.bank, '#bank-overlay is Hud.el.bank');
+        assert(win.Hud.bankOpen() && !bank.hidden, 'Bank option opens the overlay');
+        assertEqual(win.Hud.mode, 'world', 'bank keeps Hud.mode world');
+        H.click(win, bank.querySelector('[data-bank-action="heal"]'));
+        assertEqual(H.hero(win).hp, 100, 'Heal option restores HP to max');
         assertEqual(H.hero(win).hp, H.hero(win).maxHp, 'HP equals maxHp');
         assertEqual(H.hero(win).gold, gold, 'heal costs 0 gold');
         assertEqual(H.hero(win).gold, 8, 'starter gold stays 8');
@@ -3328,17 +3337,114 @@ EmberwoodTests.add('npcs: Banker Elise heals for free', function (win, H) {
         win.syncCoins(hero);
         win.game.registry.set('hero', hero);
         world.refreshHud();
-        world.tryTalk(elise);
+        H.click(win, bank.querySelector('[data-bank-action="heal"]'));
         assertEqual(H.hero(win).hp, H.hero(win).maxHp, '0-gold hero still heals to max');
         assertEqual(H.hero(win).gold, 0, '0-gold heal still costs 0');
         assert(!H.chatHas(win, 'Come back with 10 gold'), 'banker never demands gold');
         assertEqual(win.document.getElementById('hud-gold').textContent, '0', 'HUD gold stays 0');
 
         gold = H.hero(win).gold;
-        world.tryTalk(elise);
+        H.click(win, bank.querySelector('[data-bank-action="heal"]'));
         assertEqual(H.hero(win).hp, H.hero(win).maxHp, 'full HP stays at max');
-        assertEqual(H.hero(win).gold, gold, 'full-HP talk costs 0');
-        assertEqual(H.lastChat(win), 'Banker Elise: Your wounds close. HP restored.', 'full-HP talk still uses the heal line');
+        assertEqual(H.hero(win).gold, gold, 'full-HP heal costs 0');
+        assertEqual(H.lastChat(win), 'Banker Elise: Your wounds close. HP restored.', 'full-HP Heal still uses the heal line');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off after heal');
+    });
+});
+
+EmberwoodTests.add('npcs: Banker Elise bank overlay deposit withdraw', function (win, H) {
+    function stackQty(list, id) {
+        var row = (list || []).filter(function (stack) { return stack.id === id; })[0];
+        return row ? row.qty : 0;
+    }
+
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        var world = H.world(win);
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.refreshHud();
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(typeof win.depositItem, 'function', 'depositItem exists');
+        assertEqual(typeof win.withdrawItem, 'function', 'withdrawItem exists');
+
+        var elise = H.findNpc(win, 'banker');
+        assert(elise, 'Elise is in Emberhaven');
+        var bank = win.document.getElementById('bank-overlay');
+        assert(bank && bank === win.Hud.el.bank, '#bank-overlay is Hud.el.bank');
+        assert(bank.hidden, 'bank overlay starts hidden');
+
+        win.Hud.el.log.innerHTML = '';
+        world.tryTalk(elise);
+        assertEqual(H.hero(win).hp, 100, 'Talk does not change HP');
+        assertEqual(H.hero(win).gold, 8, 'Talk does not change gold');
+        H.click(win, win.document.querySelector('[data-dialogue-option="bank"]'));
+        assert(!win.Hud.dialogueOpen(), 'Bank closes dialogue');
+        assert(win.Hud.bankOpen() && !bank.hidden, 'Bank opens #bank-overlay');
+        assertEqual(win.Hud.mode, 'world', 'bank keeps Hud.mode world');
+        assertEqual(bank.getAttribute('data-bank'), 'banker', 'overlay is Elise');
+        assertEqual(win.document.getElementById('bank-speaker').textContent, 'Banker Elise', 'bank names Elise');
+        assertEqual(win.document.getElementById('bank-title').textContent, 'Bank', 'window title is Bank');
+        assertEqual(win.getComputedStyle(bank).display, 'flex', 'visible bank uses flex CSS, not Phaser text');
+
+        assertEqual(stackQty(H.hero(win).inventory, 'coins'), 8, 'start with 8 coins in inventory');
+        assertEqual(stackQty(H.hero(win).bank, 'coins'), 0, 'bank starts empty of coins');
+        H.click(win, bank.querySelector('#bank-inv-grid [data-bank-item="coins"]'));
+        H.click(win, bank.querySelector('[data-bank-action="deposit"]'));
+        assertEqual(H.hero(win).gold, 7, 'deposit 1 coin decrements gold');
+        assertEqual(stackQty(H.hero(win).inventory, 'coins'), 7, 'inventory coins 8→7');
+        assertEqual(stackQty(H.hero(win).bank, 'coins'), 1, 'bank coins 0→1');
+        assertEqual(win.document.getElementById('hud-gold').textContent, '7', 'HUD gold after deposit');
+        assertEqual(H.lastChat(win), 'You deposit 1 x Coins.', 'deposit chat');
+        H.click(win, bank.querySelector('[data-bank-action="deposit"]'));
+        H.click(win, bank.querySelector('[data-bank-action="deposit"]'));
+        assertEqual(H.hero(win).gold, 5, 'three coin deposits leave 5 gold');
+        assertEqual(stackQty(H.hero(win).inventory, 'coins'), 5, 'inventory coins 5');
+        assertEqual(stackQty(H.hero(win).bank, 'coins'), 3, 'bank coins 3');
+
+        H.click(win, bank.querySelector('#bank-vault-grid [data-bank-item="coins"]'));
+        H.click(win, bank.querySelector('[data-bank-action="withdraw"]'));
+        assertEqual(H.hero(win).gold, 6, 'withdraw 1 coin increments gold');
+        assertEqual(stackQty(H.hero(win).inventory, 'coins'), 6, 'inventory coins 5→6');
+        assertEqual(stackQty(H.hero(win).bank, 'coins'), 2, 'bank coins 3→2');
+        assertEqual(win.document.getElementById('hud-gold').textContent, '6', 'HUD gold after withdraw');
+        assertEqual(H.lastChat(win), 'You withdraw 1 x Coins.', 'withdraw chat');
+
+        var shrimpInv = stackQty(H.hero(win).inventory, 'shrimp');
+        assertEqual(shrimpInv, 8, 'start with 8 shrimp');
+        H.click(win, bank.querySelector('#bank-inv-grid [data-bank-item="shrimp"]'));
+        H.click(win, bank.querySelector('[data-bank-action="deposit"]'));
+        assertEqual(stackQty(H.hero(win).inventory, 'shrimp'), 7, 'inventory shrimp 8→7');
+        assertEqual(stackQty(H.hero(win).bank, 'shrimp'), 1, 'bank shrimp 0→1');
+        assertEqual(H.hero(win).gold, 6, 'shrimp deposit does not change gold');
+        H.click(win, bank.querySelector('#bank-vault-grid [data-bank-item="shrimp"]'));
+        H.click(win, bank.querySelector('[data-bank-action="withdraw"]'));
+        assertEqual(stackQty(H.hero(win).inventory, 'shrimp'), 8, 'withdraw restores shrimp');
+        assertEqual(stackQty(H.hero(win).bank, 'shrimp'), 0, 'bank shrimp stack removed');
+        assertEqual(H.hero(win).gold, 6, 'shrimp withdraw does not change gold');
+
+        H.click(win, win.document.getElementById('btn-bank-close'));
+        assert(bank.hidden, 'Close hides the bank overlay');
+        assert(!win.Hud.bankOpen(), 'bankOpen is false after Close');
+        assertEqual(win.Hud.mode, 'world', 'Close keeps Hud.mode world');
+        assertEqual(H.hero(win).gold, 6, 'gold stays 6 after close');
+        assertEqual(stackQty(H.hero(win).bank, 'coins'), 2, 'banked coins persist after close');
+        assert(!win.document.getElementById('shop-overlay') || win.document.getElementById('shop-overlay').hidden, 'shop stays closed');
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
     });
 });
 
@@ -3767,21 +3873,26 @@ EmberwoodTests.add('npcs: dialogue option buttons Talk Trade Bank Quest where th
         world.refreshHud();
         win.Hud.el.log.innerHTML = '';
         world.tryTalk(elise);
-        assertEqual(H.hero(win).hp, 100, 'tryTalk still heals');
+        assertEqual(H.hero(win).hp, 40, 'tryTalk no longer auto-heals');
         assertEqual(optionIds(overlay), 'talk,bank', 'Elise shows Talk and Bank');
         assertEqual(optionLabels(overlay), 'Talk,Bank', 'Elise Talk Bank labels');
         assert(!overlay.querySelector('[data-dialogue-option="trade"]'), 'Elise has no Trade');
         assert(!overlay.querySelector('[data-dialogue-option="quest"]'), 'Elise has no Quest');
         gold = H.hero(win).gold;
         H.click(win, overlay.querySelector('[data-dialogue-option="bank"]'));
-        assert(win.Hud.dialogueOpen(), 'Bank stub keeps dialogue open');
-        assertEqual(H.lastChat(win), 'Banker Elise: The vault is still being fitted.', 'Bank is a stub until the bank UI item');
-        assertEqual(H.hero(win).gold, gold, 'Bank stub does not take gold');
-        assertEqual(H.hero(win).hp, 100, 'Bank stub does not change HP');
-        noShopBank(win, 'Elise Bank');
+        var bank = win.document.getElementById('bank-overlay');
+        assert(!win.Hud.dialogueOpen(), 'Bank closes dialogue');
+        assert(win.Hud.bankOpen() && bank && !bank.hidden, 'Bank opens #bank-overlay');
+        assertEqual(win.Hud.mode, 'world', 'bank keeps Hud.mode world');
+        assertEqual(H.hero(win).gold, gold, 'Bank does not take gold');
+        assertEqual(H.hero(win).hp, 40, 'Bank does not auto-heal');
+        assert(win.document.getElementById('shop-overlay').hidden, 'Elise Bank does not open shop UI');
+        H.click(win, win.document.getElementById('btn-bank-close'));
+        assert(bank.hidden, 'Close hides the bank overlay');
+        world.tryTalk(elise);
         H.click(win, overlay.querySelector('[data-dialogue-option="talk"]'));
         assertEqual(win.document.getElementById('dialogue-text').textContent, elise.npcDef.lines[0], 'Talk shows Elise flavor');
-        noShopBank(win, 'Elise Talk');
+        assert(bank.hidden, 'Elise Talk does not open bank UI');
         win.Hud.hideDialogue();
 
         H.enterZone(win, 'mire');
@@ -3877,7 +3988,7 @@ EmberwoodTests.add('npcs: Shopkeeper Mira Trade window opens shop-overlay', func
 
         var elise = H.findNpc(win, 'banker');
         assert(elise, 'Elise is still in Emberhaven');
-        assertEqual(elise.npcDef.name, 'Banker Elise', 'Elise is not converted this tick');
+        assertEqual(elise.npcDef.name, 'Banker Elise', 'Elise remains the banker');
         assertEqual(win.npcDialogueOptions(elise.npcDef).map(function (opt) { return opt.id; }).join(','), 'talk,bank', 'Elise stays Talk and Bank');
 
         win.Hud.el.log.innerHTML = '';

@@ -530,6 +530,9 @@ var WorldScene = new Phaser.Class({
         if (Hud.hideShop) {
             Hud.hideShop();
         }
+        if (Hud.hideBank) {
+            Hud.hideBank();
+        }
         this.cancelLongPress();
         if (Hud.hideContextMenu) {
             Hud.hideContextMenu();
@@ -576,6 +579,9 @@ var WorldScene = new Phaser.Class({
         if (Hud.hideShop) {
             Hud.hideShop();
         }
+        if (Hud.hideBank) {
+            Hud.hideBank();
+        }
         if (!this.interiorId) {
             this.snapshotMobs();
             this.snapshotLoot();
@@ -604,6 +610,9 @@ var WorldScene = new Phaser.Class({
         }
         if (Hud.hideShop) {
             Hud.hideShop();
+        }
+        if (Hud.hideBank) {
+            Hud.hideBank();
         }
         this.interiorId = null;
         this.clearWorldObjects();
@@ -1527,14 +1536,12 @@ var WorldScene = new Phaser.Class({
             } else {
                 pages = ['Emberhaven stands because of you.'];
             }
-        } else if (def.key === 'banker' || def.key === 'witch') {
-            var cost = def.key === 'witch' ? 10 : 0;
+        } else if (def.key === 'witch') {
+            var cost = 10;
             if (hero.gold < cost) {
                 pages = ['Come back with 10 gold.'];
             } else {
-                if (cost) {
-                    takeItem(hero, 'coins', cost);
-                }
+                takeItem(hero, 'coins', cost);
                 hero.hp = hero.maxHp;
                 this.registry.set('hero', hero);
                 pages = ['Your wounds close. HP restored.'];
@@ -1581,7 +1588,9 @@ var WorldScene = new Phaser.Class({
             return;
         }
         if (id === 'bank') {
-            Hud.log(def.name + ': The vault is still being fitted.');
+            if (Hud.showBank) {
+                Hud.showBank(def);
+            }
             return;
         }
         if (id === 'trade') {
@@ -1613,6 +1622,9 @@ var WorldScene = new Phaser.Class({
         }
         if (Hud.hideShop) {
             Hud.hideShop();
+        }
+        if (Hud.hideBank) {
+            Hud.hideBank();
         }
         this.clearWalk();
         this.player.body.setVelocity(0);

@@ -438,17 +438,49 @@ button.ghost {
     font-size: 12px;
 }
 
-#shop-actions {
+#shop-actions,
+#bank-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
     margin: 8px 0;
 }
 
+#bank-overlay .title-card {
+    width: min(560px, 94vw);
+}
+
+#bank-panes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 8px 0;
+    text-align: left;
+}
+
+#bank-panes h3 {
+    margin: 0 0 6px;
+    font-size: 13px;
+    color: #ffe08a;
+}
+
+#bank-inv-grid,
+#bank-vault-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3px;
+}
+
+#bank-overlay .inv-slot.is-on {
+    border-color: #e6c56a;
+    background: #7a623e;
+}
+
 #title-overlay,
 #dead-overlay,
 #world-map-overlay,
-#shop-overlay {
+#shop-overlay,
+#bank-overlay {
     position: fixed;
     inset: 0;
     background: rgba(8, 6, 10, 0.82);
@@ -462,6 +494,7 @@ button.ghost {
 #dead-overlay[hidden],
 #world-map-overlay[hidden],
 #shop-overlay[hidden],
+#bank-overlay[hidden],
 #dialogue-overlay[hidden],
 #dialogue-options[hidden],
 #battle-panel[hidden],

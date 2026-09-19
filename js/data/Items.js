@@ -44,6 +44,7 @@ function makeHero() {
             { id: 'shrimp', qty: 8 },
             { id: 'bread', qty: 3 }
         ],
+        bank: [],
         skills: {
             attack: { level: 1, xp: 0 },
             strength: { level: 1, xp: 0 },
@@ -107,6 +108,61 @@ function takeItem(hero, id, qty) {
         }
     }
     return false;
+}
+
+function ensureBank(hero) {
+    if (!hero.bank) {
+        hero.bank = [];
+    }
+    return hero.bank;
+}
+
+function findStack(list, id) {
+    if (!list) {
+        return null;
+    }
+    for (var i = 0; i < list.length; i++) {
+        if (list[i].id === id) {
+            return list[i];
+        }
+    }
+    return null;
+}
+
+function depositItem(hero, id, qty) {
+    qty = qty || 1;
+    if (!hero || !id || qty < 1) {
+        return false;
+    }
+    if (!takeItem(hero, id, qty)) {
+        return false;
+    }
+    var bank = ensureBank(hero);
+    var stack = findStack(bank, id);
+    if (stack) {
+        stack.qty += qty;
+    } else {
+        bank.push({ id: id, qty: qty });
+    }
+    return true;
+}
+
+function withdrawItem(hero, id, qty) {
+    qty = qty || 1;
+    if (!hero || !id || qty < 1) {
+        return false;
+    }
+    var bank = ensureBank(hero);
+    var stack = findStack(bank, id);
+    if (!stack || stack.qty < qty) {
+        return false;
+    }
+    stack.qty -= qty;
+    if (stack.qty <= 0) {
+        bank.splice(bank.indexOf(stack), 1);
+    }
+    addItem(hero, id, qty);
+    return true;
 }
 
 function syncCoins(hero) {

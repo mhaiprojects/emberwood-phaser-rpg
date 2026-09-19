@@ -44,10 +44,17 @@ var Hud = {
             shop: document.getElementById('shop-overlay'),
             shopSpeaker: document.getElementById('shop-speaker'),
             shopCopy: document.getElementById('shop-copy'),
-            shopClose: document.getElementById('btn-shop-close')
+            shopClose: document.getElementById('btn-shop-close'),
+            bank: document.getElementById('bank-overlay'),
+            bankSpeaker: document.getElementById('bank-speaker'),
+            bankCopy: document.getElementById('bank-copy'),
+            bankInv: document.getElementById('bank-inv-grid'),
+            bankVault: document.getElementById('bank-vault-grid'),
+            bankClose: document.getElementById('btn-bank-close')
         };
         this.ctxTarget = null;
         this.dialogue = null;
+        this.bankSel = null;
         this.buildMinimap();
         this.renderWorldMap();
         this.bindInterface();
@@ -218,6 +225,27 @@ var Hud = {
                 }
             });
         }
+        if (this.el.bank) {
+            this.el.bank.addEventListener('click', function (event) {
+                var slot = event.target && event.target.closest && event.target.closest('[data-bank-item]');
+                if (slot) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    slot.blur();
+                    self.bankSel = slot.getAttribute('data-bank-item');
+                    self.renderBank();
+                    return;
+                }
+                var btn = event.target && event.target.closest && event.target.closest('[data-bank-action]');
+                if (!btn) {
+                    return;
+                }
+                event.preventDefault();
+                event.stopPropagation();
+                btn.blur();
+                self.chooseBankAction(btn.getAttribute('data-bank-action'));
+            });
+        }
         if (this.el.dialogue) {
             this.el.dialogue.addEventListener('click', function (event) {
                 var btn = event.target && event.target.closest && event.target.closest('[data-dialogue-option]');
@@ -235,6 +263,10 @@ var Hud = {
         window.addEventListener('keydown', function (event) {
             if (event.code === 'Escape' && self.el.shop && !self.el.shop.hidden) {
                 self.hideShop();
+                return;
+            }
+            if (event.code === 'Escape' && self.el.bank && !self.el.bank.hidden) {
+                self.hideBank();
                 return;
             }
             if (event.code === 'Escape' && self.el.worldMap && !self.el.worldMap.hidden) {
@@ -263,7 +295,7 @@ var Hud = {
 
     bindHudBlur: function () {
         document.addEventListener('mouseup', function (event) {
-            if (event.target && event.target.closest && event.target.closest('#title-overlay, #dead-overlay, #world-map-overlay, #dialogue-overlay, #shop-overlay')) {
+            if (event.target && event.target.closest && event.target.closest('#title-overlay, #dead-overlay, #world-map-overlay, #dialogue-overlay, #shop-overlay, #bank-overlay')) {
                 return;
             }
             var btn = event.target && event.target.closest && event.target.closest('#shell button');
@@ -350,6 +382,7 @@ var Hud = {
         this.hideWorldMap();
         this.hideDialogue();
         this.hideShop();
+        this.hideBank();
         this.el.title.hidden = false;
         this.el.battle.hidden = true;
         this.el.dead.hidden = true;
@@ -371,6 +404,7 @@ var Hud = {
         this.hideWorldMap();
         this.hideDialogue();
         this.hideShop();
+        this.hideBank();
         this.mode = 'dead';
         this.el.dead.hidden = false;
         document.getElementById('dead-text').textContent = text || 'You have been defeated.';
@@ -465,6 +499,7 @@ var Hud = {
         }
         this.hideContextMenu();
         this.hideShop();
+        this.hideBank();
         this.dialogue = { speaker: speaker || '', pages: clean, index: 0, options: options };
         this.renderDialogue(true);
     },
@@ -580,6 +615,7 @@ var Hud = {
         this.hideContextMenu();
         this.hideWorldMap();
         this.hideDialogue();
+        this.hideBank();
         var name = def && def.name ? def.name : 'Shopkeeper';
         if (this.el.shopSpeaker) {
             this.el.shopSpeaker.textContent = name;
@@ -603,6 +639,115 @@ var Hud = {
 
     shopOpen: function () {
         return !!(this.el && this.el.shop && !this.el.shop.hidden);
+    },
+
+    showBank: function (def) {
+        if (!this.el || !this.el.bank || this.mode !== 'world') {
+            return;
+        }
+        this.hideContextMenu();
+        this.hideWorldMap();
+        this.hideDialogue();
+        this.hideShop();
+        var name = def && def.name ? def.name : 'Banker Elise';
+        if (this.el.bankSpeaker) {
+            this.el.bankSpeaker.textContent = name;
+        }
+        if (this.el.bankCopy) {
+            this.el.bankCopy.textContent = 'Your items are safe with Elise.';
+        }
+        this.el.bank.hidden = false;
+        this.el.bank.setAttribute('data-bank', def && def.key ? def.key : 'banker');
+        this.bankSel = null;
+        this.renderBank();
+    },
+
+    hideBank: function () {
+        if (this.el && this.el.bank) {
+            this.el.bank.hidden = true;
+            this.el.bank.removeAttribute('data-bank');
+            if (this.el.bankClose) {
+                this.el.bankClose.blur();
+            }
+        }
+        this.bankSel = null;
+    },
+
+    bankOpen: function () {
+        return !!(this.el && this.el.bank && !this.el.bank.hidden);
+    },
+
+    renderBank: function () {
+        var hero = this.hero();
+        if (!this.el || !this.el.bankInv || !this.el.bankVault) {
+            return;
+        }
+        this.el.bankInv.innerHTML = this.bankGridHtml(hero && hero.inventory, 'inv');
+        this.el.bankVault.innerHTML = this.bankGridHtml(hero && ensureBank(hero), 'vault');
+    },
+
+    bankGridHtml: function (list, side) {
+        var html = '';
+        var i;
+        list = list || [];
+        for (i = 0; i < 28; i++) {
+            var stack = list[i];
+            if (stack) {
+                var def = ITEM_DB[stack.id] || { name: stack.id };
+                var on = this.bankSel === stack.id ? ' is-on' : '';
+                html += '<button type="button" class="inv-slot' + on + '" data-bank-side="' + side +
+                    '" data-bank-item="' + stack.id + '" title="' + def.name + '">' +
+                    '<img class="pix" src="' + itemIcon(stack.id) + '" alt="">' +
+                    (stack.qty > 1 ? '<span class="qty">' + stack.qty + '</span>' : '') +
+                    '</button>';
+            } else {
+                html += '<div class="inv-slot"></div>';
+            }
+        }
+        return html;
+    },
+
+    chooseBankAction: function (action) {
+        if (!this.bankOpen() || this.mode !== 'world') {
+            return;
+        }
+        if (action === 'close') {
+            this.hideBank();
+            return;
+        }
+        var hero = this.hero();
+        if (!hero) {
+            return;
+        }
+        if (action === 'heal') {
+            hero.hp = hero.maxHp;
+            this.saveHero(hero);
+            var healer = (this.el.bankSpeaker && this.el.bankSpeaker.textContent) || 'Banker Elise';
+            this.log(healer + ': Your wounds close. HP restored.');
+            return;
+        }
+        var id = this.bankSel;
+        if (!id) {
+            this.log(action === 'withdraw' ? 'Select a bank item to withdraw.' : 'Select an inventory item to deposit.');
+            return;
+        }
+        if (action === 'deposit') {
+            if (!depositItem(hero, id, 1)) {
+                this.log('You have nothing to deposit.');
+                return;
+            }
+            this.saveHero(hero);
+            this.log('You deposit 1 x ' + itemName(id) + '.');
+            return;
+        }
+        if (action === 'withdraw') {
+            if (!withdrawItem(hero, id, 1)) {
+                this.log('The bank is empty.');
+                return;
+            }
+            this.saveHero(hero);
+            this.log('You withdraw 1 x ' + itemName(id) + '.');
+        }
     },
 
     chooseContext: function (action) {
@@ -702,6 +847,9 @@ var Hud = {
         this.renderAutoPickup(hero);
         this.renderRun(hero);
         this.renderCollisionDebug();
+        if (this.bankOpen()) {
+            this.renderBank();
+        }
     },
 
     toggleCollisionDebug: function () {
@@ -919,6 +1067,7 @@ var Hud = {
         this.hideWorldMap();
         this.hideDialogue();
         this.hideShop();
+        this.hideBank();
         this.battle = battle;
         this.selectingEnemy = false;
         this.el.battle.hidden = false;

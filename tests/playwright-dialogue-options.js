@@ -1,6 +1,6 @@
 /**
  * Playwright proof: from spawn (328, 248), dialogue shows Talk / Trade /
- * Bank / Quest buttons only where the NPC supports them. No shop/bank UI.
+ * Bank / Quest buttons only where the NPC supports them. Elise Bank opens #bank-overlay.
  * Phaser keyboard stays off.
  *
  * Headless via tests/playwright-session.js (reuses a live server, or starts
@@ -106,14 +106,19 @@
                 throw new Error('Elise options were ' + optionIds());
             }
             clickOption('bank');
-            if (lastChat() !== 'Banker Elise: The vault is still being fitted.') {
-                throw new Error('Bank stub was ' + lastChat());
+            if (window.Hud.dialogueOpen()) {
+                throw new Error('Bank did not close dialogue');
+            }
+            var bank = document.getElementById('bank-overlay');
+            if (!bank || bank.hidden || !window.Hud.bankOpen()) {
+                throw new Error('Bank did not open #bank-overlay');
             }
             if (document.getElementById('shop-overlay') && !document.getElementById('shop-overlay').hidden) {
                 throw new Error('shop UI opened');
             }
-            if (document.getElementById('bank-overlay') && !document.getElementById('bank-overlay').hidden) {
-                throw new Error('bank UI opened');
+            document.getElementById('btn-bank-close').click();
+            if (!bank.hidden) {
+                throw new Error('Close did not hide bank');
             }
             window.Hud.hideDialogue();
 
