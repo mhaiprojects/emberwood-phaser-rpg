@@ -1243,6 +1243,176 @@ EmberwoodTests.add('combat: OSRS-like combat level from Attack Strength Defence 
     });
 });
 
+EmberwoodTests.add('combat: melee vs ranged vs magic triangle hook', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        world.placePlayer(spawn.x, spawn.y);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof win.heroCombatClass, 'function', 'heroCombatClass exists');
+        assertEqual(typeof win.mobCombatClass, 'function', 'mobCombatClass exists');
+        assertEqual(typeof win.combatClass, 'function', 'combatClass exists');
+        assertEqual(typeof win.triangleMultiplier, 'function', 'triangleMultiplier exists');
+        assertEqual(typeof win.triangleHit, 'function', 'triangleHit exists');
+
+        hero = H.hero(win);
+        assertEqual(hero.stance, 'melee', 'starter stance is melee');
+        assertEqual(win.heroCombatClass(hero), 'melee', 'starter combat class is melee');
+        assertEqual(win.combatSkill(hero), 'attack', 'melee Accurate still maps to Attack');
+        hero.style = 'aggressive';
+        assertEqual(win.combatSkill(hero), 'strength', 'melee Aggressive still maps to Strength');
+        hero.style = 'defensive';
+        assertEqual(win.combatSkill(hero), 'defence', 'melee Defensive still maps to Defence');
+        hero.style = 'accurate';
+        hero.stance = 'ranged';
+        assertEqual(win.heroCombatClass(hero), 'ranged', 'ranged stance uses Ranged');
+        assertEqual(win.combatSkill(hero), 'ranged', 'ranged stance trains Ranged, not Attack');
+        hero.stance = 'magic';
+        assertEqual(win.heroCombatClass(hero), 'magic', 'magic stance uses Magic');
+        assertEqual(win.combatSkill(hero), 'magic', 'magic stance trains Magic, not Attack');
+        hero.stance = 'melee';
+
+        var chicken = H.findMob(win, 'Chicken');
+        assert(chicken, 'haven chicken exists');
+        assertEqual(win.mobCombatClass(chicken.mobDef), 'melee', 'Chicken is melee');
+        assertEqual(chicken.mobDef.combatClass, 'melee', 'world chicken mobDef is tagged melee');
+        assertEqual(win.mobCombatClass('Goblin'), 'melee', 'Goblin is melee');
+        assertEqual(win.mobCombatClass('Cow'), 'melee', 'Cow is melee');
+        assertEqual(win.mobCombatClass('Crab'), 'melee', 'Crab is melee');
+        assertEqual(win.mobCombatClass('Skeleton'), 'melee', 'Skeleton is melee');
+        assertEqual(win.mobCombatClass('Bat'), 'ranged', 'Bat is ranged');
+        assertEqual(win.mobCombatClass('Slime'), 'magic', 'Slime is magic');
+        assertEqual(win.mobCombatClass('Drake'), 'magic', 'Drake is magic');
+
+        assertEqual(win.triangleMultiplier('melee', 'melee'), 1, 'same class is 1');
+        assertEqual(win.triangleMultiplier('melee', 'ranged'), 1.25, 'melee beats ranged');
+        assertEqual(win.triangleMultiplier('ranged', 'magic'), 1.25, 'ranged beats magic');
+        assertEqual(win.triangleMultiplier('magic', 'melee'), 1.25, 'magic beats melee');
+        assertEqual(win.triangleMultiplier('melee', 'magic'), 0.75, 'melee is weak to magic');
+        assertEqual(win.triangleMultiplier('ranged', 'melee'), 0.75, 'ranged is weak to melee');
+        assertEqual(win.triangleMultiplier('magic', 'ranged'), 0.75, 'magic is weak to ranged');
+        assertEqual(win.triangleHit(16, 'melee', 'melee'), 16, 'neutral 16 stays 16');
+        assertEqual(win.triangleHit(16, 'melee', 'ranged'), 20, 'melee vs ranged is 20');
+        assertEqual(win.triangleHit(16, 'melee', 'magic'), 12, 'melee vs magic is 12');
+        assertEqual(win.triangleHit(16, 'ranged', 'magic'), 20, 'ranged vs magic is 20');
+        assertEqual(win.triangleHit(16, 'magic', 'melee'), 20, 'magic vs melee is 20');
+        assertEqual(win.triangleHit(8, 'magic', 'melee'), 10, 'incoming magic vs melee 8 becomes 10');
+
+        hero.stance = 'melee';
+        win.game.registry.set('hero', hero);
+        return H.startCustomFight(win, [
+            { type: 'Bat', texture: 'slime', tint: 0xddbbff, hp: 80, damage: 8, gold: 0, xp: 1 }
+        ]);
+    }).then(function () {
+        var battle = H.battle(win);
+        var you = battle.heroes[0];
+        var foe = battle.enemies[0];
+        assertEqual(you.combatClass, 'melee', 'battle hero is melee');
+        assertEqual(foe.combatClass, 'ranged', 'battle Bat is ranged');
+        assertEqual(win.combatClass(you), 'melee', 'combatClass reads hero unit');
+        assertEqual(win.combatClass(foe), 'ranged', 'combatClass reads Bat unit');
+        assertEqual(you.damage, 16, 'starter battle damage is 16');
+
+        var orig = win.Phaser.Math.Between;
+        win.Phaser.Math.Between = function () { return 0; };
+        var before = foe.hp;
+        you.attack(foe);
+        return H.waitUntil(function () {
+            return foe.hp < before;
+        }, 2000, 'melee vs ranged triangle hit').then(function () {
+            win.Phaser.Math.Between = orig;
+            assertEqual(before - foe.hp, 20, 'melee vs Bat deals 20 (16 * 1.25)');
+            return H.forceFlee(win);
+        }).catch(function (err) {
+            win.Phaser.Math.Between = orig;
+            throw err;
+        });
+    }).then(function () {
+        var hero = win.makeHero();
+        hero.stance = 'ranged';
+        win.game.registry.set('hero', hero);
+        H.world(win).refreshHud();
+        return H.startCustomFight(win, [
+            { type: 'Slime', texture: 'slime', tint: 0x88ffaa, hp: 80, damage: 8, gold: 0, xp: 1 }
+        ]);
+    }).then(function () {
+        var battle = H.battle(win);
+        var you = battle.heroes[0];
+        var foe = battle.enemies[0];
+        assertEqual(you.combatClass, 'ranged', 'ranged stance stamps the hero');
+        assertEqual(foe.combatClass, 'magic', 'Slime is magic in battle');
+        var orig = win.Phaser.Math.Between;
+        win.Phaser.Math.Between = function () { return 0; };
+        var before = foe.hp;
+        you.attack(foe);
+        return H.waitUntil(function () {
+            return foe.hp < before;
+        }, 2000, 'ranged vs magic triangle hit').then(function () {
+            assertEqual(before - foe.hp, 20, 'ranged vs Slime deals 20 (16 * 1.25)');
+            var incomingBefore = you.hp;
+            foe.attack(you);
+            return H.waitUntil(function () {
+                return you.hp < incomingBefore;
+            }, 2000, 'magic vs ranged incoming hit').then(function () {
+                return incomingBefore;
+            });
+        }).then(function (incomingBefore) {
+            win.Phaser.Math.Between = orig;
+            assertEqual(you.hp, incomingBefore - 6, 'magic vs ranged incoming is 6 (8 * 0.75)');
+            return H.forceFlee(win);
+        }).catch(function (err) {
+            win.Phaser.Math.Between = orig;
+            throw err;
+        });
+    }).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var hero = win.makeHero();
+        hero.stance = 'magic';
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        world.placePlayer(spawn.x, spawn.y);
+        var chicken = H.findMob(win, 'Chicken');
+        var xp = chicken.mobDef.xp || 10;
+        var orig = win.Phaser.Math.Between;
+        win.Phaser.Math.Between = function () { return 0; };
+        return H.startFight(win, chicken).then(function () {
+            win.Hud.tryAttack();
+            return H.waitWorld(win);
+        }).then(function () {
+            win.Phaser.Math.Between = orig;
+            hero = H.hero(win);
+            assertEqual(hero.stance, 'magic', 'magic stance persisted through win');
+            assertEqual(win.combatSkill(hero), 'magic', 'win still maps magic stance to Magic');
+            assertEqual(hero.skills.magic.xp, xp, 'magic stance grants Magic XP');
+            assertEqual(hero.skills.attack.xp, 0, 'magic stance does not grant Attack XP');
+            assertEqual(hero.skills.ranged.xp, 0, 'magic stance does not grant Ranged XP');
+            assert(H.chatHas(win, 'collapses'), 'magic stance still wins a chicken');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+            world.placePlayer(spawn.x, spawn.y);
+        }).catch(function (err) {
+            win.Phaser.Math.Between = orig;
+            throw err;
+        });
+    }).catch(function (err) {
+        return H.cleanupBattle(win).then(function () {
+            throw err;
+        });
+    });
+});
+
 EmberwoodTests.add('skills: gainSkillXp uses 1 + floor(sqrt(xp / 50)) and Hitpoints never below 10', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         var world = H.world(win);

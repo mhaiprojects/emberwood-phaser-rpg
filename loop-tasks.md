@@ -144,7 +144,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Hit-splats and a 0.6s tick later; until then keep turns but document the 900ms queue. — Conclusion: From spawn (328,248) hit/heal reuse ± floaters as splat discs; Attack still queues 900ms turns (0.6s tick deferred). Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Death rules: gravestone or safe-death keep items; respawn in Emberhaven at low HP instead of wiping to title (title retry can remain as “abandon”). — Conclusion: From spawn (328,248) lose keeps items (safe-death); `#btn-respawn` Emberhaven at HP max/10; title retry stays abandon; Phaser 3.90 keyboard off; dedicated + Playwright 1/1.
 - [done] Disable Attack / Eat / Run while `busy` or not player-turn (already intended — verify no double-queue). — Conclusion: From spawn (328,248) Attack/Eat/Run disable while busy or not player-turn; a second action does not replace the 900ms queue. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [todo] A simple combat triangle hook (melee vs the unused Ranged/Magic skills) without adding Phaser 4. — Conclusion: —
+- [done] A simple combat triangle hook (melee vs the unused Ranged/Magic skills) without adding Phaser 4. — Conclusion: From spawn (328,248) melee beats ranged (16→20) and is weak to magic (16→12); `hero.stance` hooks unused Ranged/Magic XP. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 
 ## 5. Inventory / equipment / bank (22)
 
@@ -518,4 +518,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 146 | 2026-09-19 | Eat-from-inventory in combat chooses shrimp vs bread | done — spawn (328,248) Inv click bread eats bread (shrimp left), then shrimp; Eat food still eatBestFood; Phaser 3.90 keyboard off; dedicated + existing eat case + Playwright 2/2 |
 | 147 | 2026-09-19 | Hit-splats reuse floaters; keep 900ms turn queue (0.6s tick later) | done — spawn (328,248) hit/heal splat discs + ± floaters; Attack queues 900ms; no 0.6s tick; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 148 | 2026-09-19 | Death rules: gravestone or safe-death keep items; respawn in Emberhaven at low HP | done — spawn (328,248) lose keeps items; `#btn-respawn` Emberhaven at HP max/10; title retry stays abandon; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
+| 149 | 2026-09-19 | Simple combat triangle hook melee vs unused Ranged/Magic skills | done — spawn (328,248) melee beats ranged 16→20, weak to magic 16→12; stance hooks Ranged/Magic XP; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 

@@ -746,6 +746,9 @@ var WorldScene = new Phaser.Class({
             sprite.setScale(scale);
             applyMobWorldBody(sprite, def.type);
             sprite.mobDef = Object.assign({ id: zoneId + '-' + index }, def);
+            if (typeof mobCombatClass === 'function') {
+                sprite.mobDef.combatClass = mobCombatClass(sprite.mobDef);
+            }
             sprite.aliveMob = true;
             sprite.respawnAt = 0;
             if (isGiantMob(def.type)) {

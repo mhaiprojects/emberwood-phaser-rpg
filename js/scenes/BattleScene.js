@@ -41,6 +41,7 @@ var BattleScene = new Phaser.Class({
         var heroData = this.registry.get('hero');
         var warrior = new PlayerCharacter(this, 390, 90, 'player', 1, 'You', heroData.maxHp, heroData.damage);
         warrior.hp = heroData.hp;
+        warrior.combatClass = typeof heroCombatClass === 'function' ? heroCombatClass(heroData) : 'melee';
         warrior.refreshHpBar();
         this.add.existing(warrior);
         this.heroes = [warrior];
@@ -51,6 +52,7 @@ var BattleScene = new Phaser.Class({
         for (var i = 0; i < pending.enemies.length; i++) {
             var spec = pending.enemies[i];
             var enemy = new Enemy(this, slots[i].x, slots[i].y, spec.texture, spec.frame || 0, spec.type, spec.hp, spec.damage);
+            enemy.combatClass = typeof mobCombatClass === 'function' ? mobCombatClass(spec) : 'melee';
             if (spec.tint && spec.tint !== 0xffffff && !isUniqueMobTexture(spec.texture)) {
                 enemy.setTint(spec.tint);
             }

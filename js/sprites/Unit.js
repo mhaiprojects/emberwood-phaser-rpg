@@ -94,7 +94,11 @@ var Unit = new Phaser.Class({
                 if (!self.scene || !self.active || !target.active) {
                     return;
                 }
-                var dealt = target.takeDamage(self.damage);
+                var amount = self.damage;
+                if (typeof triangleHit === 'function' && typeof combatClass === 'function') {
+                    amount = triangleHit(amount, combatClass(self), combatClass(target));
+                }
+                var dealt = target.takeDamage(amount);
                 if (self.scene && self.scene.events) {
                     var verb = self.type === 'You' ? ' hit ' : ' hits ';
                     self.scene.events.emit('Message', self.type + verb + target.type + ' for ' + dealt);

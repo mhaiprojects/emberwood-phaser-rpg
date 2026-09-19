@@ -32,6 +32,7 @@ function makeHero() {
         xp: 0,
         level: 1,
         style: 'accurate',
+        stance: 'melee',
         autoAttack: true,
         autoRetaliate: true,
         autoPickup: true,
@@ -306,11 +307,90 @@ function eatBestFood(hero) {
 }
 
 function combatSkill(hero) {
-    if (hero.style === 'aggressive') {
+    var cls = heroCombatClass(hero);
+    if (cls === 'ranged') {
+        return 'ranged';
+    }
+    if (cls === 'magic') {
+        return 'magic';
+    }
+    if (hero && hero.style === 'aggressive') {
         return 'strength';
     }
-    if (hero.style === 'defensive') {
+    if (hero && hero.style === 'defensive') {
         return 'defence';
     }
     return 'attack';
+}
+
+function normalizeCombatClass(value) {
+    if (value === 'ranged' || value === 'magic') {
+        return value;
+    }
+    return 'melee';
+}
+
+function heroCombatClass(hero) {
+    return normalizeCombatClass(hero && hero.stance);
+}
+
+function mobCombatClass(spec) {
+    if (!spec) {
+        return 'melee';
+    }
+    if (typeof spec === 'string') {
+        spec = { type: spec };
+    }
+    if (spec.combatClass) {
+        return normalizeCombatClass(spec.combatClass);
+    }
+    var type = spec.type;
+    if (type === 'Bat') {
+        return 'ranged';
+    }
+    if (type === 'Slime' || type === 'Drake') {
+        return 'magic';
+    }
+    return 'melee';
+}
+
+function combatClass(source) {
+    if (!source) {
+        return 'melee';
+    }
+    if (source.skills) {
+        return heroCombatClass(source);
+    }
+    if (source.combatClass) {
+        return normalizeCombatClass(source.combatClass);
+    }
+    if (source.mobDef) {
+        return mobCombatClass(source.mobDef);
+    }
+    if (source.type && source.type !== 'You') {
+        return mobCombatClass(source);
+    }
+    return heroCombatClass(source);
+}
+
+function triangleMultiplier(attackerClass, defenderClass) {
+    var atk = normalizeCombatClass(attackerClass);
+    var def = normalizeCombatClass(defenderClass);
+    if (atk === def) {
+        return 1;
+    }
+    if ((atk === 'melee' && def === 'ranged') ||
+        (atk === 'ranged' && def === 'magic') ||
+        (atk === 'magic' && def === 'melee')) {
+        return 1.25;
+    }
+    return 0.75;
+}
+
+function triangleHit(amount, attackerClass, defenderClass) {
+    var n = Number(amount);
+    if (!(n >= 0)) {
+        n = 0;
+    }
+    return Math.max(1, Math.round(n * triangleMultiplier(attackerClass, defenderClass)));
 }
