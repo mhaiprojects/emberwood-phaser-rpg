@@ -140,7 +140,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [todo] Eat-from-inventory in combat (choose shrimp vs bread) instead of only `eatBestFood`. — Conclusion: —
 - [done] Each mob type’s world/battle scale (chicken/crab/bat 0.75, goblin/skeleton/slime 1, cow 1.25, giant drake multi-tile) and `PLAYER_BATTLE_SCALE` 3. — Conclusion: World player is 1 tile; drake body 28×28; battle player stays 3. Suite 35/35.
 - [done] Dead overworld mob hides ~18s then respawns in place with label and body re-enabled. — Conclusion: spawn (328,248) haven chicken hides body+label+body.enable; 18000ms timer still dead ~400ms early, then respawns in place with label+body; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1.
-- [verify] Mob wander uses occasional small velocity and still collides with the ground layer. — Conclusion: —
+- [done] Mob wander uses occasional small velocity and still collides with the ground layer. — Conclusion: From spawn (328,248) wanderMobs rolls Between(0,80); miss leaves vx=vy=0; hit sets small vx/vy in −20..20; chicken still blocked by ground TREE. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [todo] Hit-splats and a 0.6s tick later; until then keep turns but document the 900ms queue. — Conclusion: —
 - [todo] Death rules: gravestone or safe-death keep items; respawn in Emberhaven at low HP instead of wiping to title (title retry can remain as “abandon”). — Conclusion: —
 - [todo] Disable Attack / Eat / Run while `busy` or not player-turn (already intended — verify no double-queue). — Conclusion: —
@@ -444,4 +444,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 71 | 2026-09-19 | HP bars go green / amber / red at 65% and 35%; ± floaters on hit/heal | done — spawn (328,248) HUD+battle green ≥65% / amber ≥35% / red <35%; −/+ floaters; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 72 | 2026-09-19 | Worn sword/shield are display-only today | done — HUD names only; hit uses hero.damage ±2 not ITEM_DB sword damage 16 or shield defence 1; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 73 | 2026-09-19 | Dead overworld mob hides ~18s then respawns in place with label and body re-enabled | done — spawn (328,248) chicken hides body+label+body.enable; 18000ms timer still dead ~400ms early, then respawns in place; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 74 | 2026-09-19 | Mob wander uses occasional small velocity and still collides with the ground | done — spawn (328,248) Between(0,80) miss stays still; hit vx/vy in −20..20; chicken blocked by TREE; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 

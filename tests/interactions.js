@@ -2211,6 +2211,23 @@ function findPlayerNpcCollider(world) {
     return null;
 }
 
+function findMobGroundCollider(world, mob) {
+    var list = colliderList(world);
+    var i;
+    for (i = 0; i < list.length; i++) {
+        var c = list[i];
+        if (!c) {
+            continue;
+        }
+        var a = c.object1;
+        var b = c.object2;
+        if ((a === mob && b === world.ground) || (b === mob && a === world.ground)) {
+            return c;
+        }
+    }
+    return null;
+}
+
 function parkMobsOnly(world) {
     world.mobs.getChildren().forEach(function (mob) {
         if (mob.body) {
@@ -2497,6 +2514,172 @@ EmberwoodTests.add('mobs: click a monster to target it', function (win, H) {
         chicken.aliveMob = true;
         world.scene.resume();
     }
+});
+
+EmberwoodTests.add('mobs: wander uses occasional small velocity and still collides with the ground', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.exitLock = true;
+        world.encounterLock = false;
+        world.clearWalk();
+        world.engageTarget = null;
+        world.talkTarget = null;
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(typeof world.wanderMobs, 'function', 'wanderMobs exists');
+
+        return H.waitUntil(function () {
+            var ready = H.livingMobs(win);
+            if (ready.length < 2) {
+                return false;
+            }
+            return ready.every(function (mob) {
+                var hit = findMobGroundCollider(world, mob);
+                return !!(hit && hit.active);
+            });
+        }, 800, 'mob-ground colliders become active').then(function () {
+        var living = H.livingMobs(win);
+        assert(living.length >= 2, 'haven has living chickens');
+        living.forEach(function (mob) {
+            var hit = findMobGroundCollider(world, mob);
+            assert(hit && hit.active, (mob.mobDef && mob.mobDef.type) + ' has an active ground collider');
+            assert(hit.object1 === world.ground || hit.object2 === world.ground, 'collider is the ground layer');
+        });
+
+        var chicken = H.findMob(win, 'Chicken');
+        assert(chicken && chicken.body, 'chicken has a physics body');
+        world.mobs.getChildren().forEach(function (mob) {
+            if (mob !== chicken) {
+                mob.aliveMob = false;
+            }
+        });
+        chicken.body.setVelocity(0, 0);
+
+        var orig = win.Phaser.Math.Between;
+        try {
+            var calls = [];
+            win.Phaser.Math.Between = function (lo, hi) {
+                calls.push([lo, hi]);
+                return 1;
+            };
+            world.wanderMobs();
+            assertEqual(calls.length, 1, 'occasional roll happens once per living mob');
+            assertEqual(calls[0][0], 0, 'wander chance low is 0');
+            assertEqual(calls[0][1], 80, 'wander chance high is 80');
+            assertEqual(chicken.body.velocity.x, 0, 'no wander vx when roll is not 0');
+            assertEqual(chicken.body.velocity.y, 0, 'no wander vy when roll is not 0');
+
+            var seq = [0, 12, -7];
+            var i = 0;
+            calls = [];
+            win.Phaser.Math.Between = function (lo, hi) {
+                calls.push([lo, hi]);
+                var value = seq[i];
+                i += 1;
+                return value;
+            };
+            world.wanderMobs();
+            assertEqual(calls.length, 3, 'roll then vx then vy');
+            assertEqual(calls[0][0], 0, 'chance low');
+            assertEqual(calls[0][1], 80, 'chance high');
+            assertEqual(calls[1][0], -20, 'vx low is -20');
+            assertEqual(calls[1][1], 20, 'vx high is 20');
+            assertEqual(calls[2][0], -20, 'vy low is -20');
+            assertEqual(calls[2][1], 20, 'vy high is 20');
+            assertEqual(Math.round(chicken.body.velocity.x), 12, 'small wander vx');
+            assertEqual(Math.round(chicken.body.velocity.y), -7, 'small wander vy');
+            assert(Math.abs(chicken.body.velocity.x) <= 20 && Math.abs(chicken.body.velocity.y) <= 20, 'wander velocity stays small');
+
+            chicken.body.setVelocity(0, 0);
+            chicken.aliveMob = false;
+            i = 0;
+            seq = [0, 15, 15];
+            world.wanderMobs();
+            assertEqual(chicken.body.velocity.x, 0, 'dead mob does not wander vx');
+            assertEqual(chicken.body.velocity.y, 0, 'dead mob does not wander vy');
+            chicken.aliveMob = true;
+        } finally {
+            win.Phaser.Math.Between = orig;
+            chicken.aliveMob = true;
+            world.mobs.getChildren().forEach(function (mob) {
+                if (mob && mob.mobDef) {
+                    mob.aliveMob = true;
+                }
+            });
+        }
+
+        world.npcs.getChildren().forEach(function (npc) {
+            if (npc.body) {
+                npc.body.enable = false;
+                npc.body.setVelocity(0, 0);
+            }
+        });
+        world.mobs.getChildren().forEach(function (mob) {
+            if (mob !== chicken && mob.body) {
+                mob.body.enable = false;
+                mob.body.setVelocity(0, 0);
+            }
+        });
+
+        var walkable = {};
+        walkable[win.TILE.GRASS] = true;
+        walkable[win.TILE.GRASS2] = true;
+        walkable[win.TILE.PATH] = true;
+        walkable[win.TILE.FLOWER] = true;
+        var push = findCardinalPush(world.tileGrid, win.TILE.TREE, walkable);
+        assert(push, 'found a stand tile beside TREE');
+        var stand = win.tileCenter(push.stand.tx, push.stand.ty);
+        chicken.body.enable = true;
+        chicken.body.reset(stand.x, stand.y);
+        chicken.setPosition(stand.x, stand.y);
+        chicken.body.setVelocity(0, 0);
+        var vx = 0;
+        var vy = 0;
+        if (push.dir.code === 'KeyD') {
+            vx = 20;
+        } else if (push.dir.code === 'KeyA') {
+            vx = -20;
+        } else if (push.dir.code === 'KeyS') {
+            vy = 20;
+        } else {
+            vy = -20;
+        }
+        orig = win.Phaser.Math.Between;
+        win.Phaser.Math.Between = function () {
+            return 1;
+        };
+        chicken.body.setVelocity(vx, vy);
+        return H.sleep(1000).then(function () {
+            win.Phaser.Math.Between = orig;
+            chicken.body.setVelocity(0, 0);
+            var at = win.worldToTile(chicken.x, chicken.y);
+            assert(!(at.tx === push.target.tx && at.ty === push.target.ty), 'chicken did not walk into TREE (' + at.tx + ',' + at.ty + ')');
+            assert(Math.abs(chicken.x - stand.x) < 14, 'wander vx blocked by ground, dx=' + (chicken.x - stand.x));
+            assert(Math.abs(chicken.y - stand.y) < 14, 'wander vy blocked by ground, dy=' + (chicken.y - stand.y));
+            assert(findMobGroundCollider(world, chicken) && findMobGroundCollider(world, chicken).active, 'ground collider still active');
+            H.enterZone(win, 'haven');
+            world = H.world(win);
+            world.placePlayer(spawn.x, spawn.y);
+            world.player.body.setVelocity(0, 0);
+            assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+            assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        }).catch(function (err) {
+            win.Phaser.Math.Between = orig;
+            throw err;
+        });
+        });
+    });
 });
 
 EmberwoodTests.add('combat: walking within 24px of engageTarget begins a fight', function (win, H) {
