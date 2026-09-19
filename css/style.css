@@ -232,6 +232,7 @@ img.pix {
 .auto-attack-btn.is-on,
 .auto-retaliate-btn.is-on,
 .auto-pickup-btn.is-on,
+.shift-click-drop-btn.is-on,
 .run-mode-btn.is-on,
 .collision-debug-btn.is-on {
     background: #7a623e;
@@ -240,6 +241,7 @@ img.pix {
 .auto-attack-btn,
 .auto-retaliate-btn,
 .auto-pickup-btn,
+.shift-click-drop-btn,
 .run-mode-btn,
 .collision-debug-btn {
     margin-top: 8px;

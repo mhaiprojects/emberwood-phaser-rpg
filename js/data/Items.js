@@ -36,6 +36,7 @@ function makeHero() {
         autoAttack: true,
         autoRetaliate: true,
         autoPickup: true,
+        shiftClickDrop: true,
         running: false,
         runEnergy: 100,
         equipment: { weapon: 'sword', shield: 'shield' },
@@ -76,6 +77,10 @@ function autoRetaliateOn(hero) {
         return !!hero.autoAttack;
     }
     return !!hero.autoRetaliate;
+}
+
+function shiftClickDropOn(hero) {
+    return !!(hero && hero.shiftClickDrop !== false);
 }
 
 var INVENTORY_CAP = 28;

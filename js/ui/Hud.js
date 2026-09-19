@@ -153,6 +153,20 @@ var Hud = {
             self.log('Auto-pickup ' + (hero.autoPickup !== false ? 'on' : 'off') + '.');
         });
         document.addEventListener('click', function (event) {
+            var btn = event.target.closest('[data-shift-click-drop]');
+            if (!btn) {
+                return;
+            }
+            var hero = self.hero();
+            if (!hero) {
+                return;
+            }
+            hero.shiftClickDrop = hero.shiftClickDrop === false;
+            self.saveHero(hero);
+            self.renderShiftClickDrop(hero);
+            self.log('Shift-click drop ' + (hero.shiftClickDrop !== false ? 'on' : 'off') + '.');
+        });
+        document.addEventListener('click', function (event) {
             var btn = event.target.closest('[data-run-toggle]');
             if (!btn) {
                 return;
@@ -171,7 +185,13 @@ var Hud = {
             if (!slot) {
                 return;
             }
-            self.useItem(slot.getAttribute('data-item'));
+            var id = slot.getAttribute('data-item');
+            if (event.shiftKey && self.mode === 'world' && shiftClickDropOn(self.hero())) {
+                self.hideContextMenu();
+                self.dropItem(id);
+                return;
+            }
+            self.useItem(id);
         });
         this.el.inv.addEventListener('contextmenu', function (event) {
             event.preventDefault();
@@ -953,6 +973,7 @@ var Hud = {
         this.renderAutoAttack(hero);
         this.renderAutoRetaliate(hero);
         this.renderAutoPickup(hero);
+        this.renderShiftClickDrop(hero);
         this.renderRun(hero);
         this.renderCollisionDebug();
         if (this.bankOpen()) {
@@ -1106,6 +1127,15 @@ var Hud = {
         for (var i = 0; i < buttons.length; i++) {
             buttons[i].classList.toggle('is-on', on);
             buttons[i].textContent = 'Auto-pickup: ' + (on ? 'On' : 'Off');
+        }
+    },
+
+    renderShiftClickDrop: function (hero) {
+        var on = !hero || hero.shiftClickDrop !== false;
+        var buttons = document.querySelectorAll('[data-shift-click-drop]');
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].classList.toggle('is-on', on);
+            buttons[i].textContent = 'Shift-click drop: ' + (on ? 'On' : 'Off');
         }
     },
 

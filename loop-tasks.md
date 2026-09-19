@@ -157,7 +157,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Stacks merge by `id` and a stack is removed when `qty` hits 0. — Conclusion: From spawn (328,248) addItem merges shrimp/bones by id (one stack); takeItem last bones and eat last shrimp/bread drop the stack; last coins drop too. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] A hard 28-stack inventory cap: loot / shop buy / gather refuse with `inventory full`. — Conclusion: From spawn (328,248) 28-stack cap refuses new loot / shop buy / gather with `inventory full` (loot stays); existing stacks still merge. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Drop-to-ground from inventory (creates `groundLoot` at the player). — Conclusion: From spawn (328,248) Inv right-click Drop puts bones/bread/coins on groundLoot at the player; auto-pickup does not vacuum; click still takes. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [todo] Shift-click drop once a Settings toggle exists (OSRS default). — Conclusion: —
+- [done] Shift-click drop once a Settings toggle exists (OSRS default). — Conclusion: From spawn (328,248) Settings Shift-click drop defaults On (OSRS); shift-click bones/bread drop to groundLoot; Off keeps use-on-click; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [todo] Wear / Wield / Remove for `sword` (weapon) and `shield` (shield) and refresh the Worn tab. — Conclusion: —
 - [todo] Apply equipped weapon `damage` and shield `defence` in `Unit.attack` / `takeDamage`. — Conclusion: —
 - [todo] Expand worn slots toward OSRS: head, cape, neck, ammo, weapon, body, shield, legs, hands, feet, ring (empty slots OK). — Conclusion: —

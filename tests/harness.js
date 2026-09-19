@@ -73,6 +73,16 @@ var EmberwoodHarness = {
         return el;
     },
 
+    shiftClick: function (win, selector) {
+        var el = typeof selector === 'string' ? win.document.querySelector(selector) : selector;
+        if (!el) {
+            throw new Error('Missing element ' + selector);
+        }
+        var opts = { bubbles: true, cancelable: true, view: win, button: 0, shiftKey: true };
+        el.dispatchEvent(new win.MouseEvent('click', opts));
+        return el;
+    },
+
     clickWorld: function (win, worldX, worldY) {
         var world = this.world(win);
         var pointer = world.input && world.input.activePointer;
@@ -387,6 +397,16 @@ var EmberwoodHarness = {
         win.game.registry.set('hero', hero);
         if (win.Hud && win.Hud.renderAutoPickup) {
             win.Hud.renderAutoPickup(hero);
+        }
+        return hero;
+    },
+
+    setShiftClickDrop: function (win, on) {
+        var hero = this.hero(win);
+        hero.shiftClickDrop = !!on;
+        win.game.registry.set('hero', hero);
+        if (win.Hud && win.Hud.renderShiftClickDrop) {
+            win.Hud.renderShiftClickDrop(hero);
         }
         return hero;
     },

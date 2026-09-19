@@ -2198,6 +2198,118 @@ EmberwoodTests.add('inv: drop from inventory creates groundLoot at the player', 
     });
 });
 
+EmberwoodTests.add('inv: shift-click drop follows Settings toggle', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, true);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.clearLoot();
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(typeof win.shiftClickDropOn, 'function', 'shiftClickDropOn helper');
+        assertEqual(typeof H.shiftClick, 'function', 'harness shiftClick helper');
+
+        var fresh = win.makeHero();
+        assertEqual(fresh.shiftClickDrop, true, 'makeHero OSRS default is on');
+        assertEqual(win.shiftClickDropOn(fresh), true, 'shiftClickDropOn reads starter on');
+
+        var hero = win.makeHero();
+        win.addItem(hero, 'bones', 2);
+        delete hero.shiftClickDrop;
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        assertEqual(win.shiftClickDropOn(H.hero(win)), true, 'missing key defaults on');
+        assertMatch(win.document.querySelector('#panel-settings [data-shift-click-drop]').textContent, 'On', 'missing key shows On');
+
+        H.click(win, '#tab-bar button[data-tab="settings"]');
+        assert(H.panelVisible(win, 'settings'), 'Settings panel visible');
+        var toggle = win.document.querySelector('#panel-settings [data-shift-click-drop]');
+        assert(toggle, 'Settings shift-click drop toggle exists');
+        assertMatch(toggle.textContent, 'On', 'settings label starts On');
+        assert(toggle.classList.contains('is-on'), 'settings button is-on');
+
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        var inv = win.document.getElementById('inv-grid');
+        assert(inv.querySelector('[data-item="bones"]'), 'bones slot before shift-click');
+
+        H.click(win, '#inv-grid [data-item="bones"]');
+        assertEqual(H.lastChat(win), 'Bones.', 'plain left-click still only logs the name');
+        assertEqual(H.hero(win).inventory.filter(function (row) { return row.id === 'bones'; })[0].qty, 2, 'plain left-click does not drop');
+        assertEqual(H.lootLive(win).length, 0, 'plain left-click does not spawn loot');
+
+        var droppedAt = world.time.now;
+        H.shiftClick(win, '#inv-grid [data-item="bones"]');
+        hero = H.hero(win);
+        assertEqual(hero.inventory.filter(function (row) { return row.id === 'bones'; })[0].qty, 1, 'shift-click Drop takes one bones');
+        assertEqual(H.lastChat(win), 'You drop Bones.', 'shift-click drop chat');
+        var live = H.lootLive(win);
+        assertEqual(live.length, 1, 'one ground pile after shift-click');
+        assertEqual(live[0].id, 'bones', 'dropped bones id');
+        assertEqual(live[0].qty, 1, 'dropped bones qty 1');
+        assertEqual(live[0].skipAuto, true, 'dropped pile skips auto-pickup');
+        assertEqual(Math.round(live[0].sprite.x), 328, 'bones pile at player x');
+        assertEqual(Math.round(live[0].sprite.y), 248, 'bones pile at player y');
+        assertEqual(live[0].until, droppedAt + 20000, 'dropped until is now + 20000');
+
+        world.collectNearbyLoot();
+        assertEqual(H.lootLive(win).length, 1, 'auto-pickup does not vacuum a shift-clicked pile');
+
+        H.click(win, '#tab-bar button[data-tab="settings"]');
+        var settingsClicked = H.mouseClick(win, '#panel-settings [data-shift-click-drop]');
+        assertEqual(H.hero(win).shiftClickDrop, false, 'settings panel toggles off');
+        assertMatch(win.document.querySelector('#panel-settings [data-shift-click-drop]').textContent, 'Off', 'settings label Off');
+        assert(win.document.activeElement !== settingsClicked, 'settings toggle blurs after click');
+        assert(H.chatHas(win, 'Shift-click drop off'), 'toggle off chat');
+        assertEqual(win.shiftClickDropOn(H.hero(win)), false, 'shiftClickDropOn reads off');
+
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        H.shiftClick(win, '#inv-grid [data-item="bones"]');
+        assertEqual(H.lastChat(win), 'Bones.', 'shift-click with toggle off only logs the name');
+        assertEqual(H.hero(win).inventory.filter(function (row) { return row.id === 'bones'; })[0].qty, 1, 'toggle off does not drop');
+        assertEqual(H.lootLive(win).length, 1, 'toggle off leaves only the earlier pile');
+
+        H.click(win, '#tab-bar button[data-tab="settings"]');
+        H.mouseClick(win, '#panel-settings [data-shift-click-drop]');
+        assertEqual(H.hero(win).shiftClickDrop, true, 'settings panel toggles on');
+        assert(H.chatHas(win, 'Shift-click drop on'), 'toggle on chat');
+
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        var bread = H.hero(win).inventory.filter(function (row) { return row.id === 'bread'; })[0];
+        var breadQty = bread.qty;
+        H.shiftClick(win, '#inv-grid [data-item="bread"]');
+        hero = H.hero(win);
+        assertEqual(hero.inventory.filter(function (row) { return row.id === 'bread'; })[0].qty, breadQty - 1, 'shift-click drops bread when on');
+        assertEqual(H.lastChat(win), 'You drop Bread.', 'bread shift-click drop chat');
+        assertEqual(H.lootLive(win).length, 2, 'bones and bread on the ground');
+
+        world.encounterLock = true;
+        var locked = H.shiftClick(win, '#inv-grid [data-item="bread"]');
+        assert(locked, 'shift-click still hits the bread slot');
+        assertEqual(world.dropFromInventory('bread', 1), false, 'encounterLock refuses drop');
+        world.encounterLock = false;
+        win.Hud.mode = 'battle';
+        H.shiftClick(win, '#inv-grid [data-item="bread"]');
+        assertEqual(H.hero(win).inventory.filter(function (row) { return row.id === 'bread'; })[0].qty, breadQty - 1, 'battle mode does not shift-drop');
+        win.Hud.mode = 'world';
+
+        world.clearLoot();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('hud: eat food from inventory', function (win, H) {
     H.click(win, '#tab-bar button[data-tab="inv"]');
     H.click(win, '#inv-grid [data-item="shrimp"]');
