@@ -3003,26 +3003,64 @@ EmberwoodTests.add('loot: win drops coins bones and extra food at the mob feet',
 });
 
 EmberwoodTests.add('combat: Eat food uses inventory on your turn', function (win, H) {
-    H.enterZone(win, 'millfields');
-    H.setAutoAttack(win, false);
-    var cow = H.findMob(win, 'Cow');
-    return H.startFight(win, cow).then(function () {
+    return ensureWorldPlay(win, H).then(function () {
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard stays off');
+        assertEqual(typeof win.eatBestFood, 'function', 'eatBestFood helper');
+        H.enterZone(win, 'millfields');
+        H.setAutoAttack(win, false);
+        var cow = H.findMob(win, 'Cow');
+        return H.startFight(win, cow);
+    }).then(function () {
         win.document.querySelector('#battle-actions [data-action="heal"]').click();
         assert(H.chatHas(win, 'already at full health') || win.document.getElementById('battle-message').textContent.indexOf('full health') !== -1, 'eat at full HP');
+        assert(H.battle(win).waitingForPlayer, 'full HP eat does not spend the turn');
         var battle = H.battle(win);
         battle.heroes[0].hp = 60;
         var hero = H.hero(win);
         hero.hp = 60;
         win.game.registry.set('hero', hero);
         var shrimp = hero.inventory.filter(function (s) { return s.id === 'shrimp'; })[0].qty;
+        var bread = hero.inventory.filter(function (s) { return s.id === 'bread'; })[0].qty;
         return H.waitPlayerTurn(win).then(function () {
             win.Hud.setActionsEnabled(true);
             win.document.querySelector('#battle-actions [data-action="heal"]').click();
             return H.sleep(200);
         }).then(function () {
-            assert(H.battle(win).heroes[0].hp > 60, 'ate food in combat');
-            var after = H.hero(win).inventory.filter(function (s) { return s.id === 'shrimp'; })[0];
-            assert(after.qty === shrimp - 1, 'combat consumed shrimp');
+            battle = H.battle(win);
+            assertEqual(battle.heroes[0].hp, 72, 'shrimp heals 12 in combat');
+            assertEqual(H.hero(win).hp, 72, 'hero HP after shrimp');
+            var afterShrimp = H.hero(win).inventory.filter(function (s) { return s.id === 'shrimp'; })[0];
+            var afterBread = H.hero(win).inventory.filter(function (s) { return s.id === 'bread'; })[0];
+            assert(afterShrimp.qty === shrimp - 1, 'combat consumed one shrimp');
+            assertEqual(afterBread.qty, bread, 'shrimp preferred over bread');
+            assert(H.chatHas(win, 'Cooked shrimp') || win.document.getElementById('battle-message').textContent.indexOf('Cooked shrimp') !== -1, 'ate shrimp');
+            assert(!battle.waitingForPlayer, 'shrimp eat spends the turn');
+            assert(battle.busy, 'shrimp eat queues the next turn');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+            return H.waitPlayerTurn(win);
+        }).then(function () {
+            hero = H.hero(win);
+            hero.hp = 50;
+            hero.inventory = hero.inventory.filter(function (s) { return s.id !== 'shrimp'; });
+            win.game.registry.set('hero', hero);
+            battle = H.battle(win);
+            battle.heroes[0].hp = 50;
+            bread = hero.inventory.filter(function (s) { return s.id === 'bread'; })[0].qty;
+            win.Hud.setActionsEnabled(true);
+            win.document.querySelector('#battle-actions [data-action="heal"]').click();
+            return H.sleep(200);
+        }).then(function () {
+            battle = H.battle(win);
+            assertEqual(battle.heroes[0].hp, 70, 'bread heals 20 when no shrimp');
+            assertEqual(H.hero(win).hp, 70, 'hero HP after bread');
+            var afterBread = H.hero(win).inventory.filter(function (s) { return s.id === 'bread'; })[0];
+            assert(afterBread.qty === bread - 1, 'combat consumed one bread');
+            assert(!H.hero(win).inventory.filter(function (s) { return s.id === 'shrimp'; })[0], 'no shrimp left');
+            assert(H.chatHas(win, 'Bread') || win.document.getElementById('battle-message').textContent.indexOf('Bread') !== -1, 'ate bread');
+            assert(!battle.waitingForPlayer, 'bread eat spends the turn');
+            assert(battle.busy, 'bread eat queues the next turn');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off after eat');
             return H.forceFlee(win);
         });
     }).then(function () {
