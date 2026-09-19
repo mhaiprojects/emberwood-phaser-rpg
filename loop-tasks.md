@@ -169,7 +169,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Bank search and at least two tabs (once bank exists). — Conclusion: From spawn (328,248) Elise Bank `#bank-overlay` chest Search + All/Food tabs; Food hides coins, `shr` keeps shrimp; Phaser 3.90 keyboard off. Dedicated + Playwright 1/1.
 - [done] Block Use in world while `Hud.mode === 'battle'` (already: “Use Eat food on your combat turn”) — verify. — Conclusion: From spawn (328,248) Inv Use of shrimp/gear/bones/coins/key while `Hud.mode === 'battle'` chats `Use Eat food on your combat turn.` and does not world-eat/wield/bury/drop; world Use still works after; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Use-item-on (raw on fire, bones on shrine) as a target cursor. — Conclusion: From spawn (328,248) Inv Use bones→shrine and raw shrimp→range (fire) consume with no Prayer/Cooking XP; miss chats Nothing interesting happens; Esc cancels cursor. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [todo] Item value fields used by shops and a later High Alch. — Conclusion: —
+- [done] Item value fields used by shops and a later High Alch. — Conclusion: From spawn (328,248) each ITEM_DB entry has a gp `value` (coins/bones/key 1, shrimp/raw 5, bread 12, sword 26, shield 20); shop Buy/Sell stay stubbed; no High Alch. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 
 ## 6. Skills (22)
 
@@ -532,4 +532,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 160 | 2026-09-19 | Bank search and at least two tabs (once bank exists) | done — spawn (328,248) chest Search + All/Food tabs; Food hides coins, shr keeps shrimp; Phaser keyboard off; dedicated + Playwright 1/1 |
 | 161 | 2026-09-19 | Block Use in world while Hud.mode is battle | done — spawn (328,248) Inv Use blocked with `Use Eat food on your combat turn.`; world eat still works after; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 162 | 2026-09-19 | Use-item-on (raw on fire, bones on shrine) as a target cursor | done — spawn (328,248) Inv Use bones→shrine and raw shrimp→range (fire) consume with no Prayer/Cooking XP; miss/Esc cancel cursor; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
+| 163 | 2026-09-19 | Item value fields used by shops and a later High Alch | done — spawn (328,248) ITEM_DB gp values (coins/bones/key 1, shrimp/raw 5, bread 12, sword 26, shield 20); shop Buy/Sell stubbed; no High Alch; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 

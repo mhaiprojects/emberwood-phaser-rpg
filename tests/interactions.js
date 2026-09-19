@@ -978,6 +978,97 @@ EmberwoodTests.add('hud: inventory and ground Examine logs ITEM_DB flavor', func
     });
 });
 
+EmberwoodTests.add('hud: ITEM_DB value fields for shops and later High Alch', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, true);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.clearLoot();
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        if (win.Hud.hideContextMenu) {
+            win.Hud.hideContextMenu();
+        }
+        if (win.Hud.hideShop) {
+            win.Hud.hideShop();
+        }
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assertEqual(win.Hud.mode, 'world', 'world mode');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(!world.cursors, 'WorldScene has no Phaser cursors');
+        assertEqual(typeof win.itemValue, 'function', 'itemValue helper exists');
+        assertEqual(typeof win.highAlch, 'undefined', 'High Alch is not this tick');
+        assertEqual(typeof win.castHighAlch, 'undefined', 'castHighAlch is not this tick');
+
+        var expected = {
+            coins: 1,
+            shrimp: 5,
+            rawshrimp: 5,
+            bread: 12,
+            sword: 26,
+            shield: 20,
+            bones: 1,
+            key: 1
+        };
+        var ids = Object.keys(win.ITEM_DB);
+        assertEqual(ids.length, 8, 'eight ITEM_DB entries');
+        assert(!win.ITEM_DB.logs && !win.ITEM_DB.ore && !win.ITEM_DB.net, 'no gathering section items');
+        ids.forEach(function (id) {
+            var def = win.ITEM_DB[id];
+            assertEqual(typeof def.value, 'number', id + ' has a numeric value');
+            assertEqual(def.value, Math.floor(def.value), id + ' value is an integer');
+            assert(def.value >= 0, id + ' value is not negative');
+            assertEqual(def.value, expected[id], id + ' shop/alch value');
+            assertEqual(win.itemValue(id), expected[id], id + ' itemValue helper');
+            assertEqual(def.buyPrice, undefined, id + ' has no buyPrice this tick');
+            assertEqual(def.sellPrice, undefined, id + ' has no sellPrice this tick');
+        });
+        assertEqual(win.itemValue('not-an-item'), 0, 'unknown items are worth 0');
+
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(hero.gold, 8, 'starter gold is 8');
+        assertEqual(win.itemValue('coins'), 1, 'coins value is 1gp');
+
+        var shop = win.document.getElementById('shop-overlay');
+        assert(shop && shop === win.Hud.el.shop, '#shop-overlay is Hud.el.shop');
+        assert(shop.hidden, 'shop overlay starts hidden');
+        var mira = H.findNpc(win, 'shopkeep');
+        assert(mira, 'Shopkeeper Mira is in Emberhaven');
+        win.Hud.el.log.innerHTML = '';
+        win.Hud.showShop(mira.npcDef);
+        assert(win.Hud.shopOpen(), 'shop can read item values while open');
+        assertEqual(win.document.getElementById('shop-copy').textContent, 'The shelves are still being stocked.', 'shop stock is still stubbed');
+        H.click(win, shop.querySelector('[data-shop-action="buy"]'));
+        assertEqual(H.lastChat(win), 'The shelves are still being stocked.', 'Buy stays stubbed');
+        assertEqual(H.hero(win).gold, 8, 'Buy stub does not take gold');
+        H.click(win, shop.querySelector('[data-shop-action="sell"]'));
+        assertEqual(H.lastChat(win), 'The shelves are still being stocked.', 'Sell stays stubbed');
+        assertEqual(H.hero(win).gold, 8, 'Sell stub does not change gold');
+        assertEqual(H.hero(win).inventory.filter(function (row) { return row.id === 'shrimp'; })[0].qty, 8, 'Sell stub does not take shrimp');
+        H.click(win, win.document.getElementById('btn-shop-close'));
+        assert(!win.Hud.shopOpen(), 'Close hides the shop');
+
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('hud: skills tab lists twelve skills with icons', function (win, H) {
     var expected = [
         ['attack', 'Attack'],

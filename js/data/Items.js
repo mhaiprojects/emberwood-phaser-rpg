@@ -1,12 +1,12 @@
 var ITEM_DB = {
-    coins: { name: 'Coins', icon: 'assets/svg/items/coins.svg', stack: true, examine: 'A small pile of copper and silver coins.' },
-    shrimp: { name: 'Cooked shrimp', icon: 'assets/svg/items/shrimp.svg', heal: 12, stack: true, examine: 'A cooked shrimp, still warm enough to eat.' },
-    rawshrimp: { name: 'Raw shrimp', icon: 'assets/svg/items/rawshrimp.svg', stack: true, cook: 'shrimp', examine: 'A raw shrimp. It should be cooked.' },
-    bread: { name: 'Bread', icon: 'assets/svg/items/bread.svg', heal: 20, stack: true, examine: 'A dense loaf baked for the road.' },
-    sword: { name: 'Bronze sword', icon: 'assets/svg/items/sword.svg', slot: 'weapon', damage: 16, examine: 'A short bronze blade, nicked but serviceable.' },
-    shield: { name: 'Wooden shield', icon: 'assets/svg/items/shield.svg', slot: 'shield', defence: 1, examine: 'A round wooden shield bound with iron.' },
-    bones: { name: 'Bones', icon: 'assets/svg/items/bones.svg', stack: true, bury: true, examine: 'Dry bones. Someone should bury them.' },
-    key: { name: 'Iron key', icon: 'assets/svg/items/key.svg', examine: 'A heavy iron key with a worn bit.' }
+    coins: { name: 'Coins', icon: 'assets/svg/items/coins.svg', stack: true, value: 1, examine: 'A small pile of copper and silver coins.' },
+    shrimp: { name: 'Cooked shrimp', icon: 'assets/svg/items/shrimp.svg', heal: 12, stack: true, value: 5, examine: 'A cooked shrimp, still warm enough to eat.' },
+    rawshrimp: { name: 'Raw shrimp', icon: 'assets/svg/items/rawshrimp.svg', stack: true, cook: 'shrimp', value: 5, examine: 'A raw shrimp. It should be cooked.' },
+    bread: { name: 'Bread', icon: 'assets/svg/items/bread.svg', heal: 20, stack: true, value: 12, examine: 'A dense loaf baked for the road.' },
+    sword: { name: 'Bronze sword', icon: 'assets/svg/items/sword.svg', slot: 'weapon', damage: 16, value: 26, examine: 'A short bronze blade, nicked but serviceable.' },
+    shield: { name: 'Wooden shield', icon: 'assets/svg/items/shield.svg', slot: 'shield', defence: 1, value: 20, examine: 'A round wooden shield bound with iron.' },
+    bones: { name: 'Bones', icon: 'assets/svg/items/bones.svg', stack: true, bury: true, value: 1, examine: 'Dry bones. Someone should bury them.' },
+    key: { name: 'Iron key', icon: 'assets/svg/items/key.svg', value: 1, examine: 'A heavy iron key with a worn bit.' }
 };
 
 var SKILL_NAMES = [
@@ -602,6 +602,15 @@ function itemExamineText(id) {
     }
     var name = itemName(id);
     return name ? "It's " + name + '.' : '';
+}
+
+function itemValue(id) {
+    var def = ITEM_DB[id];
+    var n = def && def.value;
+    if (typeof n !== 'number' || !(n >= 0) || n !== Math.floor(n)) {
+        return 0;
+    }
+    return n;
 }
 
 function itemIcon(id) {
