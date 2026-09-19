@@ -799,6 +799,71 @@ EmberwoodTests.add('hud: chat appends lines, auto-scrolls, and drops the oldest 
     });
 });
 
+EmberwoodTests.add('hud: death overlay copy You are dead and retry keeps focus', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+        world.refreshHud();
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        var overlay = win.document.getElementById('dead-overlay');
+        var heading = overlay && overlay.querySelector('h1');
+        var deadText = win.document.getElementById('dead-text');
+        var retry = win.document.getElementById('btn-retry');
+        assert(overlay && overlay === win.Hud.el.dead, '#dead-overlay is Hud.el.dead');
+        assert(heading, 'death overlay has an h1');
+        assertEqual(heading.textContent.replace(/\s+/g, ' ').trim(), 'You are dead', 'death heading copy');
+        assert(retry && retry === win.Hud.el.retry, '#btn-retry is Hud.el.retry');
+        assertEqual(retry.textContent.replace(/\s+/g, ' ').trim(), 'Return to title', 'retry button copy');
+        assert(deadText, '#dead-text exists');
+
+        var hero = H.hero(win);
+        var combatLevel = hero.level;
+        var subtitle = 'Combat level ' + combatLevel + '. Emberwood claimed another traveller.';
+        win.Hud.showDead(subtitle);
+        assertEqual(win.Hud.mode, 'dead', 'hud dead mode');
+        assert(!overlay.hidden, 'death overlay visible');
+        assert(win.document.getElementById('title-overlay').hidden, 'title stays hidden while dead');
+        assertEqual(deadText.textContent, subtitle, 'GameOverScene combat-level subtitle');
+        assertMatch(overlay.innerText, 'You are dead', 'overlay still shows You are dead');
+        assertMatch(overlay.innerText, 'Return to title', 'overlay still shows Return to title');
+        assertMatch(overlay.innerText, 'Combat level ' + combatLevel, 'overlay shows combat level');
+
+        retry.focus();
+        assertEqual(win.document.activeElement, retry, 'retry can take focus');
+        var opts = { bubbles: true, cancelable: true, view: win, button: 0 };
+        retry.dispatchEvent(new win.MouseEvent('mouseup', opts));
+        assertEqual(win.document.activeElement, retry, 'retry keeps focus after mouseup');
+        assert(retry.matches(':focus'), 'retry is :focus (bindHudBlur skips #dead-overlay)');
+
+        var invBtn = win.document.querySelector('#tab-bar button[data-tab="inv"]');
+        assert(invBtn, 'Inv tab exists');
+        invBtn.focus();
+        assertEqual(win.document.activeElement, invBtn, 'Inv tab can take focus');
+        H.mouseClick(win, invBtn);
+        assert(win.document.activeElement !== invBtn, 'Inv tab still blurs after mouseup');
+        assert(!invBtn.matches(':focus'), 'Inv tab is not :focus');
+
+        H.click(win, '#btn-retry');
+        return H.waitUntil(function () {
+            return !win.document.getElementById('title-overlay').hidden;
+        }, 4000, 'title after retry');
+    }).then(function () {
+        assertEqual(win.Hud.mode, 'title', 'retry returns to title');
+        assert(win.document.getElementById('dead-overlay').hidden, 'death overlay closed');
+        assert(!win.document.getElementById('title-overlay').hidden, 'title overlay shown');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off after retry');
+    });
+});
+
 EmberwoodTests.add('skills: Hitpoints level-up sets maxHp to 10 * level and chats Skill increased to N', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         var world = H.world(win);

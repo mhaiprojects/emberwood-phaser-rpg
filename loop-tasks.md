@@ -287,7 +287,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Chat appends lines, auto-scrolls, and drops the oldest after 40 lines. — Conclusion: From spawn (328,248) Hud.log appends `.chat-line`, pins scrollTop to the newest line, and drops the oldest after 40; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Title: **Click here to play** starts WorldScene in Emberhaven; Credits toggles `#credit-text`. — Conclusion: Click here to play starts WorldScene in Emberhaven (haven, spawn 328,248); Credits toggles `#credit-text`. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] `#btn-start` stays disabled until `TitleScene` binds `Hud.setStartHandler`. — Conclusion: `#btn-start` stays disabled until TitleScene `Hud.setStartHandler`; unbound click stays on title; bind enables and starts Emberhaven (328,248). Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [verify] Death overlay + retry (already listed in Combat — here: HUD copy and focus). — Conclusion: —
+- [done] Death overlay + retry (already listed in Combat — here: HUD copy and focus). — Conclusion: From spawn (328,248) `#dead-overlay` “You are dead”, `Hud.mode === 'dead'`, `#dead-text` Combat level N, `#btn-retry` Return to title keeps focus (`bindHudBlur` skips overlay); retry returns to title. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [todo] Replace Prayer stub (“No prayers unlocked yet”) with bury-bones XP and at least Thick Skin / Burst of Strength toggles + prayer points. — Conclusion: —
 - [todo] Replace Magic stub (“Wind Strike is not learned yet”) with a cast button, rune check, and autocast later. — Conclusion: —
 - [todo] Chat input (local echo) and Game/Public filters; do not let the input steal WASD (`Keys.typing`). — Conclusion: —
@@ -475,4 +475,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 102 | 2026-09-19 | Chat appends lines, auto-scrolls, and drops the oldest after 40 lines | done — spawn (328,248) Hud.log appends `.chat-line`, auto-scrolls, drops oldest after 40; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 103 | 2026-09-19 | Click here to play starts WorldScene in Emberhaven; Credits toggles #credit-text | done — play starts WorldScene in Emberhaven (328,248); Credits toggles `#credit-text`; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 104 | 2026-09-19 | #btn-start stays disabled until TitleScene binds Hud.setStartHandler | done — unbound click stays on title; setStartHandler enables and starts Emberhaven (328,248); Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 105 | 2026-09-19 | Death overlay HUD copy You are dead and retry keeps focus | done — spawn (328,248) `#dead-overlay` You are dead, Combat level subtitle, retry keeps focus; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 
