@@ -1296,7 +1296,20 @@ var WorldScene = new Phaser.Class({
 
     tryMineRock: function (hit) {
         var hero = this.registry.get('hero');
-        var result = typeof mineAtRock === 'function' ? mineAtRock(hero) : null;
+        var rock = typeof mineRockAt === 'function'
+            ? mineRockAt(hit.tx, hit.ty, this.zoneId, this.tileGrid, {
+                houseRects: this.houseRectsNow(),
+                interior: !!this.interiorId
+            })
+            : null;
+        var ore = rock && rock.ore;
+        var result = typeof mineAtRock === 'function' ? mineAtRock(hero, ore) : null;
+        if (result && result.need && !result.ok) {
+            Hud.log(typeof needLevelChat === 'function'
+                ? needLevelChat(result.need)
+                : ('You need level ' + result.need + '.'));
+            return false;
+        }
         if (!result || !result.ok) {
             return this.examineScenery(hit);
         }

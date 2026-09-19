@@ -71,6 +71,20 @@ var AGILITY_SHORTCUT = {
     verb: 'squeeze'
 };
 var MINE_SHAFT_HOUSE = { x: 6, y: 8, w: 6, h: 5 };
+var MINE_PROPS = {
+    copper: [
+        { x: 14, y: 16 },
+        { x: 15, y: 20 }
+    ],
+    tin: [
+        { x: 16, y: 16 },
+        { x: 17, y: 20 }
+    ],
+    iron: [
+        { x: 22, y: 16 },
+        { x: 24, y: 20 }
+    ]
+};
 var INTERIOR_ROOM = { x: 12, y: 8, w: 12, h: 13 };
 var SCENERY_EXAMINE = {
     tree: "It's a tree.",
@@ -329,6 +343,7 @@ function generateMap(seed, biome, neighbors) {
         scatter(grid, TILE.ROCK, 55, seed, true);
         scatter(grid, TILE.TREE, 8, seed + 5, true);
         house(grid, MINE_SHAFT_HOUSE.x, MINE_SHAFT_HOUSE.y, MINE_SHAFT_HOUSE.w, MINE_SHAFT_HOUSE.h);
+        placeMineOres(grid);
     } else if (biome === 'plains') {
         scatter(grid, TILE.FLOWER, 24, seed, true);
         scatter(grid, TILE.TREE, 14, seed + 6, true);
@@ -447,6 +462,39 @@ function woodcutTreeAt(tx, ty, zoneId, grid) {
     return { x: tx, y: ty };
 }
 
+function mineOreAt(tx, ty) {
+    var kinds = ['iron', 'tin', 'copper'];
+    var k;
+    var i;
+    for (k = 0; k < kinds.length; k++) {
+        var list = MINE_PROPS && MINE_PROPS[kinds[k]];
+        if (!list) {
+            continue;
+        }
+        for (i = 0; i < list.length; i++) {
+            if (list[i].x === tx && list[i].y === ty) {
+                return kinds[k];
+            }
+        }
+    }
+    return (tx + ty) % 2 === 0 ? 'copper' : 'tin';
+}
+
+function placeMineOres(grid) {
+    var kinds = ['copper', 'tin', 'iron'];
+    var k;
+    var i;
+    for (k = 0; k < kinds.length; k++) {
+        var list = MINE_PROPS && MINE_PROPS[kinds[k]];
+        if (!list) {
+            continue;
+        }
+        for (i = 0; i < list.length; i++) {
+            setCell(grid, list[i].x, list[i].y, TILE.ROCK);
+        }
+    }
+}
+
 function mineRockAt(tx, ty, zoneId, grid, opts) {
     if (zoneId !== 'darkmine' || !inBounds(tx, ty)) {
         return null;
@@ -471,7 +519,9 @@ function mineRockAt(tx, ty, zoneId, grid, opts) {
             return null;
         }
     }
-    return { x: tx, y: ty };
+    var ore = mineOreAt(tx, ty);
+    var level = typeof resourceNeedLevel === 'function' ? resourceNeedLevel(ore) : (ore === 'iron' ? 15 : 1);
+    return { x: tx, y: ty, ore: ore, level: level };
 }
 
 function agilityShortcutAt(tx, ty, zoneId) {

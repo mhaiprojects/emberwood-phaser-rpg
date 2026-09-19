@@ -9601,7 +9601,11 @@ EmberwoodTests.add('skills: Darkmine rocks grant Mining XP', function (win, H) {
                     if (skip.x === x && skip.y === y) {
                         continue;
                     }
-                    if (win.mineRockAt(x, y, 'darkmine', grid)) {
+                    var found = win.mineRockAt(x, y, 'darkmine', grid);
+                    if (found && found.level > 1) {
+                        continue;
+                    }
+                    if (found) {
                         return { x: x, y: y };
                     }
                 }
@@ -9759,6 +9763,180 @@ EmberwoodTests.add('skills: Darkmine rocks grant Mining XP', function (win, H) {
         assertEqual(typeof win.lightFire, 'undefined', 'Firemaking still not this tick');
         assertEqual(typeof win.firemakeAt, 'undefined', 'Firemaking helper still not this tick');
         assertEqual(H.hero(win).skills.crafting.xp, 0, 'Crafting XP still 0');
+    });
+});
+
+EmberwoodTests.add('skills: copper and tin need level 1, iron needs 15', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, true);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.clearLoot();
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        if (win.Hud.hideContextMenu) {
+            win.Hud.hideContextMenu();
+        }
+        if (win.Hud.clearUseOn) {
+            win.Hud.clearUseOn();
+        }
+        parkWorldBodies(world);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof win.mineAtRock, 'function', 'mineAtRock helper');
+        assertEqual(typeof win.mineRockAt, 'function', 'mineRockAt helper');
+        assertEqual(typeof win.mineOreAt, 'function', 'mineOreAt helper');
+        assertEqual(typeof win.needLevelChat, 'function', 'needLevelChat helper');
+        assertEqual(typeof win.resourceNeedLevel, 'function', 'resourceNeedLevel helper');
+        assertEqual(win.RESOURCE_LEVEL.copper, 1, 'copper needs Mining 1');
+        assertEqual(win.RESOURCE_LEVEL.tin, 1, 'tin needs Mining 1');
+        assertEqual(win.RESOURCE_LEVEL.iron, 15, 'iron needs Mining 15');
+        assertEqual(win.resourceNeedLevel('copper'), 1, 'copper gate is 1');
+        assertEqual(win.resourceNeedLevel('tin'), 1, 'tin gate is 1');
+        assertEqual(win.resourceNeedLevel('iron'), 15, 'iron gate is 15');
+        assertEqual(win.needLevelChat(15), 'You need level 15.', 'need-level chat');
+        assertEqual(typeof win.lightFire, 'undefined', 'Firemaking is not this tick');
+        assertEqual(typeof win.smithBar, 'undefined', 'Smithing is not this tick');
+
+        function clickTile(tx, ty) {
+            var pt = win.tileCenter(tx, ty);
+            world.onClick({ worldX: pt.x, worldY: pt.y });
+            return pt;
+        }
+
+        var copperSpot = win.MINE_PROPS.copper[0];
+        var tinSpot = win.MINE_PROPS.tin[0];
+        var ironSpot = win.MINE_PROPS.iron[0];
+        assertEqual(copperSpot.x, 14, 'copper rock x');
+        assertEqual(copperSpot.y, 16, 'copper rock y');
+        assertEqual(tinSpot.x, 16, 'tin rock x');
+        assertEqual(tinSpot.y, 16, 'tin rock y');
+        assertEqual(ironSpot.x, 22, 'iron rock x');
+        assertEqual(ironSpot.y, 16, 'iron rock y');
+        assertEqual(win.mineOreAt(copperSpot.x, copperSpot.y), 'copper', 'listed copper ore');
+        assertEqual(win.mineOreAt(tinSpot.x, tinSpot.y), 'tin', 'listed tin ore');
+        assertEqual(win.mineOreAt(ironSpot.x, ironSpot.y), 'iron', 'listed iron ore');
+
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(hero.skills.mining.level, 1, 'Mining starts 1');
+        assertEqual(hero.skills.mining.xp, 0, 'Mining XP starts 0');
+
+        var blocked = win.mineAtRock(hero, 'iron');
+        assert(blocked && blocked.ok === false, 'helper blocks iron at Mining 1');
+        assertEqual(blocked.need, 15, 'helper need is 15');
+        assertEqual(blocked.ore, 'iron', 'helper ore is iron');
+        assertEqual(hero.skills.mining.xp, 0, 'blocked helper grants no Mining XP');
+
+        var copperHelper = win.mineAtRock(hero, 'copper');
+        assert(copperHelper && copperHelper.ok, 'helper mines copper at Mining 1');
+        assertEqual(copperHelper.ore, 'copper', 'helper ore is copper');
+        assertEqual(hero.skills.mining.xp, 10, 'copper helper grants Mining XP');
+
+        var tinHelper = win.mineAtRock(hero, 'tin');
+        assert(tinHelper && tinHelper.ok, 'helper mines tin at Mining 1');
+        assertEqual(tinHelper.ore, 'tin', 'helper ore is tin');
+        assertEqual(hero.skills.mining.xp, 20, 'tin helper grants Mining XP');
+
+        H.enterZone(win, 'darkmine');
+        world = H.world(win);
+        H.setAutoAttack(win, false);
+        world.encounterLock = false;
+        world.engageTarget = null;
+        world.talkTarget = null;
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        parkWorldBodies(world);
+        hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(world.tileGrid[copperSpot.y][copperSpot.x], win.TILE.ROCK, 'copper tile is ROCK');
+        assertEqual(world.tileGrid[tinSpot.y][tinSpot.x], win.TILE.ROCK, 'tin tile is ROCK');
+        assertEqual(world.tileGrid[ironSpot.y][ironSpot.x], win.TILE.ROCK, 'iron tile is ROCK');
+        assertEqual(win.mineRockAt(copperSpot.x, copperSpot.y, 'darkmine', world.tileGrid).ore, 'copper', 'mineRockAt copper');
+        assertEqual(win.mineRockAt(tinSpot.x, tinSpot.y, 'darkmine', world.tileGrid).ore, 'tin', 'mineRockAt tin');
+        assertEqual(win.mineRockAt(ironSpot.x, ironSpot.y, 'darkmine', world.tileGrid).ore, 'iron', 'mineRockAt iron');
+        assertEqual(win.mineRockAt(ironSpot.x, ironSpot.y, 'darkmine', world.tileGrid).level, 15, 'iron rock level 15');
+        assertEqual(win.mineRockAt(copperSpot.x, copperSpot.y, 'darkmine', world.tileGrid).level, 1, 'copper rock level 1');
+
+        H.click(win, '#tab-bar button[data-tab="skills"]');
+        var dropsHost = win.Hud.ensureXpDrops();
+        assert(dropsHost && dropsHost.id === 'xp-drops', 'xp-drops host exists');
+        dropsHost.innerHTML = '';
+        win.Hud.el.log.innerHTML = '';
+
+        clickTile(ironSpot.x, ironSpot.y);
+        hero = H.hero(win);
+        assertEqual(H.lastChat(win), 'You need level 15.', 'iron at Mining 1 chats need-level');
+        assertEqual(hero.skills.mining.xp, 0, 'iron at Mining 1 grants no XP');
+        assertEqual(hero.skills.mining.level, 1, 'Mining stays 1');
+        assertEqual(hero.skills.woodcutting.xp, 0, 'iron gate does not grant Woodcutting');
+        assertEqual(H.lootLive(win).length, 0, 'gated mine does not drop loot');
+        assert(!world.walkTarget, 'gated mine does not walk');
+        var drops = win.document.querySelectorAll('#xp-drops .xp-drop');
+        assertEqual(drops.length, 0, 'gated mine has no XP drop');
+
+        clickTile(copperSpot.x, copperSpot.y);
+        hero = H.hero(win);
+        assertEqual(H.lastChat(win), 'You mine the rock.', 'copper at Mining 1 mines');
+        assertEqual(hero.skills.mining.xp, 10, 'copper click grants 10 Mining XP');
+
+        clickTile(tinSpot.x, tinSpot.y);
+        hero = H.hero(win);
+        assertEqual(H.lastChat(win), 'You mine the rock.', 'tin at Mining 1 mines');
+        assertEqual(hero.skills.mining.xp, 20, 'tin click grants another 10 Mining XP');
+
+        dropsHost.innerHTML = '';
+        win.Hud.el.log.innerHTML = '';
+        hero.skills.mining.level = 15;
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        clickTile(ironSpot.x, ironSpot.y);
+        hero = H.hero(win);
+        assertEqual(H.lastChat(win), 'You mine the rock.', 'iron at Mining 15 mines');
+        assertEqual(hero.skills.mining.xp, 30, 'iron at Mining 15 grants XP');
+        drops = win.document.querySelectorAll('#xp-drops .xp-drop');
+        assertEqual(drops.length, 1, 'one Mining XP drop after iron');
+        assertEqual(drops[0].getAttribute('data-skill'), 'mining', 'drop skill is mining');
+        assertEqual(drops[0].getAttribute('data-xp'), '10', 'drop amount is 10');
+
+        hero.skills.mining.level = 14;
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        win.Hud.el.log.innerHTML = '';
+        dropsHost.innerHTML = '';
+        clickTile(ironSpot.x, ironSpot.y);
+        hero = H.hero(win);
+        assertEqual(H.lastChat(win), 'You need level 15.', 'iron at Mining 14 still gated');
+        assertEqual(hero.skills.mining.xp, 30, 'Mining 14 iron grants no XP');
+        drops = win.document.querySelectorAll('#xp-drops .xp-drop');
+        assertEqual(drops.length, 0, 'Mining 14 iron has no XP drop');
+
+        H.enterZone(win, 'haven');
+        world = H.world(win);
+        world.encounterLock = false;
+        parkWorldBodies(world);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        assertEqual(typeof win.lightFire, 'undefined', 'Firemaking still not this tick');
+        assertEqual(typeof win.smithBar, 'undefined', 'Smithing still not this tick');
     });
 });
 

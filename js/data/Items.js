@@ -23,6 +23,32 @@ var WOODCUT_TREE_XP = 10;
 var MINE_ROCK_XP = 10;
 var CRAFT_HIDE_XP = 14;
 var CRAFT_LEATHER_XP = 14;
+var RESOURCE_LEVEL = {
+    copper: 1,
+    tin: 1,
+    iron: 15
+};
+
+function resourceNeedLevel(id) {
+    var need = RESOURCE_LEVEL[id];
+    if (typeof need === 'number') {
+        return need;
+    }
+    return RESOURCE_LEVEL.copper;
+}
+
+function needLevelChat(need) {
+    return 'You need level ' + need + '.';
+}
+
+function resourceLevelGate(hero, skill, id) {
+    var need = resourceNeedLevel(id);
+    var have = heroSkillLevel(hero, skill);
+    if (have < need) {
+        return { ok: false, need: need, have: have };
+    }
+    return { ok: true, need: need, have: have };
+}
 
 var SKILL_NAMES = [
     ['attack', 'Attack'],
@@ -363,12 +389,17 @@ function chopAtTree(hero) {
     return { ok: true, xp: WOODCUT_TREE_XP };
 }
 
-function mineAtRock(hero) {
+function mineAtRock(hero, ore) {
     if (!hero || !hero.skills || !hero.skills.mining) {
         return null;
     }
+    ore = ore || 'copper';
+    var gate = resourceLevelGate(hero, 'mining', ore);
+    if (!gate.ok) {
+        return { ok: false, need: gate.need, ore: ore };
+    }
     gainSkillXp(hero, 'mining', MINE_ROCK_XP);
-    return { ok: true, xp: MINE_ROCK_XP };
+    return { ok: true, xp: MINE_ROCK_XP, ore: ore };
 }
 
 function tanCowhide(hero, id) {

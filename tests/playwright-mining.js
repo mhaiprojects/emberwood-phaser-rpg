@@ -85,7 +85,8 @@
             var x;
             for (y = 0; y < world.tileGrid.length && !rock; y++) {
                 for (x = 0; x < world.tileGrid[y].length; x++) {
-                    if (window.mineRockAt(x, y, 'darkmine', world.tileGrid)) {
+                    var found = window.mineRockAt(x, y, 'darkmine', world.tileGrid);
+                    if (found && !(found.level > 1)) {
                         rock = { x: x, y: y };
                         break;
                     }
