@@ -4,6 +4,8 @@ var ITEM_DB = {
     rawshrimp: { name: 'Raw shrimp', icon: 'assets/svg/items/rawshrimp.svg', stack: true, cook: 'shrimp', value: 5, examine: 'A raw shrimp. It should be cooked.' },
     bread: { name: 'Bread', icon: 'assets/svg/items/bread.svg', heal: 20, stack: true, value: 12, examine: 'A dense loaf baked for the road.' },
     sword: { name: 'Bronze sword', icon: 'assets/svg/items/sword.svg', slot: 'weapon', damage: 16, value: 26, examine: 'A short bronze blade, nicked but serviceable.' },
+    shortbow: { name: 'Shortbow', icon: 'assets/svg/items/shortbow.svg', slot: 'weapon', damage: 16, combatClass: 'ranged', value: 32, examine: 'A yew shortbow, light enough for bronze arrows.' },
+    arrow: { name: 'Bronze arrows', icon: 'assets/svg/items/arrow.svg', slot: 'ammo', stack: true, value: 1, examine: 'A sheaf of bronze arrows with grey-goose fletching.' },
     shield: { name: 'Wooden shield', icon: 'assets/svg/items/shield.svg', slot: 'shield', defence: 1, value: 20, examine: 'A round wooden shield bound with iron.' },
     bones: { name: 'Bones', icon: 'assets/svg/items/bones.svg', stack: true, bury: true, value: 1, examine: 'Dry bones. Someone should bury them.' },
     key: { name: 'Iron key', icon: 'assets/svg/items/key.svg', value: 1, examine: 'A heavy iron key with a worn bit.' }
@@ -52,15 +54,68 @@ function ensureEquipment(hero) {
     }
     if (!hero.equipment) {
         hero.equipment = emptyEquipment();
-        return hero.equipment;
-    }
-    for (var i = 0; i < EQUIP_SLOTS.length; i++) {
-        var key = EQUIP_SLOTS[i][0];
-        if (!Object.prototype.hasOwnProperty.call(hero.equipment, key)) {
-            hero.equipment[key] = null;
+    } else {
+        for (var i = 0; i < EQUIP_SLOTS.length; i++) {
+            var key = EQUIP_SLOTS[i][0];
+            if (!Object.prototype.hasOwnProperty.call(hero.equipment, key)) {
+                hero.equipment[key] = null;
+            }
         }
     }
+    ensureEquipmentQty(hero);
     return hero.equipment;
+}
+
+function ensureEquipmentQty(hero) {
+    if (!hero) {
+        return {};
+    }
+    if (!hero.equipmentQty) {
+        hero.equipmentQty = {};
+    }
+    return hero.equipmentQty;
+}
+
+function equippedQty(hero, slot) {
+    if (!hero || !slot || !hero.equipment || !hero.equipment[slot]) {
+        return 0;
+    }
+    var qty = hero.equipmentQty && hero.equipmentQty[slot];
+    if (typeof qty === 'number' && qty > 0) {
+        return qty;
+    }
+    return 1;
+}
+
+function rangedWeaponEquipped(hero) {
+    if (!hero || !hero.equipment || !hero.equipment.weapon) {
+        return false;
+    }
+    var def = ITEM_DB[hero.equipment.weapon];
+    return !!(def && def.combatClass === 'ranged');
+}
+
+function consumeAmmo(hero) {
+    if (!hero) {
+        return false;
+    }
+    ensureEquipment(hero);
+    if (!hero.equipment.ammo) {
+        return false;
+    }
+    var qty = equippedQty(hero, 'ammo');
+    if (qty < 1) {
+        hero.equipment.ammo = null;
+        hero.equipmentQty.ammo = 0;
+        return false;
+    }
+    qty -= 1;
+    hero.equipmentQty.ammo = qty;
+    if (qty < 1) {
+        hero.equipment.ammo = null;
+        hero.equipmentQty.ammo = 0;
+    }
+    return true;
 }
 
 function makeHero() {
@@ -85,6 +140,7 @@ function makeHero() {
             eq.shield = 'shield';
             return eq;
         }()),
+        equipmentQty: {},
         inventory: [
             { id: 'coins', qty: 8 },
             { id: 'sword', qty: 1 },
@@ -341,7 +397,22 @@ function equipItem(hero, id) {
     }
     ensureEquipment(hero);
     var current = hero.equipment[slot] || null;
+    var takeQty = 1;
+    if (slot === 'ammo') {
+        var held = findStack(hero.inventory, id);
+        takeQty = held ? held.qty : 0;
+        if (takeQty < 1) {
+            return false;
+        }
+    }
     if (current === id) {
+        if (slot === 'ammo') {
+            if (!takeItem(hero, id, takeQty)) {
+                return false;
+            }
+            hero.equipmentQty[slot] = equippedQty(hero, slot) + takeQty;
+            return true;
+        }
         if (heroHasItem(hero, id)) {
             return takeItem(hero, id, 1);
         }
@@ -350,17 +421,19 @@ function equipItem(hero, id) {
     if (!heroHasItem(hero, id)) {
         return false;
     }
-    if (!takeItem(hero, id, 1)) {
+    if (!takeItem(hero, id, takeQty)) {
         return false;
     }
     if (current) {
+        var giveQty = slot === 'ammo' ? equippedQty(hero, slot) : 1;
         if (!canAddItem(hero, current)) {
-            addItem(hero, id, 1);
+            addItem(hero, id, takeQty);
             return false;
         }
-        addItem(hero, current, 1);
+        addItem(hero, current, giveQty);
     }
     hero.equipment[slot] = id;
+    hero.equipmentQty[slot] = slot === 'ammo' ? takeQty : 1;
     return true;
 }
 
@@ -376,8 +449,19 @@ function unequipItem(hero, slot) {
     if (!id) {
         return false;
     }
+    var qty = equippedQty(hero, slot);
+    if (slot === 'ammo') {
+        if (!canAddItem(hero, id)) {
+            return false;
+        }
+        addItem(hero, id, qty);
+        hero.equipment[slot] = null;
+        hero.equipmentQty[slot] = 0;
+        return true;
+    }
     if (heroHasItem(hero, id)) {
         hero.equipment[slot] = null;
+        hero.equipmentQty[slot] = 0;
         return true;
     }
     if (!canAddItem(hero, id)) {
@@ -385,6 +469,7 @@ function unequipItem(hero, slot) {
     }
     addItem(hero, id, 1);
     hero.equipment[slot] = null;
+    hero.equipmentQty[slot] = 0;
     return true;
 }
 
@@ -756,7 +841,7 @@ function grantStyleHitXp(hero, target, dealt, hpBefore) {
     }
     var skill = combatSkill(hero);
     gainSkillXp(hero, skill, amount);
-    if (skill === 'attack' || skill === 'strength' || skill === 'defence') {
+    if (skill === 'attack' || skill === 'strength' || skill === 'defence' || skill === 'ranged') {
         var hpAmount = hitpointsHitXp(mobXp, scored, maxHp);
         if (hpAmount > 0) {
             gainSkillXp(hero, 'hitpoints', hpAmount);
@@ -779,6 +864,9 @@ function normalizeCombatClass(value) {
 }
 
 function heroCombatClass(hero) {
+    if (rangedWeaponEquipped(hero)) {
+        return 'ranged';
+    }
     return normalizeCombatClass(hero && hero.stance);
 }
 

@@ -59,13 +59,15 @@
                 rawshrimp: 5,
                 bread: 12,
                 sword: 26,
+                shortbow: 32,
+                arrow: 1,
                 shield: 20,
                 bones: 1,
                 key: 1
             };
             var ids = Object.keys(window.ITEM_DB);
-            if (ids.length !== 8) {
-                throw new Error('ITEM_DB count is ' + ids.length + ' not 8');
+            if (ids.length !== 10) {
+                throw new Error('ITEM_DB count is ' + ids.length + ' not 10');
             }
             if (window.ITEM_DB.logs || window.ITEM_DB.ore || window.ITEM_DB.net) {
                 throw new Error('gathering section items started this tick');

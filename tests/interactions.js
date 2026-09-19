@@ -843,12 +843,14 @@ EmberwoodTests.add('hud: inventory and ground Examine logs ITEM_DB flavor', func
             rawshrimp: 'A raw shrimp. It should be cooked.',
             bread: 'A dense loaf baked for the road.',
             sword: 'A short bronze blade, nicked but serviceable.',
+            shortbow: 'A yew shortbow, light enough for bronze arrows.',
+            arrow: 'A sheaf of bronze arrows with grey-goose fletching.',
             shield: 'A round wooden shield bound with iron.',
             bones: 'Dry bones. Someone should bury them.',
             key: 'A heavy iron key with a worn bit.'
         };
         var ids = Object.keys(win.ITEM_DB);
-        assertEqual(ids.length, 8, 'eight ITEM_DB entries');
+        assertEqual(ids.length, 10, 'ten ITEM_DB entries');
         var seen = {};
         ids.forEach(function (id) {
             var def = win.ITEM_DB[id];
@@ -1016,12 +1018,14 @@ EmberwoodTests.add('hud: ITEM_DB value fields for shops and later High Alch', fu
             rawshrimp: 5,
             bread: 12,
             sword: 26,
+            shortbow: 32,
+            arrow: 1,
             shield: 20,
             bones: 1,
             key: 1
         };
         var ids = Object.keys(win.ITEM_DB);
-        assertEqual(ids.length, 8, 'eight ITEM_DB entries');
+        assertEqual(ids.length, 10, 'ten ITEM_DB entries');
         assert(!win.ITEM_DB.logs && !win.ITEM_DB.ore && !win.ITEM_DB.net, 'no gathering section items');
         ids.forEach(function (id) {
             var def = win.ITEM_DB[id];
@@ -8534,6 +8538,149 @@ EmberwoodTests.add('combat: Hitpoints XP on each successful melee hit', function
                 H.enterZone(win, 'haven');
                 world.placePlayer(spawn.x, spawn.y);
             });
+        });
+    }).catch(function (err) {
+        return H.cleanupBattle(win).then(function () {
+            throw err;
+        });
+    });
+});
+
+EmberwoodTests.add('combat: shortbow and bronze arrows grant Ranged XP and consume ammo', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        world.placePlayer(spawn.x, spawn.y);
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(win.ITEM_DB.shortbow, 'shortbow is in ITEM_DB');
+        assert(win.ITEM_DB.arrow, 'bronze arrows are in ITEM_DB');
+        assertEqual(win.ITEM_DB.shortbow.slot, 'weapon', 'shortbow uses the weapon slot');
+        assertEqual(win.ITEM_DB.shortbow.combatClass, 'ranged', 'shortbow is a ranged weapon');
+        assertEqual(win.ITEM_DB.shortbow.damage, 16, 'shortbow damage is 16');
+        assertEqual(win.ITEM_DB.arrow.slot, 'ammo', 'arrows use the ammo slot');
+        assertEqual(win.itemDefaultVerb('shortbow'), 'wield', 'shortbow default is wield');
+        assertEqual(win.itemDefaultVerb('arrow'), 'wear', 'arrows default is wear');
+        assertEqual(typeof win.rangedWeaponEquipped, 'function', 'rangedWeaponEquipped exists');
+        assertEqual(typeof win.consumeAmmo, 'function', 'consumeAmmo exists');
+        assertEqual(typeof win.equippedQty, 'function', 'equippedQty exists');
+        assertEqual(win.styleHitXp(12, 16, 80), 2, 'Bat 16/80 is 2 Ranged XP');
+        assertEqual(win.hitpointsHitXp(12, 16, 80), 1, 'Bat 16/80 Hitpoints is ceil(2/3) min 1');
+
+        var foeSpec = { type: 'Bat', texture: 'slime', tint: 0xddbbff, hp: 80, damage: 1, gold: 0, xp: 12 };
+        var styleXp = win.styleHitXp(12, 16, 80);
+        var hpHitXp = win.hitpointsHitXp(12, 16, 80);
+        var hero;
+
+        return H.cleanupBattle(win).then(function () {
+            H.enterZone(win, 'haven');
+            H.setAutoAttack(win, false);
+            hero = win.makeHero();
+            hero.autoAttack = false;
+            hero.autoRetaliate = false;
+            hero.style = 'accurate';
+            win.addItem(hero, 'shortbow', 1);
+            win.addItem(hero, 'arrow', 50);
+            win.game.registry.set('hero', hero);
+            world.refreshHud();
+            world.placePlayer(spawn.x, spawn.y);
+            H.setAutoAttack(win, false);
+            H.setAutoRetaliate(win, false);
+            H.click(win, '#tab-bar button[data-tab="inv"]');
+            H.click(win, '#inv-grid [data-item="shortbow"]');
+            H.click(win, '#inv-grid [data-item="arrow"]');
+            hero = H.hero(win);
+            assertEqual(hero.equipment.weapon, 'shortbow', 'left-click wields the shortbow');
+            assertEqual(hero.equipment.ammo, 'arrow', 'left-click wears bronze arrows');
+            assertEqual(win.equippedQty(hero, 'ammo'), 50, 'ammo slot holds the whole stack');
+            assertEqual(win.rangedWeaponEquipped(hero), true, 'worn shortbow is a ranged weapon');
+            assertEqual(win.heroCombatClass(hero), 'ranged', 'shortbow sets combat class to ranged');
+            assertEqual(win.combatSkill(hero), 'ranged', 'Accurate shortbow trains Ranged');
+            assertEqual(hero.skills.ranged.xp, 0, 'Ranged starts 0');
+            assertEqual(hero.skills.attack.xp, 0, 'Attack starts 0');
+            assertEqual(hero.skills.hitpoints.xp, 1154, 'Hitpoints starts 1154');
+            H.click(win, '#tab-bar button[data-tab="equip"]');
+            var worn = win.document.getElementById('equip-grid').innerText;
+            assertMatch(worn, 'Shortbow', 'worn tab shows Shortbow');
+            assertMatch(worn, 'Bronze arrows', 'worn tab shows Bronze arrows');
+            assertMatch(worn, 'x50', 'worn ammo shows x50');
+            return H.startCustomFight(win, [foeSpec]);
+        }).then(function () {
+            var battle = H.battle(win);
+            var you = battle.heroes[0];
+            var foe = battle.enemies[0];
+            assertEqual(battle.enemies.length, 1, 'one foe');
+            assertEqual(you.combatClass, 'ranged', 'battle hero is ranged from the shortbow');
+            assertEqual(foe.combatClass, 'ranged', 'Bat is ranged');
+            assertEqual(foe.hp, 80, 'Bat starts at 80');
+            assertEqual(foe.xp, 12, 'foe carries mob XP');
+            var orig = win.Phaser.Math.Between;
+            win.Phaser.Math.Between = function () { return 0; };
+            var before = foe.hp;
+            you.attack(foe);
+            return H.waitUntil(function () {
+                return foe.hp < before;
+            }, 2000, 'ranged hit lands').then(function () {
+                return H.sleep(280);
+            }).then(function () {
+                win.Phaser.Math.Between = orig;
+                hero = H.hero(win);
+                assertEqual(before - foe.hp, 16, 'shortbow deals 16 vs Bat');
+                assert(foe.living, 'Bat still living');
+                assertEqual(win.Hud.mode, 'battle', 'still in battle');
+                assertEqual(hero.skills.ranged.xp, styleXp, 'Ranged XP on the hit');
+                assertEqual(hero.skills.attack.xp, 0, 'shortbow does not grant Attack XP');
+                assertEqual(hero.skills.magic.xp, 0, 'shortbow does not start Magic XP');
+                assertEqual(hero.skills.hitpoints.xp, 1154 + hpHitXp, 'Hitpoints XP on the ranged hit');
+                assertEqual(hero.equipment.ammo, 'arrow', 'ammo slot still holds arrows');
+                assertEqual(win.equippedQty(hero, 'ammo'), 49, 'one bronze arrow was consumed');
+                var wornAmmo = win.document.querySelector('#equip-grid [data-equip-slot="ammo"]');
+                assert(wornAmmo, 'worn ammo button exists');
+                assertMatch(wornAmmo.textContent, 'x49', 'worn tab shows x49 after the shot');
+                var rangedRow = win.document.querySelector('#skills-list [data-skill="ranged"]');
+                assert(rangedRow, 'Ranged Skills row exists');
+                assert(
+                    String(rangedRow.getAttribute('title') || '').indexOf(styleXp + ' XP') !== -1,
+                    'Skills tab shows Ranged hit XP'
+                );
+                assert(!H.chatHas(win, 'collapses'), 'no win chat yet');
+                return H.forceFlee(win);
+            }).catch(function (err) {
+                win.Phaser.Math.Between = orig;
+                throw err;
+            });
+        }).then(function () {
+            hero = H.hero(win);
+            assertEqual(hero.skills.ranged.xp, styleXp, 'keeps Ranged XP after flee');
+            assertEqual(hero.skills.attack.xp, 0, 'Attack still 0 after flee');
+            assertEqual(win.equippedQty(hero, 'ammo'), 49, 'keeps consumed ammo after flee');
+            assertEqual(hero.xp, 0, 'no combat XP on flee');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+
+            hero.equipment.ammo = null;
+            hero.equipmentQty.ammo = 0;
+            win.game.registry.set('hero', hero);
+            world.refreshHud();
+            return H.startCustomFight(win, [foeSpec]);
+        }).then(function () {
+            var battle = H.battle(win);
+            var you = battle.heroes[0];
+            var foe = battle.enemies[0];
+            var before = foe.hp;
+            win.Hud.el.log.innerHTML = '';
+            you.attack(foe);
+            return H.sleep(400).then(function () {
+                assertEqual(foe.hp, before, 'no ammo means the shortbow does not fire');
+                assert(H.chatHas(win, 'no ammo'), 'empty ammo logs You have no ammo.');
+                assertEqual(H.hero(win).skills.ranged.xp, styleXp, 'dry-fire grants no more Ranged XP');
+                return H.forceFlee(win);
+            });
+        }).then(function () {
+            H.enterZone(win, 'haven');
+            world.placePlayer(spawn.x, spawn.y);
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
         });
     }).catch(function (err) {
         return H.cleanupBattle(win).then(function () {

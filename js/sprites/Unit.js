@@ -106,8 +106,30 @@ var Unit = new Phaser.Class({
                     return;
                 }
                 var amount = self.damage;
+                var hero = unitHero(self);
+                if (self instanceof PlayerCharacter && typeof rangedWeaponEquipped === 'function' &&
+                    rangedWeaponEquipped(hero)) {
+                    if (typeof consumeAmmo !== 'function' || !consumeAmmo(hero)) {
+                        if (self.scene && self.scene.events) {
+                            self.scene.events.emit('Message', 'You have no ammo.');
+                        }
+                        if (hero && self.scene && self.scene.registry) {
+                            self.scene.registry.set('hero', hero);
+                        }
+                        if (typeof Hud !== 'undefined' && Hud.renderHero && hero) {
+                            Hud.renderHero(hero);
+                        }
+                        return;
+                    }
+                    if (hero && self.scene && self.scene.registry) {
+                        self.scene.registry.set('hero', hero);
+                    }
+                    if (typeof Hud !== 'undefined' && Hud.renderHero) {
+                        Hud.renderHero(hero);
+                    }
+                }
                 if (typeof equippedWeaponDamage === 'function') {
-                    amount = equippedWeaponDamage(unitHero(self), self.damage);
+                    amount = equippedWeaponDamage(hero, self.damage);
                 }
                 if (typeof triangleHit === 'function' && typeof combatClass === 'function') {
                     amount = triangleHit(amount, combatClass(self), combatClass(target));
@@ -115,7 +137,7 @@ var Unit = new Phaser.Class({
                 var hpBefore = target.hp;
                 var dealt = target.takeDamage(amount);
                 if (self instanceof PlayerCharacter && typeof grantStyleHitXp === 'function') {
-                    grantStyleHitXp(unitHero(self), target, dealt, hpBefore);
+                    grantStyleHitXp(hero, target, dealt, hpBefore);
                 }
                 if (self.scene && self.scene.events) {
                     var verb = self.type === 'You' ? ' hit ' : ' hits ';

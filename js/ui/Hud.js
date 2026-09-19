@@ -1583,9 +1583,14 @@ var Hud = {
             var id = hero.equipment && hero.equipment[slots[i][0]];
             html += '<div class="equip-row"><span>' + slots[i][1] + '</span>';
             if (id) {
+                var wornName = itemName(id);
+                var wornQty = typeof equippedQty === 'function' ? equippedQty(hero, slots[i][0]) : 0;
+                if (slots[i][0] === 'ammo' && wornQty > 0) {
+                    wornName += ' x' + wornQty;
+                }
                 html += '<button type="button" class="equip-item" data-equip-slot="' + slots[i][0] +
                     '" data-item="' + id + '" title="Remove">' +
-                    '<img class="pix" src="' + itemIcon(id) + '" alt=""> ' + itemName(id) + '</button>';
+                    '<img class="pix" src="' + itemIcon(id) + '" alt=""> ' + wornName + '</button>';
             } else {
                 html += '<strong>None</strong>';
             }

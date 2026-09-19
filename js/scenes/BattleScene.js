@@ -235,6 +235,14 @@ var BattleScene = new Phaser.Class({
                 Hud.setActionsEnabled(true);
                 return;
             }
+            var hero = this.registry.get('hero');
+            if (typeof rangedWeaponEquipped === 'function' && rangedWeaponEquipped(hero) &&
+                typeof equippedQty === 'function' && equippedQty(hero, 'ammo') < 1) {
+                this.waitingForPlayer = true;
+                this.events.emit('Message', 'You have no ammo.');
+                Hud.setActionsEnabled(true);
+                return;
+            }
             this.busy = true;
             this.targetIndex = targetIndex;
             this.refreshTargetMarker();
