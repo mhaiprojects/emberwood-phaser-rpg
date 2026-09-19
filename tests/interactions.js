@@ -4943,6 +4943,130 @@ EmberwoodTests.add('npcs: Banker Elise withdraw-X withdraw-all bank chest', func
     });
 });
 
+EmberwoodTests.add('npcs: Banker Elise bank search and All Food tabs', function (win, H) {
+    function stackQty(list, id) {
+        var row = (list || []).filter(function (stack) { return stack.id === id; })[0];
+        return row ? row.qty : 0;
+    }
+
+    function vaultIds(root) {
+        var nodes = root.querySelectorAll('#bank-vault-grid [data-bank-item]');
+        var ids = [];
+        var i;
+        for (i = 0; i < nodes.length; i++) {
+            ids.push(nodes[i].getAttribute('data-bank-item'));
+        }
+        return ids.join(',');
+    }
+
+    function typeSearch(el, value) {
+        el.value = value;
+        el.dispatchEvent(new win.Event('input', { bubbles: true }));
+    }
+
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        var world = H.world(win);
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.refreshHud();
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        assert(win.BANK_TABS && win.BANK_TABS.length >= 2, 'BANK_TABS has at least two tabs');
+        assertEqual(win.BANK_TABS[0][0], 'all', 'first bank tab is All');
+        assertEqual(win.BANK_TABS[1][0], 'food', 'second bank tab is Food');
+        assertEqual(win.bankItemTab('shrimp'), 'food', 'shrimp is a food tab item');
+        assertEqual(win.bankItemTab('coins'), 'all', 'coins stay on All');
+
+        var elise = H.findNpc(win, 'banker');
+        assert(elise, 'Elise is in Emberhaven');
+        var bank = win.document.getElementById('bank-overlay');
+        var chest = win.document.getElementById('bank-chest');
+        var search = win.document.getElementById('bank-search');
+        var tabs = win.document.getElementById('bank-tabs');
+        assert(bank && bank === win.Hud.el.bank, '#bank-overlay is Hud.el.bank');
+        assert(chest && chest === win.Hud.el.bankChest, '#bank-chest is Hud.el.bankChest');
+        assert(search && search === win.Hud.el.bankSearch, '#bank-search is Hud.el.bankSearch');
+        assertEqual(search.tagName, 'INPUT', 'bank search is an HTML input');
+        assert(tabs && tabs === win.Hud.el.bankTabs, '#bank-tabs is Hud.el.bankTabs');
+        assert(chest.contains(search), 'search sits in the chest');
+        assert(chest.contains(tabs), 'tabs sit in the chest');
+        assertEqual(tabs.querySelectorAll('[data-bank-tab]').length, 2, 'exactly two bank tabs');
+        assert(tabs.querySelector('[data-bank-tab="all"]'), 'All tab exists');
+        assert(tabs.querySelector('[data-bank-tab="food"]'), 'Food tab exists');
+        assert(bank.hidden, 'bank overlay starts hidden');
+
+        win.Hud.el.log.innerHTML = '';
+        world.tryTalk(elise);
+        H.click(win, win.document.querySelector('[data-dialogue-option="bank"]'));
+        assert(win.Hud.bankOpen() && !bank.hidden, 'Bank opens #bank-overlay');
+        assertEqual(win.Hud.mode, 'world', 'bank keeps Hud.mode world');
+        assertEqual(win.Hud.bankTab, 'all', 'opens on All tab');
+        assertEqual(search.value, '', 'search starts empty');
+        assert(tabs.querySelector('[data-bank-tab="all"]').classList.contains('is-on'), 'All tab is on');
+        assert(!tabs.querySelector('[data-bank-tab="food"]').classList.contains('is-on'), 'Food tab starts off');
+
+        H.click(win, bank.querySelector('#bank-inv-grid [data-bank-item="coins"]'));
+        H.click(win, bank.querySelector('[data-bank-action="deposit"]'));
+        H.click(win, bank.querySelector('#bank-inv-grid [data-bank-item="shrimp"]'));
+        H.click(win, bank.querySelector('[data-bank-action="deposit"]'));
+        H.click(win, bank.querySelector('#bank-inv-grid [data-bank-item="bread"]'));
+        H.click(win, bank.querySelector('[data-bank-action="deposit"]'));
+        assertEqual(stackQty(H.hero(win).bank, 'coins'), 1, 'bank coins 1');
+        assertEqual(stackQty(H.hero(win).bank, 'shrimp'), 1, 'bank shrimp 1');
+        assertEqual(stackQty(H.hero(win).bank, 'bread'), 1, 'bank bread 1');
+        assertEqual(vaultIds(bank), 'coins,shrimp,bread', 'All tab shows coins shrimp bread');
+
+        H.click(win, tabs.querySelector('[data-bank-tab="food"]'));
+        assertEqual(win.Hud.bankTab, 'food', 'Food tab is selected');
+        assert(tabs.querySelector('[data-bank-tab="food"]').classList.contains('is-on'), 'Food tab is on');
+        assert(!tabs.querySelector('[data-bank-tab="all"]').classList.contains('is-on'), 'All tab turns off');
+        assertEqual(vaultIds(bank), 'shrimp,bread', 'Food tab hides coins');
+        assert(!bank.querySelector('#bank-vault-grid [data-bank-item="coins"]'), 'coins leave the Food grid');
+
+        typeSearch(search, 'shr');
+        assertEqual(vaultIds(bank), 'shrimp', 'Food search shr shows shrimp only');
+        assert(!bank.querySelector('#bank-vault-grid [data-bank-item="bread"]'), 'bread filtered out');
+
+        typeSearch(search, 'coin');
+        assertEqual(vaultIds(bank), '', 'Food search coin shows nothing');
+
+        H.click(win, tabs.querySelector('[data-bank-tab="all"]'));
+        assertEqual(win.Hud.bankTab, 'all', 'All tab selected again');
+        assertEqual(vaultIds(bank), 'coins', 'All + coin search shows coins only');
+
+        typeSearch(search, '');
+        assertEqual(vaultIds(bank), 'coins,shrimp,bread', 'clearing search restores All stacks');
+
+        H.click(win, tabs.querySelector('[data-bank-tab="food"]'));
+        H.click(win, bank.querySelector('#bank-vault-grid [data-bank-item="shrimp"]'));
+        H.click(win, bank.querySelector('[data-bank-action="withdraw"]'));
+        assertEqual(stackQty(H.hero(win).bank, 'shrimp'), 0, 'withdraw from Food tab removes shrimp');
+        assertEqual(stackQty(H.hero(win).inventory, 'shrimp'), 8, 'shrimp returns to inventory');
+        assertEqual(vaultIds(bank), 'bread', 'Food tab left with bread');
+        assertEqual(H.lastChat(win), 'You withdraw 1 x Cooked shrimp.', 'Food-tab withdraw chat');
+
+        H.click(win, win.document.getElementById('btn-bank-close'));
+        assert(bank.hidden, 'Close hides the bank overlay');
+        assert(!win.Hud.bankOpen(), 'bankOpen is false after Close');
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('npcs: Fen Witch refuses below 10 gold and does not heal', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');

@@ -367,6 +367,47 @@ function ensureBank(hero) {
     return hero.bank;
 }
 
+var BANK_TABS = [
+    ['all', 'All'],
+    ['food', 'Food']
+];
+
+function bankItemTab(id) {
+    var def = ITEM_DB[id];
+    if (def && def.heal) {
+        return 'food';
+    }
+    return 'all';
+}
+
+function bankStackMatches(stack, tab, query) {
+    if (!stack || !stack.id) {
+        return false;
+    }
+    tab = tab || 'all';
+    if (tab !== 'all' && bankItemTab(stack.id) !== tab) {
+        return false;
+    }
+    var q = query == null ? '' : String(query).trim().toLowerCase();
+    if (!q) {
+        return true;
+    }
+    var name = itemName(stack.id).toLowerCase();
+    return name.indexOf(q) !== -1 || String(stack.id).toLowerCase().indexOf(q) !== -1;
+}
+
+function filterBankStacks(list, tab, query) {
+    var out = [];
+    var i;
+    list = list || [];
+    for (i = 0; i < list.length; i++) {
+        if (bankStackMatches(list[i], tab, query)) {
+            out.push(list[i]);
+        }
+    }
+    return out;
+}
+
 function findStack(list, id) {
     if (!list) {
         return null;

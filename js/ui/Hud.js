@@ -54,11 +54,14 @@ var Hud = {
             bankVault: document.getElementById('bank-vault-grid'),
             bankChest: document.getElementById('bank-chest'),
             bankQty: document.getElementById('bank-qty'),
+            bankSearch: document.getElementById('bank-search'),
+            bankTabs: document.getElementById('bank-tabs'),
             bankClose: document.getElementById('btn-bank-close')
         };
         this.ctxTarget = null;
         this.dialogue = null;
         this.bankSel = null;
+        this.bankTab = 'all';
         this.buildMinimap();
         this.renderWorldMap();
         this.bindInterface();
@@ -307,6 +310,15 @@ var Hud = {
                     self.renderBank();
                     return;
                 }
+                var tabBtn = event.target && event.target.closest && event.target.closest('[data-bank-tab]');
+                if (tabBtn) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    tabBtn.blur();
+                    self.bankTab = tabBtn.getAttribute('data-bank-tab') || 'all';
+                    self.renderBank();
+                    return;
+                }
                 var btn = event.target && event.target.closest && event.target.closest('[data-bank-action]');
                 if (!btn) {
                     return;
@@ -315,6 +327,11 @@ var Hud = {
                 event.stopPropagation();
                 btn.blur();
                 self.chooseBankAction(btn.getAttribute('data-bank-action'));
+            });
+        }
+        if (this.el.bankSearch) {
+            this.el.bankSearch.addEventListener('input', function () {
+                self.renderBank();
             });
         }
         if (this.el.bankQty) {
@@ -923,8 +940,12 @@ var Hud = {
         this.el.bank.hidden = false;
         this.el.bank.setAttribute('data-bank', def && def.key ? def.key : 'banker');
         this.bankSel = null;
+        this.bankTab = 'all';
         if (this.el.bankQty) {
             this.el.bankQty.value = '1';
+        }
+        if (this.el.bankSearch) {
+            this.el.bankSearch.value = '';
         }
         this.renderBank();
     },
@@ -939,8 +960,12 @@ var Hud = {
             if (this.el.bankQty) {
                 this.el.bankQty.blur();
             }
+            if (this.el.bankSearch) {
+                this.el.bankSearch.blur();
+            }
         }
         this.bankSel = null;
+        this.bankTab = 'all';
     },
 
     bankOpen: function () {
@@ -949,11 +974,34 @@ var Hud = {
 
     renderBank: function () {
         var hero = this.hero();
+        var vault;
         if (!this.el || !this.el.bankInv || !this.el.bankVault) {
             return;
         }
+        this.renderBankTabs();
         this.el.bankInv.innerHTML = this.bankGridHtml(hero && hero.inventory, 'inv');
-        this.el.bankVault.innerHTML = this.bankGridHtml(hero && ensureBank(hero), 'vault');
+        vault = hero && typeof filterBankStacks === 'function'
+            ? filterBankStacks(ensureBank(hero), this.bankTab || 'all', this.readBankSearch())
+            : (hero && ensureBank(hero));
+        this.el.bankVault.innerHTML = this.bankGridHtml(vault, 'vault');
+    },
+
+    renderBankTabs: function () {
+        var tab = this.bankTab || 'all';
+        var buttons;
+        var i;
+        if (!this.el || !this.el.bankTabs) {
+            return;
+        }
+        buttons = this.el.bankTabs.querySelectorAll('[data-bank-tab]');
+        for (i = 0; i < buttons.length; i++) {
+            buttons[i].classList.toggle('is-on', buttons[i].getAttribute('data-bank-tab') === tab);
+        }
+    },
+
+    readBankSearch: function () {
+        var el = this.el && this.el.bankSearch;
+        return el && el.value ? String(el.value) : '';
     },
 
     bankGridHtml: function (list, side) {

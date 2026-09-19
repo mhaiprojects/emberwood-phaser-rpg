@@ -536,6 +536,41 @@ button.ghost {
     gap: 3px;
 }
 
+#bank-tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 8px;
+}
+
+#bank-search-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #ffe08a;
+    font-size: 12px;
+}
+
+#bank-search {
+    width: 110px;
+    padding: 4px 6px;
+    background: #2a2116;
+    color: #fff4d6;
+    border: 1px solid #e6c56a;
+    font: 13px Verdana, Geneva, sans-serif;
+}
+
+#bank-tabs {
+    display: flex;
+    gap: 4px;
+}
+
+#bank-tabs button.is-on {
+    background: #7a623e;
+    border-color: #e6c56a;
+}
+
 #bank-qty-label {
     display: inline-flex;
     align-items: center;

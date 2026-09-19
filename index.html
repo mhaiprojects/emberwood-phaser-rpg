@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="assets/svg/ui/combat.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/style.css?v=bankx1">
+    <link rel="stylesheet" href="css/style.css?v=banktab1">
 </head>
 <body>
     <div id="shell">
@@ -197,6 +197,15 @@
                 <div id="bank-chest" data-bank-chest>
                     <div class="bank-chest-lid" aria-hidden="true"></div>
                     <h3>Chest</h3>
+                    <div id="bank-tools">
+                        <label id="bank-search-label">Search
+                            <input id="bank-search" type="search" autocomplete="off" spellcheck="false">
+                        </label>
+                        <div id="bank-tabs" data-bank-tabs>
+                            <button type="button" data-bank-tab="all">All</button>
+                            <button type="button" data-bank-tab="food">Food</button>
+                        </div>
+                    </div>
                     <div id="bank-vault-grid"></div>
                 </div>
             </div>
@@ -216,9 +225,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
     <script src="js/input/Keys.js?v=run1"></script>
-    <script src="js/data/Items.js?v=bankx1"></script>
+    <script src="js/data/Items.js?v=banktab1"></script>
     <script src="js/data/Scales.js?v=giant1"></script>
-    <script src="js/ui/Hud.js?v=bankx1"></script>
+    <script src="js/ui/Hud.js?v=banktab1"></script>
     <script src="js/world/MapGen.js?v=agil1"></script>
     <script src="js/world/Pathfind.js?v=giant1"></script>
     <script src="js/world/Zones.js?v=tutor1"></script>

@@ -166,7 +166,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Left-click defaults per item: eat food, wield gear, bury bones, drop junk. — Conclusion: From spawn (328,248) Inv left-click eats shrimp, wields/wears sword/shield, buries bones, drops coins/key; battle still Eat-food-only; no use-with; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Load `item-sword` and `item-shield` in `BootScene` (currently only coins/bones/shrimp/bread) so ground drops can show them. — Conclusion: From spawn (328,248) BootScene loads item-sword and item-shield; spawnLoot sprites use those textures not missing; coins/bones/shrimp/bread stay loaded; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Banker Elise deposit / withdraw / withdraw-X / withdraw-all with a  bank chest UI. — Conclusion: From spawn (328,248) Elise Bank `#bank-overlay` chest UI; deposit/withdraw 1 stay; Withdraw-X 2 and Withdraw-all move coins+shrimp with gold/stack in sync; Phaser 3.90 keyboard off. Dedicated + Playwright 1/1.
-- [todo] Bank search and at least two tabs (once bank exists). — Conclusion: —
+- [done] Bank search and at least two tabs (once bank exists). — Conclusion: From spawn (328,248) Elise Bank `#bank-overlay` chest Search + All/Food tabs; Food hides coins, `shr` keeps shrimp; Phaser 3.90 keyboard off. Dedicated + Playwright 1/1.
 - [todo] Block Use in world while `Hud.mode === 'battle'` (already: “Use Eat food on your combat turn”) — verify. — Conclusion: —
 - [todo] Use-item-on (raw on fire, bones on shrine) as a target cursor. — Conclusion: —
 - [todo] Item value fields used by shops and a later High Alch. — Conclusion: —
@@ -529,4 +529,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 157 | 2026-09-19 | Left-click defaults per item: eat food, wield gear, bury bones, drop junk | done — spawn (328,248) Inv left-click eats shrimp, wields/wears sword/shield, buries bones, drops coins/key; battle still Eat-food-only; Phaser keyboard off; dedicated + Playwright 1/1 |
 | 158 | 2026-09-19 | Load item-sword and item-shield in BootScene so ground drops can show them | done — spawn (328,248) BootScene loads item-sword/item-shield; spawnLoot uses those textures not missing; coins/bones/shrimp/bread stay; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 159 | 2026-09-19 | Banker Elise deposit / withdraw / withdraw-X / withdraw-all with a bank chest UI | done — spawn (328,248) chest UI; Withdraw-X 2 / Withdraw-all move gold+items; deposit/withdraw 1 stay; Phaser keyboard off; dedicated + Playwright 1/1 |
+| 160 | 2026-09-19 | Bank search and at least two tabs (once bank exists) | done — spawn (328,248) chest Search + All/Food tabs; Food hides coins, shr keeps shrimp; Phaser keyboard off; dedicated + Playwright 1/1 |
 
