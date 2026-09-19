@@ -235,6 +235,30 @@ function equippedShieldDefence(hero) {
     return 0;
 }
 
+function equipmentMeleeDefence(hero) {
+    if (!hero) {
+        return 0;
+    }
+    ensureEquipment(hero);
+    var total = 0;
+    for (var i = 0; i < EQUIP_SLOTS.length; i++) {
+        var id = hero.equipment[EQUIP_SLOTS[i][0]];
+        if (!id) {
+            continue;
+        }
+        var def = ITEM_DB[id];
+        if (def && typeof def.defence === 'number') {
+            total += def.defence;
+        }
+    }
+    return total;
+}
+
+function signedStat(n) {
+    n = Number(n) || 0;
+    return (n >= 0 ? '+' : '') + String(n);
+}
+
 function equipItem(hero, id) {
     if (!hero || !id) {
         return false;

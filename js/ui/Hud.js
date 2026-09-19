@@ -34,6 +34,7 @@ var Hud = {
             inv: document.getElementById('inv-grid'),
             skills: document.getElementById('skills-list'),
             equip: document.getElementById('equip-grid'),
+            equipStats: document.getElementById('equip-stats'),
             tabs: document.getElementById('tab-bar'),
             styles: document.getElementById('style-row'),
             ctx: document.getElementById('ctx-menu'),
@@ -1205,6 +1206,23 @@ var Hud = {
             html += '</div>';
         }
         this.el.equip.innerHTML = html;
+        this.renderEquipStats(hero);
+    },
+
+    renderEquipStats: function (hero) {
+        if (!this.el.equipStats) {
+            return;
+        }
+        var defence = 0;
+        if (typeof equipmentMeleeDefence === 'function') {
+            defence = equipmentMeleeDefence(hero);
+        } else if (typeof equippedShieldDefence === 'function') {
+            defence = equippedShieldDefence(hero);
+        }
+        var signed = typeof signedStat === 'function' ? signedStat(defence) : String(defence);
+        this.el.equipStats.innerHTML =
+            '<h4>Equipment stats</h4>' +
+            '<div class="equip-stat-row"><span>Melee +defence</span><strong>' + signed + '</strong></div>';
     },
 
     renderStyles: function (hero) {

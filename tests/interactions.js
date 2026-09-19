@@ -749,6 +749,67 @@ EmberwoodTests.add('hud: worn tab lists OSRS slots with empty None', function (w
     });
 });
 
+EmberwoodTests.add('hud: worn tab shows melee +defence from equipment', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof win.equipmentMeleeDefence, 'function', 'equipmentMeleeDefence helper');
+        assertEqual(typeof win.signedStat, 'function', 'signedStat helper');
+        assertEqual(win.ITEM_DB.shield.defence, 1, 'ITEM_DB shield defence is 1');
+        assertEqual(win.ITEM_DB.sword.damage, 16, 'ITEM_DB sword damage is 16');
+
+        var hero = H.hero(win);
+        assertEqual(hero.equipment.weapon, 'sword', 'starter wears bronze sword');
+        assertEqual(hero.equipment.shield, 'shield', 'starter wears wooden shield');
+        assertEqual(win.equipmentMeleeDefence(hero), 1, 'worn wooden shield is melee +defence 1');
+        assertEqual(win.equippedShieldDefence(hero), 1, 'combat shield defence still 1');
+        assertEqual(win.signedStat(1), '+1', 'signedStat prefixes plus');
+        assertEqual(win.signedStat(0), '+0', 'signedStat zero is +0');
+
+        H.click(win, '#tab-bar button[data-tab="equip"]');
+        var stats = win.document.getElementById('equip-stats');
+        assert(stats, 'equip-stats readout exists');
+        var text = stats.innerText;
+        assertMatch(text, 'Equipment stats', 'stats heading is listed');
+        assertMatch(text, 'Melee +defence', 'stats readout labels melee +defence');
+        assertMatch(text, '+1', 'starter wooden shield shows +1');
+        assertEqual(text.indexOf('16'), -1, 'readout does not show sword damage 16');
+
+        var rows = win.document.querySelectorAll('#equip-grid .equip-row');
+        assertEqual(rows.length, 11, 'slot rows stay eleven');
+        var worn = win.document.getElementById('equip-grid').innerText;
+        assertEqual(worn.toLowerCase().indexOf('defence'), -1, 'slot grid still hides defence');
+        assertEqual(worn.indexOf('16'), -1, 'slot grid still hides sword damage');
+
+        assert(win.unequipItem(hero, 'shield'), 'unequip shield');
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        assertEqual(hero.equipment.shield, null, 'shield slot empty');
+        assertEqual(win.equipmentMeleeDefence(hero), 0, 'no shield is melee +defence 0');
+        assertEqual(win.equippedShieldDefence(hero), 0, 'combat shield defence is 0');
+        text = win.document.getElementById('equip-stats').innerText;
+        assertMatch(text, 'Melee +defence', 'label stays after unequip');
+        assertMatch(text, '+0', 'readout drops to +0');
+        assertEqual(text.indexOf('+1'), -1, 'unequip hides +1');
+
+        assert(win.equipItem(hero, 'shield'), 're-wear shield');
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        assertEqual(win.equipmentMeleeDefence(hero), 1, 're-wear restores melee +defence 1');
+        text = win.document.getElementById('equip-stats').innerText;
+        assertMatch(text, '+1', 'readout restores +1');
+
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('hud: skills tab lists twelve skills with icons', function (win, H) {
     var expected = [
         ['attack', 'Attack'],
