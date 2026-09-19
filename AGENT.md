@@ -76,6 +76,7 @@ Same origin; Glass is optional and human-requested only:
 - `window` blur clears `Keys.down` / `Keys.pressed` (no stuck walk after alt-tab).
 - WASD and arrow keys must still walk after HUD tab clicks. `Hud.bindHudBlur` blurs `#shell button` on mouseup.
 - Click-to-walk uses world pointer + yellow 6×6 marker plus a thin purple path line. Keyboard move cancels walk / talk target and hides the line.
+- Right-click empty ground opens a small HTML `#ctx-menu` with **Walk here** (same `setWalk` path). Left-click still walks immediately. Entity right-click menus are later. `input.mouse.disableContextMenu()` keeps the browser menu off the canvas.
 - World clicks ignored while `encounterLock`, `Hud.mode === 'battle'`, or title.
 
 ## Pathfinding
@@ -136,8 +137,8 @@ Same origin; Glass is optional and human-requested only:
 
 ## Tests
 
-- Interaction suite: `tests/run.html` → `tests/runner.js` + `tests/harness.js` + `tests/interactions.js`.
-- Cases already cover title, HUD tabs/F-keys, skills/worn/styles/inv, eat, W-from-spawn (Keys.js only, Phaser keyboard off), WASD, arrows, HUD-focus walk (all 8 tabs + `bindHudBlur`), click-to-walk, HUD-then-world click-to-walk (canvas unfocused), purple A* path + courtyard-gate / house-door path + WASD cancel, zone NPC/mob spawn, `enterZone` cleanup (old tilemap/colliders/NPCs/mobs/labels/loot), talk (Space + click), talking blocked during `Hud.mode === 'battle'` / `encounterLock`, Bram / Elise / Witch (refuse below 10 gp; ≥10 gp heals via `takeItem`), flavor NPCs (Rowan/Kett/Willa/Ned/Sila/Wisp/Corb/Ola `{Name}:` + one of their lines), every `NPC_DEFS` spawn at def x,y with a yellow `#ffe08a` name label, player–NPC arcade collider immovable (Keys.js shove does not move NPCs), click-mob, win+loot, combat eat/flee/target, goblin quest, player/mob scales (1-tile world player; giant drake multi-tile), 1-tile door walk + wall block, auto-attack on (nearest living mob <20px after engageGrace; exactly 20px and grace do not fight), auto-pickup (default on; off skips walk-over; click still takes), walk-loot, death+retry, Space not `preventDefault` on title/dead (`Keys.shouldBlockBrowser`).
+- Interaction suite: `tests/run.html` → `tests/runner.js` + `tests/harness.js` + `tests/interactions.js`. Targeted tick: `/tests/run.html?only=<substring>` (matches case names). Full suite when shared files change.
+- Cases already cover title, HUD tabs/F-keys, skills/worn/styles/inv, eat, W-from-spawn (Keys.js only, Phaser keyboard off), WASD, arrows, HUD-focus walk (all 8 tabs + `bindHudBlur`), click-to-walk, HUD-then-world click-to-walk (canvas unfocused), purple A* path + courtyard-gate / house-door path + WASD cancel, zone NPC/mob spawn, `enterZone` cleanup (old tilemap/colliders/NPCs/mobs/labels/loot), talk (Space + click), talking blocked during `Hud.mode === 'battle'` / `encounterLock`, Bram / Elise / Witch (refuse below 10 gp; ≥10 gp heals via `takeItem`), flavor NPCs (Rowan/Kett/Willa/Ned/Sila/Wisp/Corb/Ola `{Name}:` + one of their lines), every `NPC_DEFS` spawn at def x,y with a yellow `#ffe08a` name label, player–NPC arcade collider immovable (Keys.js shove does not move NPCs), click-mob, win+loot, combat eat/flee/target, goblin quest, player/mob scales (1-tile world player; giant drake multi-tile), 1-tile door walk + wall block, auto-attack on (nearest living mob <20px after engageGrace; exactly 20px and grace do not fight), auto-attack HUD three-button sync (Combat/Settings/battle panel log on/off), auto-pickup (default on; off skips walk-over; click still takes), walk-loot, death+retry, Space not `preventDefault` on title/dead (`Keys.shouldBlockBrowser`).
 - Playwright is the extra proof for movement and HUD smoke. Default is **headless** via `tests/playwright-session.js` / `node tests/playwright-*.js <port>` (see Background playtest). The parent opens Glass **only if the human asked** to see the sidebar. Keep WASD green if you touch input. Always close browsers / owned servers / MCP tabs this tick opened.
 - Add a case in `tests/interactions.js` when you ship a matching feature. Extend `tests/harness.js` instead of copying scene guts.
 
@@ -145,13 +146,15 @@ Same origin; Glass is optional and human-requested only:
 
 - `loop-tasks.md` is the **flat-file PM** (not a wiki). Filename is `loop-tasks.md` (not `loops-tasks.md`).
 - Max nesting 3: `#` title, `##` area, then a simple list. Each item has a status (`todo` | `doing` | `done` | `blocked` | `verify`) and a one-line Conclusion (`—` if not started).
-- The 30-second loop: pick the next `verify` in a section, else the next `todo`. One item per **spawned** tick. Mark `done` only after tests pass. Do not invent dones. Then **commit that tick's work** (see Loop-tick commits).
-- **Parent coordinator:** cadence is **30 seconds**. Only spin up a subagent when the next PM item is **independent** and will **not conflict** with in-progress `doing` items (same files / same system: WorldScene pathing, MapGen, Keys.js, tests colliding, etc.). If the next item would collide, **skip the tick** (do not spawn). Wait for the in-flight work to finish. Still one item per spawned tick; still commit after a completed item. Pass the live `http://127.0.0.1:<port>/` URL in the Task prompt. **Do not** `open_resource` every tick (see Background playtest). Open Glass only if the human asked to playtest in the inline browser.
+- `loop-next.md` is the **tick card** (next 5 items). Refresh it with `python3 tools/loop-next.py` after a commit. Parent ticks read **only** that file + `git status` — do not paste this brief or the full PM into the Task prompt.
+- Pick the first `verify` anywhere above Stretch, else the next `todo`. One item per **spawned** tick. Mark `done` only after tests pass. Do not invent dones. Then **commit that tick's work** (see Loop-tick commits).
+- **Parent coordinator:** **event-paced**, not 30 seconds. One worker at a time. Wake when a tick **commits** (git HEAD advances) or on an **8–10 minute** fallback heartbeat if the worker died silently. Read `loop-next.md`. If Busy / `doing` is set, **skip with no user-facing essay** (do not spawn, do not dump a skip report). Else spawn one worker for item #1. Task prompt ~15 lines: item text, 2–4 file paths, one test name, live `http://127.0.0.1:<port>/`. **Do not** `open_resource` every tick (see Background playtest). Open Glass only if the human asked to playtest in the inline browser.
+- Default tests: run **one** matching case via `/tests/run.html?only=<substring>` (headless Playwright). Also run a WASD case only if the tick touched `js/input/Keys.js`. Full suite only when `WorldScene.js`, `Keys.js`, `Hud.js`, or the harness changed, or the dedicated case is flaky.
 - Do **not** rewrite the whole task list unless the human asks for a format change.
 
 ### Loop-tick commits
 
-Every 30-second loop tick that completes an item **must** create a git commit of that tick's work. The human asked for commits after each loop; this overrides “do not commit unless asked.”
+Every loop tick that completes an item **must** create a git commit of that tick's work. The human asked for commits after each loop; this overrides “do not commit unless asked.”
 
 - Follow git safety: NEVER update git config; NEVER `--no-verify` / `--no-gpg-sign`; NEVER force push; NEVER destructive git; NEVER commit secrets (`.env`, credentials).
 - After finishing a PM item (status `done` + tests), stage only the relevant files and commit with a concise 1–2 sentence message focused on WHY (e.g. “Verify Bram stage 3 post-quest line.” or “Fix east/south zone entry spawning off-map.”).
@@ -167,13 +170,13 @@ EOF
 ### New game-design work goes on the PM first
 
 - New game-design / feature ideas are **added to `loop-tasks.md`** as `todo` (status + short `Conclusion: —`) and are **not implemented in the same pass**.
-- The 30-second loop (and later ticks) **action** items from the PM — one item per spawned tick.
+- Event-paced loop ticks **action** items from the PM — one item per spawned tick.
 - **Exception — implement immediately** only if the user explicitly says to do it now (e.g. “implement now”, “fix this bug”, “redo this code”) or the change is process/docs (`AGENT.md` / `loop-tasks.md` format).
 - When the user describes a feature, the correct response is: write well-specified PM items (and related follow-ups), then **stop**.
 
 ## Hard no's
 
-- Do not commit unless the human asks, **except** after each completed 30-second loop tick (see Loop-tick commits). Do not push unless asked.
+- Do not commit unless the human asks, **except** after each completed loop tick (see Loop-tick commits). Do not push unless asked.
 - Do not enable Phaser keyboard or Phaser audio.
 - Do not introduce a bundler or Phaser 4.
 - Do not use commercial / third-party game art.
@@ -193,3 +196,4 @@ EOF
 - `js/scenes/WorldScene.js` — walk, click path + purple line, talk, fight, loot, zone exits.
 - `js/scenes/BattleScene.js` — turns, Attack / Eat / Run.
 - `README.md` — player-facing run/test/controls notes. Keep it in sync when controls change.
+- `loop-next.md` / `tools/loop-next.py` — compact next-5 queue for parent ticks.

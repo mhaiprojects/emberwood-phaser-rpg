@@ -2327,6 +2327,90 @@ EmberwoodTests.add('movement: click-to-walk sets a destination', function (win, 
     }
 });
 
+EmberwoodTests.add('movement: right-click Walk here on the ground shows a context menu', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.engageTarget = null;
+        world.talkTarget = null;
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        if (win.Hud.hideContextMenu) {
+            win.Hud.hideContextMenu();
+        }
+        assertEqual(spawn.x, 328, 'spawn x tile center');
+        assertEqual(spawn.y, 248, 'spawn y tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assertEqual(win.Hud.mode, 'world', 'world mode');
+        assert(String(win.Phaser.VERSION).indexOf('3.') === 0, 'Phaser 3');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(!world.cursors, 'WorldScene has no Phaser cursors');
+
+        var destX = spawn.x - 64;
+        var destY = spawn.y;
+        world.onClick({ worldX: destX, worldY: destY });
+        assert(world.walkTarget, 'left-click still sets walkTarget');
+        assertEqual(Math.round(world.walkTarget.x), destX, 'left-click walk x');
+        assertEqual(Math.round(world.walkTarget.y), destY, 'left-click walk y');
+        assert(world.marker.visible, 'left-click yellow marker');
+        assert(world.walkPath && world.walkPath.length, 'left-click A* path');
+        assert(world.pathGfx && world.pathGfx.visible, 'left-click purple line');
+        world.clearWalk();
+
+        var menu = win.document.getElementById('ctx-menu');
+        assert(menu, 'ctx-menu element exists');
+        assert(menu.hidden, 'menu starts hidden');
+        var right = {
+            worldX: destX,
+            worldY: destY,
+            button: 2,
+            rightButtonDown: function () { return true; },
+            event: { clientX: 48, clientY: 56 }
+        };
+        world.onClick(right);
+        assert(!world.walkTarget, 'right-click does not walk immediately');
+        assert(!world.marker.visible, 'right-click does not show marker yet');
+        assert(!menu.hidden, 'right-click opens context menu');
+        var walkBtn = menu.querySelector('[data-ctx="walk-here"]');
+        assert(walkBtn, 'Walk here action is listed');
+        assertEqual(walkBtn.textContent, 'Walk here', 'Walk here label');
+        assertEqual(Math.round(win.Hud.ctxTarget.worldX), destX, 'menu stores ground x');
+        assertEqual(Math.round(win.Hud.ctxTarget.worldY), destY, 'menu stores ground y');
+
+        H.mouseClick(win, walkBtn);
+        assert(menu.hidden, 'Walk here closes the menu');
+        assert(world.walkTarget, 'Walk here sets walkTarget');
+        assertEqual(Math.round(world.walkTarget.x), destX, 'Walk here walk x');
+        assertEqual(Math.round(world.walkTarget.y), destY, 'Walk here walk y');
+        assert(world.marker.visible, 'Walk here yellow marker');
+        assert(world.walkPath && world.walkPath.length, 'Walk here A* path');
+        assert(world.pathGfx && world.pathGfx.visible, 'Walk here purple line');
+
+        world.clearWalk();
+        world.encounterLock = true;
+        world.onClick(right);
+        assert(menu.hidden, 'encounterLock ignores right-click menu');
+        assert(!world.walkTarget, 'encounterLock does not walk from menu');
+        world.encounterLock = false;
+        win.Hud.mode = 'battle';
+        world.onClick(right);
+        assert(menu.hidden, 'battle mode ignores right-click menu');
+        win.Hud.mode = 'world';
+        world.clearWalk();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('movement: click-to-walk after HUD click when canvas is unfocused', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');

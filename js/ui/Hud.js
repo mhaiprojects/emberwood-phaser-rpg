@@ -30,11 +30,14 @@ var Hud = {
             skills: document.getElementById('skills-list'),
             equip: document.getElementById('equip-grid'),
             tabs: document.getElementById('tab-bar'),
-            styles: document.getElementById('style-row')
+            styles: document.getElementById('style-row'),
+            ctx: document.getElementById('ctx-menu')
         };
+        this.ctxTarget = null;
         this.buildMinimap();
         this.bindInterface();
         this.bindHudBlur();
+        this.hideContextMenu();
         var self = this;
         this.el.start.disabled = true;
         this.el.start.addEventListener('click', function () {
@@ -122,6 +125,27 @@ var Hud = {
                 return;
             }
             self.useItem(slot.getAttribute('data-item'));
+        });
+        if (this.el.ctx) {
+            this.el.ctx.addEventListener('click', function (event) {
+                var btn = event.target.closest('[data-ctx]');
+                if (!btn) {
+                    return;
+                }
+                self.chooseContext(btn.getAttribute('data-ctx'));
+            });
+        }
+        document.addEventListener('mousedown', function (event) {
+            if (!self.el.ctx || self.el.ctx.hidden) {
+                return;
+            }
+            if (event.button !== 0) {
+                return;
+            }
+            if (event.target && event.target.closest && event.target.closest('#ctx-menu')) {
+                return;
+            }
+            self.hideContextMenu();
         });
         window.addEventListener('keydown', function (event) {
             var tabs = {
@@ -222,6 +246,7 @@ var Hud = {
 
     showTitle: function () {
         this.mode = 'title';
+        this.hideContextMenu();
         this.el.title.hidden = false;
         this.el.battle.hidden = true;
         this.el.dead.hidden = true;
@@ -239,6 +264,7 @@ var Hud = {
 
     showDead: function (text) {
         this.hideBattle();
+        this.hideContextMenu();
         this.mode = 'dead';
         this.el.dead.hidden = false;
         document.getElementById('dead-text').textContent = text || 'You have been defeated.';
@@ -246,6 +272,65 @@ var Hud = {
 
     hideDead: function () {
         this.el.dead.hidden = true;
+    },
+
+    showContextMenu: function (items, pos) {
+        var menu = this.el && this.el.ctx;
+        if (!menu) {
+            return;
+        }
+        this.ctxTarget = pos || null;
+        menu.innerHTML = '';
+        items = items || [];
+        for (var i = 0; i < items.length; i++) {
+            var item = items[i];
+            if (!item || !item.action) {
+                continue;
+            }
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.textContent = item.label || item.action;
+            btn.setAttribute('data-ctx', item.action);
+            menu.appendChild(btn);
+        }
+        menu.hidden = false;
+        var x = pos && pos.clientX != null ? pos.clientX : 16;
+        var y = pos && pos.clientY != null ? pos.clientY : 16;
+        menu.style.left = x + 'px';
+        menu.style.top = y + 'px';
+        var w = menu.offsetWidth || 110;
+        var h = menu.offsetHeight || 28;
+        menu.style.left = Math.max(4, Math.min(x, window.innerWidth - w - 4)) + 'px';
+        menu.style.top = Math.max(4, Math.min(y, window.innerHeight - h - 4)) + 'px';
+    },
+
+    hideContextMenu: function () {
+        var menu = this.el && this.el.ctx;
+        if (menu) {
+            menu.hidden = true;
+            menu.innerHTML = '';
+            menu.style.left = '';
+            menu.style.top = '';
+        }
+        this.ctxTarget = null;
+    },
+
+    chooseContext: function (action) {
+        var target = this.ctxTarget;
+        this.hideContextMenu();
+        if (action !== 'walk-here' || !target) {
+            return;
+        }
+        if (this.mode !== 'world') {
+            return;
+        }
+        var world = window.game && window.game.scene.getScene('WorldScene');
+        if (!world || !world.setWalk || world.encounterLock) {
+            return;
+        }
+        world.engageTarget = null;
+        world.talkTarget = null;
+        world.setWalk(target.worldX, target.worldY);
     },
 
     log: function (line) {
@@ -456,6 +541,7 @@ var Hud = {
     },
 
     showBattle: function (battle) {
+        this.hideContextMenu();
         this.battle = battle;
         this.selectingEnemy = false;
         this.el.battle.hidden = false;

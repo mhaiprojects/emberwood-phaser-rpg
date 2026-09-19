@@ -397,8 +397,36 @@ button.ghost {
 #title-overlay[hidden],
 #dead-overlay[hidden],
 #battle-panel[hidden],
-#credit-text[hidden] {
+#credit-text[hidden],
+#ctx-menu[hidden] {
     display: none !important;
+}
+
+#ctx-menu {
+    position: fixed;
+    z-index: 30;
+    min-width: 110px;
+    margin: 0;
+    padding: 2px;
+    background: #3a2f22;
+    border: 1px solid #c9a227;
+    box-shadow: 2px 2px 0 #1a140c;
+}
+
+#ctx-menu button {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 4px 8px;
+    text-align: left;
+    border: 0;
+    background: transparent;
+    color: #fff4d6;
+    font: 12px Verdana, Geneva, Tahoma, sans-serif;
+}
+
+#ctx-menu button:hover {
+    background: #7a623e;
 }
 
 .title-card {

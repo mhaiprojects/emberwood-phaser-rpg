@@ -46,6 +46,9 @@ var WorldScene = new Phaser.Class({
         this.cameras.main.roundPixels = true;
 
         this.input.on('pointerdown', this.onClick, this);
+        if (this.input.mouse && this.input.mouse.disableContextMenu) {
+            this.input.mouse.disableContextMenu();
+        }
         this.sys.events.off('wake', this.wake, this);
         this.sys.events.on('wake', this.wake, this);
 
@@ -234,12 +237,52 @@ var WorldScene = new Phaser.Class({
         });
     },
 
+    isRightClick: function (pointer) {
+        if (!pointer) {
+            return false;
+        }
+        if (pointer.button === 2) {
+            return true;
+        }
+        if (typeof pointer.rightButtonDown === 'function') {
+            return !!pointer.rightButtonDown();
+        }
+        return false;
+    },
+
     onClick: function (pointer) {
         if (this.encounterLock || Hud.mode === 'battle' || Hud.mode === 'title') {
+            if (Hud.hideContextMenu) {
+                Hud.hideContextMenu();
+            }
             return;
         }
         var x = pointer.worldX;
         var y = pointer.worldY;
+        if (this.isRightClick(pointer)) {
+            var ev = pointer.event;
+            var onLoot = this.pickLoot(x, y, 18);
+            var onMob = this.pickSprite(this.mobs, x, y, 18);
+            var onNpc = this.pickSprite(this.npcs, x, y, 18);
+            if (onLoot || (onMob && onMob.aliveMob) || onNpc) {
+                if (Hud.hideContextMenu) {
+                    Hud.hideContextMenu();
+                }
+                return;
+            }
+            if (Hud.showContextMenu) {
+                Hud.showContextMenu([{ label: 'Walk here', action: 'walk-here' }], {
+                    worldX: x,
+                    worldY: y,
+                    clientX: ev && ev.clientX != null ? ev.clientX : 16,
+                    clientY: ev && ev.clientY != null ? ev.clientY : 16
+                });
+            }
+            return;
+        }
+        if (Hud.hideContextMenu) {
+            Hud.hideContextMenu();
+        }
         var loot = this.pickLoot(x, y, 18);
         if (loot) {
             this.tryPickup(loot);
@@ -853,6 +896,9 @@ var WorldScene = new Phaser.Class({
         if (Keys.justPressed('Escape')) {
             this.clearWalk();
             this.talkTarget = null;
+            if (window.Hud && Hud.hideContextMenu) {
+                Hud.hideContextMenu();
+            }
         }
         if (move.left || move.right || move.up || move.down) {
             this.clearWalk();

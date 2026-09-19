@@ -37,7 +37,7 @@ runEmberwoodTests()
 HUD, chat, combat buttons, and the title screen are **HTML** (Verdana) so they stay sharp. The world is a Phaser pixel canvas.
 
 - **Title:** click **Click here to play**
-- **Walk:** WASD or arrow keys, or click the ground (a thin purple line shows the path)
+- **Walk:** WASD or arrow keys, or left-click the ground (a thin purple line shows the path). Right-click the ground for **Walk here**
 - **Talk:** click an NPC (or walk up and press Space)
 - **Fight:** click a monster, then walk into range. Auto-attack (default on) is on Combat, Settings, and the battle panel
 - **Loot:** walk over a pile when auto-pickup is on (default), or click the pile. Toggle is on Combat and Settings
