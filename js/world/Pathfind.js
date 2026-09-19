@@ -174,6 +174,117 @@ function findTilePath(grid, startTx, startTy, endTx, endTy, options) {
     return null;
 }
 
+function isOneTileGapX(grid, tx, ty) {
+    return tileWalkable(grid, tx, ty)
+        && !tileWalkable(grid, tx, ty - 1)
+        && !tileWalkable(grid, tx, ty + 1);
+}
+
+function isOneTileGapY(grid, tx, ty) {
+    return tileWalkable(grid, tx, ty)
+        && !tileWalkable(grid, tx - 1, ty)
+        && !tileWalkable(grid, tx + 1, ty);
+}
+
+function overlapRange(a0, a1, b0, b1) {
+    return Math.min(a1, b1) - Math.max(a0, b0);
+}
+
+function slideIntoOneTileGap(grid, x, y, bodyW, bodyH, vx, vy) {
+    if (!grid || (!vx && !vy)) {
+        return { x: x, y: y, vx: vx, vy: vy };
+    }
+    var size = typeof TILE_SIZE === 'number' ? TILE_SIZE : 16;
+    var hw = bodyW / 2;
+    var hh = bodyH / 2;
+    var outX = x;
+    var outY = y;
+    var outVx = vx;
+    var outVy = vy;
+
+    if (vx !== 0) {
+        var lookX = outX + (vx > 0 ? hw + 2 : -hw - 2);
+        var tx = Math.floor(lookX / size);
+        var bodyTop = outY - hh;
+        var bodyBot = outY + hh;
+        var ty0 = Math.floor(bodyTop / size) - 1;
+        var ty1 = Math.floor((bodyBot - 0.001) / size) + 1;
+        var bestTy = null;
+        var bestOv = 0;
+        var ty;
+        for (ty = ty0; ty <= ty1; ty++) {
+            if (!isOneTileGapX(grid, tx, ty)) {
+                continue;
+            }
+            var gTop = ty * size;
+            var ov = overlapRange(bodyTop, bodyBot, gTop, gTop + size);
+            if (ov > bestOv) {
+                bestOv = ov;
+                bestTy = ty;
+            }
+        }
+        if (bestTy !== null && bestOv > 0.5) {
+            var gapTop = bestTy * size;
+            var minY = gapTop + hh;
+            var maxY = gapTop + size - hh;
+            if (minY <= maxY) {
+                if (outY < minY) {
+                    outY = minY;
+                } else if (outY > maxY) {
+                    outY = maxY;
+                }
+                if (outVy < 0 && outY <= minY + 0.25) {
+                    outVy = 0;
+                } else if (outVy > 0 && outY >= maxY - 0.25) {
+                    outVy = 0;
+                }
+            }
+        }
+    }
+
+    if (vy !== 0) {
+        var lookY = outY + (vy > 0 ? hh + 2 : -hh - 2);
+        var lookTy = Math.floor(lookY / size);
+        var bodyLeft = outX - hw;
+        var bodyRight = outX + hw;
+        var tx0 = Math.floor(bodyLeft / size) - 1;
+        var tx1 = Math.floor((bodyRight - 0.001) / size) + 1;
+        var bestTx = null;
+        var bestOvX = 0;
+        var txScan;
+        for (txScan = tx0; txScan <= tx1; txScan++) {
+            if (!isOneTileGapY(grid, txScan, lookTy)) {
+                continue;
+            }
+            var gLeft = txScan * size;
+            var ovx = overlapRange(bodyLeft, bodyRight, gLeft, gLeft + size);
+            if (ovx > bestOvX) {
+                bestOvX = ovx;
+                bestTx = txScan;
+            }
+        }
+        if (bestTx !== null && bestOvX > 0.5) {
+            var gapLeft = bestTx * size;
+            var minX = gapLeft + hw;
+            var maxX = gapLeft + size - hw;
+            if (minX <= maxX) {
+                if (outX < minX) {
+                    outX = minX;
+                } else if (outX > maxX) {
+                    outX = maxX;
+                }
+                if (outVx < 0 && outX <= minX + 0.25) {
+                    outVx = 0;
+                } else if (outVx > 0 && outX >= maxX - 0.25) {
+                    outVx = 0;
+                }
+            }
+        }
+    }
+
+    return { x: outX, y: outY, vx: outVx, vy: outVy };
+}
+
 function tilesToWorldPath(tiles, toWx, toWy) {
     if (!tiles || !tiles.length) {
         return [{ x: toWx, y: toWy }];

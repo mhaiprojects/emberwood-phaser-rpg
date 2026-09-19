@@ -75,7 +75,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Walking the 12 existing adjacencies (haven↔all four, plus the ring) does not soft-lock or spawn in water. — Conclusion: From spawn (328,248) Keys.js walks all 24 directed edges (12 adjacencies both ways). Lands stay on-map and off WATER; inward walk does not bounce. `placePlayer` now `body.reset` + camera `centerOn` so east/south entries no longer fling off-map. Phaser 3.90 keyboard off. Dedicated case pass; suite 74/74.
 - [done] Player body = 1 tile; squeeze through the Emberhaven 1-tile courtyard gate. — Conclusion: From spawn (328,248) D via Keys.js to x=388 (past gate tile 23,15); rock beside the door still blocks (x=362). Suite 35/35 + Playwright.
 - [done] Click-to-walk pathing through 1-tile corridors (do not slide off the door tile). — Conclusion: A* threads courtyard gate (23,15) and house south-wall door (11,10); no corner-cut through frames. Suite gate-path case pass.
-- [todo] Diagonal door entry (W+D into a 1-tile gap without catching the frame). — Conclusion: —
+- [done] Diagonal door entry (W+D into a 1-tile gap without catching the frame). — Conclusion: From a south-offset stand just west of courtyard gate (23,15), Keys.js W+D slides into the 1-tile PATH (x>384, y≈247) without catching the ROCK frame; aligned D still walks through and the south wall still blocks. Phaser 3.90 keyboard off. Dedicated + Playwright 2/2.
 - [todo] Closed/locked doors + keys. — Conclusion: —
 - [todo] Door open/close animation. — Conclusion: —
 - [todo] Examine door (flavor text on the courtyard gate and house doors). — Conclusion: —
@@ -494,4 +494,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 121 | 2026-09-19 | Darkmine lower shaft as a second mine room | done — spawn (328,248) shaft door (9,12) enters indoor Phaser 3 tilemap; S returns; Corb stays 210,200 in Darkmine; Phaser keyboard off; dedicated + Playwright 1/1 |
 | 122 | 2026-09-19 | Emberhaven stall, range, anvil, bank booth as examine-only props | done — spawn (328,248) left-click stall/range/anvil/booth logs examine; right-click Examine; bank interior booth; no shop/bank UI; Phaser keyboard off; dedicated + Playwright 1/1 |
 | 123 | 2026-09-19 | Southshore dock/boat and Restless Graves tombs as examine objects | done — spawn (328,248) left-click dock/boat/tombs log examine; right-click dock Examine; no travel; lock/battle ignore; Phaser keyboard off; dedicated + Playwright 1/1 |
+| 124 | 2026-09-19 | Diagonal door entry (W+D into a 1-tile gap without catching the frame) | done — south-offset W+D at gate (23,15) slides through (x>384, y≈247); aligned D still passes; south ROCK still blocks; Phaser keyboard off; dedicated + Playwright 2/2 |
 

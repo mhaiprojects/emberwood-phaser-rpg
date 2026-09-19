@@ -1428,8 +1428,28 @@ var WorldScene = new Phaser.Class({
         this.player.body.setVelocity(vx, vy);
         if (vx || vy) {
             var len = Math.sqrt(vx * vx + vy * vy) || 1;
-            this.player.body.velocity.x = (vx / len) * speed;
-            this.player.body.velocity.y = (vy / len) * speed;
+            var nx = (vx / len) * speed;
+            var ny = (vy / len) * speed;
+            var slid = slideIntoOneTileGap(
+                this.tileGrid,
+                this.player.x,
+                this.player.y,
+                this.player.body.width,
+                this.player.body.height,
+                nx,
+                ny
+            );
+            if (slid.x !== this.player.x || slid.y !== this.player.y) {
+                this.player.setPosition(slid.x, slid.y);
+            }
+            var slen = Math.sqrt(slid.vx * slid.vx + slid.vy * slid.vy);
+            if (slen > 1) {
+                this.player.body.velocity.x = (slid.vx / slen) * speed;
+                this.player.body.velocity.y = (slid.vy / slen) * speed;
+            } else {
+                this.player.body.velocity.x = slid.vx;
+                this.player.body.velocity.y = slid.vy;
+            }
         }
 
         this.tickRunEnergy(dt, !!(vx || vy));

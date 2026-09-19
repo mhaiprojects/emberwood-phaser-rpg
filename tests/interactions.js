@@ -6182,34 +6182,90 @@ EmberwoodTests.add('world: player is one tile and mobs scale by type', function 
 });
 
 EmberwoodTests.add('world: player walks through a 1-tile door and is blocked by walls', function (win, H) {
-    var world = H.world(win);
-    H.setAutoAttack(win, false);
-    H.enterZone(win, 'haven');
-    world.walkTarget = null;
-    world.engageTarget = null;
-    world.talkTarget = null;
-    var spawn = win.defaultWorldSpawn();
-    world.placePlayer(spawn.x, spawn.y);
-    assertEqual(Math.round(world.player.x), spawn.x, 'starts at courtyard spawn x');
-    assertEqual(Math.round(world.player.y), spawn.y, 'starts at courtyard spawn y');
-    assertEqual(world.player.scaleX, 1, 'world player is 1 tile');
-    assert(world.player.body.width < 16, 'body narrower than a tile so doors are reliable');
-    var gate = win.HAVEN_GATE_TILE;
-    var tile = typeof win.TILE_SIZE === 'number' ? win.TILE_SIZE : 16;
-    var doorWest = gate.x * tile;
-    var doorEast = (gate.x + 1) * tile;
-    assert(spawn.x < doorWest, 'spawn is west of the 1-tile gate');
-    return H.holdKey(win, 'KeyD', 'd', 700).then(function () {
-        assert(world.player.x > doorEast, 'walked through 1-tile door, x=' + world.player.x);
-        assert(Math.abs(world.player.y - spawn.y) < 8, 'door walk stays on the opening row');
-        var wallSpot = win.tileCenter(gate.x - 1, gate.y + 1);
-        world.placePlayer(wallSpot.x, wallSpot.y);
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        H.setAutoAttack(win, false);
+        H.enterZone(win, 'haven');
         world.walkTarget = null;
-        var blockedX = world.player.x;
-        return H.holdKey(win, 'KeyD', 'd', 400).then(function () {
-            assert(world.player.x < doorWest + 8, 'solid wall still blocks, x=' + world.player.x);
-            assert(world.player.x < blockedX + 10, 'did not pass through rock');
-            world.placePlayer(spawn.x, spawn.y);
+        world.engageTarget = null;
+        world.talkTarget = null;
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        assertEqual(Math.round(world.player.x), spawn.x, 'starts at courtyard spawn x');
+        assertEqual(Math.round(world.player.y), spawn.y, 'starts at courtyard spawn y');
+        assertEqual(world.player.scaleX, 1, 'world player is 1 tile');
+        assert(world.player.body.width < 16, 'body narrower than a tile so doors are reliable');
+        var gate = win.HAVEN_GATE_TILE;
+        var tile = typeof win.TILE_SIZE === 'number' ? win.TILE_SIZE : 16;
+        var doorWest = gate.x * tile;
+        var doorEast = (gate.x + 1) * tile;
+        assert(spawn.x < doorWest, 'spawn is west of the 1-tile gate');
+        return H.holdKey(win, 'KeyD', 'd', 700).then(function () {
+            assert(world.player.x > doorEast, 'walked through 1-tile door, x=' + world.player.x);
+            assert(Math.abs(world.player.y - spawn.y) < 8, 'door walk stays on the opening row');
+            var wallSpot = win.tileCenter(gate.x - 1, gate.y + 1);
+            world.placePlayer(wallSpot.x, wallSpot.y);
+            world.walkTarget = null;
+            var blockedX = world.player.x;
+            return H.holdKey(win, 'KeyD', 'd', 400).then(function () {
+                assert(world.player.x < doorWest + 8, 'solid wall still blocks, x=' + world.player.x);
+                assert(world.player.x < blockedX + 10, 'did not pass through rock');
+                world.placePlayer(spawn.x, spawn.y);
+            });
+        });
+    });
+});
+
+EmberwoodTests.add('world: diagonal W+D enters a 1-tile door without catching the frame', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        H.setAutoAttack(win, false);
+        H.enterZone(win, 'haven');
+        world.walkTarget = null;
+        world.engageTarget = null;
+        world.talkTarget = null;
+        world.encounterLock = false;
+        parkWorldBodies(world);
+        var spawn = win.defaultWorldSpawn();
+        var gate = win.HAVEN_GATE_TILE;
+        var tile = typeof win.TILE_SIZE === 'number' ? win.TILE_SIZE : 16;
+        var doorWest = gate.x * tile;
+        var doorEast = (gate.x + 1) * tile;
+        var gapY = win.tileCenter(gate.x, gate.y).y;
+        var startX = doorWest - 8;
+        var startY = gapY + 6;
+        world.placePlayer(startX, startY);
+        assertEqual(typeof win.slideIntoOneTileGap, 'function', 'slideIntoOneTileGap is global');
+        assert(startX < doorWest, 'start west of the gate');
+        assert(startY > gapY, 'start south of the opening so W+D would catch the south frame');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(!world.cursors, 'WorldScene has no Phaser cursors');
+
+        H.key(win, 'KeyW', 'w', 'keydown');
+        H.key(win, 'KeyD', 'd', 'keydown');
+        var flags = world.moveFlags();
+        assert(flags.up && flags.right && !flags.left && !flags.down, 'W+D moveFlags');
+
+        return H.waitUntil(function () {
+            return world.player.x > doorEast;
+        }, 1500, 'Keys.js W+D through 1-tile door').then(function () {
+            var throughY = world.player.y;
+            H.key(win, 'KeyW', 'w', 'keyup');
+            H.key(win, 'KeyD', 'd', 'keyup');
+            H.clearKeys(win);
+            assert(world.player.x > doorEast, 'W+D walked through the 1-tile door, x=' + world.player.x);
+            assert(Math.abs(throughY - gapY) < 16, 'threaded the opening instead of catching the frame, y=' + throughY);
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off after diagonal door');
+
+            var wallSpot = win.tileCenter(gate.x - 1, gate.y + 1);
+            world.placePlayer(wallSpot.x, wallSpot.y);
+            world.walkTarget = null;
+            var blockedX = world.player.x;
+            return H.holdKey(win, 'KeyD', 'd', 400).then(function () {
+                assert(world.player.x < doorWest + 8, 'solid wall still blocks after diagonal slide, x=' + world.player.x);
+                assert(world.player.x < blockedX + 10, 'did not pass through rock');
+                world.placePlayer(spawn.x, spawn.y);
+            });
         });
     });
 });
