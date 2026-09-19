@@ -2106,7 +2106,6 @@ var WorldScene = new Phaser.Class({
         if (outcome === 'win' && this.lastFought) {
             var def = this.lastFought.mobDef;
             hero.xp += def.xp || 0;
-            gainSkillXp(hero, 'hitpoints', Math.max(1, Math.ceil((def.xp || 10) / 3)));
             this.levelHero(hero);
             this.registry.set('hero', hero);
             Hud.log('The ' + def.type + ' collapses. +' + def.xp + ' xp. Loot drops to the ground.');

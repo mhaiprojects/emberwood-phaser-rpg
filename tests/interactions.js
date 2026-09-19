@@ -8249,9 +8249,11 @@ EmberwoodTests.add('combat: Accurate Attack XP, Aggressive Strength XP, Defensiv
         assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
         assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
         assertEqual(typeof win.styleHitXp, 'function', 'styleHitXp exists');
+        assertEqual(typeof win.hitpointsHitXp, 'function', 'hitpointsHitXp exists');
         assertEqual(win.styleHitXp(4, 12, 12), 4, 'chicken one-shot is full mob XP');
         assertEqual(win.styleHitXp(12, 16, 80), 2, 'goblin 16/80 is 2 XP');
         assertEqual(win.styleHitXp(12, 1, 80), 1, 'successful hit is at least 1 XP');
+        assertEqual(win.hitpointsHitXp(12, 16, 80), 1, 'goblin 16/80 Hitpoints is ceil(2/3) min 1');
         assertEqual(win.combatSkill({ style: 'accurate' }), 'attack', 'Accurate maps to Attack');
         assertEqual(win.combatSkill({ style: 'aggressive' }), 'strength', 'Aggressive maps to Strength');
         assertEqual(win.combatSkill({ style: 'defensive' }), 'defence', 'Defensive maps to Defence');
@@ -8263,6 +8265,7 @@ EmberwoodTests.add('combat: Accurate Attack XP, Aggressive Strength XP, Defensiv
         ];
         var foeSpec = { type: 'Goblin', texture: 'slime', tint: 0x5aa33a, hp: 80, damage: 1, gold: 0, xp: 12 };
         var hitXp = win.styleHitXp(12, 16, 80);
+        var hpHitXp = win.hitpointsHitXp(12, 16, 80);
 
         function hitWithStyle(row) {
             var hero;
@@ -8314,7 +8317,7 @@ EmberwoodTests.add('combat: Accurate Attack XP, Aggressive Strength XP, Defensiv
                     row.others.forEach(function (id) {
                         assertEqual(hero.skills[id].xp, 0, row.style + ' does not grant ' + id + ' XP');
                     });
-                    assertEqual(hero.skills.hitpoints.xp, 1154, row.style + ' Hitpoints still waits for the win');
+                    assertEqual(hero.skills.hitpoints.xp, 1154 + hpHitXp, row.style + ' Hitpoints XP on the hit');
                     assertEqual(hero.xp, 0, row.style + ' combat XP still waits for the win');
                     var skillRow = win.document.querySelector('#skills-list [data-skill="' + row.skill + '"]');
                     assert(skillRow, row.style + ' Skills row exists');
@@ -8334,7 +8337,7 @@ EmberwoodTests.add('combat: Accurate Attack XP, Aggressive Strength XP, Defensiv
                 row.others.forEach(function (id) {
                     assertEqual(hero.skills[id].xp, 0, row.style + ' other melee skill still 0 after flee');
                 });
-                assertEqual(hero.skills.hitpoints.xp, 1154, row.style + ' no Hitpoints XP on flee');
+                assertEqual(hero.skills.hitpoints.xp, 1154 + hpHitXp, row.style + ' keeps Hitpoints XP after flee');
                 assertEqual(hero.xp, 0, row.style + ' no combat XP on flee');
                 assert(!win.game.input.keyboard, 'Phaser keyboard still off');
             });
@@ -8414,6 +8417,124 @@ EmberwoodTests.add('combat: Hitpoints XP on win is ceil(mobXp / 3) min 1', funct
             .then(function () {
                 H.enterZone(win, 'haven');
             });
+    }).catch(function (err) {
+        return H.cleanupBattle(win).then(function () {
+            throw err;
+        });
+    });
+});
+
+EmberwoodTests.add('combat: Hitpoints XP on each successful melee hit', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        world.placePlayer(spawn.x, spawn.y);
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof win.hitpointsHitXp, 'function', 'hitpointsHitXp exists');
+        assertEqual(win.hitpointsHitXp(4, 12, 12), 2, 'chicken one-shot is ceil(4/3)');
+        assertEqual(win.hitpointsHitXp(1, 12, 12), 1, 'mobXp 1 one-shot is min 1');
+        assertEqual(win.hitpointsHitXp(2, 12, 12), 1, 'mobXp 2 one-shot is ceil(2/3) min 1');
+        assertEqual(win.hitpointsHitXp(5, 12, 12), 2, 'mobXp 5 one-shot is ceil(5/3)');
+        assertEqual(win.hitpointsHitXp(10, 12, 12), 4, 'mobXp 10 one-shot is ceil(10/3)');
+        assertEqual(win.hitpointsHitXp(12, 16, 80), 1, 'goblin 16/80 is ceil(2/3) min 1');
+        assertEqual(win.hitpointsHitXp(12, 1, 80), 1, 'successful hit is at least 1 Hitpoints XP');
+        assertEqual(win.hitpointsHitXp(12, 0, 80), 0, 'a miss grants no Hitpoints XP');
+
+        var foeSpec = { type: 'Goblin', texture: 'slime', tint: 0x5aa33a, hp: 80, damage: 1, gold: 0, xp: 12 };
+        var styleXp = win.styleHitXp(12, 16, 80);
+        var hpHitXp = win.hitpointsHitXp(12, 16, 80);
+        var hero;
+
+        return H.cleanupBattle(win).then(function () {
+            H.enterZone(win, 'haven');
+            H.setAutoAttack(win, false);
+            hero = win.makeHero();
+            hero.autoAttack = false;
+            hero.autoRetaliate = false;
+            hero.style = 'accurate';
+            win.game.registry.set('hero', hero);
+            world.refreshHud();
+            world.placePlayer(spawn.x, spawn.y);
+            H.setAutoAttack(win, false);
+            H.setAutoRetaliate(win, false);
+            hero = H.hero(win);
+            assertEqual(hero.skills.attack.xp, 0, 'Attack starts 0');
+            assertEqual(hero.skills.hitpoints.xp, 1154, 'Hitpoints starts 1154');
+            assertEqual(hero.xp, 0, 'combat XP starts 0');
+            return H.startCustomFight(win, [foeSpec]);
+        }).then(function () {
+            var battle = H.battle(win);
+            var you = battle.heroes[0];
+            var foe = battle.enemies[0];
+            assertEqual(battle.enemies.length, 1, 'one foe');
+            assertEqual(foe.hp, 80, 'goblin starts at 80');
+            assertEqual(foe.xp, 12, 'foe carries mob XP');
+            assertEqual(you.damage, 16, 'starter battle damage is 16');
+            var orig = win.Phaser.Math.Between;
+            win.Phaser.Math.Between = function () { return 0; };
+            var before = foe.hp;
+            you.attack(foe);
+            return H.waitUntil(function () {
+                return foe.hp < before;
+            }, 2000, 'hit lands').then(function () {
+                return H.sleep(280);
+            }).then(function () {
+                win.Phaser.Math.Between = orig;
+                hero = H.hero(win);
+                assertEqual(before - foe.hp, 16, 'deals 16');
+                assert(foe.living, 'goblin still living');
+                assertEqual(win.Hud.mode, 'battle', 'still in battle');
+                assertEqual(hero.skills.attack.xp, styleXp, 'Attack XP on the hit');
+                assertEqual(hero.skills.hitpoints.xp, 1154 + hpHitXp, 'Hitpoints XP on the hit, not only on win');
+                assertEqual(hero.xp, 0, 'combat XP still waits for the win');
+                var hpRow = win.document.querySelector('#skills-list [data-skill="hitpoints"]');
+                assert(hpRow, 'Hitpoints Skills row exists');
+                assert(
+                    String(hpRow.getAttribute('title') || '').indexOf((1154 + hpHitXp) + ' XP') !== -1,
+                    'Skills tab shows Hitpoints hit XP'
+                );
+                assert(!H.chatHas(win, 'collapses'), 'no win chat yet');
+                return H.forceFlee(win);
+            }).catch(function (err) {
+                win.Phaser.Math.Between = orig;
+                throw err;
+            });
+        }).then(function () {
+            hero = H.hero(win);
+            assertEqual(hero.skills.attack.xp, styleXp, 'keeps Attack XP after flee');
+            assertEqual(hero.skills.hitpoints.xp, 1154 + hpHitXp, 'keeps Hitpoints XP after flee');
+            assertEqual(hero.xp, 0, 'no combat XP on flee');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+
+            return H.cleanupBattle(win);
+        }).then(function () {
+            H.enterZone(win, 'haven');
+            H.setAutoAttack(win, false);
+            hero = win.makeHero();
+            hero.autoAttack = false;
+            hero.autoRetaliate = false;
+            win.game.registry.set('hero', hero);
+            world.refreshHud();
+            world.placePlayer(spawn.x, spawn.y);
+            var chicken = H.findMob(win, 'Chicken');
+            var xp = chicken.mobDef.xp || 10;
+            var hpXp = win.hitpointsHitXp(xp, chicken.mobDef.hp, chicken.mobDef.hp);
+            assertEqual(hpXp, Math.max(1, Math.ceil(xp / 3)), 'one-shot Hitpoints matches old win formula');
+            return H.startFight(win, chicken).then(function () {
+                win.Hud.tryAttack();
+                return H.waitWorld(win);
+            }).then(function () {
+                hero = H.hero(win);
+                assertEqual(hero.skills.hitpoints.xp, 1154 + hpXp, 'chicken win does not double Hitpoints XP');
+                assert(H.chatHas(win, 'collapses'), 'win chat');
+                assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+                H.enterZone(win, 'haven');
+                world.placePlayer(spawn.x, spawn.y);
+            });
+        });
     }).catch(function (err) {
         return H.cleanupBattle(win).then(function () {
             throw err;

@@ -719,6 +719,14 @@ function styleHitXp(mobXp, dealt, maxHp) {
     return Math.max(1, Math.round(xp * scored / hp));
 }
 
+function hitpointsHitXp(mobXp, dealt, maxHp) {
+    var style = styleHitXp(mobXp, dealt, maxHp);
+    if (style < 1) {
+        return 0;
+    }
+    return Math.max(1, Math.ceil(style / 3));
+}
+
 function enemyMobXp(target) {
     if (target && typeof target.xp === 'number') {
         return target.xp;
@@ -740,12 +748,20 @@ function grantStyleHitXp(hero, target, dealt, hpBefore) {
     }
     var remaining = typeof hpBefore === 'number' ? hpBefore : (target && target.hp);
     var scored = Math.min(dealt, remaining);
-    var amount = styleHitXp(enemyMobXp(target), scored, target && target.maxHp);
+    var mobXp = enemyMobXp(target);
+    var maxHp = target && target.maxHp;
+    var amount = styleHitXp(mobXp, scored, maxHp);
     if (amount < 1) {
         return 0;
     }
     var skill = combatSkill(hero);
     gainSkillXp(hero, skill, amount);
+    if (skill === 'attack' || skill === 'strength' || skill === 'defence') {
+        var hpAmount = hitpointsHitXp(mobXp, scored, maxHp);
+        if (hpAmount > 0) {
+            gainSkillXp(hero, 'hitpoints', hpAmount);
+        }
+    }
     if (target && target.scene && target.scene.registry) {
         target.scene.registry.set('hero', hero);
     }
