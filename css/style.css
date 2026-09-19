@@ -230,6 +230,7 @@ img.pix {
 
 #style-row button.is-on,
 .auto-attack-btn.is-on,
+.auto-retaliate-btn.is-on,
 .auto-pickup-btn.is-on,
 .run-mode-btn.is-on,
 .collision-debug-btn.is-on {
@@ -237,6 +238,7 @@ img.pix {
 }
 
 .auto-attack-btn,
+.auto-retaliate-btn,
 .auto-pickup-btn,
 .run-mode-btn,
 .collision-debug-btn {

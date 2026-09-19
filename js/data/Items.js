@@ -33,6 +33,7 @@ function makeHero() {
         level: 1,
         style: 'accurate',
         autoAttack: true,
+        autoRetaliate: true,
         autoPickup: true,
         running: false,
         runEnergy: 100,
@@ -64,6 +65,16 @@ function makeHero() {
     };
     applyCombatLevel(hero, false);
     return hero;
+}
+
+function autoRetaliateOn(hero) {
+    if (!hero) {
+        return false;
+    }
+    if (hero.autoRetaliate == null) {
+        return !!hero.autoAttack;
+    }
+    return !!hero.autoRetaliate;
 }
 
 function addItem(hero, id, qty) {

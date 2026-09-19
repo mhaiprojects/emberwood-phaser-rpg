@@ -2158,6 +2158,11 @@ var WorldScene = new Phaser.Class({
         return !!(hero && hero.autoAttack);
     },
 
+    autoRetaliateOn: function () {
+        var hero = this.registry.get('hero');
+        return typeof autoRetaliateOn === 'function' ? autoRetaliateOn(hero) : !!(hero && hero.autoRetaliate);
+    },
+
     ensureRunState: function (hero) {
         if (!hero) {
             return hero;

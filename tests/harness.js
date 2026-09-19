@@ -324,9 +324,23 @@ var EmberwoodHarness = {
     setAutoAttack: function (win, on) {
         var hero = this.hero(win);
         hero.autoAttack = !!on;
+        hero.autoRetaliate = !!on;
         win.game.registry.set('hero', hero);
         if (win.Hud && win.Hud.renderAutoAttack) {
             win.Hud.renderAutoAttack(hero);
+        }
+        if (win.Hud && win.Hud.renderAutoRetaliate) {
+            win.Hud.renderAutoRetaliate(hero);
+        }
+        return hero;
+    },
+
+    setAutoRetaliate: function (win, on) {
+        var hero = this.hero(win);
+        hero.autoRetaliate = !!on;
+        win.game.registry.set('hero', hero);
+        if (win.Hud && win.Hud.renderAutoRetaliate) {
+            win.Hud.renderAutoRetaliate(hero);
         }
         return hero;
     },

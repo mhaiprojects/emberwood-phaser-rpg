@@ -121,6 +121,20 @@ var Hud = {
             self.log('Auto-attack ' + (hero.autoAttack ? 'on' : 'off') + '.');
         });
         document.addEventListener('click', function (event) {
+            var btn = event.target.closest('[data-auto-retaliate]');
+            if (!btn) {
+                return;
+            }
+            var hero = self.hero();
+            if (!hero) {
+                return;
+            }
+            hero.autoRetaliate = !autoRetaliateOn(hero);
+            self.saveHero(hero);
+            self.renderAutoRetaliate(hero);
+            self.log('Auto-retaliate ' + (hero.autoRetaliate ? 'on' : 'off') + '.');
+        });
+        document.addEventListener('click', function (event) {
             var btn = event.target.closest('[data-auto-pickup]');
             if (!btn) {
                 return;
@@ -849,6 +863,7 @@ var Hud = {
         this.renderEquip(hero);
         this.renderStyles(hero);
         this.renderAutoAttack(hero);
+        this.renderAutoRetaliate(hero);
         this.renderAutoPickup(hero);
         this.renderRun(hero);
         this.renderCollisionDebug();
@@ -985,6 +1000,15 @@ var Hud = {
         for (var i = 0; i < buttons.length; i++) {
             buttons[i].classList.toggle('is-on', on);
             buttons[i].textContent = 'Auto-attack: ' + (on ? 'On' : 'Off');
+        }
+    },
+
+    renderAutoRetaliate: function (hero) {
+        var on = autoRetaliateOn(hero);
+        var buttons = document.querySelectorAll('[data-auto-retaliate]');
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].classList.toggle('is-on', on);
+            buttons[i].textContent = 'Auto-retaliate: ' + (on ? 'On' : 'Off');
         }
     },
 
@@ -1202,10 +1226,10 @@ var Hud = {
         var target = battle.enemies[battle.targetIndex];
         this.battleLog(target ? 'Your turn. Target: ' + target.type + '.' : 'Your turn.');
         var hero = this.hero();
-        if (hero && hero.autoAttack && battle && battle.isPlayerTurn()) {
+        if (hero && autoRetaliateOn(hero) && battle && battle.isPlayerTurn()) {
             var self = this;
             battle.time.delayedCall(180, function () {
-                if (self.mode === 'battle' && self.battle === battle && hero.autoAttack && battle.isPlayerTurn() && !battle.busy) {
+                if (self.mode === 'battle' && self.battle === battle && autoRetaliateOn(hero) && battle.isPlayerTurn() && !battle.busy) {
                     self.tryAttack();
                 }
             });

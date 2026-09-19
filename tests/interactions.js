@@ -7807,9 +7807,12 @@ EmberwoodTests.add('hud: all three Auto-attack buttons stay in sync and log on/o
 });
 
 EmberwoodTests.add('world: auto-attack engages a nearby mob', function (win, H) {
-    return H.cleanupBattle(win).then(function () {
+    return ensureWorldPlay(win, H).then(function () {
+        return H.cleanupBattle(win);
+    }).then(function () {
         H.enterZone(win, 'haven');
         H.setAutoAttack(win, true);
+        H.setAutoRetaliate(win, false);
         var chicken = H.findMob(win, 'Chicken');
         var world = H.world(win);
         world.engageGrace = 0;
@@ -7822,6 +7825,7 @@ EmberwoodTests.add('world: auto-attack engages a nearby mob', function (win, H) 
         return H.forceFlee(win);
     }).then(function () {
         H.setAutoAttack(win, false);
+        H.setAutoRetaliate(win, true);
         H.enterZone(win, 'haven');
         var chicken = H.findMob(win, 'Chicken');
         var world = H.world(win);
@@ -7831,6 +7835,139 @@ EmberwoodTests.add('world: auto-attack engages a nearby mob', function (win, H) 
         world.update();
         assertEqual(win.Hud.mode, 'world', 'no auto fight when toggled off');
         assert(!world.encounterLock, 'not locked into combat');
+        assertEqual(H.hero(win).autoRetaliate, true, 'auto-retaliate does not world-engage');
+    });
+});
+
+EmberwoodTests.add('combat: auto-retaliate is separate from world auto-engage', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(H.hero(win).autoAttack, true, 'auto-attack defaults on');
+        assertEqual(win.autoRetaliateOn(H.hero(win)), true, 'auto-retaliate defaults on');
+        assertEqual(world.autoAttackOn(), true, 'world auto-engage on');
+        assertEqual(world.autoRetaliateOn(), true, 'world helper sees retaliate on');
+
+        var combatAtk = win.document.querySelector('#panel-combat [data-auto-attack]');
+        var combatRet = win.document.querySelector('#panel-combat [data-auto-retaliate]');
+        var settingsAtk = win.document.querySelector('#panel-settings [data-auto-attack]');
+        var settingsRet = win.document.querySelector('#panel-settings [data-auto-retaliate]');
+        var battleRet = win.document.querySelector('#battle-panel [data-auto-retaliate]');
+        assertEqual(win.document.querySelectorAll('[data-auto-attack]').length, 3, 'three Auto-attack buttons stay');
+        assertEqual(win.document.querySelectorAll('[data-auto-retaliate]').length, 3, 'three Auto-retaliate buttons');
+        assert(combatAtk && combatRet && settingsAtk && settingsRet && battleRet, 'Combat, Settings, and battle-panel retaliate exist');
+
+        H.click(win, '#tab-bar button[data-tab="combat"]');
+        var retOff = H.mouseClick(win, combatRet);
+        assertEqual(H.hero(win).autoRetaliate, false, 'Combat auto-retaliate toggles off');
+        assertEqual(H.hero(win).autoAttack, true, 'auto-attack stays on when retaliate toggles');
+        assertMatch(combatRet.textContent, 'Off', 'combat retaliate Off');
+        assertMatch(settingsRet.textContent, 'Off', 'settings retaliate follows');
+        assertMatch(battleRet.textContent, 'Off', 'battle-panel retaliate follows');
+        assertEqual(H.lastChat(win), 'Auto-retaliate off.', 'retaliate off log');
+        assert(win.document.activeElement !== retOff, 'retaliate toggle blurs');
+
+        H.click(win, '#tab-bar button[data-tab="settings"]');
+        var atkOff = H.mouseClick(win, settingsAtk);
+        assertEqual(H.hero(win).autoAttack, false, 'Settings auto-attack toggles off');
+        assertEqual(H.hero(win).autoRetaliate, false, 'auto-retaliate stays off when auto-attack toggles');
+        assert(win.document.activeElement !== atkOff, 'auto-attack toggle blurs');
+        var atkOn = H.mouseClick(win, settingsAtk);
+        assertEqual(H.hero(win).autoAttack, true, 'Settings auto-attack toggles on');
+        assertEqual(H.hero(win).autoRetaliate, false, 'turning auto-attack on does not turn retaliate on');
+        assert(win.document.activeElement !== atkOn, 'auto-attack On blurs');
+
+        H.setAutoAttack(win, true);
+        H.setAutoRetaliate(win, false);
+        assertEqual(world.autoAttackOn(), true, 'world auto-engage still on');
+        assertEqual(world.autoRetaliateOn(), false, 'auto-retaliate off independently');
+
+        var chicken = H.findMob(win, 'Chicken');
+        world.engageGrace = 0;
+        world.engageTarget = null;
+        world.talkTarget = null;
+        world.walkTarget = null;
+        world.encounterLock = false;
+        world.player.setPosition(chicken.x - 10, chicken.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(world.tryAutoEngage(), true, 'world auto-attack still engages with retaliate off');
+        assertEqual(world.encounterLock, true, 'encounterLock after world engage');
+
+        return H.waitUntil(function () {
+            return win.game.scene.isActive('BattleScene');
+        }, 4000, 'BattleScene after world auto-attack').then(function () {
+            return H.waitPlayerTurn(win);
+        }).then(function () {
+            var battle = H.battle(win);
+            var hp = battle.enemies[0].hp;
+            return H.sleep(400).then(function () {
+                assertEqual(H.battle(win).waitingForPlayer, true, 'retaliate off does not auto-Attack');
+                assertEqual(H.battle(win).enemies[0].hp, hp, 'foe HP unchanged without retaliate');
+                assertEqual(H.hero(win).autoAttack, true, 'auto-attack still on in battle');
+                assertEqual(H.hero(win).autoRetaliate, false, 'auto-retaliate still off in battle');
+                return H.forceFlee(win);
+            });
+        }).then(function () {
+            H.enterZone(win, 'haven');
+            world = H.world(win);
+            world.placePlayer(spawn.x, spawn.y);
+            world.player.body.setVelocity(0, 0);
+            H.setAutoAttack(win, false);
+            H.setAutoRetaliate(win, true);
+            assertEqual(world.autoAttackOn(), false, 'world auto-engage off');
+            assertEqual(world.autoRetaliateOn(), true, 'auto-retaliate on independently');
+
+            chicken = H.findMob(win, 'Chicken');
+            world.engageGrace = 0;
+            world.engageTarget = null;
+            world.encounterLock = false;
+            world.player.setPosition(chicken.x - 10, chicken.y);
+            world.player.body.setVelocity(0, 0);
+            assertEqual(world.tryAutoEngage(), false, 'auto-retaliate does not world-engage');
+            assertEqual(world.encounterLock, false, 'no lock from retaliate');
+            assertEqual(win.Hud.mode, 'world', 'still world with retaliate on and auto-attack off');
+            assert(!win.game.scene.isActive('BattleScene'), 'no BattleScene from retaliate');
+
+            H.setAutoRetaliate(win, false);
+            chicken.mobDef.hp = 80;
+            return H.startFight(win, chicken);
+        }).then(function () {
+            var battle = H.battle(win);
+            battle.enemies[0].hp = 80;
+            var hp = battle.enemies[0].hp;
+            assert(battle.waitingForPlayer, 'player turn before auto-retaliate');
+            H.setAutoRetaliate(win, true);
+            win.Hud.onPlayerTurn(battle);
+            return H.sleep(350).then(function () {
+                battle = H.battle(win);
+                assert(battle.enemies[0].hp < hp, 'auto-retaliate Attack drops foe HP');
+                assert(!battle.waitingForPlayer || battle.busy, 'auto-retaliate spends the turn');
+                assertEqual(H.hero(win).autoAttack, false, 'world auto-attack stayed off');
+                assertEqual(H.hero(win).autoRetaliate, true, 'auto-retaliate stayed on');
+                assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+                return H.forceFlee(win);
+            });
+        }).then(function () {
+            world = H.world(win);
+            world.placePlayer(spawn.x, spawn.y);
+            world.player.body.setVelocity(0, 0);
+            assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+            assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off after flee');
+        }).catch(function (err) {
+            return H.cleanupBattle(win).then(function () {
+                throw err;
+            });
+        });
     });
 });
 

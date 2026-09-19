@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="assets/svg/ui/combat.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/style.css?v=bank1">
+    <link rel="stylesheet" href="css/style.css?v=retal1">
 </head>
 <body>
     <div id="shell">
@@ -38,13 +38,14 @@
                     <button type="button" data-action="flee"><img class="pix" src="assets/svg/ui/flee.svg" alt=""> Run</button>
                 </div>
                 <button type="button" class="auto-attack-btn" data-auto-attack>Auto-attack: On</button>
+                <button type="button" class="auto-retaliate-btn" data-auto-retaliate title="When on, Attack is chosen for you in combat.">Auto-retaliate: On</button>
             </div>
         </aside>
         <div id="bottom">
             <div id="chat-col" class="panel">
                 <h2>Chat</h2>
                 <div id="chat-log"></div>
-                <p class="hint">WASD or arrows to walk. Ctrl toggles run. Click ground, NPCs, or monsters. F1–F8 switch panels. Auto-attack and auto-pickup are in Combat and Settings. Loot drops on the ground — walk over it when auto-pickup is on, or click it. Click food in Inventory to eat.</p>
+                <p class="hint">WASD or arrows to walk. Ctrl toggles run. Click ground, NPCs, or monsters. F1–F8 switch panels. Auto-attack, auto-retaliate, and auto-pickup are in Combat and Settings. Loot drops on the ground — walk over it when auto-pickup is on, or click it. Click food in Inventory to eat.</p>
             </div>
             <div id="iface">
                 <div id="tab-panels">
@@ -57,8 +58,11 @@
                             <button type="button" data-style="defensive"><img class="pix" src="assets/svg/ui/defensive.svg" alt=""> Defensive</button>
                         </div>
                         <h3>Auto-attack</h3>
-                        <p>When on, walking into a nearby foe starts a fight, and Attack is chosen for you in combat.</p>
+                        <p>When on, walking into a nearby foe starts a fight.</p>
                         <button type="button" class="auto-attack-btn" data-auto-attack title="When on, walking into a nearby foe starts a fight.">Auto-attack: On</button>
+                        <h3>Auto-retaliate</h3>
+                        <p>When on, Attack is chosen for you in combat. Separate from world auto-attack.</p>
+                        <button type="button" class="auto-retaliate-btn" data-auto-retaliate title="When on, Attack is chosen for you in combat.">Auto-retaliate: On</button>
                         <h3>Auto-pickup</h3>
                         <p>When on, walking near a loot pile picks it up. When off, click the pile to take it.</p>
                         <button type="button" class="auto-pickup-btn" data-auto-pickup title="When on, walking near a loot pile picks it up.">Auto-pickup: On</button>
@@ -96,6 +100,9 @@
                         <h3>Auto-attack</h3>
                         <p>Toggle automatic engagement of nearby monsters, like classic RuneScape.</p>
                         <button type="button" class="auto-attack-btn" data-auto-attack title="When on, walking into a nearby foe starts a fight.">Auto-attack: On</button>
+                        <h3>Auto-retaliate</h3>
+                        <p>When on, Attack is chosen for you in combat. Does not walk you into nearby foes.</p>
+                        <button type="button" class="auto-retaliate-btn" data-auto-retaliate title="When on, Attack is chosen for you in combat.">Auto-retaliate: On</button>
                         <h3>Auto-pickup</h3>
                         <p>When on, walking near a loot pile picks it up. When off, click the pile to take it. New games start with this on.</p>
                         <button type="button" class="auto-pickup-btn" data-auto-pickup title="When on, walking near a loot pile picks it up.">Auto-pickup: On</button>
@@ -198,9 +205,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
     <script src="js/input/Keys.js?v=run1"></script>
-    <script src="js/data/Items.js?v=cmb1"></script>
+    <script src="js/data/Items.js?v=retal1"></script>
     <script src="js/data/Scales.js?v=giant1"></script>
-    <script src="js/ui/Hud.js?v=cmb1"></script>
+    <script src="js/ui/Hud.js?v=retal1"></script>
     <script src="js/world/MapGen.js?v=agil1"></script>
     <script src="js/world/Pathfind.js?v=giant1"></script>
     <script src="js/world/Zones.js?v=tutor1"></script>
@@ -211,7 +218,7 @@
     <script src="js/ui/Message.js"></script>
     <script src="js/scenes/BootScene.js"></script>
     <script src="js/scenes/TitleScene.js?v=move4"></script>
-    <script src="js/scenes/WorldScene.js?v=cmb1"></script>
+    <script src="js/scenes/WorldScene.js?v=retal1"></script>
     <script src="js/scenes/BattleScene.js"></script>
     <script src="js/scenes/UIScene.js"></script>
     <script src="js/scenes/GameOverScene.js?v=cmb1"></script>
