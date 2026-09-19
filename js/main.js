@@ -36,3 +36,7 @@ var config = {
 };
 
 window.game = new Phaser.Game(config);
+Keys.keepPhaserKeyboardOff();
+window.game.events.on('ready', function () {
+    Keys.keepPhaserKeyboardOff();
+});

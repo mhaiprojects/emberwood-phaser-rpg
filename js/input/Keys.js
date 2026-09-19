@@ -25,7 +25,32 @@ var Keys = {
         window.addEventListener('blur', function () {
             self.down = {};
             self.pressed = {};
+            self.keepPhaserKeyboardOff();
         });
+        var pinOff = function () {
+            self.keepPhaserKeyboardOff();
+        };
+        window.addEventListener('pointerdown', pinOff, true);
+        window.addEventListener('pointerup', pinOff, true);
+        window.addEventListener('mousedown', pinOff, true);
+        window.addEventListener('mouseup', pinOff, true);
+        this.keepPhaserKeyboardOff();
+    },
+
+    keepPhaserKeyboardOff: function () {
+        var game = window.game;
+        if (!game || !game.input) {
+            return;
+        }
+        var kb = game.input.keyboard;
+        if (kb && typeof kb === 'object') {
+            try {
+                kb.enabled = false;
+            } catch (err) { /* plugin may already be gone */ }
+        }
+        if (game.input.keyboard !== false) {
+            game.input.keyboard = false;
+        }
     },
 
     typing: function (event) {
@@ -88,6 +113,7 @@ var Keys = {
     },
 
     onKey: function (event, isDown) {
+        this.keepPhaserKeyboardOff();
         if (isDown && this.typing(event)) {
             return;
         }

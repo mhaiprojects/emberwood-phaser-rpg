@@ -6199,6 +6199,91 @@ EmberwoodTests.add('hud: settings experiment never sets input.keyboard true', fu
     });
 });
 
+EmberwoodTests.add('input: game.input.keyboard stays false after any input change', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.clearWalk();
+        H.clearKeys(win);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!world.cursors, 'WorldScene has no Phaser cursors');
+        assertEqual(typeof win.Keys.keepPhaserKeyboardOff, 'function', 'Keys.keepPhaserKeyboardOff exists');
+
+        var keyboardFalse = function (label) {
+            var kb = win.game.input.keyboard;
+            assert(kb === false, label + ': game.input.keyboard === false (got ' + kb + ')');
+        };
+
+        keyboardFalse('after play');
+
+        H.key(win, 'KeyW', 'w', 'keydown');
+        assert(win.Keys.isDown('KeyW'), 'Keys.js recorded KeyW');
+        keyboardFalse('W down');
+        H.key(win, 'KeyW', 'w', 'keyup');
+        keyboardFalse('W up');
+
+        H.key(win, 'KeyA', 'a', 'keydown');
+        keyboardFalse('A down');
+        H.key(win, 'KeyA', 'a', 'keyup');
+        H.key(win, 'KeyS', 's', 'keydown');
+        keyboardFalse('S down');
+        H.key(win, 'KeyS', 's', 'keyup');
+        H.key(win, 'KeyD', 'd', 'keydown');
+        keyboardFalse('D down');
+        H.key(win, 'KeyD', 'd', 'keyup');
+        H.clearKeys(win);
+
+        H.key(win, 'ArrowUp', 'ArrowUp', 'keydown');
+        keyboardFalse('ArrowUp');
+        H.key(win, 'ArrowUp', 'ArrowUp', 'keyup');
+        H.key(win, 'Escape', 'Escape', 'keydown');
+        keyboardFalse('Escape');
+        H.key(win, 'Escape', 'Escape', 'keyup');
+        H.clearKeys(win);
+
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        keyboardFalse('Inv tab click');
+        H.click(win, '#tab-bar button[data-tab="combat"]');
+        keyboardFalse('Combat tab click');
+
+        world.onClick({ worldX: spawn.x - 48, worldY: spawn.y });
+        keyboardFalse('click-to-walk');
+        world.clearWalk();
+
+        win.game.input.keyboard = { enabled: true };
+        assert(win.game.input.keyboard && win.game.input.keyboard.enabled, 'fixture: plugin-like object assigned');
+        H.key(win, 'KeyD', 'd', 'keydown');
+        keyboardFalse('after attempted re-enable on key');
+        H.key(win, 'KeyD', 'd', 'keyup');
+        H.clearKeys(win);
+
+        win.game.input.keyboard = true;
+        H.mouseClick(win, '#tab-bar button[data-tab="settings"]');
+        keyboardFalse('after attempted re-enable on pointer');
+
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        H.clearKeys(win);
+        var startY = world.player.y;
+        return H.holdKey(win, 'KeyW', 'w', 400).then(function () {
+            assert(world.player.y < startY - 16, 'W still walks north via Keys.js, y=' + world.player.y);
+            assert(Math.abs(world.player.x - spawn.x) < 8, 'W does not drift sideways');
+            keyboardFalse('after WASD walk');
+            H.clearKeys(win);
+            world.placePlayer(spawn.x, spawn.y);
+            world.player.body.setVelocity(0, 0);
+        });
+    });
+});
+
 EmberwoodTests.add('world: auto-pickup off skips walk-over and click still takes', function (win, H) {
     H.enterZone(win, 'haven');
     H.setAutoAttack(win, false);
