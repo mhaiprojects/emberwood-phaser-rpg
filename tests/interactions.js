@@ -2301,6 +2301,154 @@ EmberwoodTests.add('hud: left-click eats food, wields gear, buries bones, drops 
     });
 });
 
+EmberwoodTests.add('hud: inventory Use is blocked while Hud.mode is battle', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, true);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.clearLoot();
+        if (win.Hud.hideContextMenu) {
+            win.Hud.hideContextMenu();
+        }
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof win.Hud.useItem, 'function', 'Hud.useItem helper');
+        assertEqual(typeof win.Hud.canBattleAct, 'function', 'canBattleAct helper');
+        assertEqual(win.Hud.mode, 'world', 'starts in world');
+
+        function stackQty(hero, id) {
+            var stack = hero.inventory.filter(function (row) { return row.id === id; })[0];
+            return stack ? stack.qty : 0;
+        }
+
+        var hero = win.makeHero();
+        win.addItem(hero, 'bones', 2);
+        win.addItem(hero, 'key', 1);
+        hero.hp = 70;
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(hero.hp, 70, 'damaged so world eat would heal');
+        assertEqual(stackQty(hero, 'shrimp'), 8, 'starter shrimp');
+        assertEqual(stackQty(hero, 'bread'), 3, 'starter bread');
+        assertEqual(stackQty(hero, 'bones'), 2, 'bones in inv');
+        assertEqual(stackQty(hero, 'key'), 1, 'key in inv');
+        assertEqual(stackQty(hero, 'sword'), 1, 'spare sword in inv');
+        assertEqual(stackQty(hero, 'shield'), 1, 'spare shield in inv');
+        assertEqual(hero.equipment.weapon, 'sword', 'sword equipped');
+        assertEqual(hero.equipment.shield, 'shield', 'shield equipped');
+        assertEqual(hero.gold, 8, 'starter gold');
+        assertEqual(hero.skills.prayer.xp, 0, 'Prayer XP still 0');
+
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        assert(win.document.querySelector('#inv-grid [data-item="shrimp"]'), 'shrimp slot');
+        assert(win.document.querySelector('#inv-grid [data-item="sword"]'), 'sword slot');
+        assert(win.document.querySelector('#inv-grid [data-item="bones"]'), 'bones slot');
+        assert(win.document.querySelector('#inv-grid [data-item="coins"]'), 'coins slot');
+        assert(win.document.querySelector('#inv-grid [data-item="key"]'), 'key slot');
+
+        function snapshot(heroState) {
+            return {
+                hp: heroState.hp,
+                gold: heroState.gold,
+                shrimp: stackQty(heroState, 'shrimp'),
+                bread: stackQty(heroState, 'bread'),
+                bones: stackQty(heroState, 'bones'),
+                coins: stackQty(heroState, 'coins'),
+                key: stackQty(heroState, 'key'),
+                sword: stackQty(heroState, 'sword'),
+                shield: stackQty(heroState, 'shield'),
+                weapon: heroState.equipment.weapon,
+                shieldWorn: heroState.equipment.shield,
+                prayer: heroState.skills.prayer.xp,
+                loot: H.lootLive(win).length
+            };
+        }
+
+        function assertUnchanged(before, after, label) {
+            assertEqual(after.hp, before.hp, label + ' hp');
+            assertEqual(after.gold, before.gold, label + ' gold');
+            assertEqual(after.shrimp, before.shrimp, label + ' shrimp');
+            assertEqual(after.bread, before.bread, label + ' bread');
+            assertEqual(after.bones, before.bones, label + ' bones');
+            assertEqual(after.coins, before.coins, label + ' coins');
+            assertEqual(after.key, before.key, label + ' key');
+            assertEqual(after.sword, before.sword, label + ' sword');
+            assertEqual(after.shield, before.shield, label + ' shield');
+            assertEqual(after.weapon, before.weapon, label + ' weapon');
+            assertEqual(after.shieldWorn, before.shieldWorn, label + ' worn shield');
+            assertEqual(after.prayer, before.prayer, label + ' prayer xp');
+            assertEqual(after.loot, before.loot, label + ' loot');
+        }
+
+        var before = snapshot(hero);
+        try {
+            win.Hud.battle = null;
+            win.Hud.mode = 'battle';
+            assertEqual(win.Hud.mode, 'battle', 'Hud.mode is battle');
+            assertEqual(win.Hud.canBattleAct(), false, 'no combat turn without a battle');
+
+            var blocked = ['shrimp', 'bread', 'sword', 'shield', 'bones', 'coins', 'key'];
+            var i;
+            for (i = 0; i < blocked.length; i++) {
+                H.click(win, '#inv-grid [data-item="' + blocked[i] + '"]');
+                assertEqual(H.lastChat(win), 'Use Eat food on your combat turn.', 'battle blocks ' + blocked[i] + ' Use');
+                assertUnchanged(before, snapshot(H.hero(win)), 'after ' + blocked[i]);
+            }
+
+            win.Hud.useItem('bones');
+            assertEqual(H.lastChat(win), 'Use Eat food on your combat turn.', 'useItem bones is blocked');
+            assertUnchanged(before, snapshot(H.hero(win)), 'after useItem bones');
+            win.Hud.useItem('shrimp');
+            assertEqual(H.lastChat(win), 'Use Eat food on your combat turn.', 'world eat shrimp is blocked off-turn');
+            assertUnchanged(before, snapshot(H.hero(win)), 'after useItem shrimp');
+
+            var menu = win.document.getElementById('ctx-menu');
+            assert(menu, 'ctx-menu exists');
+            if (win.Hud.hideContextMenu) {
+                win.Hud.hideContextMenu();
+            }
+            var slot = win.document.querySelector('#inv-grid [data-item="bones"]');
+            slot.dispatchEvent(new win.MouseEvent('contextmenu', {
+                bubbles: true,
+                cancelable: true,
+                view: win,
+                button: 2,
+                clientX: 40,
+                clientY: 80
+            }));
+            assert(menu.hidden, 'battle hides inventory context Use/Drop');
+            assertUnchanged(before, snapshot(H.hero(win)), 'after battle contextmenu');
+        } finally {
+            win.Hud.mode = 'world';
+            win.Hud.battle = null;
+        }
+
+        assertEqual(win.Hud.mode, 'world', 'restored world');
+        H.click(win, '#inv-grid [data-item="shrimp"]');
+        hero = H.hero(win);
+        assertEqual(hero.hp, 82, 'world Use shrimp heals 12 after battle');
+        assertEqual(stackQty(hero, 'shrimp'), 7, 'world Use consumes one shrimp after battle');
+        assertEqual(H.lastChat(win), 'You eat Cooked shrimp and recover 12 HP.', 'world eat chat after battle');
+
+        world.clearLoot();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('inv: addItem coins increments gold and syncCoins; takeItem decrements both', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         var world = H.world(win);
