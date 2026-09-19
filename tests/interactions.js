@@ -2944,20 +2944,45 @@ EmberwoodTests.add('combat: manual list click hits the chosen foe', function (wi
 });
 
 EmberwoodTests.add('combat: canvas select then Attack uses that target', function (win, H) {
-    H.setAutoAttack(win, false);
-    return H.startCustomFight(win, [
-        { type: 'Goblin', texture: 'slime', tint: 0x5aa33a, hp: 40, damage: 1, gold: 0, xp: 1 },
-        { type: 'Cow', texture: 'slime', tint: 0xaa7744, hp: 40, damage: 1, gold: 0, xp: 1 }
-    ]).then(function () {
+    return ensureWorldPlay(win, H).then(function () {
+        H.setAutoAttack(win, false);
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard stays off');
+        return H.startCustomFight(win, [
+            { type: 'Goblin', texture: 'slime', tint: 0x5aa33a, hp: 40, damage: 1, gold: 0, xp: 1 },
+            { type: 'Cow', texture: 'slime', tint: 0xaa7744, hp: 40, damage: 1, gold: 0, xp: 1 }
+        ]);
+    }).then(function () {
         var battle = H.battle(win);
         battle.pickReady = true;
-        win.Hud.onEnemyPicked(1, true);
+        assertEqual(win.Hud.selectingEnemy, false, 'not in pick-to-strike mode');
+        battle.enemies[1].emit('pointerdown');
         assertEqual(battle.targetIndex, 1, 'sprite selected cow');
         assertEqual(battle.enemies[1].hp, 40, 'select does not strike');
+        assertEqual(battle.enemies[0].hp, 40, 'goblin still full after select');
         win.Hud.tryAttack();
         return H.sleep(250).then(function () {
             assert(battle.enemies[1].hp < 40, 'Attack hit selected cow');
             assertEqual(battle.enemies[0].hp, 40, 'goblin still full');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+            return H.forceFlee(win);
+        });
+    }).then(function () {
+        return H.startCustomFight(win, [
+            { type: 'Goblin', texture: 'slime', tint: 0x5aa33a, hp: 40, damage: 1, gold: 0, xp: 1 },
+            { type: 'Cow', texture: 'slime', tint: 0xaa7744, hp: 40, damage: 1, gold: 0, xp: 1 }
+        ]);
+    }).then(function () {
+        var battle = H.battle(win);
+        battle.pickReady = true;
+        win.Hud.selectingEnemy = true;
+        battle.enemies[1].emit('pointerdown');
+        return H.sleep(250).then(function () {
+            assertEqual(battle.targetIndex, 1, 'selectingEnemy canvas targeted cow');
+            assert(battle.enemies[1].hp < 40, 'fromSprite strikes when selectingEnemy');
+            assertEqual(battle.enemies[0].hp, 40, 'goblin still full after selectingEnemy strike');
+            assertEqual(win.Hud.selectingEnemy, false, 'selectingEnemy cleared after strike');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
             return H.forceFlee(win);
         });
     }).then(function () {
