@@ -72,6 +72,42 @@ EmberwoodTests.add('title: credits toggle', function (win, H) {
     });
 });
 
+EmberwoodTests.add('title: click here to play starts WorldScene in Emberhaven and credits toggle #credit-text', function (win, H) {
+    return H.waitReady(win).then(function () {
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(win.Hud.mode, 'title', 'hud starts on title');
+        assert(win.document.getElementById('title-overlay').hidden === false, 'title overlay should show');
+        assert(win.game.scene.isActive('TitleScene'), 'TitleScene active before play');
+        assert(!win.game.scene.isActive('WorldScene'), 'WorldScene stays off on title');
+        var credits = win.document.getElementById('credit-text');
+        var start = win.document.getElementById('btn-start');
+        assert(credits, '#credit-text exists');
+        assert(credits.hidden, 'credits start hidden');
+        H.click(win, '#btn-credits');
+        assert(!credits.hidden, 'Credits shows #credit-text');
+        H.click(win, '#btn-credits');
+        assert(credits.hidden, 'Credits hides #credit-text again');
+        assert(start && start.textContent.indexOf('Click here to play') !== -1, 'start button label');
+        return H.startPlay(win);
+    }).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assert(win.game.scene.isActive('WorldScene'), 'Click here to play starts WorldScene');
+        assert(!win.game.scene.isActive('TitleScene'), 'TitleScene stops after play');
+        assert(win.document.getElementById('title-overlay').hidden, 'title overlay hidden after play');
+        assertEqual(win.Hud.mode, 'world', 'hud mode world');
+        assertEqual(win.game.registry.get('zone'), 'haven', 'registry zone haven');
+        assertEqual(world.zoneId, 'haven', 'start zone');
+        assertEqual(win.document.getElementById('hud-zone').textContent, 'Emberhaven', 'zone heading');
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off after play');
+    });
+});
+
 EmberwoodTests.add('title: click here to play enters Emberhaven', function (win, H) {
     return H.startPlay(win).then(function () {
         var world = H.world(win);
