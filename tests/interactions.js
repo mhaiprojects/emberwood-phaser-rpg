@@ -4241,6 +4241,99 @@ EmberwoodTests.add('loot: clearLoot on zone change wipes ground loot', function 
     });
 });
 
+EmberwoodTests.add('loot: pickup during encounterLock is blocked or deferred', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, true);
+        H.clearKeys(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        var world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.clearLoot();
+        world.encounterLock = false;
+        win.Hud.mode = 'world';
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(H.hero(win).autoPickup, true, 'auto-pickup on so unlock can defer');
+
+        world.spawnLoot(spawn.x, spawn.y, [{ id: 'coins', qty: 2 }]);
+        var gold = H.hero(win).gold;
+        world.collectNearbyLoot();
+        assertEqual(H.hero(win).gold, gold + 2, 'unlocked collectNearbyLoot still takes');
+        assert(H.chatHas(win, 'You pick up'), 'unlocked pickup chat');
+        assertEqual(H.lootLive(win).length, 0, 'unlocked pile taken');
+
+        world.clearLoot();
+        world.spawnLoot(spawn.x, spawn.y, [{ id: 'coins', qty: 3 }]);
+        gold = H.hero(win).gold;
+        var chatCount = H.chat(win).length;
+        var live = H.lootLive(win);
+        assertEqual(live.length, 1, 'locked pile exists');
+        var drop = live[0];
+
+        world.scene.pause();
+        try {
+            world.encounterLock = true;
+            world.collectNearbyLoot();
+            assertEqual(H.hero(win).gold, gold, 'collectNearbyLoot is blocked under encounterLock');
+            assertEqual(H.lootLive(win).length, 1, 'walk-over pile stays under encounterLock');
+            assertEqual(H.chat(win).length, chatCount, 'no pickup chat under encounterLock');
+
+            assertEqual(world.tryPickup(drop), false, 'tryPickup returns false under encounterLock');
+            assertEqual(H.hero(win).gold, gold, 'tryPickup is blocked under encounterLock');
+            assert(!drop.taken, 'drop stays untaken under encounterLock');
+
+            world.onClick({ worldX: drop.sprite.x, worldY: drop.sprite.y });
+            assertEqual(H.hero(win).gold, gold, 'onClick pickup is blocked under encounterLock');
+
+            drop.sprite.emit('pointerdown');
+            assertEqual(H.hero(win).gold, gold, 'sprite click is blocked under encounterLock');
+            assertEqual(H.lootLive(win).length, 1, 'sprite pile stays under encounterLock');
+
+            world.update();
+            assertEqual(H.hero(win).gold, gold, 'update does not vacuum under encounterLock');
+
+            world.encounterLock = false;
+            win.Hud.mode = 'battle';
+            world.collectNearbyLoot();
+            assertEqual(H.hero(win).gold, gold, 'collectNearbyLoot is blocked in battle');
+            assertEqual(world.tryPickup(drop), false, 'tryPickup returns false in battle');
+            world.onClick({ worldX: drop.sprite.x, worldY: drop.sprite.y });
+            assertEqual(H.hero(win).gold, gold, 'onClick pickup is blocked in battle');
+            drop.sprite.emit('pointerdown');
+            assertEqual(H.hero(win).gold, gold, 'sprite click is blocked in battle');
+            assertEqual(H.lootLive(win).length, 1, 'pile stays in battle');
+            assertEqual(H.chat(win).length, chatCount, 'no pickup chat in battle');
+
+            win.Hud.mode = 'world';
+            world.encounterLock = false;
+            world.collectNearbyLoot();
+            assertEqual(H.hero(win).gold, gold + 3, 'collectNearbyLoot takes after unlock (deferred)');
+            assertEqual(H.chat(win).length, chatCount + 1, 'deferred pickup chat');
+            assert(H.lastChat(win).indexOf('You pick up') !== -1, 'deferred pickup line');
+            assertEqual(H.lootLive(win).length, 0, 'deferred pile taken');
+        } finally {
+            H.clearKeys(win);
+            win.Hud.mode = 'world';
+            world.encounterLock = false;
+            world.clearLoot();
+            world.scene.resume();
+        }
+
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('combat: Eat food uses inventory on your turn', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');

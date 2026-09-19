@@ -579,6 +579,9 @@ var WorldScene = new Phaser.Class({
     },
 
     tryPickup: function (drop) {
+        if (this.encounterLock || Hud.mode === 'battle') {
+            return false;
+        }
         if (!drop || drop.taken) {
             return false;
         }
@@ -602,7 +605,7 @@ var WorldScene = new Phaser.Class({
     },
 
     collectNearbyLoot: function () {
-        if (!this.autoPickupOn()) {
+        if (this.encounterLock || Hud.mode === 'battle' || !this.autoPickupOn()) {
             return;
         }
         var i;
