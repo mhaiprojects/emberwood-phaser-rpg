@@ -2373,6 +2373,46 @@ EmberwoodTests.add('quests: side Task and Quest tab start as Talk to Guildmaster
     });
 });
 
+EmberwoodTests.add('quests: after accept HUD is Kill goblins in Northwood (N/5) and journal is 0/5', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        var world = H.world(win);
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        win.game.registry.set('quest', { id: 'goblins', stage: 0, progress: 0, goal: 5 });
+        world.placePlayer(spawn.x, spawn.y);
+        world.refreshHud();
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(H.quest(win).stage, 0, 'starts unaccepted');
+        var bram = H.findNpc(win, 'guild');
+        assert(bram, 'Bram is in Emberhaven');
+        world.tryTalk(bram);
+        assertEqual(H.quest(win).stage, 1, 'accept moves to stage 1');
+        assertEqual(H.quest(win).progress, 0, 'accept progress is 0');
+        var afterAccept = 'Kill goblins in Northwood (0/5).';
+        assertEqual(win.document.getElementById('hud-quest').textContent, afterAccept, 'side HUD is Kill goblins in Northwood (N/5) at 0');
+        assertEqual(win.document.getElementById('hud-quest-tab').textContent, afterAccept, 'journal after accept is 0/5');
+        assertMatch(win.document.getElementById('hud-quest-tab').textContent, '0/5', 'journal contains 0/5');
+        H.click(win, '#tab-bar button[data-tab="quest"]');
+        assert(H.panelVisible(win, 'quest'), 'Quest tab panel is visible');
+        assertEqual(win.document.getElementById('hud-quest-tab').textContent, afterAccept, 'open Quest tab still 0/5');
+        assertEqual(win.document.getElementById('hud-quest').textContent, afterAccept, 'side Task stays 0/5 while Quest is open');
+        var quest = H.quest(win);
+        quest.progress = 2;
+        win.game.registry.set('quest', quest);
+        world.refreshHud();
+        assertEqual(win.document.getElementById('hud-quest').textContent, 'Kill goblins in Northwood (2/5).', 'N in (N/5) is quest.progress');
+        assertEqual(win.document.getElementById('hud-quest-tab').textContent, 'Kill goblins in Northwood (2/5).', 'journal tracks N');
+    });
+});
+
 EmberwoodTests.add('npcs: Guildmaster Bram quest', function (win, H) {
     H.enterZone(win, 'haven');
     var bram = H.findNpc(win, 'guild');
