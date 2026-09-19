@@ -86,9 +86,12 @@
 
             window.Hud.showTab('inv');
             window.Hud.el.log.innerHTML = '';
-            document.querySelector('#inv-grid [data-item="coins"]').click();
-            if (lastChat() !== 'Coins.') {
-                throw new Error('left-click coins was ' + lastChat());
+            document.querySelector('#inv-grid [data-item="shrimp"]').click();
+            if (lastChat().indexOf('already at full health') === -1) {
+                throw new Error('left-click shrimp was ' + lastChat());
+            }
+            if (lastChat() === window.itemExamineText('shrimp')) {
+                throw new Error('left-click logged examine flavor');
             }
 
             var slot = document.querySelector('#inv-grid [data-item="bones"]');

@@ -163,7 +163,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Expand worn slots toward OSRS: head, cape, neck, ammo, weapon, body, shield, legs, hands, feet, ring (empty slots OK). — Conclusion: From spawn (328,248) Worn lists Head/Cape/Neck/Ammo/Weapon/Body/Shield/Legs/Hands/Feet/Ring; sword/shield filled, nine empty None; no stats readout; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] An equipment-stats readout (melee +defence at minimum). — Conclusion: From spawn (328,248) Worn `#equip-stats` shows Melee +defence +1 from the wooden shield and +0 after unequip; 11 slot rows stay names-only; Phaser 3.90 keyboard off; dedicated + Playwright 1/1.
 - [done] Item examine text on each `ITEM_DB` entry. — Conclusion: From spawn (328,248) each ITEM_DB entry has unique examine; Inv/ground right-click Examine logs flavor; left-click still names/picks up; Phaser 3.90 keyboard off; dedicated + Playwright 1/1.
-- [todo] Left-click defaults per item: eat food, wield gear, bury bones, drop junk. — Conclusion: —
+- [done] Left-click defaults per item: eat food, wield gear, bury bones, drop junk. — Conclusion: From spawn (328,248) Inv left-click eats shrimp, wields/wears sword/shield, buries bones, drops coins/key; battle still Eat-food-only; no use-with; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [todo] Load `item-sword` and `item-shield` in `BootScene` (currently only coins/bones/shrimp/bread) so ground drops can show them. — Conclusion: —
 - [todo] Banker Elise deposit / withdraw / withdraw-X / withdraw-all with a  bank chest UI. — Conclusion: —
 - [todo] Bank search and at least two tabs (once bank exists). — Conclusion: —
@@ -526,4 +526,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 154 | 2026-09-19 | Expand worn slots toward OSRS head through ring | done — spawn (328,248) Worn lists 11 OSRS slots; sword/shield filled, nine empty None; no stats readout; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 155 | 2026-09-19 | An equipment-stats readout (melee +defence at minimum) | done — spawn (328,248) Worn `#equip-stats` Melee +defence +1 / unequip +0; 11 slots unchanged; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 156 | 2026-09-19 | Item examine text on each ITEM_DB entry | done — spawn (328,248) each ITEM_DB entry has unique examine; Inv/ground Examine logs flavor; left-click still names/picks up; Phaser keyboard off; dedicated + Playwright 1/1 |
+| 157 | 2026-09-19 | Left-click defaults per item: eat food, wield gear, bury bones, drop junk | done — spawn (328,248) Inv left-click eats shrimp, wields/wears sword/shield, buries bones, drops coins/key; battle still Eat-food-only; Phaser keyboard off; dedicated + Playwright 1/1 |
 

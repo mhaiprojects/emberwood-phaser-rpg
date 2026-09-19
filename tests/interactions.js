@@ -431,9 +431,6 @@ EmberwoodTests.add('hud: wear/wield/remove sword and shield refresh worn tab', f
         assertEqual(renderSrc.indexOf('defence'), -1, 'renderEquip does not read item defence');
 
         H.click(win, '#tab-bar button[data-tab="inv"]');
-        H.click(win, '#inv-grid [data-item="sword"]');
-        assertEqual(H.lastChat(win), 'Bronze sword.', 'left-click sword still only logs the name');
-
         var menu = openInvMenu('sword');
         assert(!menu.hidden, 'right-click sword opens menu');
         assert(menu.querySelector('[data-ctx="wield"]'), 'Wield action is listed');
@@ -875,9 +872,9 @@ EmberwoodTests.add('hud: inventory and ground Examine logs ITEM_DB flavor', func
         assert(inv.querySelector('[data-item="coins"]'), 'coins slot');
 
         win.Hud.el.log.innerHTML = '';
-        H.click(win, '#inv-grid [data-item="coins"]');
-        assertEqual(H.lastChat(win), 'Coins.', 'left-click still only logs the name');
-        assert(H.lastChat(win) !== win.itemExamineText('coins'), 'left-click does not log examine flavor');
+        H.click(win, '#inv-grid [data-item="shrimp"]');
+        assert(H.chatHas(win, 'already at full health'), 'left-click food still eats');
+        assert(H.lastChat(win) !== win.itemExamineText('shrimp'), 'left-click does not log examine flavor');
 
         var menu = win.document.getElementById('ctx-menu');
         assert(menu, 'ctx-menu element exists');
@@ -2161,7 +2158,7 @@ EmberwoodTests.add('hud: click bread at low HP heals 20 and decrements', functio
     });
 });
 
-EmberwoodTests.add('hud: click coins/sword/shield/bones only logs the item name', function (win, H) {
+EmberwoodTests.add('hud: left-click eats food, wields gear, buries bones, drops junk', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         var world = H.world(win);
         var spawn = win.defaultWorldSpawn();
@@ -2169,50 +2166,137 @@ EmberwoodTests.add('hud: click coins/sword/shield/bones only logs the item name'
         assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
         H.enterZone(win, 'haven');
         H.setAutoAttack(win, false);
+        H.setAutoPickup(win, true);
         world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.clearLoot();
+        if (win.Hud.hideContextMenu) {
+            win.Hud.hideContextMenu();
+        }
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
         assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
         assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof win.itemDefaultVerb, 'function', 'itemDefaultVerb helper');
+        assertEqual(typeof win.buryItem, 'function', 'buryItem helper');
+        assertEqual(win.itemDefaultVerb('shrimp'), 'eat', 'shrimp default is eat');
+        assertEqual(win.itemDefaultVerb('bread'), 'eat', 'bread default is eat');
+        assertEqual(win.itemDefaultVerb('sword'), 'wield', 'sword default is wield');
+        assertEqual(win.itemDefaultVerb('shield'), 'wear', 'shield default is wear');
+        assertEqual(win.itemDefaultVerb('bones'), 'bury', 'bones default is bury');
+        assertEqual(win.itemDefaultVerb('coins'), 'drop', 'coins default is drop');
+        assertEqual(win.itemDefaultVerb('key'), 'drop', 'key default is drop');
+        assert(win.ITEM_DB.bones.bury, 'bones are buryable');
 
-        var hero = H.hero(win);
-        assertEqual(hero.hp, 100, 'starts at full HP');
-        assertEqual(hero.gold, 8, 'starts with 8 gold');
-        assert(!hero.inventory.some(function (s) { return s.id === 'bones'; }), 'starter kit has no bones');
+        function stackQty(hero, id) {
+            var stack = hero.inventory.filter(function (row) { return row.id === id; })[0];
+            return stack ? stack.qty : 0;
+        }
+
+        var hero = win.makeHero();
         win.addItem(hero, 'bones', 2);
+        win.addItem(hero, 'key', 1);
         win.game.registry.set('hero', hero);
         world.refreshHud();
+        hero = H.hero(win);
+        var shrimpQty = stackQty(hero, 'shrimp');
+        assertEqual(hero.hp, 100, 'starts at full HP');
+        assertEqual(hero.gold, 8, 'starts with 8 gold');
+        assertEqual(stackQty(hero, 'bones'), 2, 'starter bones 2');
+        assertEqual(stackQty(hero, 'key'), 1, 'iron key in inventory');
+        assertEqual(hero.equipment.weapon, 'sword', 'starter wears bronze sword');
+        assertEqual(hero.equipment.shield, 'shield', 'starter wears wooden shield');
+        assertEqual(hero.skills.prayer.xp, 0, 'Prayer XP still 0 this tick');
 
         H.click(win, '#tab-bar button[data-tab="inv"]');
         assert(win.document.querySelector('#inv-grid [data-item="coins"]'), 'coins slot');
         assert(win.document.querySelector('#inv-grid [data-item="sword"]'), 'sword slot');
         assert(win.document.querySelector('#inv-grid [data-item="shield"]'), 'shield slot');
         assert(win.document.querySelector('#inv-grid [data-item="bones"]'), 'bones slot');
+        assert(win.document.querySelector('#inv-grid [data-item="key"]'), 'key slot');
+        assert(win.document.querySelector('#inv-grid [data-item="shrimp"]'), 'shrimp slot');
 
-        var beforeInv = hero.inventory.map(function (s) { return s.id + ':' + s.qty; }).join(',');
-        var clicks = [
-            ['coins', 'Coins.'],
-            ['sword', 'Bronze sword.'],
-            ['shield', 'Wooden shield.'],
-            ['bones', 'Bones.']
-        ];
-        clicks.forEach(function (pair) {
-            try {
-                H.click(win, '#inv-grid [data-item="' + pair[0] + '"]');
-            } catch (err) {
-                throw new Error(pair[0] + ' click crashed: ' + (err && err.message ? err.message : err));
-            }
-            assertEqual(H.lastChat(win), pair[1], pair[0] + ' logs only the item name');
-        });
-
+        H.click(win, '#inv-grid [data-item="shrimp"]');
         hero = H.hero(win);
-        assertEqual(hero.hp, 100, 'HP unchanged after non-food clicks');
-        assertEqual(hero.gold, 8, 'gold unchanged after coin click');
-        assertEqual(
-            hero.inventory.map(function (s) { return s.id + ':' + s.qty; }).join(','),
-            beforeInv,
-            'inventory stacks unchanged'
-        );
-        assert(!H.chatHas(win, 'You eat'), 'non-food clicks do not eat');
-        assert(!H.chatHas(win, 'bury'), 'bones click does not bury');
+        assert(H.chatHas(win, 'already at full health'), 'full-HP shrimp still eats');
+        assertEqual(stackQty(hero, 'shrimp'), shrimpQty, 'full HP does not consume shrimp');
+        assertEqual(hero.hp, 100, 'full HP stays 100');
+
+        hero.hp = 70;
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        H.click(win, '#inv-grid [data-item="shrimp"]');
+        hero = H.hero(win);
+        assertEqual(hero.hp, 82, 'left-click shrimp heals 12');
+        assertEqual(stackQty(hero, 'shrimp'), shrimpQty - 1, 'eat consumes one shrimp');
+        assertEqual(H.lastChat(win), 'You eat Cooked shrimp and recover 12 HP.', 'eat chat');
+
+        H.click(win, '#inv-grid [data-item="sword"]');
+        hero = H.hero(win);
+        assertEqual(hero.equipment.weapon, 'sword', 'left-click keeps the bronze sword equipped');
+        assertEqual(stackQty(hero, 'sword'), 0, 'left-click wield takes the inventory sword');
+        assertEqual(H.lastChat(win), 'You wield the Bronze sword.', 'wield chat');
+        assert(!win.document.querySelector('#inv-grid [data-item="sword"]'), 'inv sword slot empty after wield');
+
+        H.click(win, '#inv-grid [data-item="shield"]');
+        hero = H.hero(win);
+        assertEqual(hero.equipment.shield, 'shield', 'left-click keeps the wooden shield equipped');
+        assertEqual(stackQty(hero, 'shield'), 0, 'left-click wear takes the inventory shield');
+        assertEqual(H.lastChat(win), 'You wear the Wooden shield.', 'wear chat');
+        assert(!win.document.querySelector('#inv-grid [data-item="shield"]'), 'inv shield slot empty after wear');
+
+        H.click(win, '#inv-grid [data-item="bones"]');
+        hero = H.hero(win);
+        assertEqual(stackQty(hero, 'bones'), 1, 'bury takes one bones');
+        assertEqual(H.lastChat(win), 'You bury the bones.', 'bury chat');
+        assertEqual(H.lootLive(win).length, 0, 'bury does not drop bones');
+        assertEqual(hero.skills.prayer.xp, 0, 'bury does not grant Prayer XP this tick');
+        assert(!H.chatHas(win, 'Use'), 'left-click bones is not use-with');
+
+        H.click(win, '#inv-grid [data-item="coins"]');
+        hero = H.hero(win);
+        assertEqual(hero.gold, 7, 'left-click coins drops one');
+        assertEqual(stackQty(hero, 'coins'), 7, 'coin stack syncs after drop');
+        assertEqual(H.lastChat(win), 'You drop Coins.', 'coin drop chat');
+        var live = H.lootLive(win);
+        assertEqual(live.length, 1, 'one ground pile after coin drop');
+        assertEqual(live[0].id, 'coins', 'dropped coins id');
+        assertEqual(live[0].qty, 1, 'dropped coins qty 1');
+        assertEqual(live[0].skipAuto, true, 'dropped coins skip auto-pickup');
+        assertEqual(Math.round(live[0].sprite.x), 328, 'coin pile at player x');
+        assertEqual(Math.round(live[0].sprite.y), 248, 'coin pile at player y');
+
+        world.collectNearbyLoot();
+        assertEqual(H.lootLive(win).length, 1, 'auto-pickup does not vacuum dropped coins');
+
+        H.click(win, '#inv-grid [data-item="key"]');
+        hero = H.hero(win);
+        assertEqual(stackQty(hero, 'key'), 0, 'left-click drops the iron key');
+        assertEqual(H.lastChat(win), 'You drop Iron key.', 'key drop chat');
+        live = H.lootLive(win);
+        assertEqual(live.length, 2, 'coins and key on the ground');
+        var keyPile = live.filter(function (drop) { return drop.id === 'key'; })[0];
+        assert(keyPile, 'key pile exists');
+        assertEqual(keyPile.skipAuto, true, 'dropped key skips auto-pickup');
+
+        world.encounterLock = true;
+        var lockedBones = stackQty(H.hero(win), 'bones');
+        H.click(win, '#inv-grid [data-item="bones"]');
+        assertEqual(stackQty(H.hero(win), 'bones'), lockedBones, 'encounterLock does not bury');
+        world.encounterLock = false;
+
+        win.Hud.mode = 'battle';
+        H.click(win, '#inv-grid [data-item="bones"]');
+        assertEqual(H.lastChat(win), 'Use Eat food on your combat turn.', 'battle blocks bury');
+        assertEqual(stackQty(H.hero(win), 'bones'), lockedBones, 'battle does not bury');
+        win.Hud.mode = 'world';
+
+        world.clearLoot();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
         assert(!win.game.input.keyboard, 'Phaser keyboard still off');
     });
 });
@@ -2611,11 +2695,6 @@ EmberwoodTests.add('inv: drop from inventory creates groundLoot at the player', 
         var inv = win.document.getElementById('inv-grid');
         assert(inv.querySelector('[data-item="bones"]'), 'bones slot before drop');
 
-        H.click(win, '#inv-grid [data-item="bones"]');
-        assertEqual(H.lastChat(win), 'Bones.', 'left-click still only logs the name');
-        assertEqual(H.hero(win).inventory.filter(function (row) { return row.id === 'bones'; })[0].qty, 2, 'left-click does not drop');
-        assertEqual(H.lootLive(win).length, 0, 'left-click does not spawn loot');
-
         var menu = win.document.getElementById('ctx-menu');
         assert(menu, 'ctx-menu element exists');
         if (win.Hud.hideContextMenu) {
@@ -2757,11 +2836,6 @@ EmberwoodTests.add('inv: shift-click drop follows Settings toggle', function (wi
         var inv = win.document.getElementById('inv-grid');
         assert(inv.querySelector('[data-item="bones"]'), 'bones slot before shift-click');
 
-        H.click(win, '#inv-grid [data-item="bones"]');
-        assertEqual(H.lastChat(win), 'Bones.', 'plain left-click still only logs the name');
-        assertEqual(H.hero(win).inventory.filter(function (row) { return row.id === 'bones'; })[0].qty, 2, 'plain left-click does not drop');
-        assertEqual(H.lootLive(win).length, 0, 'plain left-click does not spawn loot');
-
         var droppedAt = world.time.now;
         H.shiftClick(win, '#inv-grid [data-item="bones"]');
         hero = H.hero(win);
@@ -2789,8 +2863,8 @@ EmberwoodTests.add('inv: shift-click drop follows Settings toggle', function (wi
 
         H.click(win, '#tab-bar button[data-tab="inv"]');
         H.shiftClick(win, '#inv-grid [data-item="bones"]');
-        assertEqual(H.lastChat(win), 'Bones.', 'shift-click with toggle off only logs the name');
-        assertEqual(H.hero(win).inventory.filter(function (row) { return row.id === 'bones'; })[0].qty, 1, 'toggle off does not drop');
+        assertEqual(H.lastChat(win), 'You bury the bones.', 'shift-click with toggle off uses bury');
+        assertEqual(H.hero(win).inventory.filter(function (row) { return row.id === 'bones'; }).length, 0, 'toggle off buries the last bones');
         assertEqual(H.lootLive(win).length, 1, 'toggle off leaves only the earlier pile');
 
         H.click(win, '#tab-bar button[data-tab="settings"]');

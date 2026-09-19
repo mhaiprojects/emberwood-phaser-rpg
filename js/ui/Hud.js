@@ -421,7 +421,8 @@ var Hud = {
             this.log('Use Eat food on your combat turn.');
             return;
         }
-        if (def && def.heal) {
+        var verb = typeof itemDefaultVerb === 'function' ? itemDefaultVerb(id) : null;
+        if (verb === 'eat' || (def && def.heal)) {
             if (hero.hp >= hero.maxHp) {
                 this.log('You are already at full health.');
                 return;
@@ -433,6 +434,18 @@ var Hud = {
             }
             this.saveHero(hero);
             this.log('You eat ' + eaten.name + ' and recover ' + eaten.heal + ' HP.');
+            return;
+        }
+        if (verb === 'wield' || verb === 'wear') {
+            this.equipFromInventory(id);
+            return;
+        }
+        if (verb === 'bury') {
+            this.buryFromInventory(id);
+            return;
+        }
+        if (verb === 'drop') {
+            this.dropItem(id);
             return;
         }
         this.log(itemName(id) + '.');
@@ -500,6 +513,24 @@ var Hud = {
         return world.dropFromInventory(id, qty || 1);
     },
 
+    buryFromInventory: function (id) {
+        var hero = this.hero();
+        if (!hero || !id || this.mode !== 'world') {
+            return false;
+        }
+        var world = window.game && window.game.scene.getScene('WorldScene');
+        if (!world || world.encounterLock) {
+            return false;
+        }
+        if (typeof buryItem !== 'function' || !buryItem(hero, id)) {
+            this.log('You do not have that.');
+            return false;
+        }
+        this.saveHero(hero);
+        this.log('You bury the bones.');
+        return true;
+    },
+
     examineItem: function (id) {
         if (!id) {
             return false;
@@ -518,11 +549,13 @@ var Hud = {
             return;
         }
         var items = [];
-        var verb = typeof itemEquipVerb === 'function' ? itemEquipVerb(id) : null;
+        var verb = typeof itemDefaultVerb === 'function' ? itemDefaultVerb(id) : (typeof itemEquipVerb === 'function' ? itemEquipVerb(id) : null);
         if (verb === 'wield') {
             items.push({ label: 'Wield', action: 'wield' });
         } else if (verb === 'wear') {
             items.push({ label: 'Wear', action: 'wear' });
+        } else if (verb === 'bury') {
+            items.push({ label: 'Bury', action: 'bury' });
         }
         items.push({ label: 'Drop', action: 'drop' });
         items.push({ label: 'Examine', action: 'examine' });
@@ -1001,6 +1034,10 @@ var Hud = {
         }
         if (action === 'wield' || action === 'wear') {
             this.equipFromInventory(target.itemId);
+            return;
+        }
+        if (action === 'bury') {
+            this.buryFromInventory(target.itemId);
             return;
         }
         if (action === 'remove') {

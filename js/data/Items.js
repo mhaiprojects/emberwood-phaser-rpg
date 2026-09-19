@@ -4,7 +4,7 @@ var ITEM_DB = {
     bread: { name: 'Bread', icon: 'assets/svg/items/bread.svg', heal: 20, stack: true, examine: 'A dense loaf baked for the road.' },
     sword: { name: 'Bronze sword', icon: 'assets/svg/items/sword.svg', slot: 'weapon', damage: 16, examine: 'A short bronze blade, nicked but serviceable.' },
     shield: { name: 'Wooden shield', icon: 'assets/svg/items/shield.svg', slot: 'shield', defence: 1, examine: 'A round wooden shield bound with iron.' },
-    bones: { name: 'Bones', icon: 'assets/svg/items/bones.svg', stack: true, examine: 'Dry bones. Someone should bury them.' },
+    bones: { name: 'Bones', icon: 'assets/svg/items/bones.svg', stack: true, bury: true, examine: 'Dry bones. Someone should bury them.' },
     key: { name: 'Iron key', icon: 'assets/svg/items/key.svg', examine: 'A heavy iron key with a worn bit.' }
 };
 
@@ -202,6 +202,32 @@ function itemEquipVerb(id) {
         return 'wield';
     }
     return 'wear';
+}
+
+function itemDefaultVerb(id) {
+    var def = ITEM_DB[id];
+    if (!def) {
+        return null;
+    }
+    if (def.heal) {
+        return 'eat';
+    }
+    var equip = itemEquipVerb(id);
+    if (equip) {
+        return equip;
+    }
+    if (def.bury) {
+        return 'bury';
+    }
+    return 'drop';
+}
+
+function buryItem(hero, id) {
+    var def = ITEM_DB[id];
+    if (!hero || !id || !def || !def.bury) {
+        return false;
+    }
+    return takeItem(hero, id, 1);
 }
 
 function equippedWeaponDamage(hero, fallback) {
