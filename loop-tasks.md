@@ -243,7 +243,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Click loot within 18px always picks up; walk within 18px only when auto-pickup is on; both chat `You pick up…`. — Conclusion: `collectNearbyLoot` gated by `hero.autoPickup !== false`; click `onClick` / sprite still take. Suite cases pass.
 - [done] Loot sprites are interactive and offset by 10px per extra drop. — Conclusion: From spawn (328,248) spawnLoot 1/2/3-drop piles sit at 0 / ±5 / ±10px and y+4; each sprite is interactive (hand cursor + pointerdown pickup). Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Loot expires at `until = now + 20000` and the sprite is destroyed. — Conclusion: From spawn (328,248) spawnLoot until = now + 20000; pruneLoot at until keeps sprites, past until destroys them and empties groundLoot. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [verify] `clearLoot` on zone change (until persistence is implemented). — Conclusion: —
+- [done] `clearLoot` on zone change (until persistence is implemented). — Conclusion: From spawn (328,248) enterZone() and Keys.js W wipe coins+bones sprites and empty groundLoot; return to haven does not restore loot; gold/inventory unchanged. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [verify] Pickup during `encounterLock` is blocked or deferred. — Conclusion: —
 - [todo] A “Take” / pile menu when two drops overlap the same click. — Conclusion: —
 - [todo] Leave items on the ground when inventory is full (do not destroy). — Conclusion: —
@@ -458,4 +458,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 85 | 2026-09-19 | Gold/bones are not added to the hero until pickup | done — spawn (328,248) chicken win drops coins+bones at feet; gold/HUD/bones stay until pickup; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 86 | 2026-09-19 | Loot sprites are interactive and offset by 10px per extra drop | done — spawn (328,248) 1/2/3-drop piles at 0 / ±5 / ±10px y+4; interactive hand cursor + pointerdown; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 87 | 2026-09-19 | Loot expires at until = now + 20000 and the sprite is destroyed | done — spawn (328,248) spawnLoot until = now + 20000; prune at until keeps sprites, past until destroys them; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 88 | 2026-09-19 | clearLoot on zone change wipes ground loot | done — spawn (328,248) enterZone + Keys.js W wipe loot sprites and empty groundLoot; return does not persist; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 
