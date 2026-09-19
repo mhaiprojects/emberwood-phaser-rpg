@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="assets/svg/ui/combat.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/style.css?v=wmap2">
+    <link rel="stylesheet" href="css/style.css?v=dlg1">
 </head>
 <body>
     <div id="shell">
@@ -133,6 +133,14 @@
 
     <div id="ctx-menu" hidden></div>
 
+    <div id="dialogue-overlay" hidden>
+        <div class="dialogue-card">
+            <h2 id="dialogue-speaker"></h2>
+            <p id="dialogue-text"></p>
+            <p id="dialogue-continue" class="hint">Click to continue</p>
+        </div>
+    </div>
+
     <div id="world-map-overlay" hidden>
         <div class="title-card">
             <h1>World map</h1>
@@ -154,7 +162,7 @@
     <script src="js/input/Keys.js?v=run1"></script>
     <script src="js/data/Items.js?v=agil1"></script>
     <script src="js/data/Scales.js?v=giant1"></script>
-    <script src="js/ui/Hud.js?v=exam1"></script>
+    <script src="js/ui/Hud.js?v=dlg1"></script>
     <script src="js/world/MapGen.js?v=agil1"></script>
     <script src="js/world/Pathfind.js?v=giant1"></script>
     <script src="js/world/Zones.js?v=shaft1"></script>
@@ -165,7 +173,7 @@
     <script src="js/ui/Message.js"></script>
     <script src="js/scenes/BootScene.js"></script>
     <script src="js/scenes/TitleScene.js?v=move4"></script>
-    <script src="js/scenes/WorldScene.js?v=agil1"></script>
+    <script src="js/scenes/WorldScene.js?v=dlg1"></script>
     <script src="js/scenes/BattleScene.js"></script>
     <script src="js/scenes/UIScene.js"></script>
     <script src="js/scenes/GameOverScene.js"></script>

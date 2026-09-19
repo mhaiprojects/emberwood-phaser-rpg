@@ -516,6 +516,9 @@ var WorldScene = new Phaser.Class({
         if (!zone) {
             return;
         }
+        if (Hud.hideDialogue) {
+            Hud.hideDialogue();
+        }
         var leavingInterior = !!this.interiorId;
         if (!leavingInterior) {
             if (fromDir && this.zoneId && this.zoneId !== zoneId) {
@@ -876,6 +879,15 @@ var WorldScene = new Phaser.Class({
         if (this.encounterLock || Hud.mode === 'battle' || Hud.mode === 'title') {
             if (Hud.hideContextMenu) {
                 Hud.hideContextMenu();
+            }
+            return;
+        }
+        if (Hud.dialogueOpen && Hud.dialogueOpen()) {
+            if (Hud.hideContextMenu) {
+                Hud.hideContextMenu();
+            }
+            if (!this.isRightClick(pointer)) {
+                Hud.advanceDialogue();
             }
             return;
         }
@@ -1357,42 +1369,48 @@ var WorldScene = new Phaser.Class({
         var def = npc.npcDef;
         var hero = this.registry.get('hero');
         var quest = this.registry.get('quest');
+        var pages;
+        var afterTalk;
         if (def.key === 'guild') {
             if (quest.stage === 0) {
                 quest.stage = 1;
                 quest.progress = 0;
                 this.registry.set('quest', quest);
-                Hud.log(def.name + ': Goblins plague Northwood. Bring me 5 kills.');
+                pages = ['Goblins plague Northwood. Bring me 5 kills.'];
             } else if (quest.stage === 1) {
-                Hud.log(def.name + ': ' + quest.progress + ' of ' + quest.goal + ' goblins down. Keep at it.');
+                pages = [quest.progress + ' of ' + quest.goal + ' goblins down. Keep at it.'];
             } else if (quest.stage === 2) {
                 quest.stage = 3;
                 addItem(hero, 'coins', 50);
                 hero.xp += 40;
-                this.levelHero(hero);
                 this.registry.set('quest', quest);
                 this.registry.set('hero', hero);
-                Hud.log(def.name + ': The militia thanks you. 50 gold and combat training.');
+                pages = ['The militia thanks you. 50 gold and combat training.'];
+                afterTalk = this.levelHero.bind(this, hero);
             } else {
-                Hud.log(def.name + ': Emberhaven stands because of you.');
+                pages = ['Emberhaven stands because of you.'];
             }
         } else if (def.key === 'banker' || def.key === 'witch') {
             var cost = def.key === 'witch' ? 10 : 0;
             if (hero.gold < cost) {
-                Hud.log(def.name + ': Come back with 10 gold.');
+                pages = ['Come back with 10 gold.'];
             } else {
                 if (cost) {
                     takeItem(hero, 'coins', cost);
                 }
                 hero.hp = hero.maxHp;
                 this.registry.set('hero', hero);
-                Hud.log(def.name + ': Your wounds close. HP restored.');
+                pages = ['Your wounds close. HP restored.'];
             }
         } else {
-            Hud.log(def.name + ': ' + def.lines[Phaser.Math.Between(0, def.lines.length - 1)]);
+            pages = (def.lines || []).slice();
         }
         this.talkTarget = null;
         this.refreshHud();
+        Hud.startDialogue(def.name, pages);
+        if (afterTalk) {
+            afterTalk();
+        }
     },
 
     levelHero: function (hero) {
@@ -1412,6 +1430,9 @@ var WorldScene = new Phaser.Class({
         }
         this.encounterLock = true;
         this.lastFought = mob;
+        if (Hud.hideDialogue) {
+            Hud.hideDialogue();
+        }
         this.clearWalk();
         this.player.body.setVelocity(0);
         this.registry.set('pendingEncounter', {

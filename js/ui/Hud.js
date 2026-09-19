@@ -35,9 +35,14 @@ var Hud = {
             equip: document.getElementById('equip-grid'),
             tabs: document.getElementById('tab-bar'),
             styles: document.getElementById('style-row'),
-            ctx: document.getElementById('ctx-menu')
+            ctx: document.getElementById('ctx-menu'),
+            dialogue: document.getElementById('dialogue-overlay'),
+            dialogueSpeaker: document.getElementById('dialogue-speaker'),
+            dialogueText: document.getElementById('dialogue-text'),
+            dialogueContinue: document.getElementById('dialogue-continue')
         };
         this.ctxTarget = null;
+        this.dialogue = null;
         this.buildMinimap();
         this.renderWorldMap();
         this.bindInterface();
@@ -189,6 +194,12 @@ var Hud = {
                 self.hideWorldMap();
             });
         }
+        if (this.el.dialogue) {
+            this.el.dialogue.addEventListener('click', function (event) {
+                event.preventDefault();
+                self.advanceDialogue();
+            });
+        }
         window.addEventListener('keydown', function (event) {
             if (event.code === 'Escape' && self.el.worldMap && !self.el.worldMap.hidden) {
                 self.hideWorldMap();
@@ -216,7 +227,7 @@ var Hud = {
 
     bindHudBlur: function () {
         document.addEventListener('mouseup', function (event) {
-            if (event.target && event.target.closest && event.target.closest('#title-overlay, #dead-overlay, #world-map-overlay')) {
+            if (event.target && event.target.closest && event.target.closest('#title-overlay, #dead-overlay, #world-map-overlay, #dialogue-overlay')) {
                 return;
             }
             var btn = event.target && event.target.closest && event.target.closest('#shell button');
@@ -301,6 +312,7 @@ var Hud = {
         this.mode = 'title';
         this.hideContextMenu();
         this.hideWorldMap();
+        this.hideDialogue();
         this.el.title.hidden = false;
         this.el.battle.hidden = true;
         this.el.dead.hidden = true;
@@ -320,6 +332,7 @@ var Hud = {
         this.hideBattle();
         this.hideContextMenu();
         this.hideWorldMap();
+        this.hideDialogue();
         this.mode = 'dead';
         this.el.dead.hidden = false;
         document.getElementById('dead-text').textContent = text || 'You have been defeated.';
@@ -390,6 +403,76 @@ var Hud = {
             if (this.el.worldMapClose) {
                 this.el.worldMapClose.blur();
             }
+        }
+    },
+
+    startDialogue: function (speaker, pages) {
+        var clean = [];
+        pages = pages || [];
+        for (var i = 0; i < pages.length; i++) {
+            if (pages[i]) {
+                clean.push(pages[i]);
+            }
+        }
+        if (!clean.length) {
+            this.hideDialogue();
+            return;
+        }
+        this.hideContextMenu();
+        this.dialogue = { speaker: speaker || '', pages: clean, index: 0 };
+        this.renderDialogue(true);
+    },
+
+    dialogueOpen: function () {
+        return !!(this.dialogue && this.el && this.el.dialogue && !this.el.dialogue.hidden);
+    },
+
+    renderDialogue: function (logPage) {
+        var overlay = this.el && this.el.dialogue;
+        var d = this.dialogue;
+        if (!overlay || !d || !d.pages || !d.pages.length) {
+            this.hideDialogue();
+            return;
+        }
+        var page = d.pages[d.index];
+        overlay.hidden = false;
+        overlay.setAttribute('data-page', String(d.index + 1));
+        overlay.setAttribute('data-pages', String(d.pages.length));
+        if (this.el.dialogueSpeaker) {
+            this.el.dialogueSpeaker.textContent = d.speaker;
+        }
+        if (this.el.dialogueText) {
+            this.el.dialogueText.textContent = page;
+        }
+        if (this.el.dialogueContinue) {
+            this.el.dialogueContinue.textContent = d.index >= d.pages.length - 1
+                ? 'Click to close'
+                : 'Click to continue';
+        }
+        if (logPage) {
+            this.log(d.speaker + ': ' + page);
+        }
+    },
+
+    advanceDialogue: function () {
+        if (!this.dialogueOpen()) {
+            return false;
+        }
+        if (this.dialogue.index >= this.dialogue.pages.length - 1) {
+            this.hideDialogue();
+            return true;
+        }
+        this.dialogue.index += 1;
+        this.renderDialogue(true);
+        return true;
+    },
+
+    hideDialogue: function () {
+        this.dialogue = null;
+        if (this.el && this.el.dialogue) {
+            this.el.dialogue.hidden = true;
+            this.el.dialogue.removeAttribute('data-page');
+            this.el.dialogue.removeAttribute('data-pages');
         }
     },
 
@@ -705,6 +788,7 @@ var Hud = {
     showBattle: function (battle) {
         this.hideContextMenu();
         this.hideWorldMap();
+        this.hideDialogue();
         this.battle = battle;
         this.selectingEnemy = false;
         this.el.battle.hidden = false;

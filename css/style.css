@@ -389,6 +389,43 @@ button.ghost {
     margin-top: 8px;
 }
 
+#dialogue-overlay {
+    position: fixed;
+    left: 12px;
+    right: 242px;
+    bottom: 222px;
+    z-index: 15;
+    display: flex;
+    justify-content: center;
+    background: none;
+}
+
+#dialogue-overlay .dialogue-card {
+    width: min(420px, 100%);
+    background: #3a2f22;
+    border: 2px solid #c9a227;
+    padding: 10px 14px 8px;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 #1a140c;
+}
+
+#dialogue-overlay .dialogue-card h2 {
+    margin: 0 0 6px;
+    font-size: 14px;
+    color: #ffe08a;
+}
+
+#dialogue-overlay .dialogue-card p {
+    margin: 0 0 6px;
+    color: #fff4d6;
+}
+
+#dialogue-overlay #dialogue-continue {
+    margin: 0;
+    color: #c9a227;
+    font-size: 11px;
+}
+
 #title-overlay,
 #dead-overlay,
 #world-map-overlay {
@@ -404,6 +441,7 @@ button.ghost {
 #title-overlay[hidden],
 #dead-overlay[hidden],
 #world-map-overlay[hidden],
+#dialogue-overlay[hidden],
 #battle-panel[hidden],
 #credit-text[hidden],
 #ctx-menu[hidden],

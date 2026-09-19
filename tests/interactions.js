@@ -3494,43 +3494,158 @@ EmberwoodTests.add('npcs: flavor NPCs emit Name plus one of their lines', functi
             { zone: 'highlands', key: 'hermit', name: 'Hermit Ola', x: 240, y: 160 }
         ];
 
-        var origBetween = win.Phaser.Math.Between;
-        try {
-            flavor.forEach(function (want) {
-                H.enterZone(win, want.zone);
-                world = H.world(win);
-                H.setAutoAttack(win, false);
-                var npc = H.findNpc(win, want.key);
-                assert(npc, want.name + ' spawned in ' + want.zone);
-                assertEqual(npc.npcDef.name, want.name, want.name + ' display name');
-                assertEqual(Math.round(npc.x), want.x, want.name + ' x');
-                assertEqual(Math.round(npc.y), want.y, want.name + ' y');
-                var lines = npc.npcDef.lines;
-                assert(lines && lines.length >= 2, want.name + ' has flavor lines');
+        flavor.forEach(function (want) {
+            H.enterZone(win, want.zone);
+            world = H.world(win);
+            H.setAutoAttack(win, false);
+            var npc = H.findNpc(win, want.key);
+            assert(npc, want.name + ' spawned in ' + want.zone);
+            assertEqual(npc.npcDef.name, want.name, want.name + ' display name');
+            assertEqual(Math.round(npc.x), want.x, want.name + ' x');
+            assertEqual(Math.round(npc.y), want.y, want.name + ' y');
+            var lines = npc.npcDef.lines;
+            assert(lines && lines.length >= 2, want.name + ' has flavor lines');
 
-                lines.forEach(function (line, idx) {
-                    win.Phaser.Math.Between = function (lo, hi) {
-                        assertEqual(lo, 0, want.name + ' Between lo');
-                        assertEqual(hi, lines.length - 1, want.name + ' Between hi');
-                        return idx;
-                    };
-                    win.Hud.el.log.innerHTML = '';
-                    world.tryTalk(npc);
-                    assertEqual(H.lastChat(win), want.name + ': ' + line, want.name + ' line ' + idx);
-                    assert(H.lastChat(win).indexOf(want.name + ': ') === 0, want.name + ' Name: prefix');
-                    assert(!H.chatHas(win, 'Come back with 10 gold'), want.name + ' is not a paid healer');
-                    assert(!H.chatHas(win, 'Your wounds close'), want.name + ' does not heal');
-                    assert(!H.chatHas(win, 'Goblins plague Northwood'), want.name + ' is not Bram');
-                    assert(!win.game.input.keyboard, 'Phaser keyboard off after ' + want.name);
-                });
-            });
-            assertEqual(flavor.length, 8, 'eight flavor NPCs');
-        } finally {
-            win.Phaser.Math.Between = origBetween;
-        }
+            win.Hud.el.log.innerHTML = '';
+            world.tryTalk(npc);
+            assert(win.Hud.dialogueOpen(), want.name + ' opens dialogue');
+            assertEqual(H.lastChat(win), want.name + ': ' + lines[0], want.name + ' first page');
+            assert(H.lastChat(win).indexOf(want.name + ': ') === 0, want.name + ' Name: prefix');
+            for (var idx = 1; idx < lines.length; idx++) {
+                win.Hud.advanceDialogue();
+                assertEqual(H.lastChat(win), want.name + ': ' + lines[idx], want.name + ' page ' + idx);
+            }
+            assert(!H.chatHas(win, 'Come back with 10 gold'), want.name + ' is not a paid healer');
+            assert(!H.chatHas(win, 'Your wounds close'), want.name + ' does not heal');
+            assert(!H.chatHas(win, 'Goblins plague Northwood'), want.name + ' is not Bram');
+            win.Hud.advanceDialogue();
+            assert(!win.Hud.dialogueOpen(), want.name + ' dialogue closes after last page');
+            assert(!win.game.input.keyboard, 'Phaser keyboard off after ' + want.name);
+        });
+        assertEqual(flavor.length, 8, 'eight flavor NPCs');
 
         H.enterZone(win, 'haven');
         world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
+EmberwoodTests.add('npcs: click-to-continue pages through multi-line dialogue', function (win, H) {
+    function hiddenCssRule(doc, id) {
+        var needle = '#' + id + '[hidden]';
+        var sheets = doc.styleSheets;
+        for (var s = 0; s < sheets.length; s++) {
+            var rules;
+            try {
+                rules = sheets[s].cssRules;
+            } catch (err) {
+                continue;
+            }
+            if (!rules) {
+                continue;
+            }
+            for (var r = 0; r < rules.length; r++) {
+                var sel = rules[r].selectorText || '';
+                if (sel.indexOf(needle) !== -1) {
+                    return rules[r];
+                }
+            }
+        }
+        return null;
+    }
+
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        var world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(win.Hud.mode, 'world', 'world mode');
+
+        var overlay = win.document.getElementById('dialogue-overlay');
+        assert(overlay && overlay === win.Hud.el.dialogue, '#dialogue-overlay is Hud.el.dialogue');
+        assertEqual(overlay.tagName, 'DIV', 'dialogue overlay is an HTML div');
+        assert(overlay.hidden, 'dialogue starts hidden');
+        var rule = hiddenCssRule(win.document, 'dialogue-overlay');
+        assert(rule, '#dialogue-overlay[hidden] CSS exists like title/dead');
+        assertEqual(rule.style.getPropertyValue('display'), 'none', '#dialogue-overlay[hidden] is display:none');
+        assertEqual(win.getComputedStyle(overlay).display, 'none', 'hidden dialogue computed display is none');
+        assertEqual(overlay.querySelectorAll('button').length, 0, 'no Talk/Trade/Bank/Quest buttons yet');
+
+        var rowan = H.findNpc(win, 'guard');
+        assert(rowan, 'Rowan is in Emberhaven');
+        var lines = rowan.npcDef.lines;
+        assert(lines && lines.length === 2, 'Rowan has two flavor pages');
+        win.Hud.el.log.innerHTML = '';
+        world.tryTalk(rowan);
+        assert(world.talkTarget === null, 'tryTalk still clears talkTarget');
+        assert(win.Hud.dialogueOpen(), 'talk opens the dialogue box');
+        assertEqual(overlay.hidden, false, 'dialogue overlay is visible');
+        assertEqual(overlay.getAttribute('data-page'), '1', 'first page index');
+        assertEqual(overlay.getAttribute('data-pages'), '2', 'two pages');
+        assertEqual(win.document.getElementById('dialogue-speaker').textContent, 'Guard Rowan', 'speaker is Rowan');
+        assertEqual(win.document.getElementById('dialogue-text').textContent, lines[0], 'first page text');
+        assertEqual(win.document.getElementById('dialogue-continue').textContent, 'Click to continue', 'continue hint');
+        assertEqual(H.chat(win).length, 1, 'first page logs one chat line');
+        assertEqual(H.lastChat(win), 'Guard Rowan: ' + lines[0], 'first page in chat');
+        assert(!H.chatHas(win, lines[1]), 'second page waits for click');
+        assertEqual(win.Hud.mode, 'world', 'dialogue keeps Hud.mode world');
+        assert(!world.walkTarget, 'opening dialogue does not walk');
+
+        H.click(win, overlay);
+        assert(win.Hud.dialogueOpen(), 'click continues to the last page');
+        assertEqual(overlay.getAttribute('data-page'), '2', 'second page index');
+        assertEqual(win.document.getElementById('dialogue-text').textContent, lines[1], 'second page text');
+        assertEqual(win.document.getElementById('dialogue-continue').textContent, 'Click to close', 'close hint on last page');
+        assertEqual(H.chat(win).length, 2, 'second page logs the next chat line');
+        assertEqual(H.lastChat(win), 'Guard Rowan: ' + lines[1], 'second page in chat');
+
+        H.click(win, overlay);
+        assert(!win.Hud.dialogueOpen(), 'click on the last page closes dialogue');
+        assert(overlay.hidden, 'dialogue overlay hidden after close');
+        assertEqual(H.chat(win).length, 2, 'closing does not add another chat line');
+
+        win.Hud.el.log.innerHTML = '';
+        world.tryTalk(rowan);
+        assert(win.Hud.dialogueOpen(), 'talk again opens page 1');
+        assertEqual(H.lastChat(win), 'Guard Rowan: ' + lines[0], 'reopen first page');
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        H.clickWorld(win, spawn.x + 80, spawn.y);
+        assert(win.Hud.dialogueOpen(), 'world click continues dialogue');
+        assertEqual(win.document.getElementById('dialogue-text').textContent, lines[1], 'world click shows page 2');
+        assert(!world.walkTarget, 'world click does not walk while paging');
+        assertEqual(Math.round(world.player.x), 328, 'player stays at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player stays at spawn y');
+        H.clickWorld(win, spawn.x + 80, spawn.y);
+        assert(!win.Hud.dialogueOpen(), 'world click closes the last page');
+        assert(!world.walkTarget, 'closing click still does not walk');
+
+        win.game.registry.set('quest', { id: 'goblins', stage: 3, progress: 5, goal: 5 });
+        world.refreshHud();
+        var bram = H.findNpc(win, 'guild');
+        assert(bram, 'Bram is in Emberhaven');
+        win.Hud.el.log.innerHTML = '';
+        world.tryTalk(bram);
+        assertEqual(H.chat(win).length, 1, 'post-quest Bram is still one page');
+        assertEqual(H.lastChat(win), 'Guildmaster Bram: Emberhaven stands because of you.', 'post-quest line');
+        assertEqual(overlay.getAttribute('data-pages'), '1', 'Bram special line is a single page');
+        H.click(win, overlay);
+        assert(!win.Hud.dialogueOpen(), 'single-page Bram closes on click');
+
         world.placePlayer(spawn.x, spawn.y);
         world.player.body.setVelocity(0, 0);
         assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
@@ -6790,6 +6905,9 @@ EmberwoodTests.add('title: Return to title stops scenes and shows title-overlay'
 
 function ensureWorldPlay(win, H) {
     return H.cleanupBattle(win).then(function () {
+        if (win.Hud && win.Hud.hideDialogue) {
+            win.Hud.hideDialogue();
+        }
         var world = H.world(win);
         if (win.Hud.mode === 'title' || win.Hud.mode === 'dead' || !world || !world.scene.isActive() || !world.player || !world.player.body) {
             return H.startPlay(win);
