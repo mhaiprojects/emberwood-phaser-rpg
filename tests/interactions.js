@@ -3585,6 +3585,66 @@ EmberwoodTests.add('combat: Attack auto-hits the only foe and winning loots', fu
     });
 });
 
+EmberwoodTests.add('loot: gold and bones stay on the ground until pickup', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.clearLoot();
+        world.encounterLock = false;
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(H.hero(win).autoPickup, false, 'auto-pickup off so wake cannot vacuum');
+
+        var chicken = H.findMob(win, 'Chicken');
+        assert(chicken && chicken.aliveMob, 'living chicken in haven');
+        var feetX = chicken.x;
+        var feetY = chicken.y;
+        var dropGold = chicken.mobDef.gold;
+        var gold = H.hero(win).gold;
+        var coinsBefore = (H.hero(win).inventory.filter(function (s) { return s.id === 'coins'; })[0] || { qty: 0 }).qty;
+        var bonesBefore = (H.hero(win).inventory.filter(function (s) { return s.id === 'bones'; })[0] || { qty: 0 }).qty;
+        var hudGold = win.document.getElementById('hud-gold').textContent;
+        assertEqual(Number(hudGold), gold, 'HUD gold matches hero before fight');
+
+        return H.startFight(win, chicken).then(function () {
+            return H.attackUntilWorld(win);
+        }).then(function () {
+            assert(H.chatHas(win, 'Loot drops'), 'win drop chat');
+            assertEqual(H.hero(win).gold, gold, 'gold waits on the ground');
+            assertEqual((H.hero(win).inventory.filter(function (s) { return s.id === 'coins'; })[0] || { qty: 0 }).qty, coinsBefore, 'coin stack waits on the ground');
+            assertEqual((H.hero(win).inventory.filter(function (s) { return s.id === 'bones'; })[0] || { qty: 0 }).qty, bonesBefore, 'bones wait on the ground');
+            assertEqual(win.document.getElementById('hud-gold').textContent, hudGold, 'HUD gold waits on the ground');
+            var live = H.assertLootAtFeet(win, feetX, feetY, ['coins', 'bones', 'shrimp']);
+            var coins = live.filter(function (drop) { return drop.id === 'coins'; })[0];
+            var bonesDrop = live.filter(function (drop) { return drop.id === 'bones'; })[0];
+            assertEqual(coins.qty, dropGold, 'ground coins match mob gold');
+            assertEqual(bonesDrop.qty, 1, 'ground bones qty 1');
+            assert(!chicken.aliveMob, 'chicken despawned');
+            assertEqual(Math.round(H.world(win).player.x), 328, 'player still at spawn x (not on the pile)');
+            assertEqual(Math.round(H.world(win).player.y), 248, 'player still at spawn y');
+
+            H.pickupAllLoot(win);
+            assertEqual(H.hero(win).gold, gold + dropGold, 'gold looted after pickup');
+            assertEqual((H.hero(win).inventory.filter(function (s) { return s.id === 'coins'; })[0] || { qty: 0 }).qty, coinsBefore + dropGold, 'coin stack after pickup');
+            assertEqual((H.hero(win).inventory.filter(function (s) { return s.id === 'bones'; })[0] || { qty: 0 }).qty, bonesBefore + 1, 'bones looted after pickup');
+            assertEqual(win.document.getElementById('hud-gold').textContent, String(gold + dropGold), 'HUD gold after pickup');
+            assert(H.chatHas(win, 'You pick up'), 'pickup chat');
+            assertEqual(H.lootLive(win).length, 0, 'ground pile taken');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        });
+    });
+});
+
 EmberwoodTests.add('combat: dead overworld mob hides ~18s then respawns in place', function (win, H) {
     function clockBags(clock) {
         return [clock._active, clock._pendingInsertion, clock.list].filter(function (bag) {
