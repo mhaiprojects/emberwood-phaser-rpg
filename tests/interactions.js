@@ -593,6 +593,64 @@ EmberwoodTests.add('hud: side HUD shows zone combat level HP fill gold XP and ta
     });
 });
 
+EmberwoodTests.add('hud: Quest tab copies the same quest string as the side Task panel', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        win.game.registry.set('quest', { id: 'goblins', stage: 0, progress: 0, goal: 5 });
+        world.placePlayer(spawn.x, spawn.y);
+        world.refreshHud();
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        var sideTask = win.document.getElementById('hud-quest');
+        var questTab = win.document.getElementById('hud-quest-tab');
+        assert(sideTask && sideTask.closest('#side'), 'side Task is #hud-quest in #side');
+        assert(questTab && questTab.closest('#panel-quest'), 'Quest tab journal is #hud-quest-tab');
+
+        function assertCopied(expected, label) {
+            assertEqual(sideTask.textContent, expected, 'side Task ' + label);
+            assertEqual(questTab.textContent, expected, 'Quest tab ' + label);
+            assertEqual(questTab.textContent, sideTask.textContent, 'Quest tab copies side Task ' + label);
+        }
+
+        assertCopied('Talk to Guildmaster Bram in Emberhaven.', 'at stage 0');
+        H.click(win, '#tab-bar button[data-tab="quest"]');
+        assert(H.panelVisible(win, 'quest'), 'Quest tab panel is visible');
+        assertCopied('Talk to Guildmaster Bram in Emberhaven.', 'with Quest tab open');
+
+        win.game.registry.set('quest', { id: 'goblins', stage: 1, progress: 0, goal: 5 });
+        world.refreshHud();
+        assertCopied('Kill goblins in Northwood (0/5).', 'after accept');
+
+        win.game.registry.set('quest', { id: 'goblins', stage: 1, progress: 3, goal: 5 });
+        world.refreshHud();
+        assertCopied('Kill goblins in Northwood (3/5).', 'at 3/5');
+
+        win.game.registry.set('quest', { id: 'goblins', stage: 2, progress: 5, goal: 5 });
+        world.refreshHud();
+        assertCopied('Return to Guildmaster Bram for your reward.', 'at stage 2');
+
+        win.game.registry.set('quest', { id: 'goblins', stage: 3, progress: 5, goal: 5 });
+        world.refreshHud();
+        assertCopied('Militia task complete. Explore the nine lands.', 'at stage 3');
+
+        win.game.registry.set('quest', { id: 'goblins', stage: 4, progress: 5, goal: 5 });
+        world.refreshHud();
+        assertCopied('Militia task complete. Explore the nine lands.', 'at stage 4+');
+        assert(H.panelVisible(win, 'quest'), 'Quest tab stays open through refreshes');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off after quest copy');
+    });
+});
+
 EmberwoodTests.add('skills: Hitpoints level-up sets maxHp to 10 * level and chats Skill increased to N', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         var world = H.world(win);
