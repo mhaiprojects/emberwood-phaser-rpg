@@ -6724,6 +6724,85 @@ EmberwoodTests.add('movement: click path waits or stops adjacent when a mob park
     });
 });
 
+EmberwoodTests.add('movement: click-to-walk shows an OSRS yellow destination X', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.engageTarget = null;
+        world.talkTarget = null;
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        assertEqual(spawn.x, 328, 'spawn x tile center');
+        assertEqual(spawn.y, 248, 'spawn y tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assertEqual(win.Hud.mode, 'world', 'world mode');
+        assert(String(win.Phaser.VERSION).indexOf('3.') === 0, 'Phaser 3');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(!world.cursors, 'WorldScene has no Phaser cursors');
+        assert(world.destX, 'dest X exists');
+        assert(!world.destX.visible, 'dest X starts hidden');
+        assertEqual(win.DEST_X_COLOR, 0xf8ff38, 'OSRS yellow dest color');
+        assertEqual(world.destX.strokeColor, 0xf8ff38, 'X stroke is OSRS yellow');
+        assert(world.destX.arm >= 7, 'X arms are larger than the 6px rect');
+        assert(world.destX !== world.marker, 'X is in addition to the tiny rectangle');
+        assertEqual(world.marker.width, 6, 'tiny rectangle is still 6 wide');
+        assertEqual(world.marker.height, 6, 'tiny rectangle is still 6 tall');
+        assert(world.destX.list && world.destX.list.length >= 2, 'X is drawn as crossing strokes');
+        var yellowStrokes = world.destX.list.filter(function (child) {
+            return child && child.strokeColor === 0xf8ff38;
+        });
+        assertEqual(yellowStrokes.length, 2, 'two yellow crossing strokes');
+
+        var destX = spawn.x - 64;
+        var destY = spawn.y;
+        world.onClick({ worldX: destX, worldY: destY });
+        assert(world.walkTarget, 'click sets walkTarget');
+        assertEqual(Math.round(world.walkTarget.x), destX, 'walk x is the click');
+        assertEqual(Math.round(world.walkTarget.y), destY, 'walk y is the click');
+        assert(world.marker.visible, 'tiny yellow rectangle still shows');
+        assertEqual(Math.round(world.marker.x), destX, 'rectangle at click x');
+        assertEqual(Math.round(world.marker.y), destY, 'rectangle at click y');
+        assert(world.destX.visible, 'OSRS yellow X is visible');
+        assertEqual(Math.round(world.destX.x), destX, 'X at click x');
+        assertEqual(Math.round(world.destX.y), destY, 'X at click y');
+        assert(world.walkPath && world.walkPath.length, 'A* path set');
+        assert(world.pathGfx && world.pathGfx.visible, 'purple path visible');
+
+        H.key(win, 'Escape', 'Escape', 'keydown');
+        world.update();
+        assert(!world.walkTarget, 'Esc cancels walkTarget');
+        assert(!world.destX.visible, 'Esc hides dest X');
+        assert(!world.marker.visible, 'Esc hides tiny rectangle');
+        H.key(win, 'Escape', 'Escape', 'keyup');
+        H.clearKeys(win);
+
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        var near = win.tileCenter(18, 15);
+        world.onClick({ worldX: near.x, worldY: near.y });
+        assert(world.destX.visible, 'short path shows dest X');
+        return H.waitUntil(function () {
+            return !world.walkTarget && !world.destX.visible;
+        }, 2000, 'arrive and hide dest X').then(function () {
+            assert(Math.abs(world.player.x - near.x) < 10, 'stopped near the click');
+            assert(!world.destX.visible, 'dest X hidden on arrive');
+            assert(!world.marker.visible, 'tiny rectangle hidden on arrive');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+            world.placePlayer(spawn.x, spawn.y);
+            world.player.body.setVelocity(0, 0);
+        });
+    });
+});
+
 EmberwoodTests.add('movement: Esc and click-self cancel walk and hide the purple line', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');

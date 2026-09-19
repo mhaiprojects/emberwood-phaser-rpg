@@ -3,6 +3,8 @@ var RUN_SPEED = 180;
 var RUN_ENERGY_MAX = 100;
 var RUN_DRAIN_PER_SEC = 25;
 var RUN_RESTORE_PER_SEC = 15;
+var DEST_X_COLOR = 0xf8ff38;
+var DEST_X_ARM = 8;
 
 var WorldScene = new Phaser.Class({
     Extends: Phaser.Scene,
@@ -28,7 +30,8 @@ var WorldScene = new Phaser.Class({
         this.lastFacing = 'down';
         this.groundLoot = [];
 
-        this.marker = this.add.rectangle(0, 0, 6, 6, 0xf8ff38).setVisible(false).setDepth(8);
+        this.marker = this.add.rectangle(0, 0, 6, 6, DEST_X_COLOR).setVisible(false).setDepth(8);
+        this.destX = this.makeDestX();
         this.pathGfx = this.add.graphics();
         this.pathGfx.setDepth(4);
         this.pathGfx.setVisible(false);
@@ -348,10 +351,38 @@ var WorldScene = new Phaser.Class({
         return best;
     },
 
+    makeDestX: function () {
+        var arm = DEST_X_ARM;
+        var mark = this.add.container(0, 0);
+        var outlineA = this.add.line(0, 0, -arm, -arm, arm, arm, 0x221800, 0.95);
+        var outlineB = this.add.line(0, 0, arm, -arm, -arm, arm, 0x221800, 0.95);
+        var strokeA = this.add.line(0, 0, -arm, -arm, arm, arm, DEST_X_COLOR, 1);
+        var strokeB = this.add.line(0, 0, arm, -arm, -arm, arm, DEST_X_COLOR, 1);
+        outlineA.setLineWidth(5, 5);
+        outlineB.setLineWidth(5, 5);
+        strokeA.setLineWidth(2, 2);
+        strokeB.setLineWidth(2, 2);
+        mark.add([outlineA, outlineB, strokeA, strokeB]);
+        mark.setDepth(9);
+        mark.setVisible(false);
+        mark.strokeColor = DEST_X_COLOR;
+        mark.arm = arm;
+        return mark;
+    },
+
+    placeWalkMarker: function (x, y) {
+        if (this.marker) {
+            this.marker.setPosition(x, y).setVisible(true);
+        }
+        if (this.destX) {
+            this.destX.setPosition(Math.round(x), Math.round(y)).setVisible(true);
+        }
+    },
+
     setWalk: function (x, y, opts) {
         opts = opts || {};
         this.walkTarget = { x: x, y: y };
-        this.marker.setPosition(x, y).setVisible(true);
+        this.placeWalkMarker(x, y);
         this.pathCheckAt = 0;
         this.walkPath = this.computeWalkPath(x, y, opts);
         this.drawPathLine();
@@ -423,6 +454,9 @@ var WorldScene = new Phaser.Class({
         this.pathCheckAt = 0;
         if (this.marker) {
             this.marker.setVisible(false);
+        }
+        if (this.destX) {
+            this.destX.setVisible(false);
         }
         this.clearPathLine();
     },
@@ -501,7 +535,7 @@ var WorldScene = new Phaser.Class({
                 toX = snapped.x;
                 toY = snapped.y;
                 this.walkTarget = { x: toX, y: toY };
-                this.marker.setPosition(toX, toY);
+                this.placeWalkMarker(toX, toY);
             }
         }
         var occupied = this.collectOccupiedTiles(toX, toY);
