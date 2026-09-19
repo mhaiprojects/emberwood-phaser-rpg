@@ -312,6 +312,84 @@ EmberwoodTests.add('hud: start skills Hitpoints 10 / 1154 XP / 100 HP; others 1 
     });
 });
 
+EmberwoodTests.add('skills: gainSkillXp uses 1 + floor(sqrt(xp / 50)) and Hitpoints never below 10', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        world.placePlayer(spawn.x, spawn.y);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.') === 0, 'Phaser 3');
+        assertEqual(typeof win.gainSkillXp, 'function', 'gainSkillXp exists');
+
+        function curveLevel(xp) {
+            return 1 + Math.floor(Math.sqrt(xp / 50));
+        }
+        assertEqual(curveLevel(0), 1, '0 XP is level 1');
+        assertEqual(curveLevel(49), 1, '49 XP stays level 1');
+        assertEqual(curveLevel(50), 2, '50 XP is level 2');
+        assertEqual(curveLevel(199), 2, '199 XP stays level 2');
+        assertEqual(curveLevel(200), 3, '200 XP is level 3');
+        assertEqual(curveLevel(1154), 5, '1154 XP curves to 5 without the Hitpoints floor');
+
+        hero = H.hero(win);
+        assertEqual(hero.skills.attack.level, 1, 'Attack starts 1');
+        assertEqual(hero.skills.attack.xp, 0, 'Attack starts 0 XP');
+        assertEqual(hero.skills.hitpoints.level, 10, 'Hitpoints starts 10');
+        assertEqual(hero.skills.hitpoints.xp, 1154, 'Hitpoints starts 1154 XP');
+
+        win.gainSkillXp(hero, 'attack', 49);
+        assertEqual(hero.skills.attack.xp, 49, 'Attack +49 XP');
+        assertEqual(hero.skills.attack.level, 1, 'Attack stays 1 below 50 XP');
+
+        win.gainSkillXp(hero, 'attack', 1);
+        assertEqual(hero.skills.attack.xp, 50, 'Attack reaches 50 XP');
+        assertEqual(hero.skills.attack.level, 2, 'Attack levels to 1 + floor(sqrt(50/50))');
+
+        win.gainSkillXp(hero, 'strength', 200);
+        assertEqual(hero.skills.strength.xp, 200, 'Strength +200 XP');
+        assertEqual(hero.skills.strength.level, 3, 'Strength levels to 1 + floor(sqrt(200/50))');
+
+        win.gainSkillXp(hero, 'hitpoints', 1);
+        assertEqual(hero.skills.hitpoints.xp, 1155, 'Hitpoints +1 XP');
+        assertEqual(hero.skills.hitpoints.level, 10, 'Hitpoints stays 10 when the curve is still 5');
+        assertEqual(curveLevel(1155), 5, '1155 XP still curves to 5');
+
+        hero.skills.hitpoints.xp = 0;
+        hero.skills.hitpoints.level = 1;
+        win.gainSkillXp(hero, 'hitpoints', 0);
+        assertEqual(hero.skills.hitpoints.xp, 0, 'Hitpoints XP can be 0');
+        assertEqual(hero.skills.hitpoints.level, 10, 'Hitpoints floors to 10 from 0 XP');
+
+        hero.skills.hitpoints.xp = 800;
+        hero.skills.hitpoints.level = 4;
+        win.gainSkillXp(hero, 'hitpoints', 0);
+        assertEqual(curveLevel(800), 5, '800 XP curves to 5');
+        assertEqual(hero.skills.hitpoints.level, 10, 'Hitpoints floors to 10 from a mid curve');
+
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        H.click(win, '#tab-bar button[data-tab="skills"]');
+        var rows = win.document.querySelectorAll('#skills-list .skill-row');
+        var byName = {};
+        for (var i = 0; i < rows.length; i++) {
+            byName[rows[i].querySelector('span').textContent] = rows[i].querySelector('strong').textContent;
+        }
+        assertEqual(byName.Hitpoints, '10', 'Skills tab Hitpoints stays 10');
+        assertEqual(byName.Attack, '2', 'Skills tab Attack is 2');
+        assertEqual(byName.Strength, '3', 'Skills tab Strength is 3');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('hud: inventory 28 slots and starter kit', function (win, H) {
     var hero = H.hero(win);
     var qty = {};
