@@ -17,6 +17,8 @@ var NPC_WANDER_SPEED = 12;
 var NPC_LEASH_PX = 16;
 var NPC_BUSY_PX = 32;
 var NPC_FACE_ORDER = ['down', 'left', 'right', 'up'];
+var FLEE_PUSH_PX = 32;
+var FLEE_GRACE_MS = 1100;
 var COLLIDE_TILES = [
     TILE.WATER, TILE.TREE, TILE.ROCK, TILE.SHRINE,
     TILE.STALL, TILE.RANGE, TILE.ANVIL, TILE.BOOTH,
@@ -2006,6 +2008,8 @@ var WorldScene = new Phaser.Class({
             this.scheduleMobRespawn(this.lastFought, MOB_RESPAWN_MS);
         } else if (outcome === 'flee') {
             Hud.log('You break away from the fight.');
+            this.pushOffMob(this.lastFought);
+            this.engageGrace = this.time.now + FLEE_GRACE_MS;
         }
         this.registry.set('battleOutcome', null);
         this.lastFought = null;
@@ -2206,6 +2210,67 @@ var WorldScene = new Phaser.Class({
         this.registry.set('hero', hero);
         if (window.Hud && Hud.renderRun) {
             Hud.renderRun(hero);
+        }
+    },
+
+    clampWorldPoint: function (x, y) {
+        var bounds = this.physics && this.physics.world && this.physics.world.bounds;
+        var minX = 8;
+        var minY = 8;
+        var maxX = bounds ? bounds.x + bounds.width - 8 : 568;
+        var maxY = bounds ? bounds.y + bounds.height - 8 : 440;
+        return {
+            x: Math.max(minX, Math.min(maxX, x)),
+            y: Math.max(minY, Math.min(maxY, y))
+        };
+    },
+
+    fleeDestWalkable: function (x, y) {
+        if (!this.tileGrid || typeof tileWalkable !== 'function' || typeof worldToTile !== 'function') {
+            return true;
+        }
+        var tile = worldToTile(x, y);
+        return tileWalkable(this.tileGrid, tile.tx, tile.ty);
+    },
+
+    pushOffMob: function (mob) {
+        if (!this.player || !mob || typeof mob.x !== 'number' || typeof mob.y !== 'number') {
+            return;
+        }
+        var dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, mob.x, mob.y);
+        if (dist >= FLEE_PUSH_PX) {
+            return;
+        }
+        var nx;
+        var ny;
+        if (dist < 1) {
+            var face = this.lastFacing || 'down';
+            nx = face === 'right' ? -1 : (face === 'left' ? 1 : 0);
+            ny = face === 'down' ? -1 : (face === 'up' ? 1 : 0);
+            if (!nx && !ny) {
+                ny = -1;
+            }
+        } else {
+            nx = (this.player.x - mob.x) / dist;
+            ny = (this.player.y - mob.y) / dist;
+        }
+        var candidates = [
+            { x: mob.x + nx * FLEE_PUSH_PX, y: mob.y + ny * FLEE_PUSH_PX },
+            { x: mob.x - FLEE_PUSH_PX, y: mob.y },
+            { x: mob.x + FLEE_PUSH_PX, y: mob.y },
+            { x: mob.x, y: mob.y - FLEE_PUSH_PX },
+            { x: mob.x, y: mob.y + FLEE_PUSH_PX }
+        ];
+        var i;
+        for (i = 0; i < candidates.length; i++) {
+            var dest = this.clampWorldPoint(candidates[i].x, candidates[i].y);
+            if (Phaser.Math.Distance.Between(dest.x, dest.y, mob.x, mob.y) < 21) {
+                continue;
+            }
+            if (this.fleeDestWalkable(dest.x, dest.y)) {
+                this.placePlayer(dest.x, dest.y);
+                return;
+            }
         }
     },
 
