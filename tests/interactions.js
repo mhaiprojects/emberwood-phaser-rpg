@@ -524,6 +524,75 @@ EmberwoodTests.add('hud: start skills Hitpoints 10 / 1154 XP / 100 HP; others 1 
     });
 });
 
+EmberwoodTests.add('hud: side HUD shows zone combat level HP fill gold XP and task', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        win.game.registry.set('quest', { id: 'goblins', stage: 0, progress: 0, goal: 5 });
+        world.placePlayer(spawn.x, spawn.y);
+        world.refreshHud();
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        var zoneEl = win.document.getElementById('hud-zone');
+        var levelEl = win.document.getElementById('hud-level');
+        var hpEl = win.document.getElementById('hud-hp');
+        var goldEl = win.document.getElementById('hud-gold');
+        var xpEl = win.document.getElementById('hud-xp');
+        var questEl = win.document.getElementById('hud-quest');
+        var fill = win.document.getElementById('hp-fill');
+        assert(zoneEl && zoneEl.closest('#side'), 'zone name is on the side HUD');
+        assert(levelEl && levelEl.closest('#side'), 'combat level is on the side HUD');
+        assert(hpEl && hpEl.closest('#side'), 'HP is on the side HUD');
+        assert(fill && fill.closest('#side'), 'HP fill is on the side HUD');
+        assert(goldEl && goldEl.closest('#side'), 'gold is on the side HUD');
+        assert(xpEl && xpEl.closest('#side'), 'XP is on the side HUD');
+        assert(questEl && questEl.closest('#side'), 'task text is on the side HUD');
+
+        assertEqual(zoneEl.textContent, 'Emberhaven', 'starter zone name');
+        assertEqual(levelEl.textContent, '1', 'starter combat level');
+        assertEqual(hpEl.textContent.replace(/\s+/g, ' ').trim(), '100 / 100', 'starter HP cur / max');
+        assertEqual(fill.style.width, '100%', 'starter HP fill 100%');
+        assertEqual(goldEl.textContent, '8', 'starter gold');
+        assertEqual(xpEl.textContent, '0', 'starter XP');
+        assertEqual(questEl.textContent, 'Talk to Guildmaster Bram in Emberhaven.', 'starter task text');
+
+        hero = H.hero(win);
+        hero.hp = 55;
+        hero.maxHp = 110;
+        hero.gold = 25;
+        hero.xp = 40;
+        hero.level = 2;
+        win.game.registry.set('hero', hero);
+        win.game.registry.set('quest', { id: 'goblins', stage: 1, progress: 3, goal: 5 });
+        H.enterZone(win, 'millfields');
+        world.refreshHud();
+
+        assertEqual(zoneEl.textContent, 'Millfields', 'zone name updates');
+        assertEqual(levelEl.textContent, '2', 'combat level updates');
+        assertEqual(hpEl.textContent.replace(/\s+/g, ' ').trim(), '55 / 110', 'HP cur / max updates');
+        assertEqual(fill.style.width, '50%', 'HP fill is 50% at 55/110');
+        assertEqual(goldEl.textContent, '25', 'gold updates');
+        assertEqual(xpEl.textContent, '40', 'XP updates');
+        assertEqual(questEl.textContent, 'Kill goblins in Northwood (3/5).', 'task text updates');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off after HUD refresh');
+
+        win.game.registry.set('hero', win.makeHero());
+        win.game.registry.set('quest', { id: 'goblins', stage: 0, progress: 0, goal: 5 });
+        H.enterZone(win, 'haven');
+        world.placePlayer(spawn.x, spawn.y);
+        world.refreshHud();
+    });
+});
+
 EmberwoodTests.add('skills: Hitpoints level-up sets maxHp to 10 * level and chats Skill increased to N', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         var world = H.world(win);

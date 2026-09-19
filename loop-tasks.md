@@ -282,7 +282,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Accurate / Aggressive / Defensive highlight and persist on `hero.style`. — Conclusion: From spawn (328,248) Accurate/Aggressive/Defensive clicks set `hero.style`, mark only that button `is-on`, log Combat style, and persist through Northwood/haven refreshHud; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] All three Auto-attack buttons (Combat, Settings, battle panel) stay in sync and log on/off. — Conclusion: From spawn (328,248) Combat/Settings/battle-panel clicks stay in sync (On/Off + is-on), log Auto-attack on/off, and blur; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Auto-pickup buttons on Combat and Settings stay in sync, log on/off, and blur after click. — Conclusion: Same UX as auto-attack; missing key renders On. `hud: auto-pickup toggle persists on the hero` pass.
-- [verify] Side HUD: zone name, combat level, HP `cur / max`, HP fill %, gold, XP, task text. — Conclusion: —
+- [done] Side HUD: zone name, combat level, HP `cur / max`, HP fill %, gold, XP, task text. — Conclusion: From spawn (328,248) side HUD shows Emberhaven, combat 1, HP `100 / 100`, fill 100%, gold 8, XP 0, talk-to-Bram; Millfields + `55 / 110` (50%) + gold 25 / XP 40 / level 2 / goblin 3/5 update. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [verify] Quest tab copies the same quest string as the side Task panel. — Conclusion: —
 - [verify] Chat appends lines, auto-scrolls, and drops the oldest after 40 lines. — Conclusion: —
 - [verify] Title: **Click here to play** starts WorldScene in Emberhaven; Credits toggles `#credit-text`. — Conclusion: —
@@ -470,4 +470,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 97 | 2026-09-19 | Tab bar clicks match F-keys and only one .tab-panel is visible | done — spawn (328,248) click matches F1–F8; only one panel visible; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 98 | 2026-09-19 | Accurate / Aggressive / Defensive highlight and persist on hero.style | done — spawn (328,248) clicks set hero.style + only that is-on; persist Northwood/haven refreshHud; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 99 | 2026-09-19 | All three Auto-attack buttons stay in sync and log on/off | done — spawn (328,248) Combat/Settings/battle-panel sync On/Off + is-on, log Auto-attack on/off, blur; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 100 | 2026-09-19 | Side HUD: zone name, combat level, HP cur/max, HP fill %, gold, XP, task text | done — spawn (328,248) Emberhaven/1/100/100/100%/8/0/talk-to-Bram; Millfields 55/110 50% gold 25 XP 40 level 2 goblin 3/5; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 
