@@ -9096,6 +9096,196 @@ EmberwoodTests.add('skills: Use-on raw shrimp on fire or range grants Cooking XP
     });
 });
 
+EmberwoodTests.add('skills: Southshore fishing spots grant Fishing XP', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, true);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.clearLoot();
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        if (win.Hud.hideContextMenu) {
+            win.Hud.hideContextMenu();
+        }
+        if (win.Hud.clearUseOn) {
+            win.Hud.clearUseOn();
+        }
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof win.fishAtSpot, 'function', 'fishAtSpot helper');
+        assertEqual(typeof win.fishingSpotAt, 'function', 'fishingSpotAt helper');
+        assertEqual(typeof win.gainSkillXp, 'function', 'gainSkillXp helper');
+        assertEqual(win.FISH_SPOT_XP, 10, 'Southshore spots grant 10 Fishing XP');
+        assertEqual(typeof win.catchFish, 'undefined', 'catchFish helper is not this tick');
+        assertEqual(typeof win.chopTree, 'undefined', 'Woodcutting is not this tick');
+        assertEqual(typeof win.woodcutTree, 'undefined', 'Woodcutting helper is not this tick');
+
+        function clickTile(tx, ty) {
+            var pt = win.tileCenter(tx, ty);
+            world.onClick({ worldX: pt.x, worldY: pt.y });
+            return pt;
+        }
+
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(hero.skills.fishing.xp, 0, 'Fishing XP starts 0');
+        assertEqual(hero.skills.fishing.level, 1, 'Fishing starts 1');
+        assertEqual(hero.skills.cooking.xp, 0, 'Cooking XP stays 0');
+        assertEqual(hero.skills.woodcutting.xp, 0, 'Woodcutting XP stays 0');
+        assertEqual(hero.level, 3, 'starter combat level 3');
+
+        var shore = win.SHORE_PROPS;
+        assert(shore && shore.spots && shore.spots.length >= 2, 'SHORE_PROPS.spots exist');
+        var spot = shore.spots[0];
+        var spot2 = shore.spots[1];
+        assertEqual(spot.x, 16, 'first fishing spot x');
+        assertEqual(spot.y, 24, 'first fishing spot y');
+        assertEqual(win.fishingSpotAt(spot.x, spot.y, 'southshore'), spot, 'fishingSpotAt matches southshore');
+        assertEqual(win.fishingSpotAt(spot.x, spot.y, 'haven'), null, 'fishing spots are zone-gated');
+        assertEqual(win.examineSceneryText('fishspot'), 'A fishing spot. Fish dart beneath the surface.', 'fishspot examine text');
+
+        H.enterZone(win, 'southshore');
+        world = H.world(win);
+        H.setAutoAttack(win, false);
+        world.encounterLock = false;
+        world.engageTarget = null;
+        world.talkTarget = null;
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        parkWorldBodies(world);
+        hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(world.tileGrid[spot.y][spot.x], win.TILE.WATER, 'first spot stays WATER');
+        assertEqual(world.tileGrid[spot2.y][spot2.x], win.TILE.WATER, 'second spot stays WATER');
+        assertEqual(
+            win.sceneryKindAt(world.tileGrid, spot.x, spot.y, { zoneId: 'southshore' }),
+            'fishspot',
+            'southshore spot kind'
+        );
+        assertEqual(
+            win.sceneryKindAt(world.tileGrid, spot.x, spot.y, { zoneId: 'haven' }),
+            'water',
+            'same tile is water outside southshore'
+        );
+
+        H.click(win, '#tab-bar button[data-tab="skills"]');
+        var dropsHost = win.Hud.ensureXpDrops();
+        assert(dropsHost && dropsHost.id === 'xp-drops', 'xp-drops host exists');
+        dropsHost.innerHTML = '';
+        win.Hud.el.log.innerHTML = '';
+
+        clickTile(spot.x, spot.y);
+        hero = H.hero(win);
+        assertEqual(H.lastChat(win), 'You fish at the fishing spot.', 'spot click chat');
+        assertEqual(hero.skills.fishing.xp, 10, 'spot click grants 10 Fishing XP');
+        assertEqual(hero.skills.fishing.level, 1, '10 XP does not level Fishing');
+        assertEqual(hero.skills.cooking.xp, 0, 'spot click does not grant Cooking XP');
+        assertEqual(hero.skills.woodcutting.xp, 0, 'spot click does not grant Woodcutting XP');
+        assertEqual(hero.level, 3, 'combat level unchanged at Fishing 1');
+        assertEqual(H.lootLive(win).length, 0, 'fish does not drop loot');
+        assert(!world.walkTarget, 'fishing does not walk');
+        var drops = win.document.querySelectorAll('#xp-drops .xp-drop');
+        assertEqual(drops.length, 1, 'one Fishing XP drop');
+        assertEqual(drops[0].getAttribute('data-skill'), 'fishing', 'drop skill is fishing');
+        assertEqual(drops[0].getAttribute('data-xp'), '10', 'drop amount is 10');
+        var fishIcon = drops[0].querySelector('img.pix');
+        assert(fishIcon && fishIcon.getAttribute('src').indexOf('assets/svg/skills/fishing.svg') !== -1, 'Fishing skill icon');
+
+        var fishRow = win.document.querySelector('#skills-list [data-skill="fishing"]');
+        assert(fishRow, 'Fishing Skills row exists');
+        assert(
+            String(fishRow.getAttribute('title') || '').indexOf('10 XP') !== -1,
+            'Skills tab shows Fishing XP'
+        );
+
+        dropsHost.innerHTML = '';
+        var helper = win.fishAtSpot(hero);
+        assert(helper && helper.ok, 'helper fishes at a spot');
+        assertEqual(helper.xp, 10, 'helper grants 10 Fishing XP');
+        assertEqual(hero.skills.fishing.xp, 20, 'helper grants another 10 Fishing XP');
+        assertEqual(hero.skills.fishing.level, 1, '20 XP does not level Fishing');
+        assertEqual(hero.skills.woodcutting.xp, 0, 'helper does not grant Woodcutting XP');
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        drops = win.document.querySelectorAll('#xp-drops .xp-drop');
+        assertEqual(drops.length, 1, 'one helper Fishing XP drop');
+        assertEqual(drops[0].getAttribute('data-skill'), 'fishing', 'helper drop skill is fishing');
+        assertEqual(drops[0].getAttribute('data-xp'), '10', 'helper drop amount is 10');
+
+        H.click(win, '#tab-bar button[data-tab="skills"]');
+        fishRow = win.document.querySelector('#skills-list [data-skill="fishing"]');
+        assert(
+            String(fishRow.getAttribute('title') || '').indexOf('20 XP') !== -1,
+            'Skills tab shows helper Fishing XP'
+        );
+
+        dropsHost.innerHTML = '';
+        clickTile(spot2.x, spot2.y);
+        hero = H.hero(win);
+        assertEqual(hero.skills.fishing.xp, 30, 'second spot grants another 10 Fishing XP');
+        assertEqual(H.lastChat(win), 'You fish at the fishing spot.', 'second spot chat');
+
+        var water = null;
+        var y;
+        var x;
+        for (y = 0; y < world.tileGrid.length && !water; y++) {
+            for (x = 0; x < world.tileGrid[y].length; x++) {
+                if (world.tileGrid[y][x] === win.TILE.WATER && !win.fishingSpotAt(x, y, 'southshore')) {
+                    water = { tx: x, ty: y };
+                    break;
+                }
+            }
+        }
+        assert(water, 'Southshore has plain WATER');
+        assertEqual(
+            win.sceneryKindAt(world.tileGrid, water.tx, water.ty, { zoneId: 'southshore' }),
+            'water',
+            'plain water kind'
+        );
+        clickTile(water.tx, water.ty);
+        hero = H.hero(win);
+        assertEqual(H.lastChat(win), "It's water.", 'plain water still examines');
+        assertEqual(hero.skills.fishing.xp, 30, 'plain water grants no Fishing XP');
+
+        clickTile(shore.boat.x, shore.boat.y);
+        hero = H.hero(win);
+        assertEqual(H.lastChat(win), 'A fishing boat, tied off and empty.', 'boat still examines');
+        assertEqual(hero.skills.fishing.xp, 30, 'boat grants no Fishing XP');
+
+        world.encounterLock = true;
+        clickTile(spot.x, spot.y);
+        assertEqual(H.hero(win).skills.fishing.xp, 30, 'encounterLock grants no Fishing XP');
+        world.encounterLock = false;
+
+        H.enterZone(win, 'haven');
+        world = H.world(win);
+        world.encounterLock = false;
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        assertEqual(typeof win.catchFish, 'undefined', 'catchFish still not this tick');
+        assertEqual(typeof win.chopTree, 'undefined', 'Woodcutting still not this tick');
+        assertEqual(H.hero(win).skills.woodcutting.xp, 0, 'Woodcutting XP still 0');
+    });
+});
+
 EmberwoodTests.add('combat: Attack auto-selects index 0 and rolls damage -2..+2 min 1', function (win, H) {
     H.enterZone(win, 'haven');
     H.setAutoAttack(win, false);

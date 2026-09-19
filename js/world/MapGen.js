@@ -34,6 +34,11 @@ var SHORE_PROPS = {
         { x: 12, y: 21 },
         { x: 12, y: 22 },
         { x: 12, y: 23 }
+    ],
+    spots: [
+        { x: 16, y: 24 },
+        { x: 20, y: 24 },
+        { x: 24, y: 23 }
     ]
 };
 var GRAVE_PROPS = {
@@ -79,6 +84,7 @@ var SCENERY_EXAMINE = {
     booth: 'A bank booth. The clerk is away.',
     dock: 'A weathered wooden dock. The tide slaps the pilings.',
     boat: 'A fishing boat, tied off and empty.',
+    fishspot: 'A fishing spot. Fish dart beneath the surface.',
     tomb: 'A weathered tomb marker. The name is worn away.',
     shortcut: 'A narrow gap beside the locked door. You might squeeze through.',
     gate: 'A wooden courtyard gate. The hinges still work.',
@@ -315,6 +321,10 @@ function generateMap(seed, biome, neighbors) {
             setCell(grid, SHORE_PROPS.planks[di].x, SHORE_PROPS.planks[di].y, TILE.DOCK);
         }
         setCell(grid, SHORE_PROPS.boat.x, SHORE_PROPS.boat.y, TILE.BOAT);
+        var si;
+        for (si = 0; si < SHORE_PROPS.spots.length; si++) {
+            setCell(grid, SHORE_PROPS.spots[si].x, SHORE_PROPS.spots[si].y, TILE.WATER);
+        }
     } else if (biome === 'mine') {
         scatter(grid, TILE.ROCK, 55, seed, true);
         scatter(grid, TILE.TREE, 8, seed + 5, true);
@@ -412,6 +422,19 @@ function isHouseWallAt(grid, tx, ty, rects) {
     return false;
 }
 
+function fishingSpotAt(tx, ty, zoneId) {
+    if (zoneId !== 'southshore' || !SHORE_PROPS || !SHORE_PROPS.spots) {
+        return null;
+    }
+    var i;
+    for (i = 0; i < SHORE_PROPS.spots.length; i++) {
+        if (SHORE_PROPS.spots[i].x === tx && SHORE_PROPS.spots[i].y === ty) {
+            return SHORE_PROPS.spots[i];
+        }
+    }
+    return null;
+}
+
 function agilityShortcutAt(tx, ty, zoneId) {
     if (!AGILITY_SHORTCUT) {
         return null;
@@ -436,6 +459,9 @@ function sceneryKindAt(grid, tx, ty, opts) {
     var index = grid[ty][tx];
     if (index === TILE.TREE) {
         return 'tree';
+    }
+    if (fishingSpotAt(tx, ty, opts.zoneId)) {
+        return 'fishspot';
     }
     if (index === TILE.WATER) {
         return 'water';

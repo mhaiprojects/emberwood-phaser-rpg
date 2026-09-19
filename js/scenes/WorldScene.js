@@ -1186,6 +1186,12 @@ var WorldScene = new Phaser.Class({
             return;
         }
         var scenery = this.pickScenery(x, y);
+        if (scenery && scenery.kind === 'fishspot') {
+            this.engageTarget = null;
+            this.talkTarget = null;
+            this.tryFishSpot(scenery);
+            return;
+        }
         if (scenery && !(typeof isWalkableExamineKind === 'function' && isWalkableExamineKind(scenery.kind))) {
             this.engageTarget = null;
             this.talkTarget = null;
@@ -1240,6 +1246,20 @@ var WorldScene = new Phaser.Class({
             return null;
         }
         return { tx: tile.tx, ty: tile.ty, kind: kind };
+    },
+
+    tryFishSpot: function (hit) {
+        var hero = this.registry.get('hero');
+        var result = typeof fishAtSpot === 'function' ? fishAtSpot(hero) : null;
+        if (!result || !result.ok) {
+            return this.examineScenery(hit);
+        }
+        if (Hud.saveHero) {
+            Hud.saveHero(hero);
+        }
+        this.refreshHud();
+        Hud.log('You fish at the fishing spot.');
+        return true;
     },
 
     examineScenery: function (hit) {

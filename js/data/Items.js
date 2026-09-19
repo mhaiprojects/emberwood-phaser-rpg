@@ -15,6 +15,7 @@ var ITEM_DB = {
 
 var WIND_STRIKE_XP = 5;
 var WIND_STRIKE_DAMAGE = 2;
+var FISH_SPOT_XP = 10;
 
 var SKILL_NAMES = [
     ['attack', 'Attack'],
@@ -334,6 +335,14 @@ function useItemOnScenery(hero, id, kind) {
         }
     }
     return { ok: true, id: id, kind: kind, cooked: def.cook || null };
+}
+
+function fishAtSpot(hero) {
+    if (!hero || !hero.skills || !hero.skills.fishing) {
+        return null;
+    }
+    gainSkillXp(hero, 'fishing', FISH_SPOT_XP);
+    return { ok: true, xp: FISH_SPOT_XP };
 }
 
 function buryItem(hero, id) {
