@@ -10,7 +10,10 @@ var ITEM_DB = {
     bones: { name: 'Bones', icon: 'assets/svg/items/bones.svg', stack: true, bury: true, buryXp: 4, value: 1, examine: 'Dry bones. Someone should bury them.' },
     airrune: { name: 'Air rune', icon: 'assets/svg/items/airrune.svg', stack: true, rune: true, value: 4, examine: 'A pale blue rune. It hums with air.' },
     mindrune: { name: 'Mind rune', icon: 'assets/svg/items/mindrune.svg', stack: true, rune: true, value: 3, examine: 'A dull purple rune. It focuses the mind.' },
-    key: { name: 'Iron key', icon: 'assets/svg/items/key.svg', value: 1, examine: 'A heavy iron key with a worn bit.' }
+    key: { name: 'Iron key', icon: 'assets/svg/items/key.svg', value: 1, examine: 'A heavy iron key with a worn bit.' },
+    cowhide: { name: 'Cowhide', icon: 'assets/svg/items/cowhide.svg', stack: true, tan: 'leather', tanXp: 14, value: 2, examine: 'A raw cowhide. It can be crafted into leather.' },
+    leather: { name: 'Leather', icon: 'assets/svg/items/leather.svg', stack: true, value: 4, examine: 'Soft leather, ready to stitch.' },
+    string: { name: 'String', icon: 'assets/svg/items/string.svg', stack: true, value: 1, examine: 'A short length of string for stitching leather.' }
 };
 
 var WIND_STRIKE_XP = 5;
@@ -18,6 +21,8 @@ var WIND_STRIKE_DAMAGE = 2;
 var FISH_SPOT_XP = 10;
 var WOODCUT_TREE_XP = 10;
 var MINE_ROCK_XP = 10;
+var CRAFT_HIDE_XP = 14;
+var CRAFT_LEATHER_XP = 14;
 
 var SKILL_NAMES = [
     ['attack', 'Attack'],
@@ -284,6 +289,9 @@ function itemDefaultVerb(id) {
     if (def.bury) {
         return 'bury';
     }
+    if (def.tan) {
+        return 'tan';
+    }
     return 'drop';
 }
 
@@ -361,6 +369,54 @@ function mineAtRock(hero) {
     }
     gainSkillXp(hero, 'mining', MINE_ROCK_XP);
     return { ok: true, xp: MINE_ROCK_XP };
+}
+
+function tanCowhide(hero, id) {
+    id = id || 'cowhide';
+    var def = ITEM_DB[id];
+    var xp;
+    if (!hero || !id || !def || !def.tan) {
+        return null;
+    }
+    if (!takeItem(hero, id, 1)) {
+        return null;
+    }
+    if (!addItem(hero, def.tan, 1)) {
+        addItem(hero, id, 1);
+        return { ok: false, full: true };
+    }
+    xp = typeof def.tanXp === 'number' ? def.tanXp : CRAFT_HIDE_XP;
+    if (xp > 0) {
+        gainSkillXp(hero, 'crafting', xp);
+    }
+    return { ok: true, id: id, made: def.tan, xp: xp };
+}
+
+function stitchLeather(hero) {
+    if (!hero || itemQty(hero, 'string') < 1 || itemQty(hero, 'leather') < 1) {
+        return null;
+    }
+    if (!takeItem(hero, 'string', 1)) {
+        return null;
+    }
+    if (!takeItem(hero, 'leather', 1)) {
+        addItem(hero, 'string', 1);
+        return null;
+    }
+    if (CRAFT_LEATHER_XP > 0) {
+        gainSkillXp(hero, 'crafting', CRAFT_LEATHER_XP);
+    }
+    return { ok: true, from: 'string', on: 'leather', xp: CRAFT_LEATHER_XP };
+}
+
+function useItemOnItem(hero, fromId, onId) {
+    if (!hero || !fromId || !onId || fromId === onId) {
+        return null;
+    }
+    if ((fromId === 'string' && onId === 'leather') || (fromId === 'leather' && onId === 'string')) {
+        return stitchLeather(hero);
+    }
+    return null;
 }
 
 function buryItem(hero, id) {

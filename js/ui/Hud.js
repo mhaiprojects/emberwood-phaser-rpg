@@ -472,6 +472,19 @@ var Hud = {
                 this.clearUseOn();
                 return;
             }
+            var world = window.game && window.game.scene.getScene('WorldScene');
+            var crafted;
+            if (!world || world.encounterLock) {
+                this.clearUseOn();
+                return;
+            }
+            crafted = typeof useItemOnItem === 'function' ? useItemOnItem(hero, this.useOnId, id) : null;
+            if (crafted && crafted.ok) {
+                this.saveHero(hero);
+                this.log('You stitch the leather.');
+                this.clearUseOn();
+                return;
+            }
             this.log('Nothing interesting happens.');
             this.clearUseOn();
             return;
@@ -508,6 +521,10 @@ var Hud = {
         }
         if (verb === 'bury') {
             this.buryFromInventory(id);
+            return;
+        }
+        if (verb === 'tan') {
+            this.tanFromInventory(id);
             return;
         }
         if (verb === 'drop') {
@@ -594,6 +611,30 @@ var Hud = {
         }
         this.saveHero(hero);
         this.log('You bury the bones.');
+        return true;
+    },
+
+    tanFromInventory: function (id) {
+        var hero = this.hero();
+        var result;
+        if (!hero || !id || this.mode !== 'world') {
+            return false;
+        }
+        var world = window.game && window.game.scene.getScene('WorldScene');
+        if (!world || world.encounterLock) {
+            return false;
+        }
+        result = typeof tanCowhide === 'function' ? tanCowhide(hero, id) : null;
+        if (!result) {
+            this.log('You do not have that.');
+            return false;
+        }
+        if (!result.ok) {
+            this.log('inventory full');
+            return false;
+        }
+        this.saveHero(hero);
+        this.log('You tan the cowhide.');
         return true;
     },
 
@@ -852,6 +893,8 @@ var Hud = {
             items.push({ label: 'Wear', action: 'wear' });
         } else if (verb === 'bury') {
             items.push({ label: 'Bury', action: 'bury' });
+        } else if (verb === 'tan') {
+            items.push({ label: 'Tan', action: 'tan' });
         }
         items.push({ label: 'Use', action: 'use' });
         items.push({ label: 'Drop', action: 'drop' });
@@ -1404,6 +1447,10 @@ var Hud = {
         }
         if (action === 'bury') {
             this.buryFromInventory(target.itemId);
+            return;
+        }
+        if (action === 'tan') {
+            this.tanFromInventory(target.itemId);
             return;
         }
         if (action === 'use') {

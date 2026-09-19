@@ -25,17 +25,20 @@
     "wanderer",
     "witch"
   ],
-  "items": [
+    "items": [
     "airrune",
     "arrow",
     "bones",
     "bread",
     "coins",
+    "cowhide",
     "key",
+    "leather",
     "mindrune",
     "shield",
     "shortbow",
     "shrimp",
+    "string",
     "sword"
   ],
   "ui": [

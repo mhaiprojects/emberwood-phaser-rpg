@@ -849,10 +849,13 @@ EmberwoodTests.add('hud: inventory and ground Examine logs ITEM_DB flavor', func
             bones: 'Dry bones. Someone should bury them.',
             airrune: 'A pale blue rune. It hums with air.',
             mindrune: 'A dull purple rune. It focuses the mind.',
-            key: 'A heavy iron key with a worn bit.'
+            key: 'A heavy iron key with a worn bit.',
+            cowhide: 'A raw cowhide. It can be crafted into leather.',
+            leather: 'Soft leather, ready to stitch.',
+            string: 'A short length of string for stitching leather.'
         };
         var ids = Object.keys(win.ITEM_DB);
-        assertEqual(ids.length, 12, 'twelve ITEM_DB entries');
+        assertEqual(ids.length, 15, 'fifteen ITEM_DB entries');
         var seen = {};
         ids.forEach(function (id) {
             var def = win.ITEM_DB[id];
@@ -1026,10 +1029,13 @@ EmberwoodTests.add('hud: ITEM_DB value fields for shops and later High Alch', fu
             bones: 1,
             airrune: 4,
             mindrune: 3,
-            key: 1
+            key: 1,
+            cowhide: 2,
+            leather: 4,
+            string: 1
         };
         var ids = Object.keys(win.ITEM_DB);
-        assertEqual(ids.length, 12, 'twelve ITEM_DB entries');
+        assertEqual(ids.length, 15, 'fifteen ITEM_DB entries');
         assert(!win.ITEM_DB.logs && !win.ITEM_DB.ore && !win.ITEM_DB.net, 'no gathering section items');
         ids.forEach(function (id) {
             var def = win.ITEM_DB[id];
@@ -9674,6 +9680,191 @@ EmberwoodTests.add('skills: Darkmine rocks grant Mining XP', function (win, H) {
         assertEqual(typeof win.lightFire, 'undefined', 'Firemaking still not this tick');
         assertEqual(typeof win.firemakeAt, 'undefined', 'Firemaking helper still not this tick');
         assertEqual(H.hero(win).skills.crafting.xp, 0, 'Crafting XP still 0');
+    });
+});
+
+EmberwoodTests.add('skills: cowhide to leather or string plus leather grants Crafting XP', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, true);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.clearLoot();
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        if (win.Hud.hideContextMenu) {
+            win.Hud.hideContextMenu();
+        }
+        if (win.Hud.clearUseOn) {
+            win.Hud.clearUseOn();
+        }
+        parkWorldBodies(world);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof win.tanCowhide, 'function', 'tanCowhide helper');
+        assertEqual(typeof win.stitchLeather, 'function', 'stitchLeather helper');
+        assertEqual(typeof win.useItemOnItem, 'function', 'useItemOnItem helper');
+        assertEqual(typeof win.gainSkillXp, 'function', 'gainSkillXp helper');
+        assertEqual(win.CRAFT_HIDE_XP, 14, 'cowhide tans for 14 Crafting XP');
+        assertEqual(win.CRAFT_LEATHER_XP, 14, 'string plus leather grants 14 Crafting XP');
+        assert(win.ITEM_DB.cowhide, 'cowhide exists');
+        assertEqual(win.ITEM_DB.cowhide.tan, 'leather', 'cowhide tans to leather');
+        assertEqual(win.ITEM_DB.cowhide.tanXp, 14, 'cowhide tanXp is 14');
+        assert(win.ITEM_DB.leather, 'leather exists');
+        assert(win.ITEM_DB.string, 'string exists');
+        assertEqual(win.itemDefaultVerb('cowhide'), 'tan', 'cowhide default is tan');
+        assertEqual(win.itemDefaultVerb('leather'), 'drop', 'leather default is drop');
+        assertEqual(win.itemDefaultVerb('string'), 'drop', 'string default is drop');
+        assertEqual(typeof win.lightFire, 'undefined', 'Firemaking is not this tick');
+        assertEqual(typeof win.firemakeAt, 'undefined', 'Firemaking helper is not this tick');
+        assertEqual(typeof win.skillTotal, 'undefined', 'side HUD skill total is not this tick');
+
+        function stackQty(hero, id) {
+            var stack = hero.inventory.filter(function (row) { return row.id === id; })[0];
+            return stack ? stack.qty : 0;
+        }
+
+        var hero = win.makeHero();
+        win.addItem(hero, 'cowhide', 2);
+        win.addItem(hero, 'string', 2);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(stackQty(hero, 'cowhide'), 2, 'starter cowhide 2');
+        assertEqual(stackQty(hero, 'string'), 2, 'starter string 2');
+        assertEqual(stackQty(hero, 'leather'), 0, 'no leather yet');
+        assertEqual(hero.skills.crafting.xp, 0, 'Crafting XP starts 0');
+        assertEqual(hero.skills.crafting.level, 1, 'Crafting starts 1');
+        assertEqual(hero.skills.mining.xp, 0, 'Mining XP stays 0');
+        assertEqual(hero.skills.cooking.xp, 0, 'Cooking XP stays 0');
+        assertEqual(hero.level, 3, 'starter combat level 3');
+
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        assert(win.document.querySelector('#inv-grid [data-item="cowhide"]'), 'cowhide slot');
+        assert(win.document.querySelector('#inv-grid [data-item="string"]'), 'string slot');
+        var dropsHost = win.Hud.ensureXpDrops();
+        assert(dropsHost && dropsHost.id === 'xp-drops', 'xp-drops host exists');
+        dropsHost.innerHTML = '';
+        win.Hud.el.log.innerHTML = '';
+
+        H.click(win, '#inv-grid [data-item="cowhide"]');
+        hero = H.hero(win);
+        assertEqual(H.lastChat(win), 'You tan the cowhide.', 'tan chat');
+        assertEqual(stackQty(hero, 'cowhide'), 1, 'tan consumes one cowhide');
+        assertEqual(stackQty(hero, 'leather'), 1, 'tan makes one leather');
+        assertEqual(hero.skills.crafting.xp, 14, 'tan grants 14 Crafting XP');
+        assertEqual(hero.skills.crafting.level, 1, '14 XP does not level Crafting');
+        assertEqual(hero.skills.mining.xp, 0, 'tan does not grant Mining XP');
+        assertEqual(hero.skills.cooking.xp, 0, 'tan does not grant Cooking XP');
+        assertEqual(hero.level, 3, 'combat level unchanged at Crafting 1');
+        assertEqual(H.lootLive(win).length, 0, 'tan does not drop loot');
+        var drops = win.document.querySelectorAll('#xp-drops .xp-drop');
+        assertEqual(drops.length, 1, 'one Crafting XP drop');
+        assertEqual(drops[0].getAttribute('data-skill'), 'crafting', 'drop skill is crafting');
+        assertEqual(drops[0].getAttribute('data-xp'), '14', 'drop amount is 14');
+        var craftIcon = drops[0].querySelector('img.pix');
+        assert(craftIcon && craftIcon.getAttribute('src').indexOf('assets/svg/skills/crafting.svg') !== -1, 'Crafting skill icon');
+
+        H.click(win, '#tab-bar button[data-tab="skills"]');
+        var craftRow = win.document.querySelector('#skills-list [data-skill="crafting"]');
+        assert(craftRow, 'Crafting Skills row exists');
+        assert(
+            String(craftRow.getAttribute('title') || '').indexOf('14 XP') !== -1,
+            'Skills tab shows Crafting XP'
+        );
+
+        dropsHost.innerHTML = '';
+        var helper = win.tanCowhide(hero, 'cowhide');
+        assert(helper && helper.ok, 'helper tans cowhide');
+        assertEqual(helper.made, 'leather', 'helper makes leather');
+        assertEqual(helper.xp, 14, 'helper grants 14 Crafting XP');
+        assertEqual(hero.skills.crafting.xp, 28, 'helper grants another 14 Crafting XP');
+        assertEqual(stackQty(hero, 'cowhide'), 0, 'helper consumes last cowhide');
+        assertEqual(stackQty(hero, 'leather'), 2, 'helper makes second leather');
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        drops = win.document.querySelectorAll('#xp-drops .xp-drop');
+        assertEqual(drops.length, 1, 'one helper Crafting XP drop');
+        assertEqual(drops[0].getAttribute('data-skill'), 'crafting', 'helper drop skill is crafting');
+        assertEqual(drops[0].getAttribute('data-xp'), '14', 'helper drop amount is 14');
+
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        var menu = win.document.getElementById('ctx-menu');
+        var slot = win.document.querySelector('#inv-grid [data-item="string"]');
+        slot.dispatchEvent(new win.MouseEvent('contextmenu', {
+            bubbles: true,
+            cancelable: true,
+            view: win,
+            button: 2,
+            clientX: 40,
+            clientY: 80
+        }));
+        assert(!menu.hidden, 'right-click string opens menu');
+        var useBtn = menu.querySelector('[data-ctx="use"]');
+        assert(useBtn, 'Use is listed');
+        H.mouseClick(win, useBtn);
+        assertEqual(win.Hud.useOnId, 'string', 'use-on id is string');
+        assertEqual(H.lastChat(win), 'Use String ->', 'use-on prompt chat');
+
+        dropsHost.innerHTML = '';
+        H.click(win, '#inv-grid [data-item="leather"]');
+        hero = H.hero(win);
+        assertEqual(H.lastChat(win), 'You stitch the leather.', 'stitch chat');
+        assertEqual(stackQty(hero, 'string'), 1, 'stitch consumes one string');
+        assertEqual(stackQty(hero, 'leather'), 1, 'stitch consumes one leather');
+        assertEqual(hero.skills.crafting.xp, 42, 'stitch grants another 14 Crafting XP');
+        assertEqual(win.Hud.useOnId, null, 'cursor clears after stitch');
+        drops = win.document.querySelectorAll('#xp-drops .xp-drop');
+        assertEqual(drops.length, 1, 'one stitch Crafting XP drop');
+        assertEqual(drops[0].getAttribute('data-xp'), '14', 'stitch drop amount is 14');
+
+        dropsHost.innerHTML = '';
+        var stitched = win.stitchLeather(hero);
+        assert(stitched && stitched.ok, 'helper stitches leather');
+        assertEqual(stitched.xp, 14, 'helper stitch grants 14 Crafting XP');
+        assertEqual(hero.skills.crafting.xp, 56, 'helper stitch grants another 14 Crafting XP');
+        assertEqual(stackQty(hero, 'string'), 0, 'helper consumes last string');
+        assertEqual(stackQty(hero, 'leather'), 0, 'helper consumes last leather');
+        assertEqual(win.useItemOnItem(hero, 'string', 'leather'), null, 'empty stitch grants no XP');
+        assertEqual(hero.skills.crafting.xp, 56, 'empty stitch leaves XP');
+
+        win.addItem(hero, 'string', 1);
+        win.addItem(hero, 'bones', 1);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        win.Hud.beginUseOn('string');
+        H.click(win, '#inv-grid [data-item="bones"]');
+        hero = H.hero(win);
+        assertEqual(H.lastChat(win), 'Nothing interesting happens.', 'string on bones misses');
+        assertEqual(stackQty(hero, 'string'), 1, 'miss does not consume string');
+        assertEqual(hero.skills.crafting.xp, 56, 'miss grants no Crafting XP');
+        assertEqual(win.Hud.useOnId, null, 'miss clears cursor');
+
+        win.addItem(hero, 'cowhide', 1);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        world.encounterLock = true;
+        H.click(win, '#inv-grid [data-item="cowhide"]');
+        assertEqual(H.hero(win).skills.crafting.xp, 56, 'encounterLock grants no Crafting XP');
+        assertEqual(stackQty(H.hero(win), 'cowhide'), 1, 'encounterLock does not tan');
+        world.encounterLock = false;
+
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        assertEqual(typeof win.lightFire, 'undefined', 'Firemaking still not this tick');
+        assertEqual(typeof win.firemakeAt, 'undefined', 'Firemaking helper still not this tick');
+        assertEqual(typeof win.skillTotal, 'undefined', 'side HUD skill total still not this tick');
+        assertEqual(H.hero(win).skills.mining.xp, 0, 'Mining XP still 0');
     });
 });
 
