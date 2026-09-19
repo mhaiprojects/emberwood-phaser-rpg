@@ -52,6 +52,8 @@ var Hud = {
             bankCopy: document.getElementById('bank-copy'),
             bankInv: document.getElementById('bank-inv-grid'),
             bankVault: document.getElementById('bank-vault-grid'),
+            bankChest: document.getElementById('bank-chest'),
+            bankQty: document.getElementById('bank-qty'),
             bankClose: document.getElementById('btn-bank-close')
         };
         this.ctxTarget = null;
@@ -313,6 +315,14 @@ var Hud = {
                 event.stopPropagation();
                 btn.blur();
                 self.chooseBankAction(btn.getAttribute('data-bank-action'));
+            });
+        }
+        if (this.el.bankQty) {
+            this.el.bankQty.addEventListener('keydown', function (event) {
+                if (event.code === 'Enter' || event.key === 'Enter') {
+                    event.preventDefault();
+                    self.chooseBankAction('withdraw-x');
+                }
             });
         }
         if (this.el.dialogue) {
@@ -913,6 +923,9 @@ var Hud = {
         this.el.bank.hidden = false;
         this.el.bank.setAttribute('data-bank', def && def.key ? def.key : 'banker');
         this.bankSel = null;
+        if (this.el.bankQty) {
+            this.el.bankQty.value = '1';
+        }
         this.renderBank();
     },
 
@@ -922,6 +935,9 @@ var Hud = {
             this.el.bank.removeAttribute('data-bank');
             if (this.el.bankClose) {
                 this.el.bankClose.blur();
+            }
+            if (this.el.bankQty) {
+                this.el.bankQty.blur();
             }
         }
         this.bankSel = null;
@@ -981,11 +997,11 @@ var Hud = {
             return;
         }
         var id = this.bankSel;
-        if (!id) {
-            this.log(action === 'withdraw' ? 'Select a bank item to withdraw.' : 'Select an inventory item to deposit.');
-            return;
-        }
         if (action === 'deposit') {
+            if (!id) {
+                this.log('Select an inventory item to deposit.');
+                return;
+            }
             if (!depositItem(hero, id, 1)) {
                 this.log('You have nothing to deposit.');
                 return;
@@ -994,18 +1010,46 @@ var Hud = {
             this.log('You deposit 1 x ' + itemName(id) + '.');
             return;
         }
-        if (action === 'withdraw') {
+        if (action === 'withdraw' || action === 'withdraw-x' || action === 'withdraw-all') {
+            if (!id) {
+                this.log('Select a bank item to withdraw.');
+                return;
+            }
+            var stack = typeof findStack === 'function' ? findStack(ensureBank(hero), id) : null;
+            var held = stack && stack.qty > 0 ? stack.qty : 0;
+            var qty = 1;
+            if (action === 'withdraw-all') {
+                qty = held;
+            } else if (action === 'withdraw-x') {
+                qty = this.readBankQty();
+                if (!(qty >= 1)) {
+                    this.log('Enter how many to withdraw.');
+                    return;
+                }
+                if (qty > held) {
+                    qty = held;
+                }
+            }
             if (typeof canAddItem === 'function' && !canAddItem(hero, id)) {
                 this.log('inventory full');
                 return;
             }
-            if (!withdrawItem(hero, id, 1)) {
+            if (!held || !withdrawItem(hero, id, qty)) {
                 this.log('The bank is empty.');
                 return;
             }
             this.saveHero(hero);
-            this.log('You withdraw 1 x ' + itemName(id) + '.');
+            this.log('You withdraw ' + qty + ' x ' + itemName(id) + '.');
         }
+    },
+
+    readBankQty: function () {
+        var el = this.el && this.el.bankQty;
+        var n = parseInt(el && el.value, 10);
+        if (!(n >= 1)) {
+            return 0;
+        }
+        return n;
     },
 
     chooseContext: function (action) {

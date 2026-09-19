@@ -398,8 +398,8 @@ function depositItem(hero, id, qty) {
 }
 
 function withdrawItem(hero, id, qty) {
-    qty = qty || 1;
-    if (!hero || !id || qty < 1) {
+    qty = Math.floor(Number(qty == null ? 1 : qty));
+    if (!hero || !id || !(qty >= 1)) {
         return false;
     }
     var bank = ensureBank(hero);

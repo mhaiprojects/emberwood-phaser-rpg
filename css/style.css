@@ -498,11 +498,59 @@ button.ghost {
     color: #ffe08a;
 }
 
+#bank-chest {
+    background: #3a2716;
+    border: 2px solid #c9a227;
+    border-radius: 4px 4px 10px 10px;
+    padding: 10px 8px 8px;
+    box-shadow: inset 0 0 0 1px #5a3e24, 0 3px 0 #1a140c;
+    position: relative;
+}
+
+#bank-chest .bank-chest-lid {
+    height: 12px;
+    margin: -10px -8px 8px;
+    background: linear-gradient(#8a6238, #5a3e24);
+    border-bottom: 2px solid #2a1c10;
+    border-radius: 2px 2px 0 0;
+    position: relative;
+}
+
+#bank-chest .bank-chest-lid::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -7px;
+    width: 14px;
+    height: 10px;
+    margin-left: -7px;
+    background: #d4b24a;
+    border: 1px solid #8a6a22;
+    border-radius: 2px;
+}
+
 #bank-inv-grid,
 #bank-vault-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 3px;
+}
+
+#bank-qty-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #ffe08a;
+    font-size: 12px;
+}
+
+#bank-qty {
+    width: 52px;
+    padding: 4px 6px;
+    background: #2a2116;
+    color: #fff4d6;
+    border: 1px solid #e6c56a;
+    font: 13px Verdana, Geneva, sans-serif;
 }
 
 #bank-overlay .inv-slot.is-on {

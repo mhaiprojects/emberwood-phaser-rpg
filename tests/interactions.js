@@ -4837,6 +4837,112 @@ EmberwoodTests.add('npcs: Banker Elise bank overlay deposit withdraw', function 
     });
 });
 
+EmberwoodTests.add('npcs: Banker Elise withdraw-X withdraw-all bank chest', function (win, H) {
+    function stackQty(list, id) {
+        var row = (list || []).filter(function (stack) { return stack.id === id; })[0];
+        return row ? row.qty : 0;
+    }
+
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        var world = H.world(win);
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.refreshHud();
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        var elise = H.findNpc(win, 'banker');
+        assert(elise, 'Elise is in Emberhaven');
+        var bank = win.document.getElementById('bank-overlay');
+        var chest = win.document.getElementById('bank-chest');
+        var qtyInput = win.document.getElementById('bank-qty');
+        assert(bank && bank === win.Hud.el.bank, '#bank-overlay is Hud.el.bank');
+        assert(chest && chest === win.Hud.el.bankChest, '#bank-chest is Hud.el.bankChest');
+        assert(chest.hasAttribute('data-bank-chest'), 'chest UI is marked data-bank-chest');
+        assert(chest.contains(win.document.getElementById('bank-vault-grid')), 'vault grid sits in the chest');
+        assertEqual(chest.querySelector('h3').textContent, 'Chest', 'chest pane is labeled Chest');
+        assert(qtyInput && qtyInput === win.Hud.el.bankQty, '#bank-qty is Hud.el.bankQty');
+        assertEqual(qtyInput.tagName, 'INPUT', 'withdraw-X uses an HTML number input');
+        assert(bank.querySelector('[data-bank-action="withdraw-x"]'), 'Withdraw-X button exists');
+        assert(bank.querySelector('[data-bank-action="withdraw-all"]'), 'Withdraw-all button exists');
+        assert(bank.hidden, 'bank overlay starts hidden');
+
+        win.Hud.el.log.innerHTML = '';
+        world.tryTalk(elise);
+        H.click(win, win.document.querySelector('[data-dialogue-option="bank"]'));
+        assert(win.Hud.bankOpen() && !bank.hidden, 'Bank opens #bank-overlay');
+        assertEqual(win.Hud.mode, 'world', 'bank keeps Hud.mode world');
+        assertEqual(qtyInput.value, '1', 'qty input resets to 1');
+        assertEqual(win.getComputedStyle(chest).display, 'block', 'chest UI is visible HTML, not Phaser text');
+
+        H.click(win, bank.querySelector('#bank-inv-grid [data-bank-item="coins"]'));
+        H.click(win, bank.querySelector('[data-bank-action="deposit"]'));
+        H.click(win, bank.querySelector('[data-bank-action="deposit"]'));
+        H.click(win, bank.querySelector('[data-bank-action="deposit"]'));
+        H.click(win, bank.querySelector('[data-bank-action="deposit"]'));
+        H.click(win, bank.querySelector('[data-bank-action="deposit"]'));
+        assertEqual(H.hero(win).gold, 3, 'five coin deposits leave 3 gold');
+        assertEqual(stackQty(H.hero(win).bank, 'coins'), 5, 'bank coins 5');
+
+        H.click(win, bank.querySelector('#bank-vault-grid [data-bank-item="coins"]'));
+        qtyInput.value = '0';
+        H.click(win, bank.querySelector('[data-bank-action="withdraw-x"]'));
+        assertEqual(H.hero(win).gold, 3, 'invalid X does not move gold');
+        assertEqual(stackQty(H.hero(win).bank, 'coins'), 5, 'invalid X leaves bank coins');
+        assertEqual(H.lastChat(win), 'Enter how many to withdraw.', 'invalid X chat');
+
+        qtyInput.value = '2';
+        H.click(win, bank.querySelector('[data-bank-action="withdraw-x"]'));
+        assertEqual(H.hero(win).gold, 5, 'withdraw-X 2 increments gold 3→5');
+        assertEqual(stackQty(H.hero(win).inventory, 'coins'), 5, 'inventory coins 3→5');
+        assertEqual(stackQty(H.hero(win).bank, 'coins'), 3, 'bank coins 5→3');
+        assertEqual(win.document.getElementById('hud-gold').textContent, '5', 'HUD gold after withdraw-X');
+        assertEqual(H.lastChat(win), 'You withdraw 2 x Coins.', 'withdraw-X chat');
+
+        qtyInput.value = '99';
+        H.click(win, bank.querySelector('[data-bank-action="withdraw-all"]'));
+        assertEqual(H.hero(win).gold, 8, 'withdraw-all returns remaining coins');
+        assertEqual(stackQty(H.hero(win).inventory, 'coins'), 8, 'inventory coins back to 8');
+        assertEqual(stackQty(H.hero(win).bank, 'coins'), 0, 'bank coins stack removed');
+        assertEqual(H.lastChat(win), 'You withdraw 3 x Coins.', 'withdraw-all chat uses remaining qty');
+
+        H.click(win, bank.querySelector('#bank-inv-grid [data-bank-item="shrimp"]'));
+        var i;
+        for (i = 0; i < 8; i++) {
+            H.click(win, bank.querySelector('[data-bank-action="deposit"]'));
+        }
+        assertEqual(stackQty(H.hero(win).inventory, 'shrimp'), 0, 'inventory shrimp deposited');
+        assertEqual(stackQty(H.hero(win).bank, 'shrimp'), 8, 'bank shrimp 8');
+        assertEqual(H.hero(win).gold, 8, 'shrimp deposit does not change gold');
+        H.click(win, bank.querySelector('#bank-vault-grid [data-bank-item="shrimp"]'));
+        H.click(win, bank.querySelector('[data-bank-action="withdraw-all"]'));
+        assertEqual(stackQty(H.hero(win).inventory, 'shrimp'), 8, 'withdraw-all restores shrimp');
+        assertEqual(stackQty(H.hero(win).bank, 'shrimp'), 0, 'bank shrimp stack removed');
+        assertEqual(H.hero(win).gold, 8, 'shrimp withdraw-all does not change gold');
+        assertEqual(H.lastChat(win), 'You withdraw 8 x Cooked shrimp.', 'withdraw-all shrimp chat');
+
+        H.click(win, win.document.getElementById('btn-bank-close'));
+        assert(bank.hidden, 'Close hides the bank overlay');
+        assert(!win.Hud.bankOpen(), 'bankOpen is false after Close');
+        assert(!win.document.getElementById('shop-overlay') || win.document.getElementById('shop-overlay').hidden, 'shop stays closed');
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('npcs: Fen Witch refuses below 10 gold and does not heal', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');

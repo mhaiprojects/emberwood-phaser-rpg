@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="assets/svg/ui/combat.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/style.css?v=eqstat1">
+    <link rel="stylesheet" href="css/style.css?v=bankx1">
 </head>
 <body>
     <div id="shell">
@@ -194,14 +194,20 @@
                     <h3>Inventory</h3>
                     <div id="bank-inv-grid"></div>
                 </div>
-                <div>
-                    <h3>Bank</h3>
+                <div id="bank-chest" data-bank-chest>
+                    <div class="bank-chest-lid" aria-hidden="true"></div>
+                    <h3>Chest</h3>
                     <div id="bank-vault-grid"></div>
                 </div>
             </div>
             <div id="bank-actions">
                 <button type="button" data-bank-action="deposit">Deposit</button>
                 <button type="button" data-bank-action="withdraw">Withdraw</button>
+                <label id="bank-qty-label">X
+                    <input id="bank-qty" type="number" min="1" step="1" value="1" inputmode="numeric" autocomplete="off">
+                </label>
+                <button type="button" data-bank-action="withdraw-x">Withdraw-X</button>
+                <button type="button" data-bank-action="withdraw-all">Withdraw-all</button>
                 <button type="button" data-bank-action="heal">Heal</button>
             </div>
             <button type="button" id="btn-bank-close" data-bank-action="close">Close</button>
@@ -210,9 +216,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
     <script src="js/input/Keys.js?v=run1"></script>
-    <script src="js/data/Items.js?v=use1"></script>
+    <script src="js/data/Items.js?v=bankx1"></script>
     <script src="js/data/Scales.js?v=giant1"></script>
-    <script src="js/ui/Hud.js?v=use1"></script>
+    <script src="js/ui/Hud.js?v=bankx1"></script>
     <script src="js/world/MapGen.js?v=agil1"></script>
     <script src="js/world/Pathfind.js?v=giant1"></script>
     <script src="js/world/Zones.js?v=tutor1"></script>
