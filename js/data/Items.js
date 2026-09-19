@@ -23,6 +23,45 @@ var SKILL_NAMES = [
     ['crafting', 'Crafting']
 ];
 
+var EQUIP_SLOTS = [
+    ['head', 'Head'],
+    ['cape', 'Cape'],
+    ['neck', 'Neck'],
+    ['ammo', 'Ammo'],
+    ['weapon', 'Weapon'],
+    ['body', 'Body'],
+    ['shield', 'Shield'],
+    ['legs', 'Legs'],
+    ['hands', 'Hands'],
+    ['feet', 'Feet'],
+    ['ring', 'Ring']
+];
+
+function emptyEquipment() {
+    var equipment = {};
+    for (var i = 0; i < EQUIP_SLOTS.length; i++) {
+        equipment[EQUIP_SLOTS[i][0]] = null;
+    }
+    return equipment;
+}
+
+function ensureEquipment(hero) {
+    if (!hero) {
+        return emptyEquipment();
+    }
+    if (!hero.equipment) {
+        hero.equipment = emptyEquipment();
+        return hero.equipment;
+    }
+    for (var i = 0; i < EQUIP_SLOTS.length; i++) {
+        var key = EQUIP_SLOTS[i][0];
+        if (!Object.prototype.hasOwnProperty.call(hero.equipment, key)) {
+            hero.equipment[key] = null;
+        }
+    }
+    return hero.equipment;
+}
+
 function makeHero() {
     var hero = {
         hp: 100,
@@ -39,7 +78,12 @@ function makeHero() {
         shiftClickDrop: true,
         running: false,
         runEnergy: 100,
-        equipment: { weapon: 'sword', shield: 'shield' },
+        equipment: (function () {
+            var eq = emptyEquipment();
+            eq.weapon = 'sword';
+            eq.shield = 'shield';
+            return eq;
+        }()),
         inventory: [
             { id: 'coins', qty: 8 },
             { id: 'sword', qty: 1 },
@@ -137,15 +181,27 @@ function itemEquipSlot(id) {
     return def && def.slot ? def.slot : null;
 }
 
+function knownEquipSlot(slot) {
+    if (!slot) {
+        return false;
+    }
+    for (var i = 0; i < EQUIP_SLOTS.length; i++) {
+        if (EQUIP_SLOTS[i][0] === slot) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function itemEquipVerb(id) {
     var slot = itemEquipSlot(id);
+    if (!knownEquipSlot(slot)) {
+        return null;
+    }
     if (slot === 'weapon') {
         return 'wield';
     }
-    if (slot === 'shield') {
-        return 'wear';
-    }
-    return null;
+    return 'wear';
 }
 
 function equippedWeaponDamage(hero, fallback) {
@@ -184,12 +240,10 @@ function equipItem(hero, id) {
         return false;
     }
     var slot = itemEquipSlot(id);
-    if (!slot) {
+    if (!knownEquipSlot(slot)) {
         return false;
     }
-    if (!hero.equipment) {
-        hero.equipment = {};
-    }
+    ensureEquipment(hero);
     var current = hero.equipment[slot] || null;
     if (current === id) {
         if (heroHasItem(hero, id)) {
@@ -218,9 +272,10 @@ function unequipItem(hero, slot) {
     if (!hero || !slot) {
         return false;
     }
-    if (!hero.equipment) {
-        hero.equipment = {};
+    if (!knownEquipSlot(slot)) {
+        return false;
     }
+    ensureEquipment(hero);
     var id = hero.equipment[slot];
     if (!id) {
         return false;

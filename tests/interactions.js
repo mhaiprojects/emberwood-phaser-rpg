@@ -655,6 +655,100 @@ EmberwoodTests.add('combat: equipped weapon damage and shield defence apply to h
     });
 });
 
+EmberwoodTests.add('hud: worn tab lists OSRS slots with empty None', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(win.EQUIP_SLOTS, 'EQUIP_SLOTS is exported');
+        assertEqual(typeof win.ensureEquipment, 'function', 'ensureEquipment helper');
+        assertEqual(win.EQUIP_SLOTS.length, 11, 'eleven worn slots');
+        assertEqual(win.EQUIP_SLOTS.map(function (row) { return row[0]; }).join(','),
+            'head,cape,neck,ammo,weapon,body,shield,legs,hands,feet,ring',
+            'OSRS slot keys');
+        assertEqual(win.EQUIP_SLOTS.map(function (row) { return row[1]; }).join(','),
+            'Head,Cape,Neck,Ammo,Weapon,Body,Shield,Legs,Hands,Feet,Ring',
+            'OSRS slot labels');
+
+        var hero = H.hero(win);
+        win.EQUIP_SLOTS.forEach(function (row) {
+            assert(Object.prototype.hasOwnProperty.call(hero.equipment, row[0]), row[0] + ' slot exists');
+        });
+        assertEqual(hero.equipment.weapon, 'sword', 'starter wears bronze sword');
+        assertEqual(hero.equipment.shield, 'shield', 'starter wears wooden shield');
+        ['head', 'cape', 'neck', 'ammo', 'body', 'legs', 'hands', 'feet', 'ring'].forEach(function (slot) {
+            assertEqual(hero.equipment[slot], null, slot + ' starts empty');
+        });
+
+        H.click(win, '#tab-bar button[data-tab="equip"]');
+        var rows = win.document.querySelectorAll('#equip-grid .equip-row');
+        assertEqual(rows.length, 11, 'worn tab renders eleven rows');
+        var labels = [];
+        var empty = 0;
+        var filled = 0;
+        for (var i = 0; i < rows.length; i++) {
+            var label = rows[i].querySelector('span');
+            assert(label, 'slot ' + i + ' has a label');
+            labels.push(label.textContent);
+            var key = win.EQUIP_SLOTS[i][0];
+            var button = rows[i].querySelector('[data-equip-slot="' + key + '"]');
+            if (key === 'weapon') {
+                assert(button, 'weapon slot is clickable');
+                assertMatch(button.textContent, 'Bronze sword', 'weapon shows bronze sword');
+                filled += 1;
+            } else if (key === 'shield') {
+                assert(button, 'shield slot is clickable');
+                assertMatch(button.textContent, 'Wooden shield', 'shield shows wooden shield');
+                filled += 1;
+            } else {
+                assert(!button, key + ' empty slot has no remove button');
+                assertMatch(rows[i].textContent, 'None', key + ' shows None');
+                empty += 1;
+            }
+        }
+        assertEqual(labels.join(','),
+            'Head,Cape,Neck,Ammo,Weapon,Body,Shield,Legs,Hands,Feet,Ring',
+            'worn rows follow OSRS order');
+        assertEqual(filled, 2, 'sword and shield are worn');
+        assertEqual(empty, 9, 'nine empty slots');
+
+        var worn = win.document.getElementById('equip-grid').innerText;
+        assertEqual(worn.indexOf('16'), -1, 'worn tab hides sword damage');
+        assertEqual(worn.toLowerCase().indexOf('defence'), -1, 'worn tab hides shield defence');
+        var renderSrc = String(win.Hud.renderEquip);
+        assertEqual(renderSrc.indexOf('damage'), -1, 'renderEquip does not read item damage');
+        assertEqual(renderSrc.indexOf('defence'), -1, 'renderEquip does not read item defence');
+
+        var leftover = { equipment: { weapon: 'sword' } };
+        win.ensureEquipment(leftover);
+        assertEqual(leftover.equipment.head, null, 'ensureEquipment fills missing head');
+        assertEqual(leftover.equipment.ring, null, 'ensureEquipment fills missing ring');
+        assertEqual(leftover.equipment.shield, null, 'ensureEquipment fills missing shield');
+        assertEqual(leftover.equipment.weapon, 'sword', 'ensureEquipment keeps worn sword');
+
+        hero.equipment = { weapon: 'sword' };
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        rows = win.document.querySelectorAll('#equip-grid .equip-row');
+        assertEqual(rows.length, 11, 'partial equipment still renders eleven rows');
+        assertMatch(win.document.getElementById('equip-grid').innerText, 'None', 'missing slots show None');
+        assert(win.document.querySelector('#equip-grid [data-equip-slot="weapon"]'), 'partial hero still shows sword');
+        assert(!win.document.querySelector('#equip-grid [data-equip-slot="shield"]'), 'missing shield stays empty');
+
+        win.ensureEquipment(hero);
+        hero.equipment.shield = 'shield';
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('hud: skills tab lists twelve skills with icons', function (win, H) {
     var expected = [
         ['attack', 'Attack'],

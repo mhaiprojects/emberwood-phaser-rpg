@@ -1184,7 +1184,10 @@ var Hud = {
     },
 
     renderEquip: function (hero) {
-        var slots = [
+        if (typeof ensureEquipment === 'function') {
+            ensureEquipment(hero);
+        }
+        var slots = typeof EQUIP_SLOTS !== 'undefined' ? EQUIP_SLOTS : [
             ['weapon', 'Weapon'],
             ['shield', 'Shield']
         ];
