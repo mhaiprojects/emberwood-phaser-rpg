@@ -188,7 +188,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Cooking XP via raw food on a fire or range. — Conclusion: From spawn (328,248) Inv Use raw shrimp→haven range cooks qty −1, Cooking +30, chat `You use the Raw shrimp on the fire.`; fire kind +30 more; Skills + XP drop; no Fishing. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Fishing XP at Southshore spots. — Conclusion: From spawn (328,248) left-click Southshore fishing spots grant Fishing +10, chat `You fish at the fishing spot.`; helper +10 more; Skills + XP drop; no Woodcutting. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Woodcutting XP on Northwood trees. — Conclusion: From spawn (328,248) left-click Northwood trees grant Woodcutting +10, chat `You chop the tree.`; helper +10 more; Skills + XP drop; no Mining. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [todo] Mining XP on Darkmine rocks. — Conclusion: —
+- [done] Mining XP on Darkmine rocks. — Conclusion: From spawn (328,248) left-click Darkmine rocks grant Mining +10, chat `You mine the rock.`; helper +10 more; Skills + XP drop; no Firemaking. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [todo] Crafting XP (cowhide → leather, or string + leather). — Conclusion: —
 - [todo] Show skill total and a single derived combat level on the side HUD (replace the ambiguous `hero.level`). — Conclusion: —
 - [todo] Gate resources by level (e.g. copper/tin 1, iron 15) with a clear “You need level N” chat. — Conclusion: —

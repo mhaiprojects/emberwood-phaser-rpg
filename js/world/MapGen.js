@@ -447,6 +447,33 @@ function woodcutTreeAt(tx, ty, zoneId, grid) {
     return { x: tx, y: ty };
 }
 
+function mineRockAt(tx, ty, zoneId, grid, opts) {
+    if (zoneId !== 'darkmine' || !inBounds(tx, ty)) {
+        return null;
+    }
+    opts = opts || {};
+    if (opts.interior) {
+        return null;
+    }
+    if (grid) {
+        if (!grid[ty] || grid[ty][tx] !== TILE.ROCK) {
+            return null;
+        }
+        var houseRects = opts.houseRects;
+        if (!houseRects && typeof housesForBiome === 'function') {
+            houseRects = housesForBiome('mine');
+        }
+        if (sceneryKindAt(grid, tx, ty, {
+            houseRects: houseRects,
+            interior: false,
+            zoneId: zoneId
+        }) !== 'rock') {
+            return null;
+        }
+    }
+    return { x: tx, y: ty };
+}
+
 function agilityShortcutAt(tx, ty, zoneId) {
     if (!AGILITY_SHORTCUT) {
         return null;

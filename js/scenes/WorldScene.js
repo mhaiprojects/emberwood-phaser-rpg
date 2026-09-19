@@ -1199,6 +1199,16 @@ var WorldScene = new Phaser.Class({
             this.tryChopTree(scenery);
             return;
         }
+        if (scenery && scenery.kind === 'rock' && typeof mineRockAt === 'function'
+                && mineRockAt(scenery.tx, scenery.ty, this.zoneId, this.tileGrid, {
+                    houseRects: this.houseRectsNow(),
+                    interior: !!this.interiorId
+                })) {
+            this.engageTarget = null;
+            this.talkTarget = null;
+            this.tryMineRock(scenery);
+            return;
+        }
         if (scenery && !(typeof isWalkableExamineKind === 'function' && isWalkableExamineKind(scenery.kind))) {
             this.engageTarget = null;
             this.talkTarget = null;
@@ -1280,6 +1290,20 @@ var WorldScene = new Phaser.Class({
         }
         this.refreshHud();
         Hud.log('You chop the tree.');
+        return true;
+    },
+
+    tryMineRock: function (hit) {
+        var hero = this.registry.get('hero');
+        var result = typeof mineAtRock === 'function' ? mineAtRock(hero) : null;
+        if (!result || !result.ok) {
+            return this.examineScenery(hit);
+        }
+        if (Hud.saveHero) {
+            Hud.saveHero(hero);
+        }
+        this.refreshHud();
+        Hud.log('You mine the rock.');
         return true;
     },
 

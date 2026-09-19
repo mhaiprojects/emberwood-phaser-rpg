@@ -17,6 +17,7 @@ var WIND_STRIKE_XP = 5;
 var WIND_STRIKE_DAMAGE = 2;
 var FISH_SPOT_XP = 10;
 var WOODCUT_TREE_XP = 10;
+var MINE_ROCK_XP = 10;
 
 var SKILL_NAMES = [
     ['attack', 'Attack'],
@@ -352,6 +353,14 @@ function chopAtTree(hero) {
     }
     gainSkillXp(hero, 'woodcutting', WOODCUT_TREE_XP);
     return { ok: true, xp: WOODCUT_TREE_XP };
+}
+
+function mineAtRock(hero) {
+    if (!hero || !hero.skills || !hero.skills.mining) {
+        return null;
+    }
+    gainSkillXp(hero, 'mining', MINE_ROCK_XP);
+    return { ok: true, xp: MINE_ROCK_XP };
 }
 
 function buryItem(hero, id) {

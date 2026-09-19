@@ -1,7 +1,7 @@
 /**
  * Playwright proof: from spawn (328, 248), left-click Northwood
  * trees grant Woodcutting XP. Phaser keyboard stays off.
- * Mining is not this tick.
+ * Mining XP is a later tick.
  *
  * Headless via tests/playwright-session.js (reuses a live server, or starts
  * python3 -m http.server on this port and kills that PID on exit).
@@ -52,9 +52,6 @@
             }
             if (typeof window.chopTree === 'function' || typeof window.woodcutTree === 'function') {
                 throw new Error('chopTree / woodcutTree started this tick');
-            }
-            if (typeof window.mineRock === 'function' || typeof window.mineAtRock === 'function') {
-                throw new Error('Mining started this tick');
             }
             if (window.WOODCUT_TREE_XP !== 10) {
                 throw new Error('WOODCUT_TREE_XP is ' + window.WOODCUT_TREE_XP + ' not 10');

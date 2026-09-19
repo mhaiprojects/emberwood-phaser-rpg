@@ -9318,8 +9318,6 @@ EmberwoodTests.add('skills: Northwood trees grant Woodcutting XP', function (win
         assertEqual(win.WOODCUT_TREE_XP, 10, 'Northwood trees grant 10 Woodcutting XP');
         assertEqual(typeof win.chopTree, 'undefined', 'chopTree helper is not this tick');
         assertEqual(typeof win.woodcutTree, 'undefined', 'woodcutTree helper is not this tick');
-        assertEqual(typeof win.mineRock, 'undefined', 'Mining is not this tick');
-        assertEqual(typeof win.mineAtRock, 'undefined', 'Mining helper is not this tick');
 
         function clickTile(tx, ty) {
             var pt = win.tileCenter(tx, ty);
@@ -9464,9 +9462,218 @@ EmberwoodTests.add('skills: Northwood trees grant Woodcutting XP', function (win
         assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
         assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
         assert(!win.game.input.keyboard, 'Phaser keyboard still off');
-        assertEqual(typeof win.mineRock, 'undefined', 'Mining still not this tick');
-        assertEqual(typeof win.mineAtRock, 'undefined', 'Mining helper still not this tick');
         assertEqual(H.hero(win).skills.mining.xp, 0, 'Mining XP still 0');
+    });
+});
+
+EmberwoodTests.add('skills: Darkmine rocks grant Mining XP', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, true);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.clearLoot();
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        if (win.Hud.hideContextMenu) {
+            win.Hud.hideContextMenu();
+        }
+        if (win.Hud.clearUseOn) {
+            win.Hud.clearUseOn();
+        }
+        parkWorldBodies(world);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof win.mineAtRock, 'function', 'mineAtRock helper');
+        assertEqual(typeof win.mineRockAt, 'function', 'mineRockAt helper');
+        assertEqual(typeof win.gainSkillXp, 'function', 'gainSkillXp helper');
+        assertEqual(win.MINE_ROCK_XP, 10, 'Darkmine rocks grant 10 Mining XP');
+        assertEqual(typeof win.mineRock, 'undefined', 'mineRock helper is not this tick');
+        assertEqual(typeof win.lightFire, 'undefined', 'Firemaking is not this tick');
+        assertEqual(typeof win.firemakeAt, 'undefined', 'Firemaking helper is not this tick');
+
+        function clickTile(tx, ty) {
+            var pt = win.tileCenter(tx, ty);
+            world.onClick({ worldX: pt.x, worldY: pt.y });
+            return pt;
+        }
+
+        function findMineRock(grid, skip) {
+            var y;
+            var x;
+            skip = skip || {};
+            for (y = 0; y < grid.length; y++) {
+                for (x = 0; x < grid[y].length; x++) {
+                    if (skip.x === x && skip.y === y) {
+                        continue;
+                    }
+                    if (win.mineRockAt(x, y, 'darkmine', grid)) {
+                        return { x: x, y: y };
+                    }
+                }
+            }
+            return null;
+        }
+
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(hero.skills.mining.xp, 0, 'Mining XP starts 0');
+        assertEqual(hero.skills.mining.level, 1, 'Mining starts 1');
+        assertEqual(hero.skills.woodcutting.xp, 0, 'Woodcutting XP stays 0');
+        assertEqual(hero.skills.crafting.xp, 0, 'Crafting XP stays 0');
+        assertEqual(hero.level, 3, 'starter combat level 3');
+        var havenRock = { x: win.HAVEN_GATE_TILE.x, y: win.HAVEN_GATE_TILE.y + 2 };
+        assertEqual(world.tileGrid[havenRock.y][havenRock.x], win.TILE.ROCK, 'haven gate neighbor is ROCK');
+        assertEqual(win.mineRockAt(havenRock.x, havenRock.y, 'haven', world.tileGrid), null, 'mine rocks are zone-gated');
+        assertEqual(win.examineSceneryText('rock'), "It's a rock.", 'rock examine text');
+
+        clickTile(havenRock.x, havenRock.y);
+        hero = H.hero(win);
+        assertEqual(H.lastChat(win), "It's a rock.", 'haven rock still examines');
+        assertEqual(hero.skills.mining.xp, 0, 'haven rock grants no Mining XP');
+
+        H.enterZone(win, 'darkmine');
+        world = H.world(win);
+        H.setAutoAttack(win, false);
+        world.encounterLock = false;
+        world.engageTarget = null;
+        world.talkTarget = null;
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        parkWorldBodies(world);
+        hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        var rock = findMineRock(world.tileGrid);
+        assert(rock, 'Darkmine has a mineable ROCK');
+        var rock2 = findMineRock(world.tileGrid, rock);
+        assert(rock2, 'Darkmine has a second mineable ROCK');
+        var flower = null;
+        var y;
+        var x;
+        for (y = 0; y < world.tileGrid.length; y++) {
+            for (x = 0; x < world.tileGrid[y].length; x++) {
+                if (!flower && world.tileGrid[y][x] === win.TILE.FLOWER) {
+                    flower = { tx: x, ty: y };
+                }
+            }
+        }
+        var wall = { x: win.MINE_SHAFT_HOUSE.x + Math.floor(win.MINE_SHAFT_HOUSE.w / 2) - 1, y: win.MINE_SHAFT_HOUSE.y + win.MINE_SHAFT_HOUSE.h - 1 };
+        assertEqual(world.tileGrid[wall.y][wall.x], win.TILE.ROCK, 'shaft door west frame is ROCK');
+        assertEqual(
+            win.sceneryKindAt(world.tileGrid, rock.x, rock.y, {
+                zoneId: 'darkmine',
+                houseRects: win.housesForBiome('mine')
+            }),
+            'rock',
+            'darkmine rock kind'
+        );
+        assertEqual(win.mineRockAt(rock.x, rock.y, 'darkmine', world.tileGrid).x, rock.x, 'mineRockAt matches darkmine');
+        assertEqual(win.mineRockAt(rock.x, rock.y, 'haven', world.tileGrid), null, 'same tile is not mined outside darkmine');
+        assertEqual(win.mineRockAt(wall.x, wall.y, 'darkmine', world.tileGrid), null, 'shaft house wall is not mined');
+
+        H.click(win, '#tab-bar button[data-tab="skills"]');
+        var dropsHost = win.Hud.ensureXpDrops();
+        assert(dropsHost && dropsHost.id === 'xp-drops', 'xp-drops host exists');
+        dropsHost.innerHTML = '';
+        win.Hud.el.log.innerHTML = '';
+
+        clickTile(rock.x, rock.y);
+        hero = H.hero(win);
+        assertEqual(H.lastChat(win), 'You mine the rock.', 'rock click chat');
+        assertEqual(hero.skills.mining.xp, 10, 'rock click grants 10 Mining XP');
+        assertEqual(hero.skills.mining.level, 1, '10 XP does not level Mining');
+        assertEqual(hero.skills.woodcutting.xp, 0, 'rock click does not grant Woodcutting XP');
+        assertEqual(hero.skills.crafting.xp, 0, 'rock click does not grant Crafting XP');
+        assertEqual(hero.level, 3, 'combat level unchanged at Mining 1');
+        assertEqual(H.lootLive(win).length, 0, 'mine does not drop loot');
+        assert(!world.walkTarget, 'mining does not walk');
+        var drops = win.document.querySelectorAll('#xp-drops .xp-drop');
+        assertEqual(drops.length, 1, 'one Mining XP drop');
+        assertEqual(drops[0].getAttribute('data-skill'), 'mining', 'drop skill is mining');
+        assertEqual(drops[0].getAttribute('data-xp'), '10', 'drop amount is 10');
+        var mineIcon = drops[0].querySelector('img.pix');
+        assert(mineIcon && mineIcon.getAttribute('src').indexOf('assets/svg/skills/mining.svg') !== -1, 'Mining skill icon');
+
+        var mineRow = win.document.querySelector('#skills-list [data-skill="mining"]');
+        assert(mineRow, 'Mining Skills row exists');
+        assert(
+            String(mineRow.getAttribute('title') || '').indexOf('10 XP') !== -1,
+            'Skills tab shows Mining XP'
+        );
+
+        dropsHost.innerHTML = '';
+        var helper = win.mineAtRock(hero);
+        assert(helper && helper.ok, 'helper mines a rock');
+        assertEqual(helper.xp, 10, 'helper grants 10 Mining XP');
+        assertEqual(hero.skills.mining.xp, 20, 'helper grants another 10 Mining XP');
+        assertEqual(hero.skills.mining.level, 1, '20 XP does not level Mining');
+        assertEqual(hero.skills.woodcutting.xp, 0, 'helper does not grant Woodcutting XP');
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        drops = win.document.querySelectorAll('#xp-drops .xp-drop');
+        assertEqual(drops.length, 1, 'one helper Mining XP drop');
+        assertEqual(drops[0].getAttribute('data-skill'), 'mining', 'helper drop skill is mining');
+        assertEqual(drops[0].getAttribute('data-xp'), '10', 'helper drop amount is 10');
+
+        H.click(win, '#tab-bar button[data-tab="skills"]');
+        mineRow = win.document.querySelector('#skills-list [data-skill="mining"]');
+        assert(
+            String(mineRow.getAttribute('title') || '').indexOf('20 XP') !== -1,
+            'Skills tab shows helper Mining XP'
+        );
+
+        dropsHost.innerHTML = '';
+        clickTile(rock2.x, rock2.y);
+        hero = H.hero(win);
+        assertEqual(hero.skills.mining.xp, 30, 'second rock grants another 10 Mining XP');
+        assertEqual(H.lastChat(win), 'You mine the rock.', 'second rock chat');
+
+        clickTile(wall.x, wall.y);
+        hero = H.hero(win);
+        assertEqual(H.lastChat(win), "It's a house wall.", 'shaft wall still examines');
+        assertEqual(hero.skills.mining.xp, 30, 'shaft wall grants no Mining XP');
+
+        if (flower) {
+            clickTile(flower.tx, flower.ty);
+            hero = H.hero(win);
+            assertEqual(hero.skills.mining.xp, 30, 'flower grants no Mining XP');
+        }
+
+        world.encounterLock = true;
+        clickTile(rock.x, rock.y);
+        assertEqual(H.hero(win).skills.mining.xp, 30, 'encounterLock grants no Mining XP');
+        world.encounterLock = false;
+
+        H.enterZone(win, 'haven');
+        world = H.world(win);
+        world.encounterLock = false;
+        parkWorldBodies(world);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        clickTile(havenRock.x, havenRock.y);
+        hero = H.hero(win);
+        assertEqual(H.lastChat(win), "It's a rock.", 'haven rock still examines after mine');
+        assertEqual(hero.skills.mining.xp, 30, 'haven rock still grants no Mining XP');
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        assertEqual(typeof win.lightFire, 'undefined', 'Firemaking still not this tick');
+        assertEqual(typeof win.firemakeAt, 'undefined', 'Firemaking helper still not this tick');
+        assertEqual(H.hero(win).skills.crafting.xp, 0, 'Crafting XP still 0');
     });
 });
 
