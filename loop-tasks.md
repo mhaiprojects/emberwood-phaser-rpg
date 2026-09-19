@@ -217,7 +217,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [todo] Use bones on the Emberhaven shrine for bonus Prayer XP (once use-on exists). — Conclusion: —
 - [todo] Depleted-spot timers comparable to OSRS (tree ~seconds, rock ~seconds, fish spot moves). — Conclusion: —
 - [todo] Do not auto-cook or auto-smelt; each step is a separate click (authentic skilling loop). — Conclusion: —
-- [verify] Gathering uses Phaser 3 arcade overlap/distance only (no Phaser 4). — Conclusion: —
+- [done] Gathering uses Phaser 3 arcade overlap/distance only (no Phaser 4). — Conclusion: From spawn (328,248) collectNearbyLoot/pickLoot use Phaser 3 Distance.Between <18 (18 miss / 17 gather); arcade default; no Phaser 4 createLayer. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 
 ## 8. Shops / economy / gold (14)
 
@@ -454,4 +454,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 81 | 2026-09-19 | gainSkillXp level curve 1 + floor(sqrt(xp / 50)); Hitpoints never below 10 | done — spawn (328,248) Attack 50→2, Strength 200→3; 1154 XP curves to 5 but Hitpoints stays ≥10; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 82 | 2026-09-19 | Hitpoints level-up sets maxHp = 10 * level and chats Skill increased to N | done — spawn (328,248) 5000 XP → 11 / 110 + `Hitpoints increased to 11.`; 6050 → 12 / 120; Attack chat does not change maxHp; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 83 | 2026-09-19 | Skill icons resolve under assets/svg/skills/{id}.svg | done — spawn (328,248) skillIcon + 12 Skills-tab icons + side HUD Hitpoints fetch 200 SVG and decode; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 84 | 2026-09-19 | Gathering uses Phaser 3 arcade overlap/distance only (no Phaser 4) | done — spawn (328,248) Distance.Between <18 (18 miss / 17 gather); arcade default; no Phaser 4; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 

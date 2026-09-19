@@ -6717,3 +6717,106 @@ EmberwoodTests.add('world: map is 36x28 tiles at 16px via Phaser 3 make.tilemap 
         });
     });
 });
+
+EmberwoodTests.add('world: gathering uses Phaser 3 arcade overlap or distance only', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, true);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.clearLoot();
+        world.exitLock = true;
+        world.encounterLock = false;
+        assertEqual(spawn.x, 328, 'spawn x tile center');
+        assertEqual(spawn.y, 248, 'spawn y tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.') === 0, 'Phaser 3');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        var physicsDefault = win.game.config && win.game.config.physics && win.game.config.physics.default;
+        assertEqual(physicsDefault, 'arcade', 'Phaser 3 arcade is the physics default');
+        assert(world.physics && world.physics.world, 'scene has Phaser 3 arcade world');
+        assertEqual(typeof world.physics.add.overlap, 'function', 'arcade overlap helper exists');
+        assertEqual(typeof win.Phaser.Math.Distance.Between, 'function', 'Phaser 3 Distance.Between');
+        assert(win.Phaser.Physics && win.Phaser.Physics.Arcade, 'Phaser 3 Arcade namespace');
+        assertEqual(typeof world.createLayer, 'undefined', 'Phaser 4 createLayer is not on the scene');
+        assertEqual(typeof world.collectNearbyLoot, 'function', 'collectNearbyLoot exists');
+        assertEqual(typeof world.pickLoot, 'function', 'pickLoot exists');
+        assertEqual(typeof world.tryPickup, 'function', 'tryPickup exists');
+
+        function assertGatherApi(fn, label) {
+            var src = Function.prototype.toString.call(fn);
+            var usesDistance = src.indexOf('Distance.Between') !== -1;
+            var usesOverlap = src.indexOf('physics') !== -1 && src.indexOf('overlap') !== -1;
+            assert(usesDistance || usesOverlap, label + ' uses Phaser 3 Distance.Between or arcade overlap');
+            assert(src.indexOf('overlapRect') === -1, label + ' does not use overlapRect');
+            assert(src.indexOf('overlapCirc') === -1, label + ' does not use overlapCirc');
+            assert(src.indexOf('Matter') === -1, label + ' does not use Matter');
+            assert(src.indexOf('SpatialHash') === -1, label + ' does not use SpatialHash');
+        }
+        assertGatherApi(world.collectNearbyLoot, 'collectNearbyLoot');
+        assertGatherApi(world.pickLoot, 'pickLoot');
+
+        var gold = H.hero(win).gold;
+        world.spawnLoot(200, 200, [{ id: 'coins', qty: 1 }]);
+        var live = (world.groundLoot || []).filter(function (entry) { return entry && !entry.taken && entry.sprite; });
+        assertEqual(live.length, 1, 'one gather pile');
+        var drop = live[0];
+        assert(!drop.sprite.body, 'loot is a Phaser image, not an arcade body');
+        var sx = drop.sprite.x;
+        var sy = drop.sprite.y;
+        assertEqual(sx, 200, 'single drop x');
+        assertEqual(sy, 204, 'single drop y+4');
+
+        world.placePlayer(sx, sy + 18);
+        var at18 = win.Phaser.Math.Distance.Between(world.player.x, world.player.y, sx, sy);
+        assertEqual(at18, 18, 'player is exactly 18px from pile');
+        world.collectNearbyLoot();
+        assertEqual(H.hero(win).gold, gold, 'exactly 18px does not gather');
+        assert(!drop.taken, 'pile stays at 18px');
+
+        world.placePlayer(sx, sy + 17);
+        var at17 = win.Phaser.Math.Distance.Between(world.player.x, world.player.y, sx, sy);
+        assertEqual(at17, 17, 'player is 17px from pile');
+        world.collectNearbyLoot();
+        assertEqual(H.hero(win).gold, gold + 1, 'within 18px gathers via Distance.Between');
+        assert(drop.taken, 'pile taken inside range');
+        assert(H.chatHas(win, 'You pick up'), 'gather chat');
+
+        world.clearLoot();
+        var gold2 = H.hero(win).gold;
+        world.spawnLoot(200, 200, [{ id: 'coins', qty: 2 }]);
+        live = (world.groundLoot || []).filter(function (entry) { return entry && !entry.taken && entry.sprite; });
+        drop = live[0];
+        sx = drop.sprite.x;
+        sy = drop.sprite.y;
+        world.placePlayer(spawn.x, spawn.y);
+        assert(!world.pickLoot(sx, sy + 18, 18), 'click at 18px misses');
+        var hit = world.pickLoot(sx, sy + 17, 18);
+        assert(hit, 'click within 18px hits via Distance.Between');
+        world.tryPickup(hit);
+        assertEqual(H.hero(win).gold, gold2 + 2, 'click gather');
+
+        world.clearLoot();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        H.clearKeys(win);
+        H.key(win, 'KeyW', 'w', 'keydown');
+        return H.sleep(400).then(function () {
+            assert(world.player.y < 248 - 12, 'W from spawn walks north via Keys.js, y=' + world.player.y);
+            H.key(win, 'KeyW', 'w', 'keyup');
+            H.clearKeys(win);
+            world.player.body.setVelocity(0, 0);
+            world.placePlayer(spawn.x, spawn.y);
+            assertEqual(Math.round(world.player.x), 328, 'restored spawn x');
+            assertEqual(Math.round(world.player.y), 248, 'restored spawn y');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        });
+    });
+});
