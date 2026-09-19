@@ -77,7 +77,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Click-to-walk pathing through 1-tile corridors (do not slide off the door tile). — Conclusion: A* threads courtyard gate (23,15) and house south-wall door (11,10); no corner-cut through frames. Suite gate-path case pass.
 - [done] Diagonal door entry (W+D into a 1-tile gap without catching the frame). — Conclusion: From a south-offset stand just west of courtyard gate (23,15), Keys.js W+D slides into the 1-tile PATH (x>384, y≈247) without catching the ROCK frame; aligned D still walks through and the south wall still blocks. Phaser 3.90 keyboard off. Dedicated + Playwright 2/2.
 - [done] Closed/locked doors + keys. — Conclusion: From spawn (328,248) Millfields farm door (26,17) is TILE.DOOR and blocks Keys.js W without a key (`The door is locked.`); addItem key unlocks to PATH and W walks in. Phaser 3.90 keyboard off. Dedicated + Playwright 1/1.
-- [todo] Door open/close animation. — Conclusion: —
+- [done] Door open/close animation. — Conclusion: From spawn (328,248) Millfields farm door (26,17) stays locked without a key; Iron key tweens a leaf open to PATH; walking away closes it; bump reopens (`You open the door.`). Phaser 3.90 keyboard off. Dedicated + Playwright 1/1.
 - [todo] Examine door (flavor text on the courtyard gate and house doors). — Conclusion: —
 - [done] Giant mobs (drake) occupy more than 1 tile (sprite + 28×28 body). — Conclusion: Drake world scale 2, display 48px, body 28×28; not required to fit 1-tile interiors. Suite 35/35.
 - [todo] Giant mobs block 2×2 (or more) and cannot enter 1-tile interiors. — Conclusion: —
@@ -496,4 +496,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 123 | 2026-09-19 | Southshore dock/boat and Restless Graves tombs as examine objects | done — spawn (328,248) left-click dock/boat/tombs log examine; right-click dock Examine; no travel; lock/battle ignore; Phaser keyboard off; dedicated + Playwright 1/1 |
 | 124 | 2026-09-19 | Diagonal door entry (W+D into a 1-tile gap without catching the frame) | done — south-offset W+D at gate (23,15) slides through (x>384, y≈247); aligned D still passes; south ROCK still blocks; Phaser keyboard off; dedicated + Playwright 2/2 |
 | 125 | 2026-09-19 | Closed/locked doors + keys | done — spawn (328,248) Millfields farm door (26,17) TILE.DOOR blocks W (`The door is locked.`); addItem key unlocks to PATH and W walks in; Phaser keyboard off; dedicated + Playwright 1/1 |
+| 126 | 2026-09-19 | Door open/close animation | done — spawn (328,248) farm door (26,17) locked without a key; Iron key tweens leaf open to PATH; walk-away closes; bump reopens; Phaser keyboard off; dedicated + Playwright 1/1 |
 

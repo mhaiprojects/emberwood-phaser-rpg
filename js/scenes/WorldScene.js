@@ -6,6 +6,8 @@ var RUN_RESTORE_PER_SEC = 15;
 var DEST_X_COLOR = 0xf8ff38;
 var DEST_X_ARM = 8;
 var MOB_RESPAWN_MS = 18000;
+var DOOR_ANIM_MS = 220;
+var DOOR_OPEN_SCALE_X = 0.18;
 
 var WorldScene = new Phaser.Class({
     Extends: Phaser.Scene,
@@ -34,6 +36,7 @@ var WorldScene = new Phaser.Class({
         this.lootZoneState = {};
         this.mobZoneState = {};
         this.unlockedDoors = {};
+        this.doorFx = {};
         this.lockChatUntil = 0;
 
         this.marker = this.add.rectangle(0, 0, 6, 6, DEST_X_COLOR).setVisible(false).setDepth(8);
@@ -143,23 +146,142 @@ var WorldScene = new Phaser.Class({
 
     applyUnlockedDoors: function () {
         this.unlockedDoors = this.unlockedDoors || {};
-        if (!this.tileGrid || !this.ground) {
+        this.doorFx = this.doorFx || {};
+        // Unlocked doors stay TILE.DOOR until opened this visit so open/close can animate.
+    },
+
+    playerNearDoor: function (tx, ty) {
+        if (!this.player) {
+            return false;
+        }
+        var at = worldToTile(this.player.x, this.player.y);
+        return Math.abs(at.tx - tx) + Math.abs(at.ty - ty) <= 1;
+    },
+
+    clearDoorFx: function () {
+        this.doorFx = this.doorFx || {};
+        var key;
+        for (key in this.doorFx) {
+            var fx = this.doorFx[key];
+            if (fx && fx.tween && fx.tween.stop) {
+                fx.tween.stop();
+            }
+            if (fx && fx.leaf && fx.leaf.destroy) {
+                fx.leaf.destroy();
+            }
+        }
+        this.doorFx = {};
+    },
+
+    ensureDoorLeaf: function (tx, ty) {
+        this.doorFx = this.doorFx || {};
+        var key = this.doorUnlockKey(tx, ty);
+        var fx = this.doorFx[key];
+        if (fx && fx.leaf && fx.leaf.active) {
+            return fx;
+        }
+        if (fx && fx.leaf && fx.leaf.destroy) {
+            fx.leaf.destroy();
+        }
+        var size = typeof TILE_SIZE === 'number' ? TILE_SIZE : 16;
+        var leaf = this.add.rectangle(tx * size + 3, ty * size + size / 2, 10, 14, 0x7a4e28);
+        leaf.setOrigin(0, 0.5);
+        leaf.setDepth(5);
+        if (leaf.setStrokeStyle) {
+            leaf.setStrokeStyle(1, 0x503018);
+        }
+        this.doorFx[key] = { tx: tx, ty: ty, leaf: leaf, state: 'closed', tween: null };
+        return this.doorFx[key];
+    },
+
+    playDoorOpen: function (tx, ty) {
+        var fx = this.ensureDoorLeaf(tx, ty);
+        var self = this;
+        var key = this.doorUnlockKey(tx, ty);
+        if (fx.state === 'opening') {
             return;
         }
-        var prefix = (this.zoneId || '') + ':';
+        if (fx.state === 'open' && fx.leaf.scaleX <= DOOR_OPEN_SCALE_X + 0.02) {
+            return;
+        }
+        if (fx.tween && fx.tween.stop) {
+            fx.tween.stop();
+        }
+        fx.state = 'opening';
+        fx.tween = this.tweens.add({
+            targets: fx.leaf,
+            scaleX: DOOR_OPEN_SCALE_X,
+            duration: DOOR_ANIM_MS,
+            ease: 'Sine.easeIn',
+            onComplete: function () {
+                if (!self.doorFx || !self.doorFx[key]) {
+                    return;
+                }
+                fx.state = 'open';
+                fx.tween = null;
+            }
+        });
+    },
+
+    finishDoorClose: function (tx, ty) {
+        var key = this.doorUnlockKey(tx, ty);
+        if (this.playerNearDoor(tx, ty)) {
+            this.playDoorOpen(tx, ty);
+            return;
+        }
+        if (this.tileGrid && this.tileGrid[ty] && this.tileGrid[ty][tx] === TILE.PATH) {
+            this.tileGrid[ty][tx] = TILE.DOOR;
+            if (this.ground) {
+                this.ground.putTileAt(TILE.DOOR, tx, ty);
+            }
+        }
+        var fx = this.doorFx && this.doorFx[key];
+        if (fx && fx.leaf && fx.leaf.destroy) {
+            fx.leaf.destroy();
+        }
+        if (this.doorFx) {
+            delete this.doorFx[key];
+        }
+    },
+
+    playDoorClose: function (tx, ty) {
+        var fx = this.ensureDoorLeaf(tx, ty);
+        var self = this;
+        var key = this.doorUnlockKey(tx, ty);
+        if (fx.state === 'closing' || this.playerNearDoor(tx, ty)) {
+            return;
+        }
+        if (fx.tween && fx.tween.stop) {
+            fx.tween.stop();
+        }
+        fx.state = 'closing';
+        fx.tween = this.tweens.add({
+            targets: fx.leaf,
+            scaleX: 1,
+            duration: DOOR_ANIM_MS,
+            ease: 'Sine.easeOut',
+            onComplete: function () {
+                if (!self.doorFx || !self.doorFx[key]) {
+                    return;
+                }
+                self.finishDoorClose(tx, ty);
+            }
+        });
+    },
+
+    updateDoors: function () {
+        if (!this.doorFx || this.encounterLock || this.interiorId) {
+            return;
+        }
         var key;
-        for (key in this.unlockedDoors) {
-            if (!this.unlockedDoors[key] || key.indexOf(prefix) !== 0) {
+        for (key in this.doorFx) {
+            var fx = this.doorFx[key];
+            if (!fx || fx.state === 'opening' || fx.state === 'closing') {
                 continue;
             }
-            var parts = key.slice(prefix.length).split(',');
-            var tx = parseInt(parts[0], 10);
-            var ty = parseInt(parts[1], 10);
-            if (!this.tileGrid[ty] || this.tileGrid[ty][tx] !== TILE.DOOR) {
-                continue;
+            if (fx.state === 'open' && !this.playerNearDoor(fx.tx, fx.ty)) {
+                this.playDoorClose(fx.tx, fx.ty);
             }
-            this.tileGrid[ty][tx] = TILE.PATH;
-            this.ground.putTileAt(TILE.PATH, tx, ty);
         }
     },
 
@@ -167,30 +289,33 @@ var WorldScene = new Phaser.Class({
         if (!this.tileGrid || !this.tileGrid[ty] || this.tileGrid[ty][tx] !== TILE.DOOR) {
             return false;
         }
+        this.ensureDoorLeaf(tx, ty);
         this.tileGrid[ty][tx] = TILE.PATH;
         if (this.ground) {
             this.ground.putTileAt(TILE.PATH, tx, ty);
         }
         this.unlockedDoors = this.unlockedDoors || {};
         this.unlockedDoors[this.doorUnlockKey(tx, ty)] = true;
+        this.playDoorOpen(tx, ty);
         return true;
     },
 
     handleLockedDoor: function (tx, ty) {
         var hero = this.registry.get('hero');
         var keyId = (LOCKED_DOOR && LOCKED_DOOR.keyId) || 'key';
-        if (heroHasItem(hero, keyId)) {
-            if (this.unlockDoor(tx, ty)) {
-                Hud.log('You unlock the door.');
+        var known = !!(this.unlockedDoors && this.unlockedDoors[this.doorUnlockKey(tx, ty)]);
+        if (!known && !heroHasItem(hero, keyId)) {
+            var now = this.time ? this.time.now : 0;
+            if (now && now < this.lockChatUntil) {
+                return;
             }
+            this.lockChatUntil = now + 800;
+            Hud.log('The door is locked.');
             return;
         }
-        var now = this.time ? this.time.now : 0;
-        if (now && now < this.lockChatUntil) {
-            return;
+        if (this.unlockDoor(tx, ty)) {
+            Hud.log(known ? 'You open the door.' : 'You unlock the door.');
         }
-        this.lockChatUntil = now + 800;
-        Hud.log('The door is locked.');
     },
 
     tryLockedDoor: function () {
@@ -311,6 +436,7 @@ var WorldScene = new Phaser.Class({
 
     clearWorldObjects: function () {
         this.clearWalk();
+        this.clearDoorFx();
         this.engageTarget = null;
         this.talkTarget = null;
         this.tileGrid = null;
@@ -1587,6 +1713,7 @@ var WorldScene = new Phaser.Class({
 
         this.wanderMobs();
         this.tryLockedDoor();
+        this.updateDoors();
         this.checkExits();
     }
 });

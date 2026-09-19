@@ -8893,6 +8893,140 @@ EmberwoodTests.add('world: locked door blocks until the player has a key', funct
     });
 });
 
+EmberwoodTests.add('world: door open/close animation on the Millfields farm door', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(spawn.x, 328, 'spawn x tile center');
+        assertEqual(spawn.y, 248, 'spawn y tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.') === 0, 'Phaser 3');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(typeof world.playDoorOpen, 'function', 'playDoorOpen exists');
+        assertEqual(typeof world.playDoorClose, 'function', 'playDoorClose exists');
+        assertEqual(typeof world.updateDoors, 'function', 'updateDoors exists');
+
+        var door = win.LOCKED_DOOR;
+        assert(door, 'LOCKED_DOOR def exists');
+        assertEqual(door.zoneId, 'millfields', 'locked door is in Millfields');
+        assertEqual(door.tx, 26, 'farm door tx');
+        assertEqual(door.ty, 17, 'farm door ty');
+        assertEqual(door.keyId, 'key', 'door wants the Iron key');
+
+        H.enterZone(win, 'millfields');
+        world = H.world(win);
+        H.setAutoAttack(win, false);
+        parkWorldBodies(world);
+        assertEqual(world.tileGrid[door.ty][door.tx], win.TILE.DOOR, 'farm door starts closed');
+        var hero = H.hero(win);
+        assertEqual(win.heroHasItem(hero, 'key'), false, 'starter kit has no key');
+        var south = win.tileCenter(door.tx, door.ty + 1);
+        var insideY = door.ty * (win.TILE_SIZE || 16);
+        var doorKey = world.doorUnlockKey(door.tx, door.ty);
+        world.placePlayer(south.x, south.y);
+        world.player.body.setVelocity(0, 0);
+        world.clearWalk();
+        world.exitLock = true;
+        world.encounterLock = false;
+        H.clearKeys(win);
+        return H.holdKey(win, 'KeyW', 'w', 500).then(function () {
+            H.clearKeys(win);
+            world = H.world(win);
+            world.player.body.setVelocity(0, 0);
+            assert(world.player.y > insideY, 'locked door blocks without a key, y=' + world.player.y);
+            assertEqual(world.tileGrid[door.ty][door.tx], win.TILE.DOOR, 'door stays TILE.DOOR without a key');
+            assert(H.chatHas(win, 'The door is locked.'), 'locked chat');
+            assert(!world.doorFx[doorKey], 'no open leaf while locked');
+            assert(!win.game.input.keyboard, 'Phaser keyboard off after locked bump');
+
+            hero = H.hero(win);
+            win.addItem(hero, 'key', 1);
+            win.game.registry.set('hero', hero);
+            world.placePlayer(south.x, south.y);
+            world.player.body.setVelocity(0, 0);
+            world.clearWalk();
+            world.exitLock = true;
+            world.encounterLock = false;
+            H.clearKeys(win);
+            H.key(win, 'KeyW', 'w', 'keydown');
+            return H.waitUntil(function () {
+                return H.world(win).player.y < insideY;
+            }, 1500, 'Keys.js W through unlocking door');
+        }).then(function () {
+            H.key(win, 'KeyW', 'w', 'keyup');
+            H.clearKeys(win);
+            world = H.world(win);
+            world.player.body.setVelocity(0, 0);
+            assertEqual(world.tileGrid[door.ty][door.tx], win.TILE.PATH, 'unlocked door is PATH');
+            assert(H.chatHas(win, 'You unlock the door.'), 'unlock chat');
+            var fx = world.doorFx[doorKey];
+            assert(fx && fx.leaf && fx.leaf.active, 'open animation leaf exists');
+            assert(fx.leaf.scaleX < 1, 'door leaf tweened open, scaleX=' + fx.leaf.scaleX);
+            assert(fx.state === 'opening' || fx.state === 'open', 'door state is opening or open');
+            assert(world.unlockedDoors[doorKey], 'door stays unlocked');
+            assert(!win.game.input.keyboard, 'Phaser keyboard off after open');
+            return H.waitUntil(function () {
+                var anim = H.world(win).doorFx[doorKey];
+                return anim && anim.state === 'open';
+            }, 800, 'open tween finished');
+        }).then(function () {
+            world = H.world(win);
+            var away = win.tileCenter(door.tx, door.ty + 3);
+            world.placePlayer(away.x, away.y);
+            world.player.body.setVelocity(0, 0);
+            world.clearWalk();
+            H.clearKeys(win);
+            return H.waitUntil(function () {
+                var scene = H.world(win);
+                return scene.tileGrid[door.ty][door.tx] === win.TILE.DOOR && !scene.doorFx[doorKey];
+            }, 1500, 'door closes after walking away');
+        }).then(function () {
+            world = H.world(win);
+            assertEqual(world.tileGrid[door.ty][door.tx], win.TILE.DOOR, 'closed door is TILE.DOOR again');
+            assertEqual(!!world.ground.getTileAt(door.tx, door.ty).collides, true, 'closed door collides');
+            assert(world.unlockedDoors[doorKey], 'close does not re-lock');
+            assert(!world.doorFx[doorKey], 'close tween removes the leaf');
+            world.placePlayer(south.x, south.y);
+            world.player.body.setVelocity(0, 0);
+            world.clearWalk();
+            world.exitLock = true;
+            world.encounterLock = false;
+            H.clearKeys(win);
+            H.key(win, 'KeyW', 'w', 'keydown');
+            return H.waitUntil(function () {
+                return H.world(win).player.y < insideY;
+            }, 1500, 'Keys.js W reopens the unlocked door');
+        }).then(function () {
+            H.key(win, 'KeyW', 'w', 'keyup');
+            H.clearKeys(win);
+            world = H.world(win);
+            world.player.body.setVelocity(0, 0);
+            assert(world.player.y < insideY, 'walked north through the reopened door, y=' + world.player.y);
+            assertEqual(world.tileGrid[door.ty][door.tx], win.TILE.PATH, 'reopened door is PATH');
+            assert(H.chatHas(win, 'You open the door.'), 'reopen chat');
+            var fx = world.doorFx[doorKey];
+            assert(fx && fx.leaf && fx.leaf.active, 'reopen animation leaf exists');
+            assert(fx.leaf.scaleX < 1, 'reopen leaf tweened, scaleX=' + fx.leaf.scaleX);
+            assert(win.heroHasItem(H.hero(win), 'key'), 'key is kept');
+            assert(!win.game.input.keyboard, 'Phaser keyboard off after reopen');
+
+            H.enterZone(win, 'haven');
+            world = H.world(win);
+            world.placePlayer(spawn.x, spawn.y);
+            world.player.body.setVelocity(0, 0);
+            assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+            assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        });
+    });
+});
+
 EmberwoodTests.add('world: Emberhaven bank shop and guild doors enter one indoor tilemap', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');
