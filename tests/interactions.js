@@ -10259,6 +10259,119 @@ EmberwoodTests.add('skills: Firemaking listed and firemakeAt grants Firemaking X
     });
 });
 
+EmberwoodTests.add('skills: unused stretch skills stay backlog-only without empty tabs', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        parkWorldBodies(world);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof win.isStretchSkill, 'function', 'isStretchSkill helper');
+        assert(win.STRETCH_SKILL_NAMES && win.STRETCH_SKILL_NAMES.length === 9, 'nine stretch skills');
+        assertEqual(typeof win.smithBar, 'undefined', 'Smithing is not this tick');
+        assert(!win.ITEM_DB.logs && !win.ITEM_DB.tinderbox && !win.ITEM_DB.ore && !win.ITEM_DB.net,
+            'no gathering section items');
+
+        var expected = [
+            ['agility', 'Agility'],
+            ['thieving', 'Thieving'],
+            ['slayer', 'Slayer'],
+            ['runecraft', 'Runecraft'],
+            ['hunter', 'Hunter'],
+            ['farming', 'Farming'],
+            ['herblore', 'Herblore'],
+            ['fletching', 'Fletching'],
+            ['construction', 'Construction']
+        ];
+        expected.forEach(function (pair, i) {
+            assertEqual(win.STRETCH_SKILL_NAMES[i][0], pair[0], pair[1] + ' stretch id');
+            assertEqual(win.STRETCH_SKILL_NAMES[i][1], pair[1], pair[1] + ' stretch name');
+            assertEqual(win.isStretchSkill(pair[0]), true, pair[1] + ' is stretch');
+        });
+        assertEqual(win.isStretchSkill('firemaking'), false, 'Firemaking is playable');
+        assertEqual(win.isStretchSkill('smithing'), false, 'Smithing is gathering not stretch');
+
+        var listed = win.SKILL_NAMES.map(function (pair) { return pair[0]; });
+        assertEqual(win.SKILL_NAMES.length, 13, 'thirteen playable skills');
+        assertEqual(win.SKILL_NAMES[12][0], 'firemaking', 'Firemaking is the extra skill');
+        expected.forEach(function (pair) {
+            assertEqual(listed.indexOf(pair[0]), -1, pair[1] + ' is not in SKILL_NAMES');
+        });
+        assertEqual(listed.indexOf('smithing'), -1, 'Smithing is not listed');
+
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assert(hero.skills.agility, 'Agility stays on the hero for shortcuts');
+        assertEqual(hero.skills.agility.level, 1, 'starter Agility is 1');
+        expected.forEach(function (pair) {
+            if (pair[0] === 'agility') {
+                return;
+            }
+            assertEqual(typeof hero.skills[pair[0]], 'undefined', pair[1] + ' is not a stub skill');
+        });
+        assertEqual(typeof hero.skills.smithing, 'undefined', 'Smithing is not a stub skill');
+        assertEqual(win.skillTotal(hero), 22, 'starter total ignores unused Agility');
+        hero.skills.agility.level = 99;
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        assertEqual(win.skillTotal(hero), 22, 'Agility 99 still ignored by total');
+
+        H.click(win, '#tab-bar button[data-tab="skills"]');
+        assert(H.panelVisible(win, 'skills'), 'skills panel visible');
+        var rows = win.document.querySelectorAll('#skills-list .skill-row');
+        assertEqual(rows.length, 13, 'thirteen skill rows');
+        expected.forEach(function (pair) {
+            assertEqual(
+                win.document.querySelectorAll('#skills-list [data-skill="' + pair[0] + '"]').length,
+                0,
+                pair[1] + ' has no Skills-tab row'
+            );
+        });
+        assert(
+            win.document.querySelector('#skills-list [data-skill="firemaking"]'),
+            'Firemaking Skills row stays'
+        );
+
+        var tabs = win.document.querySelectorAll('#tab-bar button[data-tab]');
+        assertEqual(tabs.length, 8, 'eight HUD tabs');
+        var tabIds = [];
+        for (var t = 0; t < tabs.length; t++) {
+            tabIds.push(tabs[t].getAttribute('data-tab'));
+        }
+        assertEqual(tabIds.join(','), 'combat,skills,quest,inv,equip,prayer,magic,settings', 'HUD tabs unchanged');
+        expected.forEach(function (pair) {
+            assertEqual(tabIds.indexOf(pair[0]), -1, pair[1] + ' has no HUD tab');
+            assertEqual(
+                win.document.querySelectorAll('#tab-bar [data-tab="' + pair[0] + '"]').length,
+                0,
+                pair[1] + ' is not a stub tab'
+            );
+        });
+
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        assertEqual(typeof win.smithBar, 'undefined', 'Smithing still not this tick');
+        assertEqual(typeof world.tryAgilityShortcut, 'function', 'Agility shortcut helper stays');
+    });
+});
+
 EmberwoodTests.add('combat: Attack auto-selects index 0 and rolls damage -2..+2 min 1', function (win, H) {
     H.enterZone(win, 'haven');
     H.setAutoAttack(win, false);

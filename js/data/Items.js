@@ -67,6 +67,32 @@ var SKILL_NAMES = [
     ['firemaking', 'Firemaking']
 ];
 
+// Unused OSRS cousins stay Stretch backlog — never stub empty Skills-tab rows.
+var STRETCH_SKILL_NAMES = [
+    ['agility', 'Agility'],
+    ['thieving', 'Thieving'],
+    ['slayer', 'Slayer'],
+    ['runecraft', 'Runecraft'],
+    ['hunter', 'Hunter'],
+    ['farming', 'Farming'],
+    ['herblore', 'Herblore'],
+    ['fletching', 'Fletching'],
+    ['construction', 'Construction']
+];
+
+function isStretchSkill(id) {
+    var i;
+    if (!id) {
+        return false;
+    }
+    for (i = 0; i < STRETCH_SKILL_NAMES.length; i++) {
+        if (STRETCH_SKILL_NAMES[i][0] === id) {
+            return true;
+        }
+    }
+    return false;
+}
+
 var EQUIP_SLOTS = [
     ['head', 'Head'],
     ['cape', 'Cape'],

@@ -1660,6 +1660,9 @@ var Hud = {
     renderSkills: function (hero) {
         var html = '';
         SKILL_NAMES.forEach(function (pair) {
+            if (typeof isStretchSkill === 'function' && isStretchSkill(pair[0])) {
+                return;
+            }
             var skill = hero.skills && hero.skills[pair[0]];
             var level = skill ? skill.level : 1;
             var hint = typeof skillXpText === 'function' ? skillXpText(pair[1], skill) : pair[1];

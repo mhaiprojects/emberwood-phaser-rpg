@@ -194,7 +194,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Gate resources by level (e.g. copper/tin 1, iron 15) with a clear “You need level N” chat. — Conclusion: From spawn (328,248) Darkmine copper/tin mine at Mining 1; iron chats `You need level 15.` until Mining 15. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] After the first six gathering skills work, add **one** extra that fits: Firemaking or Smithing (not a full 23-skill dump). — Conclusion: From spawn (328,248) Skills lists Firemaking with icon; firemakeAt/lightFire +10 XP; Use-on fire still Cooking; no Smithing/logs. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Skill icons resolve under `assets/svg/skills/{id}.svg`. — Conclusion: From spawn (328,248) `skillIcon(id)` is `assets/svg/skills/{id}.svg`; all 12 Skills-tab icons + side HUD Hitpoints fetch 200 SVG and decode. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [todo] Keep unused stretch skills (Agility, Thieving, Slayer, Runecraft, Hunter, Farming, Herblore, Fletching, Construction) listed only as later backlog items — do not stub empty tabs. — Conclusion: —
+- [done] Keep unused stretch skills (Agility, Thieving, Slayer, Runecraft, Hunter, Farming, Herblore, Fletching, Construction) listed only as later backlog items — do not stub empty tabs. — Conclusion: From spawn (328,248) Skills lists 13 rows (Firemaking extra); Agility/Thieving/Slayer/Runecraft/Hunter/Farming/Herblore/Fletching/Construction stay Stretch backlog with no empty tabs. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 
 ## 7. Gathering / processing / skilling loops (20)
 
@@ -362,7 +362,7 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 - [todo] Full spellbooks, prayer book drain, special-attack bar, poison/venom. — Conclusion: —
 - [todo] Multiplayer, trade, duel, wilderness, hiscores, clans. — Conclusion: —
 - [todo] Grand Exchange, clue scrolls, random events, ironman. — Conclusion: —
-- [todo] Full 23 OSRS skills and member content. — Conclusion: —
+- [todo] Full 23 OSRS skills (Agility, Thieving, Slayer, Runecraft, Hunter, Farming, Herblore, Fletching, Construction) and member content — do not stub empty Skills-tab rows before this section starts. — Conclusion: —
 
 ---
 
@@ -547,4 +547,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 175 | 2026-09-19 | Show skill total and derived combat level on the side HUD | done — spawn (328,248) Combat 3 + Total 21; Cooking 2 → combat 3 / Total 22; Attack+Strength 10 → Combat 9 / Total 40; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 176 | 2026-09-19 | Gate resources by level (copper/tin 1, iron 15) | done — spawn (328,248) copper/tin mine at Mining 1; iron chats You need level 15. until Mining 15; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 177 | 2026-09-19 | Add one extra skill that fits: Firemaking (not Smithing) | done — spawn (328,248) Skills lists Firemaking with icon; firemakeAt/lightFire +10 XP; Use-on fire still Cooking; no Smithing/logs; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
+| 178 | 2026-09-19 | Keep unused stretch skills backlog-only; do not stub empty tabs | done — spawn (328,248) Skills 13 rows (Firemaking extra); nine stretch skills stay Stretch with no empty tabs; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 
