@@ -3674,9 +3674,13 @@ EmberwoodTests.add('world: auto-pickup off skips walk-over and click still takes
 });
 
 EmberwoodTests.add('combat: defeat shows You are dead and retry returns to title', function (win, H) {
-    return H.cleanupBattle(win).then(function () {
+    var combatLevel;
+    return ensureWorldPlay(win, H).then(function () {
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
         var hero = H.hero(win);
         hero.hp = 4;
+        combatLevel = hero.level;
         win.game.registry.set('hero', hero);
         H.setAutoAttack(win, false);
         return H.startCustomFight(win, [
@@ -3690,6 +3694,8 @@ EmberwoodTests.add('combat: defeat shows You are dead and retry returns to title
     }).then(function () {
         assertMatch(win.document.getElementById('dead-overlay').innerText, 'You are dead', 'death heading');
         assertEqual(win.Hud.mode, 'dead', 'hud dead mode');
+        assertMatch(win.document.getElementById('dead-text').textContent, 'Combat level ' + combatLevel, 'combat level subtitle');
+        assert(!win.game.input.keyboard, 'Phaser keyboard stays off');
         H.click(win, '#btn-retry');
         return H.waitUntil(function () {
             return !win.document.getElementById('title-overlay').hidden;
