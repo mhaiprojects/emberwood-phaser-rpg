@@ -19,6 +19,9 @@ var Hud = {
             quest: document.getElementById('hud-quest'),
             questTab: document.getElementById('hud-quest-tab'),
             minimap: document.getElementById('minimap'),
+            minimapChrome: document.getElementById('minimap-chrome'),
+            worldMap: document.getElementById('world-map-overlay'),
+            worldMapClose: document.getElementById('btn-world-map-close'),
             enemies: document.getElementById('battle-enemies'),
             actions: document.getElementById('battle-actions'),
             message: document.getElementById('battle-message'),
@@ -151,13 +154,27 @@ var Hud = {
             this.el.minimap.addEventListener('click', function (event) {
                 var cell = event.target.closest('.mm-cell');
                 var zoneId = cell && cell.getAttribute('data-zone');
-                if (!zoneId) {
+                if (zoneId) {
+                    self.clickMinimap(zoneId);
                     return;
                 }
-                self.clickMinimap(zoneId);
+                self.showWorldMap();
+            });
+        }
+        if (this.el.minimapChrome) {
+            this.el.minimapChrome.addEventListener('click', function () {
+                self.showWorldMap();
+            });
+        }
+        if (this.el.worldMapClose) {
+            this.el.worldMapClose.addEventListener('click', function () {
+                self.hideWorldMap();
             });
         }
         window.addEventListener('keydown', function (event) {
+            if (event.code === 'Escape' && self.el.worldMap && !self.el.worldMap.hidden) {
+                self.hideWorldMap();
+            }
             var tabs = {
                 F1: 'combat', F2: 'skills', F3: 'quest', F4: 'inv',
                 F5: 'equip', F6: 'prayer', F7: 'magic', F8: 'settings'
@@ -173,7 +190,7 @@ var Hud = {
 
     bindHudBlur: function () {
         document.addEventListener('mouseup', function (event) {
-            if (event.target && event.target.closest && event.target.closest('#title-overlay, #dead-overlay')) {
+            if (event.target && event.target.closest && event.target.closest('#title-overlay, #dead-overlay, #world-map-overlay')) {
                 return;
             }
             var btn = event.target && event.target.closest && event.target.closest('#shell button');
@@ -257,6 +274,7 @@ var Hud = {
     showTitle: function () {
         this.mode = 'title';
         this.hideContextMenu();
+        this.hideWorldMap();
         this.el.title.hidden = false;
         this.el.battle.hidden = true;
         this.el.dead.hidden = true;
@@ -275,6 +293,7 @@ var Hud = {
     showDead: function (text) {
         this.hideBattle();
         this.hideContextMenu();
+        this.hideWorldMap();
         this.mode = 'dead';
         this.el.dead.hidden = false;
         document.getElementById('dead-text').textContent = text || 'You have been defeated.';
@@ -325,6 +344,25 @@ var Hud = {
         this.ctxTarget = null;
     },
 
+    showWorldMap: function () {
+        if (this.mode !== 'world') {
+            return;
+        }
+        this.hideContextMenu();
+        if (this.el.worldMap) {
+            this.el.worldMap.hidden = false;
+        }
+    },
+
+    hideWorldMap: function () {
+        if (this.el && this.el.worldMap) {
+            this.el.worldMap.hidden = true;
+            if (this.el.worldMapClose) {
+                this.el.worldMapClose.blur();
+            }
+        }
+    },
+
     chooseContext: function (action) {
         var target = this.ctxTarget;
         this.hideContextMenu();
@@ -345,6 +383,7 @@ var Hud = {
 
     clickMinimap: function (zoneId) {
         this.hideContextMenu();
+        this.hideWorldMap();
         if (this.mode !== 'world') {
             return;
         }
@@ -545,8 +584,7 @@ var Hud = {
         };
         for (var r = 0; r < 3; r++) {
             for (var c = 0; c < 3; c++) {
-                var cell = document.createElement('button');
-                cell.type = 'button';
+                var cell = document.createElement('div');
                 cell.className = 'mm-cell';
                 cell.dataset.zone = order[r][c];
                 cell.textContent = labels[order[r][c]];
@@ -564,6 +602,7 @@ var Hud = {
 
     showBattle: function (battle) {
         this.hideContextMenu();
+        this.hideWorldMap();
         this.battle = battle;
         this.selectingEnemy = false;
         this.el.battle.hidden = false;

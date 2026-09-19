@@ -298,6 +298,10 @@ canvas {
     background: #6a9ad4;
 }
 
+#minimap-chrome {
+    cursor: pointer;
+}
+
 #minimap {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -384,7 +388,8 @@ button.ghost {
 }
 
 #title-overlay,
-#dead-overlay {
+#dead-overlay,
+#world-map-overlay {
     position: fixed;
     inset: 0;
     background: rgba(8, 6, 10, 0.82);
@@ -396,9 +401,11 @@ button.ghost {
 
 #title-overlay[hidden],
 #dead-overlay[hidden],
+#world-map-overlay[hidden],
 #battle-panel[hidden],
 #credit-text[hidden],
-#ctx-menu[hidden] {
+#ctx-menu[hidden],
+#world-map-list[hidden] {
     display: none !important;
 }
 

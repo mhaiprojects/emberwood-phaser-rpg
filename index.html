@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="assets/svg/ui/combat.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/style.css?v=mm1">
+    <link rel="stylesheet" href="css/style.css?v=wmap1">
 </head>
 <body>
     <div id="shell">
         <div id="content"></div>
         <aside id="side">
             <div class="panel">
-                <h2>Minimap</h2>
+                <h2 id="minimap-chrome" title="Open world map">Minimap</h2>
                 <div id="minimap"></div>
             </div>
             <div class="panel">
@@ -130,6 +130,15 @@
 
     <div id="ctx-menu" hidden></div>
 
+    <div id="world-map-overlay" hidden>
+        <div class="title-card">
+            <h1>World map</h1>
+            <p id="world-map-copy">The nine lands of Emberwood.</p>
+            <div id="world-map-list" hidden></div>
+            <button type="button" id="btn-world-map-close">Close</button>
+        </div>
+    </div>
+
     <div id="dead-overlay" hidden>
         <div class="title-card">
             <h1>You are dead</h1>
@@ -142,7 +151,7 @@
     <script src="js/input/Keys.js?v=run1"></script>
     <script src="js/data/Items.js?v=run1"></script>
     <script src="js/data/Scales.js?v=tile2"></script>
-    <script src="js/ui/Hud.js?v=mm1"></script>
+    <script src="js/ui/Hud.js?v=wmap1"></script>
     <script src="js/world/MapGen.js?v=biome1"></script>
     <script src="js/world/Pathfind.js?v=path2"></script>
     <script src="js/world/Zones.js?v=tile1"></script>
