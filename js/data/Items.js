@@ -1,11 +1,11 @@
 var ITEM_DB = {
-    coins: { name: 'Coins', icon: 'assets/svg/items/coins.svg', stack: true },
-    shrimp: { name: 'Cooked shrimp', icon: 'assets/svg/items/shrimp.svg', heal: 12, stack: true },
-    bread: { name: 'Bread', icon: 'assets/svg/items/bread.svg', heal: 20, stack: true },
-    sword: { name: 'Bronze sword', icon: 'assets/svg/items/sword.svg', slot: 'weapon', damage: 16 },
-    shield: { name: 'Wooden shield', icon: 'assets/svg/items/shield.svg', slot: 'shield', defence: 1 },
-    bones: { name: 'Bones', icon: 'assets/svg/items/bones.svg', stack: true },
-    key: { name: 'Iron key', icon: 'assets/svg/items/key.svg' }
+    coins: { name: 'Coins', icon: 'assets/svg/items/coins.svg', stack: true, examine: 'A small pile of copper and silver coins.' },
+    shrimp: { name: 'Cooked shrimp', icon: 'assets/svg/items/shrimp.svg', heal: 12, stack: true, examine: 'A cooked shrimp, still warm enough to eat.' },
+    bread: { name: 'Bread', icon: 'assets/svg/items/bread.svg', heal: 20, stack: true, examine: 'A dense loaf baked for the road.' },
+    sword: { name: 'Bronze sword', icon: 'assets/svg/items/sword.svg', slot: 'weapon', damage: 16, examine: 'A short bronze blade, nicked but serviceable.' },
+    shield: { name: 'Wooden shield', icon: 'assets/svg/items/shield.svg', slot: 'shield', defence: 1, examine: 'A round wooden shield bound with iron.' },
+    bones: { name: 'Bones', icon: 'assets/svg/items/bones.svg', stack: true, examine: 'Dry bones. Someone should bury them.' },
+    key: { name: 'Iron key', icon: 'assets/svg/items/key.svg', examine: 'A heavy iron key with a worn bit.' }
 };
 
 var SKILL_NAMES = [
@@ -480,6 +480,15 @@ function gainSkillXp(hero, skill, amount) {
 
 function itemName(id) {
     return (ITEM_DB[id] && ITEM_DB[id].name) || id;
+}
+
+function itemExamineText(id) {
+    var def = ITEM_DB[id];
+    if (def && def.examine) {
+        return def.examine;
+    }
+    var name = itemName(id);
+    return name ? "It's " + name + '.' : '';
 }
 
 function itemIcon(id) {

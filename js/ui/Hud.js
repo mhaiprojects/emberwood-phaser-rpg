@@ -500,6 +500,18 @@ var Hud = {
         return world.dropFromInventory(id, qty || 1);
     },
 
+    examineItem: function (id) {
+        if (!id) {
+            return false;
+        }
+        var line = typeof itemExamineText === 'function' ? itemExamineText(id) : '';
+        if (!line) {
+            return false;
+        }
+        this.log(line);
+        return true;
+    },
+
     showInvDropMenu: function (id, event) {
         if (this.mode !== 'world' || !id) {
             this.hideContextMenu();
@@ -513,6 +525,7 @@ var Hud = {
             items.push({ label: 'Wear', action: 'wear' });
         }
         items.push({ label: 'Drop', action: 'drop' });
+        items.push({ label: 'Examine', action: 'examine' });
         this.showContextMenu(items, {
             kind: 'inv',
             itemId: id,
@@ -973,6 +986,10 @@ var Hud = {
             return;
         }
         if (action === 'examine') {
+            if (target.itemId) {
+                this.examineItem(target.itemId);
+                return;
+            }
             if (world.examineAt) {
                 world.examineAt(target.worldX, target.worldY);
             }

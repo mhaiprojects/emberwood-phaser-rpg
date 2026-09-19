@@ -810,6 +810,176 @@ EmberwoodTests.add('hud: worn tab shows melee +defence from equipment', function
     });
 });
 
+EmberwoodTests.add('hud: inventory and ground Examine logs ITEM_DB flavor', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, true);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.clearLoot();
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        if (win.Hud.hideContextMenu) {
+            win.Hud.hideContextMenu();
+        }
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assertEqual(win.Hud.mode, 'world', 'world mode');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(!world.cursors, 'WorldScene has no Phaser cursors');
+        assertEqual(typeof win.itemExamineText, 'function', 'itemExamineText exists');
+        assertEqual(typeof win.Hud.examineItem, 'function', 'Hud.examineItem exists');
+        assertEqual(typeof world.examineLoot, 'function', 'examineLoot exists');
+        assertEqual(typeof world.showLootExamineMenu, 'function', 'showLootExamineMenu exists');
+
+        var expected = {
+            coins: 'A small pile of copper and silver coins.',
+            shrimp: 'A cooked shrimp, still warm enough to eat.',
+            bread: 'A dense loaf baked for the road.',
+            sword: 'A short bronze blade, nicked but serviceable.',
+            shield: 'A round wooden shield bound with iron.',
+            bones: 'Dry bones. Someone should bury them.',
+            key: 'A heavy iron key with a worn bit.'
+        };
+        var ids = Object.keys(win.ITEM_DB);
+        assertEqual(ids.length, 7, 'seven ITEM_DB entries');
+        var seen = {};
+        ids.forEach(function (id) {
+            var def = win.ITEM_DB[id];
+            assert(def.examine, id + ' has examine text');
+            var line = win.itemExamineText(id);
+            assertEqual(line, expected[id], id + ' examine text');
+            assert(line.indexOf('.') !== -1, id + ' examine is a sentence');
+            assert(!seen[line], id + ' examine is unique');
+            seen[line] = id;
+        });
+
+        var hero = win.makeHero();
+        win.addItem(hero, 'bones', 1);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(hero.inventory.filter(function (row) { return row.id === 'bones'; })[0].qty, 1, 'starter bones 1');
+
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        var inv = win.document.getElementById('inv-grid');
+        assert(inv.querySelector('[data-item="bones"]'), 'bones slot');
+        assert(inv.querySelector('[data-item="coins"]'), 'coins slot');
+
+        win.Hud.el.log.innerHTML = '';
+        H.click(win, '#inv-grid [data-item="coins"]');
+        assertEqual(H.lastChat(win), 'Coins.', 'left-click still only logs the name');
+        assert(H.lastChat(win) !== win.itemExamineText('coins'), 'left-click does not log examine flavor');
+
+        var menu = win.document.getElementById('ctx-menu');
+        assert(menu, 'ctx-menu element exists');
+        win.Hud.hideContextMenu();
+        var slot = inv.querySelector('[data-item="bones"]');
+        slot.dispatchEvent(new win.MouseEvent('contextmenu', {
+            bubbles: true,
+            cancelable: true,
+            view: win,
+            button: 2,
+            clientX: 40,
+            clientY: 80
+        }));
+        assert(!menu.hidden, 'right-click inventory opens menu');
+        var examBtn = menu.querySelector('[data-ctx="examine"]');
+        var dropBtn = menu.querySelector('[data-ctx="drop"]');
+        assert(dropBtn, 'Drop stays listed');
+        assert(examBtn, 'Examine action is listed');
+        assertEqual(examBtn.textContent, 'Examine', 'Examine label');
+        assertEqual(win.Hud.ctxTarget.itemId, 'bones', 'menu stores bones id');
+        assertEqual(win.Hud.ctxTarget.kind, 'inv', 'menu is inventory');
+        assert(!menu.querySelector('[data-ctx="take"]'), 'Take is not this tick');
+        H.mouseClick(win, examBtn);
+        assert(menu.hidden, 'Examine closes the menu');
+        assertEqual(H.lastChat(win), expected.bones, 'inventory Examine logs bones flavor');
+        assertEqual(H.hero(win).inventory.filter(function (row) { return row.id === 'bones'; })[0].qty, 1, 'Examine does not drop bones');
+        assertEqual(H.lootLive(win).length, 0, 'Examine does not spawn loot');
+
+        var dropped = world.dropFromInventory('bones', 1);
+        assert(dropped && dropped.sprite, 'bones on the ground');
+        assertEqual(H.hero(win).inventory.filter(function (row) { return row.id === 'bones'; }).length, 0, 'bones left inventory');
+        var live = H.lootLive(win);
+        assertEqual(live.length, 1, 'one ground pile');
+        assertEqual(live[0].id, 'bones', 'ground bones id');
+        assertEqual(Math.round(live[0].sprite.x), 328, 'bones pile at player x');
+        assertEqual(Math.round(live[0].sprite.y), 248, 'bones pile at player y');
+
+        win.Hud.el.log.innerHTML = '';
+        win.Hud.hideContextMenu();
+        world.onClick({
+            worldX: live[0].sprite.x,
+            worldY: live[0].sprite.y,
+            button: 2,
+            rightButtonDown: function () { return true; },
+            event: { clientX: 48, clientY: 56 }
+        });
+        assert(!world.walkTarget, 'right-click loot does not walk');
+        assert(!menu.hidden, 'right-click loot opens Examine');
+        examBtn = menu.querySelector('[data-ctx="examine"]');
+        assert(examBtn, 'ground Examine is listed');
+        assertEqual(examBtn.textContent, 'Examine', 'ground Examine label');
+        assert(!menu.querySelector('[data-ctx="take"]'), 'ground Take is not this tick');
+        assert(!menu.querySelector('[data-ctx="walk-here"]'), 'Walk here is not listed on loot');
+        assertEqual(win.Hud.ctxTarget.kind, 'loot', 'menu is ground loot');
+        assertEqual(win.Hud.ctxTarget.itemId, 'bones', 'ground menu stores bones id');
+        H.mouseClick(win, examBtn);
+        assert(menu.hidden, 'ground Examine closes the menu');
+        assertEqual(H.lastChat(win), expected.bones, 'ground Examine logs bones flavor');
+        live = H.lootLive(win);
+        assertEqual(live.length, 1, 'Examine does not pick up bones');
+        assertEqual(live[0].taken, false, 'ground bones stay');
+
+        win.Hud.el.log.innerHTML = '';
+        assertEqual(world.tryPickup(live[0]), true, 'left-click still takes the pile');
+        assert(H.chatHas(win, 'You pick up Bones.'), 'pickup chat after examine');
+        assertEqual(H.lootLive(win).length, 0, 'pile gone after pickup');
+        assertEqual(H.hero(win).inventory.filter(function (row) { return row.id === 'bones'; })[0].qty, 1, 'bones return on pickup');
+
+        world.dropFromInventory('bones', 1);
+        live = H.lootLive(win);
+        assertEqual(live.length, 1, 'bones re-dropped');
+        world.encounterLock = true;
+        win.Hud.hideContextMenu();
+        world.onClick({
+            worldX: live[0].sprite.x,
+            worldY: live[0].sprite.y,
+            button: 2,
+            rightButtonDown: function () { return true; },
+            event: { clientX: 48, clientY: 56 }
+        });
+        assert(menu.hidden, 'encounterLock ignores loot right-click');
+        world.encounterLock = false;
+        win.Hud.mode = 'battle';
+        world.onClick({
+            worldX: live[0].sprite.x,
+            worldY: live[0].sprite.y,
+            button: 2,
+            rightButtonDown: function () { return true; },
+            event: { clientX: 48, clientY: 56 }
+        });
+        assert(menu.hidden, 'battle mode ignores loot right-click');
+        win.Hud.mode = 'world';
+
+        world.clearLoot();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('hud: skills tab lists twelve skills with icons', function (win, H) {
     var expected = [
         ['attack', 'Attack'],

@@ -1106,7 +1106,14 @@ var WorldScene = new Phaser.Class({
             var onLoot = this.pickLoot(x, y, 18);
             var onMob = this.pickSprite(this.mobs, x, y, 18);
             var onNpc = this.pickSprite(this.npcs, x, y, 18);
-            if (onLoot || (onMob && onMob.aliveMob)) {
+            if (onLoot) {
+                this.showLootExamineMenu(onLoot, {
+                    clientX: ev && ev.clientX != null ? ev.clientX : 16,
+                    clientY: ev && ev.clientY != null ? ev.clientY : 16
+                });
+                return;
+            }
+            if (onMob && onMob.aliveMob) {
                 if (Hud.hideContextMenu) {
                     Hud.hideContextMenu();
                 }
@@ -1237,12 +1244,44 @@ var WorldScene = new Phaser.Class({
         return true;
     },
 
+    examineLoot: function (loot) {
+        if (!loot || loot.taken) {
+            return false;
+        }
+        var line = typeof itemExamineText === 'function' ? itemExamineText(loot.id) : '';
+        if (!line) {
+            return false;
+        }
+        Hud.log(line);
+        return true;
+    },
+
     examineAt: function (x, y) {
+        var loot = this.pickLoot(x, y, 18);
+        if (loot) {
+            return this.examineLoot(loot);
+        }
         var npc = this.pickSprite(this.npcs, x, y, 18);
         if (npc) {
             return this.examineNpc(npc);
         }
         return this.examineScenery(this.pickScenery(x, y));
+    },
+
+    showLootExamineMenu: function (loot, pos) {
+        if (!loot || loot.taken) {
+            return;
+        }
+        if (Hud.showContextMenu) {
+            Hud.showContextMenu([{ label: 'Examine', action: 'examine' }], {
+                kind: 'loot',
+                itemId: loot.id,
+                worldX: loot.sprite ? loot.sprite.x : 0,
+                worldY: loot.sprite ? loot.sprite.y : 0,
+                clientX: pos && pos.clientX != null ? pos.clientX : 16,
+                clientY: pos && pos.clientY != null ? pos.clientY : 16
+            });
+        }
     },
 
     showNpcExamineMenu: function (npc, pos) {
@@ -1875,7 +1914,10 @@ var WorldScene = new Phaser.Class({
             until: until,
             skipAuto: !!drop.skipAuto
         };
-        sprite.on('pointerdown', function () {
+        sprite.on('pointerdown', function (pointer) {
+            if (self.isRightClick(pointer)) {
+                return;
+            }
             self.tryPickup(entry);
         });
         this.groundLoot.push(entry);

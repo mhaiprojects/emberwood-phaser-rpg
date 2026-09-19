@@ -162,7 +162,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Apply equipped weapon `damage` and shield `defence` in `Unit.attack` / `takeDamage`. — Conclusion: From spawn (328,248) worn Bronze sword hits for ITEM_DB damage 16 even when hero.damage is 24; wooden shield subtracts defence 1; unequip falls back; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Expand worn slots toward OSRS: head, cape, neck, ammo, weapon, body, shield, legs, hands, feet, ring (empty slots OK). — Conclusion: From spawn (328,248) Worn lists Head/Cape/Neck/Ammo/Weapon/Body/Shield/Legs/Hands/Feet/Ring; sword/shield filled, nine empty None; no stats readout; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] An equipment-stats readout (melee +defence at minimum). — Conclusion: From spawn (328,248) Worn `#equip-stats` shows Melee +defence +1 from the wooden shield and +0 after unequip; 11 slot rows stay names-only; Phaser 3.90 keyboard off; dedicated + Playwright 1/1.
-- [todo] Item examine text on each `ITEM_DB` entry. — Conclusion: —
+- [done] Item examine text on each `ITEM_DB` entry. — Conclusion: From spawn (328,248) each ITEM_DB entry has unique examine; Inv/ground right-click Examine logs flavor; left-click still names/picks up; Phaser 3.90 keyboard off; dedicated + Playwright 1/1.
 - [todo] Left-click defaults per item: eat food, wield gear, bury bones, drop junk. — Conclusion: —
 - [todo] Load `item-sword` and `item-shield` in `BootScene` (currently only coins/bones/shrimp/bread) so ground drops can show them. — Conclusion: —
 - [todo] Banker Elise deposit / withdraw / withdraw-X / withdraw-all with a  bank chest UI. — Conclusion: —
@@ -525,4 +525,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 153 | 2026-09-19 | Apply equipped weapon damage and shield defence in Unit.attack / takeDamage | done — spawn (328,248) worn sword hits 16 even if hero.damage is 24; shield −1 incoming; unequip falls back; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 154 | 2026-09-19 | Expand worn slots toward OSRS head through ring | done — spawn (328,248) Worn lists 11 OSRS slots; sword/shield filled, nine empty None; no stats readout; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 155 | 2026-09-19 | An equipment-stats readout (melee +defence at minimum) | done — spawn (328,248) Worn `#equip-stats` Melee +defence +1 / unequip +0; 11 slots unchanged; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
+| 156 | 2026-09-19 | Item examine text on each ITEM_DB entry | done — spawn (328,248) each ITEM_DB entry has unique examine; Inv/ground Examine logs flavor; left-click still names/picks up; Phaser keyboard off; dedicated + Playwright 1/1 |
 
