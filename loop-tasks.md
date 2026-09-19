@@ -150,7 +150,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 
 - [done] The inventory grid is 28 slots and starting kit is 8 coins, bronze sword, wooden shield, 8 shrimp, 3 bread. — Conclusion: Live Inv + suite: 28 slots (5 filled: 8 coins, Bronze sword, Wooden shield, 8 shrimp, 3 bread; 23 empty). Phaser 3.90 keyboard off. Dedicated case pass.
 - [done] Click shrimp at full HP chats `already at full health` and does not consume. — Conclusion: From spawn (328,248) full-HP Inv click shrimp chats already at full health, qty unchanged, HP 100; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [verify] Click shrimp at low HP heals 12 (capped) and decrements the stack. — Conclusion: —
+- [done] Click shrimp at low HP heals 12 (capped) and decrements the stack. — Conclusion: From spawn (328,248) Inv click shrimp at 70 HP heals 12→82 and at 95 caps at maxHp 100; qty −1 each; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [verify] Click bread heals 20 (capped) and decrements the stack. — Conclusion: —
 - [verify] Click coins / sword / shield / bones only logs the item name (no crash). — Conclusion: —
 - [verify] `addItem('coins')` increments `hero.gold` and `syncCoins`; `takeItem('coins')` decrements both. — Conclusion: —
@@ -446,4 +446,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 73 | 2026-09-19 | Dead overworld mob hides ~18s then respawns in place with label and body re-enabled | done — spawn (328,248) chicken hides body+label+body.enable; 18000ms timer still dead ~400ms early, then respawns in place; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 74 | 2026-09-19 | Mob wander uses occasional small velocity and still collides with the ground | done — spawn (328,248) Between(0,80) miss stays still; hit vx/vy in −20..20; chicken blocked by TREE; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 75 | 2026-09-19 | Click shrimp at full HP chats already at full health and does not consume | done — spawn (328,248) full-HP Inv click shrimp chats already at full health, qty unchanged, HP 100; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 76 | 2026-09-19 | Click shrimp at low HP heals 12 (capped) and decrements the stack | done — spawn (328,248) Inv click shrimp 70→82 and 95→100 cap; qty −1 each; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 
