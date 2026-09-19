@@ -3122,6 +3122,63 @@ EmberwoodTests.add('combat: Eat at full HP does not consume food and returns the
     });
 });
 
+EmberwoodTests.add('combat: Eat with no food chats You have no food and returns the turn', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        world.placePlayer(spawn.x, spawn.y);
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof win.eatBestFood, 'function', 'eatBestFood helper');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+        var hero = H.hero(win);
+        var kept = hero.inventory.filter(function (s) { return s.id !== 'shrimp' && s.id !== 'bread'; });
+        hero.inventory = kept.map(function (s) { return { id: s.id, qty: s.qty }; });
+        hero.hp = 60;
+        win.game.registry.set('hero', hero);
+        assert(!hero.inventory.filter(function (s) { return s.id === 'shrimp'; })[0], 'no shrimp in pack');
+        assert(!hero.inventory.filter(function (s) { return s.id === 'bread'; })[0], 'no bread in pack');
+        assertEqual(win.eatBestFood(hero), null, 'eatBestFood refuses with no food');
+        assertEqual(hero.hp, 60, 'helper leaves damaged HP');
+        assert(!hero.inventory.filter(function (s) { return s.id === 'shrimp'; })[0], 'helper does not invent shrimp');
+        assert(!hero.inventory.filter(function (s) { return s.id === 'bread'; })[0], 'helper does not invent bread');
+        var chicken = H.findMob(win, 'Chicken');
+        return H.startFight(win, chicken).then(function () {
+            hero = H.hero(win);
+            hero.inventory = hero.inventory.filter(function (s) { return s.id !== 'shrimp' && s.id !== 'bread'; });
+            hero.hp = 60;
+            win.game.registry.set('hero', hero);
+            var battle = H.battle(win);
+            battle.heroes[0].hp = 60;
+            assert(battle.waitingForPlayer, 'player turn before eat');
+            assert(!battle.busy, 'not busy before eat');
+            win.document.querySelector('#battle-actions [data-action="heal"]').click();
+            battle = H.battle(win);
+            hero = H.hero(win);
+            assert(H.chatHas(win, 'You have no food.') || win.document.getElementById('battle-message').textContent.indexOf('You have no food.') !== -1, 'no-food eat message');
+            assert(!H.chatHas(win, 'already at full health') && win.document.getElementById('battle-message').textContent.indexOf('full health') === -1, 'not the full-HP message');
+            assert(!hero.inventory.filter(function (s) { return s.id === 'shrimp'; })[0], 'combat does not invent shrimp');
+            assert(!hero.inventory.filter(function (s) { return s.id === 'bread'; })[0], 'combat does not invent bread');
+            assertEqual(hero.hp, 60, 'HP stays damaged');
+            assertEqual(battle.heroes[0].hp, 60, 'battle actor stays damaged');
+            assert(battle.waitingForPlayer, 'no-food eat returns the turn');
+            assert(!battle.busy, 'no-food eat does not queue a turn');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+            return H.forceFlee(win);
+        });
+    }).then(function () {
+        H.enterZone(win, 'haven');
+    }).catch(function (err) {
+        return H.cleanupBattle(win).then(function () {
+            throw err;
+        });
+    });
+});
+
 EmberwoodTests.add('combat: Run flees back to the world', function (win, H) {
     H.enterZone(win, 'haven');
     H.setAutoAttack(win, false);

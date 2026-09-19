@@ -126,7 +126,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Hitpoints XP on win is `ceil(mobXp / 3)` (minimum 1). — Conclusion: From spawn (328,248) chicken wins grant Hitpoints `ceil(mobXp/3)` min 1 (1→+1, 2→+1, 4→+2, 5→+2, 10→+4 from 1154). Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Eat food in combat uses shrimp then bread (`eatBestFood`), heals, consumes one, and spends the turn. — Conclusion: On player turn, Eat food calls `eatBestFood` (shrimp then bread): heals 12/20, consumes one, `queueTurn(800)`. Full HP does not spend the turn. Phaser 3.90 keyboard off. Dedicated case + Playwright; ?only=Eat food uses 1/1.
 - [done] Eat at full HP does not consume food and returns the turn. — Conclusion: From spawn (328,248) full-HP Eat food chats already at full health, shrimp/bread qty unchanged, `waitingForPlayer` stays true, busy false. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [verify] Eat with no food chats `You have no food.` and returns the turn. — Conclusion: —
+- [done] Eat with no food chats `You have no food.` and returns the turn. — Conclusion: damaged no-food Eat chats `You have no food.`, HP/inventory unchanged, waitingForPlayer true, busy false; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1
 - [verify] Run succeeds on `Between(0,99) < 70`, chats run/break-away, outcome `flee`, no XP/loot. — Conclusion: —
 - [verify] Run fail chats `You fail to get away!` and the enemy still gets a turn. — Conclusion: —
 - [verify] Player death shows `#dead-overlay` “You are dead”, `Hud.mode === 'dead'`, and combat level in the subtitle. — Conclusion: —
@@ -436,4 +436,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 63 | 2026-09-19 | Hitpoints XP on win is ceil(mobXp / 3) (minimum 1) | done — spawn (328,248) chicken wins grant Hitpoints ceil(mobXp/3) min 1 (1→+1, 2→+1, 4→+2, 5→+2, 10→+4 from 1154); Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 64 | 2026-09-19 | Eat food in combat uses shrimp then bread (eatBestFood) | done — shrimp then bread heals 12/20, consumes one, spends the turn; full HP does not; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 65 | 2026-09-19 | Eat at full HP does not consume food and returns the turn | done — spawn (328,248) full-HP Eat food chats already at full health, shrimp/bread unchanged, waitingForPlayer true, busy false; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 66 | 2026-09-19 | Eat with no food chats You have no food. and returns the turn | done — spawn (328,248) damaged no-food Eat chats `You have no food.`, HP 60 unchanged, waitingForPlayer true, busy false; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 
