@@ -4083,6 +4083,71 @@ EmberwoodTests.add('loot: sprites are interactive and offset by 10px per extra d
     });
 });
 
+EmberwoodTests.add('loot: expires at until = now + 20000 and the sprite is destroyed', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.clearLoot();
+        world.encounterLock = false;
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(typeof world.spawnLoot, 'function', 'spawnLoot helper');
+        assertEqual(typeof world.pruneLoot, 'function', 'pruneLoot helper');
+
+        var spawnedAt = world.time.now;
+        world.spawnLoot(80, 80, [{ id: 'coins', qty: 1 }, { id: 'bones', qty: 1 }]);
+        var live = H.lootLive(win);
+        assertEqual(live.length, 2, 'two ground drops spawned');
+        assertEqual(live[0].until, spawnedAt + 20000, 'first until is now + 20000');
+        assertEqual(live[1].until, spawnedAt + 20000, 'second until is now + 20000');
+        var sprites = live.map(function (drop) { return drop.sprite; });
+        sprites.forEach(function (sprite, i) {
+            assert(sprite, 'drop ' + i + ' has a sprite');
+            assert(sprite.active !== false, 'drop ' + i + ' sprite is active');
+        });
+
+        world.pruneLoot();
+        assertEqual(H.lootLive(win).length, 2, 'prune keeps loot before until');
+        assert(sprites[0].active !== false, 'first sprite still live before until');
+        assert(sprites[1].active !== false, 'second sprite still live before until');
+
+        var savedNow = world.time.now;
+        world.time.now = live[0].until;
+        if (world.time.now !== live[0].until && typeof world.time.update === 'function') {
+            world.time.update(live[0].until, 0);
+        }
+        world.pruneLoot();
+        assertEqual(H.lootLive(win).length, 2, 'loot remains at exactly until');
+
+        world.time.now = live[0].until + 1;
+        if (world.time.now <= live[0].until && typeof world.time.update === 'function') {
+            world.time.update(live[0].until + 1, 20001);
+        }
+        assert(world.time.now > live[0].until, 'clock is past until');
+        world.pruneLoot();
+        assertEqual(H.lootLive(win).length, 0, 'expired loot removed from groundLoot');
+        assertEqual((world.groundLoot || []).length, 0, 'groundLoot array empty after expiry');
+        sprites.forEach(function (sprite, i) {
+            assert(isDestroyedGo(sprite), 'expired sprite ' + i + ' is destroyed');
+        });
+
+        world.time.now = savedNow;
+        world.clearLoot();
+        world.placePlayer(spawn.x, spawn.y);
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('combat: Eat food uses inventory on your turn', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
