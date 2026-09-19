@@ -58,9 +58,9 @@ def hash_n(x, y, seed):
     return (x * 374761393 + y * 668265263 + seed * 1274126177) & 0xFFFFFFFF
 
 
-# --- tiles 12 x 16x16 ---
+# --- tiles 15 x 16x16 ---
 TILE = 16
-TILE_COUNT = 12
+TILE_COUNT = 15
 
 K = (22, 16, 14, 255)
 SKIN = (236, 188, 132, 255)
@@ -212,6 +212,60 @@ def make_tiles():
     fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 2, 4, 12, 1, (212, 168, 48, 255))
     put(sheet, TILE * TILE_COUNT, ox + 7, 8, (240, 220, 90, 255), TILE)
     put(sheet, TILE * TILE_COUNT, ox + 8, 8, (240, 220, 90, 255), TILE)
+
+    def fill_water_bg(ox):
+        for y in range(TILE):
+            for x in range(TILE):
+                n = (x + y * 2) % 5
+                if n == 0:
+                    c = (72, 148, 196, 255)
+                elif n == 1:
+                    c = (48, 108, 168, 255)
+                else:
+                    c = (40, 92, 156, 255)
+                put(sheet, TILE * TILE_COUNT, ox + x, y, c, TILE)
+
+    def fill_grass_bg(ox):
+        for y in range(TILE):
+            for x in range(TILE):
+                n = hash_n(x, y, 11) % 8
+                if n == 0:
+                    c = (58, 122, 52, 255)
+                elif n == 1:
+                    c = (86, 158, 72, 255)
+                else:
+                    c = (70, 140, 60, 255)
+                put(sheet, TILE * TILE_COUNT, ox + x, y, c, TILE)
+
+    # 12 dock (planks over water)
+    ox = TILE * 12
+    fill_water_bg(ox)
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 1, 3, 14, 10, (148, 108, 56, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 1, 3, 14, 1, (180, 136, 72, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 1, 7, 14, 1, (122, 86, 44, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 1, 11, 14, 1, (122, 86, 44, 255))
+    put(sheet, TILE * TILE_COUNT, ox + 4, 5, (96, 64, 32, 255), TILE)
+    put(sheet, TILE * TILE_COUNT, ox + 11, 9, (96, 64, 32, 255), TILE)
+
+    # 13 fishing boat
+    ox = TILE * 13
+    fill_water_bg(ox)
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 2, 8, 12, 4, (122, 78, 40, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 3, 7, 10, 2, (168, 108, 56, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 4, 11, 8, 2, (90, 58, 28, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 7, 3, 2, 5, (220, 216, 200, 255))
+    put(sheet, TILE * TILE_COUNT, ox + 8, 2, (196, 72, 48, 255), TILE)
+    put(sheet, TILE * TILE_COUNT, ox + 9, 3, (196, 72, 48, 255), TILE)
+
+    # 14 tomb marker
+    ox = TILE * 14
+    fill_grass_bg(ox)
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 5, 4, 6, 10, (150, 148, 142, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 6, 3, 4, 2, (168, 166, 158, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 6, 6, 4, 3, (112, 110, 104, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 4, 13, 8, 2, (90, 86, 80, 255))
+    put(sheet, TILE * TILE_COUNT, ox + 7, 7, (190, 188, 180, 255), TILE)
+    put(sheet, TILE * TILE_COUNT, ox + 8, 8, (190, 188, 180, 255), TILE)
     write_png(os.path.join(ASSETS, "tiles.png"), TILE * TILE_COUNT, TILE, sheet)
 
 

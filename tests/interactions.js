@@ -9265,6 +9265,168 @@ EmberwoodTests.add('world: Emberhaven stall, range, anvil, and bank booth are ex
     });
 });
 
+EmberwoodTests.add('world: Southshore dock/boat and Restless Graves tombs are examine-only scenery', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.engageTarget = null;
+        world.talkTarget = null;
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        if (win.Hud.hideContextMenu) {
+            win.Hud.hideContextMenu();
+        }
+        assertEqual(spawn.x, 328, 'spawn x tile center');
+        assertEqual(spawn.y, 248, 'spawn y tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assertEqual(win.Hud.mode, 'world', 'world mode');
+        assert(String(win.Phaser.VERSION).indexOf('3.') === 0, 'Phaser 3');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(!world.cursors, 'WorldScene has no Phaser cursors');
+        assertEqual(win.TILE.DOCK, 13, 'DOCK index');
+        assertEqual(win.TILE.BOAT, 14, 'BOAT index');
+        assertEqual(win.TILE.TOMB, 15, 'TOMB index');
+        assertEqual(win.examineSceneryText('dock'), 'A weathered wooden dock. The tide slaps the pilings.', 'dock examine text');
+        assertEqual(win.examineSceneryText('boat'), 'A fishing boat, tied off and empty.', 'boat examine text');
+        assertEqual(win.examineSceneryText('tomb'), 'A weathered tomb marker. The name is worn away.', 'tomb examine text');
+        assertEqual(win.tileBlockedByTerrain(win.TILE.DOCK), true, 'Pathfind blocks dock');
+        assertEqual(win.tileBlockedByTerrain(win.TILE.BOAT), true, 'Pathfind blocks boat');
+        assertEqual(win.tileBlockedByTerrain(win.TILE.TOMB), true, 'Pathfind blocks tomb');
+
+        function clickTile(tx, ty) {
+            var pt = win.tileCenter(tx, ty);
+            world.onClick({ worldX: pt.x, worldY: pt.y });
+            return pt;
+        }
+        function rightTile(tx, ty) {
+            var pt = win.tileCenter(tx, ty);
+            world.onClick({
+                worldX: pt.x,
+                worldY: pt.y,
+                button: 2,
+                rightButtonDown: function () { return true; },
+                event: { clientX: 48, clientY: 56 }
+            });
+            return pt;
+        }
+
+        H.enterZone(win, 'southshore');
+        world = H.world(win);
+        H.setAutoAttack(win, false);
+        world.encounterLock = false;
+        world.engageTarget = null;
+        world.talkTarget = null;
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        parkWorldBodies(world);
+        var shore = win.SHORE_PROPS;
+        assert(shore && shore.dock && shore.boat && shore.planks, 'SHORE_PROPS exists');
+        shore.planks.forEach(function (at) {
+            assertEqual(world.tileGrid[at.y][at.x], win.TILE.DOCK, 'dock plank at ' + at.x + ',' + at.y);
+            assertEqual(win.sceneryKindAt(world.tileGrid, at.x, at.y, {}), 'dock', 'dock kind at ' + at.x + ',' + at.y);
+            var layerTile = world.ground.getTileAt(at.x, at.y);
+            assert(layerTile && layerTile.collides, 'dock collides at ' + at.x + ',' + at.y);
+        });
+        assertEqual(world.tileGrid[shore.boat.y][shore.boat.x], win.TILE.BOAT, 'boat tile');
+        assertEqual(win.sceneryKindAt(world.tileGrid, shore.boat.x, shore.boat.y, {}), 'boat', 'boat kind');
+        assert(world.ground.getTileAt(shore.boat.x, shore.boat.y).collides, 'boat collides');
+        assertEqual(world.tileGrid[13][18], win.TILE.PATH, 'southshore path stays open');
+
+        clickTile(shore.dock.x, shore.dock.y);
+        assertEqual(H.lastChat(win), 'A weathered wooden dock. The tide slaps the pilings.', 'left-click dock logs examine');
+        assert(!world.walkTarget, 'dock examine does not walk');
+        clickTile(shore.boat.x, shore.boat.y);
+        assertEqual(H.lastChat(win), 'A fishing boat, tied off and empty.', 'left-click boat logs examine');
+        assert(!world.walkTarget, 'boat examine does not walk');
+        assert(
+            !win.document.getElementById('shop-overlay') || win.document.getElementById('shop-overlay').hidden,
+            'shop overlay stays hidden'
+        );
+
+        var menu = win.document.getElementById('ctx-menu');
+        assert(menu, 'ctx-menu element exists');
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        win.Hud.hideContextMenu();
+        rightTile(shore.dock.x, shore.dock.y);
+        assert(!world.walkTarget, 'right-click dock does not walk immediately');
+        assert(!menu.hidden, 'right-click dock opens context menu');
+        var examBtn = menu.querySelector('[data-ctx="examine"]');
+        var walkBtn = menu.querySelector('[data-ctx="walk-here"]');
+        assert(examBtn, 'Examine action is listed');
+        assertEqual(examBtn.textContent, 'Examine', 'Examine label');
+        assert(walkBtn, 'Walk here remains listed on dock');
+        H.mouseClick(win, examBtn);
+        assert(menu.hidden, 'Examine closes the menu');
+        assertEqual(H.lastChat(win), 'A weathered wooden dock. The tide slaps the pilings.', 'Examine menu logs dock line');
+        assert(!world.walkTarget, 'Examine menu does not walk');
+
+        H.enterZone(win, 'graves');
+        world = H.world(win);
+        H.setAutoAttack(win, false);
+        world.encounterLock = false;
+        world.engageTarget = null;
+        world.talkTarget = null;
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        parkWorldBodies(world);
+        var graves = win.GRAVE_PROPS;
+        assert(graves && graves.tombs && graves.tombs.length >= 3, 'GRAVE_PROPS tombs exist');
+        graves.tombs.forEach(function (at) {
+            assertEqual(world.tileGrid[at.y][at.x], win.TILE.TOMB, 'tomb at ' + at.x + ',' + at.y);
+            assertEqual(win.sceneryKindAt(world.tileGrid, at.x, at.y, {}), 'tomb', 'tomb kind at ' + at.x + ',' + at.y);
+            var tombTile = world.ground.getTileAt(at.x, at.y);
+            assert(tombTile && tombTile.collides, 'tomb collides at ' + at.x + ',' + at.y);
+            if (world.clearWalk) {
+                world.clearWalk();
+            }
+            clickTile(at.x, at.y);
+            assertEqual(H.lastChat(win), 'A weathered tomb marker. The name is worn away.', 'left-click tomb logs examine');
+            assert(!world.walkTarget, 'tomb examine does not walk');
+        });
+        assertEqual(world.tileGrid[14][18], win.TILE.PATH, 'graves path stays open');
+
+        H.enterZone(win, 'haven');
+        world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        H.enterZone(win, 'southshore');
+        world = H.world(win);
+        parkWorldBodies(world);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = true;
+        var lastBefore = H.lastChat(win);
+        clickTile(shore.dock.x, shore.dock.y);
+        assertEqual(H.lastChat(win), lastBefore, 'encounterLock ignores dock examine');
+        world.encounterLock = false;
+        win.Hud.mode = 'battle';
+        clickTile(shore.boat.x, shore.boat.y);
+        assertEqual(H.lastChat(win), lastBefore, 'battle mode ignores boat examine');
+        win.Hud.mode = 'world';
+
+        H.enterZone(win, 'haven');
+        world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        H.clearKeys(win);
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        assertEqual(Math.round(world.player.x), 328, 'restored spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'restored spawn y');
+    });
+});
+
 function countTilesInRows(grid, index, y0, y1) {
     var n = 0;
     var y;

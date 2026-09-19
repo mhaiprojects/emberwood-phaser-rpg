@@ -123,7 +123,8 @@ var WorldScene = new Phaser.Class({
         this.ground = this.map.createLayer(0, tiles, 0, 0);
         this.ground.setCollision([
             TILE.WATER, TILE.TREE, TILE.ROCK, TILE.SHRINE,
-            TILE.STALL, TILE.RANGE, TILE.ANVIL, TILE.BOOTH
+            TILE.STALL, TILE.RANGE, TILE.ANVIL, TILE.BOOTH,
+            TILE.DOCK, TILE.BOAT, TILE.TOMB
         ]);
         this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
         this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);

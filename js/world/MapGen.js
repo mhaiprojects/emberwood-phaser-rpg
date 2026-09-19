@@ -10,7 +10,10 @@ var TILE = {
     STALL: 9,
     RANGE: 10,
     ANVIL: 11,
-    BOOTH: 12
+    BOOTH: 12,
+    DOCK: 13,
+    BOAT: 14,
+    TOMB: 15
 };
 
 var MAP_W = 36;
@@ -22,6 +25,22 @@ var TOWN_PROPS = {
     range: { x: 16, y: 17 },
     anvil: { x: 21, y: 12 },
     booth: { x: 14, y: 12 }
+};
+var SHORE_PROPS = {
+    dock: { x: 12, y: 22 },
+    boat: { x: 11, y: 23 },
+    planks: [
+        { x: 12, y: 21 },
+        { x: 12, y: 22 },
+        { x: 12, y: 23 }
+    ]
+};
+var GRAVE_PROPS = {
+    tombs: [
+        { x: 8, y: 6 },
+        { x: 22, y: 6 },
+        { x: 8, y: 18 }
+    ]
 };
 var TOWN_HOUSES = [
     { x: 8, y: 6, w: 6, h: 5 },
@@ -42,7 +61,10 @@ var SCENERY_EXAMINE = {
     stall: 'A market stall. The grocer is away.',
     range: 'A cooking range. The fire is out.',
     anvil: 'A well-used smithing anvil.',
-    booth: 'A bank booth. The clerk is away.'
+    booth: 'A bank booth. The clerk is away.',
+    dock: 'A weathered wooden dock. The tide slaps the pilings.',
+    boat: 'A fishing boat, tied off and empty.',
+    tomb: 'A weathered tomb marker. The name is worn away.'
 };
 
 function tileCenter(tx, ty) {
@@ -246,6 +268,11 @@ function generateMap(seed, biome, neighbors) {
             setCell(grid, x, MAP_H - 7, TILE.PATH);
         }
         scatter(grid, TILE.ROCK, 8, seed, true);
+        var di;
+        for (di = 0; di < SHORE_PROPS.planks.length; di++) {
+            setCell(grid, SHORE_PROPS.planks[di].x, SHORE_PROPS.planks[di].y, TILE.DOCK);
+        }
+        setCell(grid, SHORE_PROPS.boat.x, SHORE_PROPS.boat.y, TILE.BOAT);
     } else if (biome === 'mine') {
         scatter(grid, TILE.ROCK, 55, seed, true);
         scatter(grid, TILE.TREE, 8, seed + 5, true);
@@ -256,6 +283,10 @@ function generateMap(seed, biome, neighbors) {
     } else if (biome === 'grave') {
         scatter(grid, TILE.ROCK, 22, seed, true);
         scatter(grid, TILE.TREE, 18, seed + 7, true);
+        var ti;
+        for (ti = 0; ti < GRAVE_PROPS.tombs.length; ti++) {
+            setCell(grid, GRAVE_PROPS.tombs[ti].x, GRAVE_PROPS.tombs[ti].y, TILE.TOMB);
+        }
     }
 
     return grid;
@@ -365,6 +396,15 @@ function sceneryKindAt(grid, tx, ty, opts) {
     }
     if (index === TILE.BOOTH) {
         return 'booth';
+    }
+    if (index === TILE.DOCK) {
+        return 'dock';
+    }
+    if (index === TILE.BOAT) {
+        return 'boat';
+    }
+    if (index === TILE.TOMB) {
+        return 'tomb';
     }
     if (index === TILE.ROCK) {
         if (opts.interior || isHouseWallAt(grid, tx, ty, opts.houseRects)) {
