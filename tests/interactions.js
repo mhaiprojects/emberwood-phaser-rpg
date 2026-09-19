@@ -2994,6 +2994,70 @@ EmberwoodTests.add('combat: canvas select then Attack uses that target', functio
     });
 });
 
+EmberwoodTests.add('combat: gold target rectangle follows selected living enemy and hides on death', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.setAutoAttack(win, false);
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard stays off');
+        return H.startCustomFight(win, [
+            { type: 'Goblin', texture: 'slime', tint: 0x5aa33a, hp: 40, damage: 1, gold: 0, xp: 1 },
+            { type: 'Cow', texture: 'slime', tint: 0xaa7744, hp: 40, damage: 1, gold: 0, xp: 1 }
+        ]);
+    }).then(function () {
+        var battle = H.battle(win);
+        var marker = battle.targetMarker;
+        var goblin = battle.enemies[0];
+        var cow = battle.enemies[1];
+        assert(marker, 'gold target rectangle exists');
+        assertEqual(marker.strokeColor, 0xf0d060, 'stroke is gold');
+        assertEqual(marker.lineWidth, 2, 'stroke width 2');
+        assertEqual(marker.fillAlpha, 0, 'fill is hollow');
+        assert(marker.visible, 'visible on default living target');
+        assertEqual(battle.targetIndex, 0, 'default first foe');
+        assertEqual(marker.x, goblin.x, 'marker on goblin x');
+        assertEqual(marker.y, goblin.y, 'marker on goblin y');
+
+        battle.pickReady = true;
+        assertEqual(win.Hud.selectingEnemy, false, 'not in pick-to-strike mode');
+        cow.emit('pointerdown');
+        assertEqual(battle.targetIndex, 1, 'canvas selected cow');
+        assertEqual(cow.hp, 40, 'select does not strike');
+        assert(marker.visible, 'stays visible on new living target');
+        assertEqual(marker.x, cow.x, 'marker jumped to cow x');
+        assertEqual(marker.y, cow.y, 'marker jumped to cow y');
+
+        cow.setPosition(cow.x + 24, cow.y - 16);
+        battle.update();
+        assertEqual(marker.x, cow.x, 'follows cow x');
+        assertEqual(marker.y, cow.y, 'follows cow y');
+        assert(marker.visible, 'still visible while cow lives');
+
+        cow.die();
+        battle.update();
+        assertEqual(cow.living, false, 'cow died');
+        assertEqual(goblin.living, true, 'goblin still living');
+        assertEqual(marker.visible, false, 'hides when selected foe dies');
+
+        win.Hud.onEnemyPicked(0, true);
+        assertEqual(battle.targetIndex, 0, 'reselected living goblin');
+        assert(marker.visible, 'shows again on living foe');
+        assertEqual(marker.x, goblin.x, 'marker on goblin after reselect');
+        assertEqual(marker.y, goblin.y, 'marker on goblin y after reselect');
+
+        goblin.die();
+        battle.update();
+        assertEqual(marker.visible, false, 'hides when last selected foe dies');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        return H.forceFlee(win);
+    }).then(function () {
+        H.enterZone(win, 'haven');
+    }).catch(function (err) {
+        return H.cleanupBattle(win).then(function () {
+            throw err;
+        });
+    });
+});
+
 EmberwoodTests.add('combat: goblin kill advances the militia quest', function (win, H) {
     return H.cleanupBattle(win).then(function () {
         H.enterZone(win, 'northwood');

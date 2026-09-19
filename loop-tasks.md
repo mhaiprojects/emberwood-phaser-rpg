@@ -121,7 +121,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Attack on a single foe auto-selects index 0 and deals damage (variance −2..+2, min 1). — Conclusion: startBattle/autoSelectTarget pick index 0; takeDamage uses Between(-2,2) min 1. Playwright from spawn (328,248) drop=16; dedicated suite case pass. Phaser 3.90 keyboard off.
 - [done] Clicking a foe in the HTML battle list on your turn selects and strikes that index. — Conclusion: On player turn, `#battle-enemies` `.enemy-btn` click (`onEnemyPicked` without `fromSprite`) sets `targetIndex` and strikes that foe; the other stays full. Phaser 3.90 keyboard off. Dedicated case + Playwright; ?only=manual list click 1/1.
 - [done] Canvas click on a foe selects (`fromSprite`) without striking unless `selectingEnemy`. — Conclusion: canvas `pointerdown`/`fromSprite` cow selects no strike; Attack hits cow; `selectingEnemy` fromSprite strikes; goblin full; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1
-- [verify] The gold target rectangle follows the selected living enemy and hides when they die. — Conclusion: —
+- [done] The gold target rectangle follows the selected living enemy and hides when they die. — Conclusion: Gold 0xf0d060 rect follows selected living foe (canvas cow + move) and hides on die(); reselect shows again; last death hides. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1
 - [verify] Accurate → Attack XP, Aggressive → Strength XP, Defensive → Defence XP on a **win**. — Conclusion: —
 - [verify] Hitpoints XP on win is `ceil(mobXp / 3)` (minimum 1). — Conclusion: —
 - [verify] Eat food in combat uses shrimp then bread (`eatBestFood`), heals, consumes one, and spends the turn. — Conclusion: —
@@ -431,4 +431,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 58 | 2026-09-16 | engageGrace is ~800ms on zone enter and ~700ms after returning from battle | done — spawn (328,248) enterZone ~800ms blocks 10px auto-attack; wake/flee ~700ms blocks re-aggro; Phaser 3.90 keyboard off; dedicated case + Playwright 2/2 |
 | 59 | 2026-09-16 | Clicking a foe in the HTML battle list on your turn selects and strikes that index | done — HTML .enemy-btn click selects+strikes chosen index (cow hit, goblin full); Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 60 | 2026-09-19 | Canvas click on a foe selects (fromSprite) without striking unless selectingEnemy | done — canvas fromSprite cow selects no strike; Attack hits cow; selectingEnemy fromSprite strikes; goblin full; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 61 | 2026-09-19 | The gold target rectangle follows the selected living enemy and hides when they die | done — gold 0xf0d060 rect follows selected living foe and hides on death; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 

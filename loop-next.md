@@ -7,35 +7,35 @@ Do not paste `AGENT.md` or `loop-tasks.md` into the Task prompt.
 
 Pick **#1**. One spawned tick = one item. Refresh this file after commit.
 
-## 1. [verify] The gold target rectangle follows the selected living enemy and hides when they die.
-
-- Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
-- Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
-- Test: `add a dedicated case; nearest existing: combat: canvas select then Attack uses that target`
-- URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
-
-## 2. [verify] Accurate → Attack XP, Aggressive → Strength XP, Defensive → Defence XP on a **win**.
+## 1. [verify] Accurate → Attack XP, Aggressive → Strength XP, Defensive → Defence XP on a **win**.
 
 - Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
 - Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
 - Test: `add a dedicated case; nearest existing: hud: start skills Hitpoints 10 / 1154 XP / 100 HP; others 1 / 0`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
-## 3. [verify] Hitpoints XP on win is `ceil(mobXp / 3)` (minimum 1).
+## 2. [verify] Hitpoints XP on win is `ceil(mobXp / 3)` (minimum 1).
 
 - Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
 - Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
 - Test: `hud: start skills Hitpoints 10 / 1154 XP / 100 HP; others 1 / 0`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
-## 4. [verify] Eat food in combat uses shrimp then bread (`eatBestFood`), heals, consumes one, and spends the turn.
+## 3. [verify] Eat food in combat uses shrimp then bread (`eatBestFood`), heals, consumes one, and spends the turn.
 
 - Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
 - Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
 - Test: `combat: Eat food uses inventory on your turn`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
-## 5. [verify] Eat at full HP does not consume food and returns the turn.
+## 4. [verify] Eat at full HP does not consume food and returns the turn.
+
+- Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
+- Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
+- Test: `combat: Eat food uses inventory on your turn`
+- URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
+
+## 5. [verify] Eat with no food chats `You have no food.` and returns the turn.
 
 - Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
 - Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
