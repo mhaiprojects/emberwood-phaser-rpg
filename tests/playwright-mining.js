@@ -1,7 +1,7 @@
 /**
  * Playwright proof: from spawn (328, 248), left-click Darkmine
  * rocks grant Mining XP. Phaser keyboard stays off.
- * Firemaking is not this tick.
+ * Smithing is not this tick.
  *
  * Headless via tests/playwright-session.js (reuses a live server, or starts
  * python3 -m http.server on this port and kills that PID on exit).
@@ -53,8 +53,8 @@
             if (typeof window.mineRock === 'function') {
                 throw new Error('mineRock started this tick');
             }
-            if (typeof window.lightFire === 'function' || typeof window.firemakeAt === 'function') {
-                throw new Error('Firemaking started this tick');
+            if (typeof window.smithBar === 'function') {
+                throw new Error('Smithing started this tick');
             }
             if (window.MINE_ROCK_XP !== 10) {
                 throw new Error('MINE_ROCK_XP is ' + window.MINE_ROCK_XP + ' not 10');

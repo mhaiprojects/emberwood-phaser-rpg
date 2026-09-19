@@ -1,7 +1,7 @@
 /**
  * Playwright proof: from spawn (328, 248), Darkmine copper/tin mine at
  * Mining 1; iron chats "You need level 15." until Mining 15.
- * Firemaking / Smithing are not this tick. Phaser keyboard stays off.
+ * Smithing is not this tick. Phaser keyboard stays off.
  *
  * Headless via tests/playwright-session.js (reuses a live server, or starts
  * python3 -m http.server on this port and kills that PID on exit).
@@ -59,8 +59,8 @@
             if (typeof window.mineAtRock !== 'function' || typeof window.needLevelChat !== 'function') {
                 throw new Error('mineAtRock / needLevelChat missing');
             }
-            if (typeof window.lightFire === 'function' || typeof window.smithBar === 'function') {
-                throw new Error('Firemaking or Smithing started this tick');
+            if (typeof window.smithBar === 'function') {
+                throw new Error('Smithing started this tick');
             }
             if (window.RESOURCE_LEVEL.copper !== 1 || window.RESOURCE_LEVEL.tin !== 1
                     || window.RESOURCE_LEVEL.iron !== 15) {

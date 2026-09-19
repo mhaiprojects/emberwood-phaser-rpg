@@ -1096,12 +1096,13 @@ EmberwoodTests.add('hud: skills tab lists twelve skills with icons', function (w
         ['fishing', 'Fishing'],
         ['woodcutting', 'Woodcutting'],
         ['mining', 'Mining'],
-        ['crafting', 'Crafting']
+        ['crafting', 'Crafting'],
+        ['firemaking', 'Firemaking']
     ];
     H.click(win, '#tab-bar button[data-tab="skills"]');
     assert(H.panelVisible(win, 'skills'), 'skills panel visible');
     var rows = win.document.querySelectorAll('#skills-list .skill-row');
-    assertEqual(rows.length, 12, 'twelve skill rows');
+    assertEqual(rows.length, 13, 'thirteen skill rows');
     expected.forEach(function (pair, i) {
         var row = rows[i];
         var img = row.querySelector('img.pix');
@@ -1134,7 +1135,7 @@ EmberwoodTests.add('hud: skill icons resolve under assets/svg/skills/{id}.svg', 
         assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
         assert(String(win.Phaser.VERSION).indexOf('3.') === 0, 'Phaser 3');
         assertEqual(typeof win.skillIcon, 'function', 'skillIcon helper exists');
-        assert(win.SKILL_NAMES && win.SKILL_NAMES.length === 12, 'twelve SKILL_NAMES');
+        assert(win.SKILL_NAMES && win.SKILL_NAMES.length === 13, 'thirteen SKILL_NAMES');
 
         win.SKILL_NAMES.forEach(function (pair) {
             assertEqual(win.skillIcon(pair[0]), 'assets/svg/skills/' + pair[0] + '.svg', pair[1] + ' skillIcon path');
@@ -1147,7 +1148,7 @@ EmberwoodTests.add('hud: skill icons resolve under assets/svg/skills/{id}.svg', 
         H.click(win, '#tab-bar button[data-tab="skills"]');
         assert(H.panelVisible(win, 'skills'), 'skills panel visible');
         var rows = win.document.querySelectorAll('#skills-list .skill-row');
-        assertEqual(rows.length, 12, 'twelve skill rows');
+        assertEqual(rows.length, 13, 'thirteen skill rows');
 
         win.SKILL_NAMES.forEach(function (pair, i) {
             var img = rows[i].querySelector('img.pix');
@@ -1200,7 +1201,7 @@ EmberwoodTests.add('hud: start skills Hitpoints 10 / 1154 XP / 100 HP; others 1 
 
     var others = [
         'attack', 'strength', 'defence', 'ranged', 'prayer', 'magic',
-        'cooking', 'fishing', 'woodcutting', 'mining', 'crafting'
+        'cooking', 'fishing', 'woodcutting', 'mining', 'crafting', 'firemaking'
     ];
     others.forEach(function (id) {
         assertEqual(hero.skills[id].level, 1, id + ' start level 1');
@@ -1215,7 +1216,7 @@ EmberwoodTests.add('hud: start skills Hitpoints 10 / 1154 XP / 100 HP; others 1 
     H.click(win, '#tab-bar button[data-tab="skills"]');
     assert(H.panelVisible(win, 'skills'), 'skills panel visible');
     var rows = win.document.querySelectorAll('#skills-list .skill-row');
-    assertEqual(rows.length, 12, 'twelve skill rows');
+    assertEqual(rows.length, 13, 'thirteen skill rows');
     var byName = {};
     for (var i = 0; i < rows.length; i++) {
         byName[rows[i].querySelector('span').textContent] = rows[i].querySelector('strong').textContent;
@@ -1223,7 +1224,7 @@ EmberwoodTests.add('hud: start skills Hitpoints 10 / 1154 XP / 100 HP; others 1 
     assertEqual(byName.Hitpoints, '10', 'Skills tab Hitpoints 10');
     [
         'Attack', 'Strength', 'Defence', 'Ranged', 'Prayer', 'Magic',
-        'Cooking', 'Fishing', 'Woodcutting', 'Mining', 'Crafting'
+        'Cooking', 'Fishing', 'Woodcutting', 'Mining', 'Crafting', 'Firemaking'
     ].forEach(function (name) {
         assertEqual(byName[name], '1', name + ' is 1 on Skills tab');
     });
@@ -1273,7 +1274,7 @@ EmberwoodTests.add('skills: skill-row hover or click shows current XP and XP-to-
         H.click(win, '#tab-bar button[data-tab="skills"]');
         assert(H.panelVisible(win, 'skills'), 'skills panel visible');
         var rows = win.document.querySelectorAll('#skills-list .skill-row');
-        assertEqual(rows.length, 12, 'twelve skill rows');
+        assertEqual(rows.length, 13, 'thirteen skill rows');
         var byId = {};
         for (var i = 0; i < rows.length; i++) {
             byId[rows[i].getAttribute('data-skill')] = rows[i];
@@ -1412,7 +1413,7 @@ EmberwoodTests.add('hud: side HUD shows zone combat level HP fill gold XP and ta
 
         assertEqual(zoneEl.textContent, 'Emberhaven', 'starter zone name');
         assertEqual(levelEl.textContent, '3', 'starter OSRS combat level');
-        assertEqual(totalEl.textContent, '21', 'starter skill total');
+        assertEqual(totalEl.textContent, '22', 'starter skill total');
         assertEqual(hpEl.textContent.replace(/\s+/g, ' ').trim(), '100 / 100', 'starter HP cur / max');
         assertEqual(fill.style.width, '100%', 'starter HP fill 100%');
         assertEqual(goldEl.textContent, '8', 'starter gold');
@@ -1433,7 +1434,7 @@ EmberwoodTests.add('hud: side HUD shows zone combat level HP fill gold XP and ta
 
         assertEqual(zoneEl.textContent, 'Millfields', 'zone name updates');
         assertEqual(levelEl.textContent, '9', 'combat level updates from Attack+Strength');
-        assertEqual(totalEl.textContent, '39', 'skill total updates from Attack+Strength');
+        assertEqual(totalEl.textContent, '40', 'skill total updates from Attack+Strength');
         assertEqual(hpEl.textContent.replace(/\s+/g, ' ').trim(), '55 / 110', 'HP cur / max updates');
         assertEqual(fill.style.width, '50%', 'HP fill is 50% at 55/110');
         assertEqual(goldEl.textContent, '25', 'gold updates');
@@ -1468,9 +1469,10 @@ EmberwoodTests.add('hud: side HUD shows skill total and derived combat level', f
         assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
         assertEqual(typeof win.skillTotal, 'function', 'skillTotal exists');
         assertEqual(typeof win.combatLevel, 'function', 'combatLevel exists');
-        assertEqual(typeof win.lightFire, 'undefined', 'Firemaking is not this tick');
-        assertEqual(typeof win.firemakeAt, 'undefined', 'Firemaking helper is not this tick');
-        assertEqual(win.SKILL_NAMES.length, 12, 'twelve skills in the total');
+        assertEqual(typeof win.firemakeAt, 'function', 'Firemaking helper exists');
+        assertEqual(typeof win.lightFire, 'function', 'lightFire alias exists');
+        assertEqual(typeof win.smithBar, 'undefined', 'Smithing is not this tick');
+        assertEqual(win.SKILL_NAMES.length, 13, 'thirteen skills in the total');
 
         var levelEl = win.document.getElementById('hud-level');
         var totalEl = win.document.getElementById('hud-total');
@@ -1483,20 +1485,20 @@ EmberwoodTests.add('hud: side HUD shows skill total and derived combat level', f
         var totalIcon = totalEl.closest('.stat').querySelector('img.pix');
         assert(totalIcon && totalIcon.getAttribute('src').indexOf('assets/svg/ui/skills.svg') !== -1, 'Total uses skills icon');
 
-        assertEqual(win.skillTotal(hero), 21, 'starter skill total is 21');
+        assertEqual(win.skillTotal(hero), 22, 'starter skill total is 22');
         assertEqual(win.combatLevel(hero), 3, 'starter derived combat is 3');
         assertEqual(hero.level, 3, 'hero.level is derived combat not skill total');
         assertEqual(levelEl.textContent, '3', 'HUD combat is 3');
-        assertEqual(totalEl.textContent, '21', 'HUD total is 21');
+        assertEqual(totalEl.textContent, '22', 'HUD total is 22');
 
         hero.skills.cooking.level = 2;
         win.game.registry.set('hero', hero);
         world.refreshHud();
-        assertEqual(win.skillTotal(hero), 22, 'Cooking 2 raises skill total');
+        assertEqual(win.skillTotal(hero), 23, 'Cooking 2 raises skill total');
         assertEqual(win.combatLevel(hero), 3, 'Cooking does not change combat');
         assertEqual(hero.level, 3, 'hero.level stays combat 3');
         assertEqual(levelEl.textContent, '3', 'HUD combat stays 3 after Cooking');
-        assertEqual(totalEl.textContent, '22', 'HUD total is 22 after Cooking');
+        assertEqual(totalEl.textContent, '23', 'HUD total is 23 after Cooking');
 
         hero.skills.attack.level = 10;
         hero.skills.strength.level = 10;
@@ -1507,10 +1509,10 @@ EmberwoodTests.add('hud: side HUD shows skill total and derived combat level', f
         win.game.registry.set('hero', hero);
         world.refreshHud();
         assertEqual(win.combatLevel(hero), 9, 'Attack+Strength 10 is combat 9');
-        assertEqual(win.skillTotal(hero), 40, 'Attack+Strength+Cooking total is 40');
+        assertEqual(win.skillTotal(hero), 41, 'Attack+Strength+Cooking total is 41');
         assertEqual(hero.level, 9, 'hero.level is combat 9 not skill total');
         assertEqual(levelEl.textContent, '9', 'HUD combat is 9');
-        assertEqual(totalEl.textContent, '40', 'HUD total ignores unused Agility');
+        assertEqual(totalEl.textContent, '41', 'HUD total ignores unused Agility');
 
         win.game.registry.set('hero', win.makeHero());
         win.game.registry.set('quest', { id: 'goblins', stage: 0, progress: 0, goal: 5 });
@@ -1520,7 +1522,7 @@ EmberwoodTests.add('hud: side HUD shows skill total and derived combat level', f
         assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
         assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
         assert(!win.game.input.keyboard, 'Phaser keyboard still off');
-        assertEqual(typeof win.lightFire, 'undefined', 'Firemaking still not this tick');
+        assertEqual(typeof win.smithBar, 'undefined', 'Smithing still not this tick');
     });
 });
 
@@ -9583,8 +9585,7 @@ EmberwoodTests.add('skills: Darkmine rocks grant Mining XP', function (win, H) {
         assertEqual(typeof win.gainSkillXp, 'function', 'gainSkillXp helper');
         assertEqual(win.MINE_ROCK_XP, 10, 'Darkmine rocks grant 10 Mining XP');
         assertEqual(typeof win.mineRock, 'undefined', 'mineRock helper is not this tick');
-        assertEqual(typeof win.lightFire, 'undefined', 'Firemaking is not this tick');
-        assertEqual(typeof win.firemakeAt, 'undefined', 'Firemaking helper is not this tick');
+        assertEqual(typeof win.smithBar, 'undefined', 'Smithing is not this tick');
 
         function clickTile(tx, ty) {
             var pt = win.tileCenter(tx, ty);
@@ -9760,8 +9761,7 @@ EmberwoodTests.add('skills: Darkmine rocks grant Mining XP', function (win, H) {
         assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
         assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
         assert(!win.game.input.keyboard, 'Phaser keyboard still off');
-        assertEqual(typeof win.lightFire, 'undefined', 'Firemaking still not this tick');
-        assertEqual(typeof win.firemakeAt, 'undefined', 'Firemaking helper still not this tick');
+        assertEqual(typeof win.smithBar, 'undefined', 'Smithing still not this tick');
         assertEqual(H.hero(win).skills.crafting.xp, 0, 'Crafting XP still 0');
     });
 });
@@ -9805,7 +9805,6 @@ EmberwoodTests.add('skills: copper and tin need level 1, iron needs 15', functio
         assertEqual(win.resourceNeedLevel('tin'), 1, 'tin gate is 1');
         assertEqual(win.resourceNeedLevel('iron'), 15, 'iron gate is 15');
         assertEqual(win.needLevelChat(15), 'You need level 15.', 'need-level chat');
-        assertEqual(typeof win.lightFire, 'undefined', 'Firemaking is not this tick');
         assertEqual(typeof win.smithBar, 'undefined', 'Smithing is not this tick');
 
         function clickTile(tx, ty) {
@@ -9935,7 +9934,6 @@ EmberwoodTests.add('skills: copper and tin need level 1, iron needs 15', functio
         assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
         assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
         assert(!win.game.input.keyboard, 'Phaser keyboard still off');
-        assertEqual(typeof win.lightFire, 'undefined', 'Firemaking still not this tick');
         assertEqual(typeof win.smithBar, 'undefined', 'Smithing still not this tick');
     });
 });
@@ -9981,8 +9979,7 @@ EmberwoodTests.add('skills: cowhide to leather or string plus leather grants Cra
         assertEqual(win.itemDefaultVerb('cowhide'), 'tan', 'cowhide default is tan');
         assertEqual(win.itemDefaultVerb('leather'), 'drop', 'leather default is drop');
         assertEqual(win.itemDefaultVerb('string'), 'drop', 'string default is drop');
-        assertEqual(typeof win.lightFire, 'undefined', 'Firemaking is not this tick');
-        assertEqual(typeof win.firemakeAt, 'undefined', 'Firemaking helper is not this tick');
+        assertEqual(typeof win.smithBar, 'undefined', 'Smithing is not this tick');
 
         function stackQty(hero, id) {
             var stack = hero.inventory.filter(function (row) { return row.id === id; })[0];
@@ -10117,9 +10114,148 @@ EmberwoodTests.add('skills: cowhide to leather or string plus leather grants Cra
         assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
         assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
         assert(!win.game.input.keyboard, 'Phaser keyboard still off');
-        assertEqual(typeof win.lightFire, 'undefined', 'Firemaking still not this tick');
-        assertEqual(typeof win.firemakeAt, 'undefined', 'Firemaking helper still not this tick');
+        assertEqual(typeof win.smithBar, 'undefined', 'Smithing still not this tick');
         assertEqual(H.hero(win).skills.mining.xp, 0, 'Mining XP still 0');
+    });
+});
+
+EmberwoodTests.add('skills: Firemaking listed and firemakeAt grants Firemaking XP', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, true);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.clearLoot();
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        if (win.Hud.hideContextMenu) {
+            win.Hud.hideContextMenu();
+        }
+        if (win.Hud.clearUseOn) {
+            win.Hud.clearUseOn();
+        }
+        parkWorldBodies(world);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof win.firemakeAt, 'function', 'firemakeAt helper');
+        assertEqual(typeof win.lightFire, 'function', 'lightFire helper');
+        assertEqual(typeof win.useItemOnScenery, 'function', 'useItemOnScenery helper');
+        assertEqual(typeof win.gainSkillXp, 'function', 'gainSkillXp helper');
+        assertEqual(win.FIREMAKE_XP, 10, 'Firemaking grants 10 XP');
+        assertEqual(typeof win.smithBar, 'undefined', 'Smithing is not this tick');
+        assertEqual(typeof win.smithAt, 'undefined', 'Smithing helper is not this tick');
+        assert(!win.ITEM_DB.logs && !win.ITEM_DB.tinderbox && !win.ITEM_DB.ore && !win.ITEM_DB.net,
+            'no gathering section items');
+        assertEqual(win.itemCanUseOn('rawshrimp', 'fire'), true, 'Use-on still targets fire');
+        assertEqual(win.itemCanUseOn('rawshrimp', 'range'), true, 'Use-on still targets range');
+        var skillIds = win.SKILL_NAMES.map(function (pair) { return pair[0]; });
+        assert(skillIds.indexOf('firemaking') !== -1, 'Firemaking is listed');
+        assertEqual(skillIds.indexOf('smithing'), -1, 'Smithing is not listed');
+        assertEqual(win.SKILL_NAMES.length, 13, 'thirteen skills including Firemaking');
+        assertEqual(win.SKILL_NAMES[12][0], 'firemaking', 'Firemaking is the extra skill');
+        assertEqual(win.skillIcon('firemaking'), 'assets/svg/skills/firemaking.svg', 'Firemaking icon path');
+
+        function clickTile(tx, ty) {
+            var pt = win.tileCenter(tx, ty);
+            world.onClick({ worldX: pt.x, worldY: pt.y });
+            return pt;
+        }
+
+        var hero = win.makeHero();
+        win.addItem(hero, 'rawshrimp', 1);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(hero.skills.firemaking.xp, 0, 'Firemaking XP starts 0');
+        assertEqual(hero.skills.firemaking.level, 1, 'Firemaking starts 1');
+        assertEqual(hero.skills.cooking.xp, 0, 'Cooking XP stays 0');
+        assertEqual(hero.skills.crafting.xp, 0, 'Crafting XP stays 0');
+        assertEqual(win.skillTotal(hero), 22, 'starter total includes Firemaking');
+        assertEqual(hero.level, 3, 'starter combat level 3');
+
+        H.click(win, '#tab-bar button[data-tab="skills"]');
+        assert(H.panelVisible(win, 'skills'), 'skills panel visible');
+        var rows = win.document.querySelectorAll('#skills-list .skill-row');
+        assertEqual(rows.length, 13, 'thirteen skill rows');
+        var fireRow = win.document.querySelector('#skills-list [data-skill="firemaking"]');
+        assert(fireRow, 'Firemaking Skills row exists');
+        var fireImg = fireRow.querySelector('img.pix');
+        assert(fireImg && fireImg.getAttribute('src').indexOf('assets/svg/skills/firemaking.svg') !== -1,
+            'Firemaking skill icon');
+
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        var dropsHost = win.Hud.ensureXpDrops();
+        assert(dropsHost && dropsHost.id === 'xp-drops', 'xp-drops host exists');
+        dropsHost.innerHTML = '';
+        win.Hud.el.log.innerHTML = '';
+
+        win.Hud.beginUseOn('rawshrimp');
+        clickTile(16, 17);
+        hero = H.hero(win);
+        assertEqual(H.lastChat(win), 'You use the Raw shrimp on the fire.', 'raw-on-range chat');
+        assertEqual(hero.skills.cooking.xp, 30, 'Use-on fire still grants Cooking XP');
+        assertEqual(hero.skills.firemaking.xp, 0, 'Use-on cook does not grant Firemaking XP');
+        assertEqual(win.Hud.useOnId, null, 'cursor clears after range');
+
+        dropsHost.innerHTML = '';
+        win.Hud.el.log.innerHTML = '';
+        var helper = win.firemakeAt(hero);
+        assert(helper && helper.ok, 'firemakeAt helper succeeds');
+        assertEqual(helper.xp, 10, 'helper grants 10 Firemaking XP');
+        assertEqual(hero.skills.firemaking.xp, 10, 'firemakeAt grants 10 Firemaking XP');
+        assertEqual(hero.skills.firemaking.level, 1, '10 XP does not level Firemaking');
+        assertEqual(hero.skills.cooking.xp, 30, 'firemakeAt does not grant Cooking XP');
+        assertEqual(hero.level, 3, 'combat level unchanged at Firemaking 1');
+        var drops = win.document.querySelectorAll('#xp-drops .xp-drop');
+        assertEqual(drops.length, 1, 'one Firemaking XP drop');
+        assertEqual(drops[0].getAttribute('data-skill'), 'firemaking', 'drop skill is firemaking');
+        assertEqual(drops[0].getAttribute('data-xp'), '10', 'drop amount is 10');
+        var fireIcon = drops[0].querySelector('img.pix');
+        assert(fireIcon && fireIcon.getAttribute('src').indexOf('assets/svg/skills/firemaking.svg') !== -1,
+            'Firemaking drop icon');
+
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        H.click(win, '#tab-bar button[data-tab="skills"]');
+        fireRow = win.document.querySelector('#skills-list [data-skill="firemaking"]');
+        assert(
+            String(fireRow.getAttribute('title') || '').indexOf('10 XP') !== -1,
+            'Skills tab shows Firemaking XP'
+        );
+
+        dropsHost.innerHTML = '';
+        var alias = win.lightFire(hero);
+        assert(alias && alias.ok, 'lightFire alias succeeds');
+        assertEqual(alias.xp, 10, 'lightFire grants 10 Firemaking XP');
+        assertEqual(hero.skills.firemaking.xp, 20, 'lightFire grants another 10 Firemaking XP');
+        assertEqual(hero.skills.firemaking.level, 1, '20 XP does not level Firemaking');
+        drops = win.document.querySelectorAll('#xp-drops .xp-drop');
+        assertEqual(drops.length, 1, 'one helper Firemaking XP drop');
+        assertEqual(drops[0].getAttribute('data-skill'), 'firemaking', 'alias drop skill is firemaking');
+
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        return win.fetch('assets/svg/skills/firemaking.svg').then(function (res) {
+            assert(res.ok, 'Firemaking svg exists');
+            assertEqual(res.status, 200, 'Firemaking svg status 200');
+            return res.text();
+        }).then(function (body) {
+            assert(body.indexOf('<svg') !== -1, 'Firemaking body is SVG');
+            assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+            assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+            assertEqual(typeof win.smithBar, 'undefined', 'Smithing still not this tick');
+            assertEqual(H.hero(win).skills.firemaking.xp, 20, 'Firemaking XP still 20');
+        });
     });
 });
 

@@ -25,7 +25,7 @@
     "wanderer",
     "witch"
   ],
-    "items": [
+  "items": [
     "airrune",
     "arrow",
     "bones",
@@ -66,6 +66,7 @@
     "cooking",
     "crafting",
     "defence",
+    "firemaking",
     "fishing",
     "hitpoints",
     "magic",

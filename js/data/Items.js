@@ -23,6 +23,7 @@ var WOODCUT_TREE_XP = 10;
 var MINE_ROCK_XP = 10;
 var CRAFT_HIDE_XP = 14;
 var CRAFT_LEATHER_XP = 14;
+var FIREMAKE_XP = 10;
 var RESOURCE_LEVEL = {
     copper: 1,
     tin: 1,
@@ -62,7 +63,8 @@ var SKILL_NAMES = [
     ['fishing', 'Fishing'],
     ['woodcutting', 'Woodcutting'],
     ['mining', 'Mining'],
-    ['crafting', 'Crafting']
+    ['crafting', 'Crafting'],
+    ['firemaking', 'Firemaking']
 ];
 
 var EQUIP_SLOTS = [
@@ -202,6 +204,7 @@ function makeHero() {
             woodcutting: { level: 1, xp: 0 },
             mining: { level: 1, xp: 0 },
             crafting: { level: 1, xp: 0 },
+            firemaking: { level: 1, xp: 0 },
             agility: { level: 1, xp: 0 }
         }
     };
@@ -330,6 +333,9 @@ function itemUseOnKinds(id) {
     if (def.cook) {
         kinds.push('fire', 'range');
     }
+    if (def.firemake) {
+        kinds.push('fire', 'range');
+    }
     if (def.bury) {
         kinds.push('shrine');
     }
@@ -370,7 +376,26 @@ function useItemOnScenery(hero, id, kind) {
             gainSkillXp(hero, 'cooking', xp);
         }
     }
+    if (!def.cook && def.firemake && (kind === 'range' || kind === 'fire')) {
+        xp = typeof def.firemakeXp === 'number' ? def.firemakeXp : FIREMAKE_XP;
+        if (xp > 0) {
+            gainSkillXp(hero, 'firemaking', xp);
+        }
+        return { ok: true, id: id, kind: kind, cooked: null, firemade: true, xp: xp };
+    }
     return { ok: true, id: id, kind: kind, cooked: def.cook || null };
+}
+
+function firemakeAt(hero) {
+    if (!hero || !hero.skills || !hero.skills.firemaking) {
+        return null;
+    }
+    gainSkillXp(hero, 'firemaking', FIREMAKE_XP);
+    return { ok: true, xp: FIREMAKE_XP };
+}
+
+function lightFire(hero) {
+    return firemakeAt(hero);
 }
 
 function fishAtSpot(hero) {

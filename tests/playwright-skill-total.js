@@ -1,7 +1,7 @@
 /**
  * Playwright proof: from spawn (328, 248), the side HUD shows skill
  * total and a single derived combat level (not ambiguous hero.level).
- * Firemaking is not this tick. Phaser keyboard stays off.
+ * Smithing is not this tick. Phaser keyboard stays off.
  *
  * Headless via tests/playwright-session.js (reuses a live server, or starts
  * python3 -m http.server on this port and kills that PID on exit).
@@ -45,8 +45,8 @@
             if (typeof window.skillTotal !== 'function' || typeof window.combatLevel !== 'function') {
                 throw new Error('skillTotal / combatLevel missing');
             }
-            if (typeof window.lightFire === 'function' || typeof window.firemakeAt === 'function') {
-                throw new Error('Firemaking started this tick');
+            if (typeof window.smithBar === 'function') {
+                throw new Error('Smithing started this tick');
             }
 
             world.enterZone('haven', null);
@@ -57,7 +57,7 @@
             world.player.body.setVelocity(0, 0);
             world.refreshHud();
 
-            if (window.skillTotal(hero) !== 21 || window.combatLevel(hero) !== 3 || hero.level !== 3) {
+            if (window.skillTotal(hero) !== 22 || window.combatLevel(hero) !== 3 || hero.level !== 3) {
                 throw new Error('starter total/combat is ' + window.skillTotal(hero) + '/' + hero.level);
             }
             var hudLevel = document.getElementById('hud-level');
@@ -65,7 +65,7 @@
             if (!hudLevel || !hudTotal || !hudLevel.closest('#side') || !hudTotal.closest('#side')) {
                 throw new Error('combat/total missing from side HUD');
             }
-            if (hudLevel.textContent !== '3' || hudTotal.textContent !== '21') {
+            if (hudLevel.textContent !== '3' || hudTotal.textContent !== '22') {
                 throw new Error('HUD is combat ' + hudLevel.textContent + ' total ' + hudTotal.textContent);
             }
             var combatLabel = hudLevel.closest('.stat').querySelector('span');
@@ -75,10 +75,10 @@
 
             hero.skills.cooking.level = 2;
             world.refreshHud();
-            if (window.skillTotal(hero) !== 22 || window.combatLevel(hero) !== 3 || hero.level !== 3) {
+            if (window.skillTotal(hero) !== 23 || window.combatLevel(hero) !== 3 || hero.level !== 3) {
                 throw new Error('Cooking changed combat to ' + hero.level + ' total ' + window.skillTotal(hero));
             }
-            if (hudLevel.textContent !== '3' || hudTotal.textContent !== '22') {
+            if (hudLevel.textContent !== '3' || hudTotal.textContent !== '23') {
                 throw new Error('HUD Cooking is combat ' + hudLevel.textContent + ' total ' + hudTotal.textContent);
             }
 
@@ -92,8 +92,8 @@
             if (window.combatLevel(hero) !== 9 || hero.level !== 9) {
                 throw new Error('Attack+Strength combat is ' + hero.level + ' not 9');
             }
-            if (window.skillTotal(hero) !== 40 || hudTotal.textContent !== '40') {
-                throw new Error('skill total is ' + window.skillTotal(hero) + ' not 40');
+            if (window.skillTotal(hero) !== 41 || hudTotal.textContent !== '41') {
+                throw new Error('skill total is ' + window.skillTotal(hero) + ' not 41');
             }
             if (hudLevel.textContent !== '9') {
                 throw new Error('HUD combat is ' + hudLevel.textContent + ' not 9');
@@ -130,8 +130,8 @@
     if (result.live.keyboard) {
         throw new Error('Phaser keyboard must stay off');
     }
-    if (result.live.combat !== 9 || result.live.derived !== 9 || result.live.total !== 40
-            || result.live.hudCombat !== '9' || result.live.hudTotal !== '40') {
+    if (result.live.combat !== 9 || result.live.derived !== 9 || result.live.total !== 41
+            || result.live.hudCombat !== '9' || result.live.hudTotal !== '41') {
         throw new Error('live HUD was ' + JSON.stringify(result.live));
     }
     console.log('PASS 1/1 side HUD skill total + combat', result.dedicated, JSON.stringify(result.live));

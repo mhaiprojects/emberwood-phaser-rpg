@@ -853,6 +853,11 @@ def skill_icons():
         "woodcutting": icon('<path %s d="M9 23 L14 14 L18 16 L13 25 Z"/><path %s d="M16 8 L22 14 M20 8 H24 V12"/>' % (s, s)),
         "mining": icon('<path %s d="M8 22 L16 10 L20 13 L12 25 Z"/><path %s d="M18 10 L24 8 L22 14"/>' % (s, s)),
         "crafting": icon('<path %s d="M10 22 V12 L16 8 L22 12 V22 Z"/><path %s d="M13 16 H19"/>' % (s, s)),
+        "firemaking": icon(
+            '<path %s d="M16 7 Q12 14 12 18 Q12 24 16 24 Q20 24 20 18 Q20 14 16 7 Z"/>'
+            '<path stroke="%s" stroke-width="1.5" d="M16 20 Q14 17 16 14"/>'
+            % (s, gold)
+        ),
     }
 
 

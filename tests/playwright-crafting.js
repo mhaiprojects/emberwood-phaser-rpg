@@ -1,7 +1,7 @@
 /**
  * Playwright proof: from spawn (328, 248), tan cowhide → leather
  * or Use string on leather grants Crafting XP. Phaser keyboard stays off.
- * Firemaking is not this tick.
+ * Smithing is not this tick.
  *
  * Headless via tests/playwright-session.js (reuses a live server, or starts
  * python3 -m http.server on this port and kills that PID on exit).
@@ -55,8 +55,8 @@
                     || typeof window.useItemOnItem !== 'function' || typeof window.gainSkillXp !== 'function') {
                 throw new Error('tanCowhide / stitchLeather / useItemOnItem / gainSkillXp missing');
             }
-            if (typeof window.lightFire === 'function' || typeof window.firemakeAt === 'function') {
-                throw new Error('Firemaking started this tick');
+            if (typeof window.smithBar === 'function') {
+                throw new Error('Smithing started this tick');
             }
             if (!window.ITEM_DB.cowhide || window.ITEM_DB.cowhide.tan !== 'leather') {
                 throw new Error('cowhide missing');
