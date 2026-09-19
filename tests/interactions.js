@@ -1089,6 +1089,65 @@ EmberwoodTests.add('skills: Hitpoints level-up sets maxHp to 10 * level and chat
     });
 });
 
+EmberwoodTests.add('combat: levelHero XP/40 does not overwrite maxHp from Hitpoints', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        world.placePlayer(spawn.x, spawn.y);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(typeof world.levelHero, 'function', 'levelHero exists');
+        assertEqual(typeof win.gainSkillXp, 'function', 'gainSkillXp exists');
+
+        hero = H.hero(win);
+        assertEqual(hero.level, 1, 'starter combat level 1');
+        assertEqual(hero.xp, 0, 'starter combat XP 0');
+        assertEqual(hero.skills.hitpoints.level, 10, 'Hitpoints starts 10');
+        assertEqual(hero.skills.hitpoints.xp, 1154, 'Hitpoints starts 1154 XP');
+        assertEqual(hero.maxHp, 100, 'start maxHp 100');
+        assertEqual(hero.hp, 100, 'start hp 100');
+        assertEqual(hero.damage, 16, 'starter damage 16');
+
+        hero.xp = 40;
+        world.levelHero(hero);
+        assertEqual(hero.level, 2, 'combat XP 40 raises combat level to 2');
+        assertEqual(hero.maxHp, 100, 'combat level-up leaves maxHp as 10 * Hitpoints 10');
+        assertEqual(hero.hp, 100, 'combat level-up does not grow or refill HP');
+        assertEqual(hero.damage, 18, 'combat level-up still sets damage 14 + level * 2');
+        assert(H.chatHas(win, 'Your combat level is now 2.'), 'combat level chat');
+        assert(!H.chatHas(win, 'Hitpoints increased'), 'combat level-up does not chat Hitpoints');
+
+        win.gainSkillXp(hero, 'hitpoints', 3846);
+        assertEqual(hero.skills.hitpoints.xp, 5000, 'Hitpoints reaches 5000 XP');
+        assertEqual(hero.skills.hitpoints.level, 11, 'Hitpoints levels to 11');
+        assertEqual(hero.maxHp, 110, 'maxHp is 10 * Hitpoints 11');
+        assertEqual(hero.hp, 100, 'Hitpoints level-up does not fill current HP');
+        assert(H.chatHas(win, 'Hitpoints increased to 11.'), 'Hitpoints chats Skill increased to N');
+
+        hero.xp = 80;
+        world.levelHero(hero);
+        assertEqual(hero.level, 3, 'combat XP 80 raises combat level to 3');
+        assertEqual(hero.maxHp, 110, 'later combat level-up still leaves maxHp as 10 * Hitpoints');
+        assertEqual(hero.hp, 100, 'later combat level-up does not fill HP');
+        assert(H.chatHas(win, 'Your combat level is now 3.'), 'second combat level chat');
+
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        assertEqual(win.document.getElementById('hud-hp').textContent, '100 / 110', 'HUD follows Hitpoints maxHp');
+        assertEqual(win.document.getElementById('hud-level').textContent, '3', 'HUD combat level is 3');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('skills: gainSkillXp uses 1 + floor(sqrt(xp / 50)) and Hitpoints never below 10', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         var world = H.world(win);
@@ -3059,7 +3118,7 @@ EmberwoodTests.add('npcs: Bram stage 2 pays 50 gold + 40 combat XP and levels if
         assertEqual(H.hero(win).gold, 58, 'pays 50 gold (8 + 50)');
         assertEqual(H.hero(win).xp, 40, 'grants 40 combat XP');
         assertEqual(H.hero(win).level, 2, 'levelHero raises combat level 1 → 2');
-        assertEqual(H.hero(win).maxHp, 110, 'level-up maxHp is 90 + level * 10');
+        assertEqual(H.hero(win).maxHp, 100, 'combat level-up leaves maxHp as 10 * Hitpoints');
         assertEqual(H.hero(win).damage, 18, 'level-up damage is 14 + level * 2');
         assert(H.chatHas(win, 'militia thanks you'), 'reward speech');
         assert(H.chatHas(win, '50 gold and combat training'), 'reward names gold and training');

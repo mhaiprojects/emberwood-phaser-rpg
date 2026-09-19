@@ -1797,8 +1797,6 @@ var WorldScene = new Phaser.Class({
         var next = 1 + Math.floor(hero.xp / 40);
         if (next > hero.level) {
             hero.level = next;
-            hero.maxHp = 90 + hero.level * 10;
-            hero.hp = hero.maxHp;
             hero.damage = 14 + hero.level * 2;
             Hud.log('Your combat level is now ' + hero.level + '.');
         }

@@ -133,7 +133,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Return to title stops scenes and shows `#title-overlay` again. — Conclusion: Return to title stops World/Battle/GameOver, only TitleScene + `#title-overlay`; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1
 - [done] HP bars go green / amber / red at 65% and 35% and that ± floaters appear on hit/heal. — Conclusion: Spawn (328,248) HUD+battle bars green ≥65% / amber ≥35% / red <35%; − hit and + heal floaters. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Worn sword/shield are **display-only** today; then apply weapon `damage` and shield `defence` to the hit formula. — Conclusion: Equip tab shows Bronze sword / Wooden shield names only; hit uses `hero.damage` + Between(-2,2) min 1, not `ITEM_DB.sword.damage` 16 or `shield.defence` 1. Spawn (328,248); Phaser 3.90 keyboard off; dedicated case + Playwright 1/1.
-- [todo] Reconcile `levelHero` (combat XP / 40) with `gainSkillXp` / `maxHp = 10 * hitpoints` so one combat-level rule wins. — Conclusion: —
+- [done] Reconcile `levelHero` (combat XP / 40) with `gainSkillXp` / `maxHp = 10 * hitpoints` so one combat-level rule wins. — Conclusion: From spawn (328,248) levelHero XP/40 raises combat level + damage but leaves maxHp = 10 * Hitpoints; Hitpoints 11 still sets 110. Phaser 3.90 keyboard off. Dedicated case + existing Hitpoints case + Playwright 2/2.
 - [todo] OSRS-like combat level from Attack, Strength, Defence, Hitpoints, Prayer, Ranged, Magic. — Conclusion: —
 - [todo] Auto-retaliate as a setting **separate** from world auto-engage. — Conclusion: —
 - [todo] After flee, push the player off the mob and extend `engageGrace` so auto-attack does not instantly re-aggro. — Conclusion: —
@@ -511,4 +511,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 138 | 2026-09-19 | Ned / Corb / Willa / Kett tutor lines unlock fishing, mining, cows, combat styles | done — spawn (328,248) talk unlocks fishing/mining/cows/combat; flavor pages stay; no gathering; Phaser keyboard off; dedicated + Playwright 1/1 |
 | 139 | 2026-09-19 | NPC idle facing and a tiny wander leash so they are not statues | done — spawn (328,248) Between(0,80) miss stays still; hit vx/vy −12..12 + flipX facing; 16px leash pulls home; nearby player keeps immovable collider; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 140 | 2026-09-19 | Add a cook / priest / shopkeeper as original CC0 SVGs | done — spawn (328,248) cook/priest/shopkeeper SVGs via generate_svgs.py; Mira uses npc-shopkeeper; Cook Pell + Priest Alden spawn; Phaser keyboard off; dedicated + Playwright 1/1 |
+| 141 | 2026-09-19 | Reconcile levelHero combat XP/40 with maxHp = 10 * Hitpoints | done — spawn (328,248) levelHero XP/40 raises combat level + damage; maxHp stays 10 * Hitpoints (11 → 110); Phaser 3.90 keyboard off; dedicated + existing Hitpoints case + Playwright 2/2 |
 
