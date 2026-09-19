@@ -1395,6 +1395,7 @@ EmberwoodTests.add('hud: side HUD shows zone combat level HP fill gold XP and ta
 
         var zoneEl = win.document.getElementById('hud-zone');
         var levelEl = win.document.getElementById('hud-level');
+        var totalEl = win.document.getElementById('hud-total');
         var hpEl = win.document.getElementById('hud-hp');
         var goldEl = win.document.getElementById('hud-gold');
         var xpEl = win.document.getElementById('hud-xp');
@@ -1402,6 +1403,7 @@ EmberwoodTests.add('hud: side HUD shows zone combat level HP fill gold XP and ta
         var fill = win.document.getElementById('hp-fill');
         assert(zoneEl && zoneEl.closest('#side'), 'zone name is on the side HUD');
         assert(levelEl && levelEl.closest('#side'), 'combat level is on the side HUD');
+        assert(totalEl && totalEl.closest('#side'), 'skill total is on the side HUD');
         assert(hpEl && hpEl.closest('#side'), 'HP is on the side HUD');
         assert(fill && fill.closest('#side'), 'HP fill is on the side HUD');
         assert(goldEl && goldEl.closest('#side'), 'gold is on the side HUD');
@@ -1410,6 +1412,7 @@ EmberwoodTests.add('hud: side HUD shows zone combat level HP fill gold XP and ta
 
         assertEqual(zoneEl.textContent, 'Emberhaven', 'starter zone name');
         assertEqual(levelEl.textContent, '3', 'starter OSRS combat level');
+        assertEqual(totalEl.textContent, '21', 'starter skill total');
         assertEqual(hpEl.textContent.replace(/\s+/g, ' ').trim(), '100 / 100', 'starter HP cur / max');
         assertEqual(fill.style.width, '100%', 'starter HP fill 100%');
         assertEqual(goldEl.textContent, '8', 'starter gold');
@@ -1430,6 +1433,7 @@ EmberwoodTests.add('hud: side HUD shows zone combat level HP fill gold XP and ta
 
         assertEqual(zoneEl.textContent, 'Millfields', 'zone name updates');
         assertEqual(levelEl.textContent, '9', 'combat level updates from Attack+Strength');
+        assertEqual(totalEl.textContent, '39', 'skill total updates from Attack+Strength');
         assertEqual(hpEl.textContent.replace(/\s+/g, ' ').trim(), '55 / 110', 'HP cur / max updates');
         assertEqual(fill.style.width, '50%', 'HP fill is 50% at 55/110');
         assertEqual(goldEl.textContent, '25', 'gold updates');
@@ -1442,6 +1446,81 @@ EmberwoodTests.add('hud: side HUD shows zone combat level HP fill gold XP and ta
         H.enterZone(win, 'haven');
         world.placePlayer(spawn.x, spawn.y);
         world.refreshHud();
+    });
+});
+
+EmberwoodTests.add('hud: side HUD shows skill total and derived combat level', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        win.game.registry.set('quest', { id: 'goblins', stage: 0, progress: 0, goal: 5 });
+        world.placePlayer(spawn.x, spawn.y);
+        world.refreshHud();
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(typeof win.skillTotal, 'function', 'skillTotal exists');
+        assertEqual(typeof win.combatLevel, 'function', 'combatLevel exists');
+        assertEqual(typeof win.lightFire, 'undefined', 'Firemaking is not this tick');
+        assertEqual(typeof win.firemakeAt, 'undefined', 'Firemaking helper is not this tick');
+        assertEqual(win.SKILL_NAMES.length, 12, 'twelve skills in the total');
+
+        var levelEl = win.document.getElementById('hud-level');
+        var totalEl = win.document.getElementById('hud-total');
+        assert(levelEl && levelEl.closest('#side'), 'combat level is on the side HUD');
+        assert(totalEl && totalEl.closest('#side'), 'skill total is on the side HUD');
+        var combatLabel = levelEl.closest('.stat').querySelector('span');
+        var totalLabel = totalEl.closest('.stat').querySelector('span');
+        assertMatch(combatLabel && combatLabel.textContent, 'Combat', 'Combat label not generic Level');
+        assertMatch(totalLabel && totalLabel.textContent, 'Total', 'Total label on the side HUD');
+        var totalIcon = totalEl.closest('.stat').querySelector('img.pix');
+        assert(totalIcon && totalIcon.getAttribute('src').indexOf('assets/svg/ui/skills.svg') !== -1, 'Total uses skills icon');
+
+        assertEqual(win.skillTotal(hero), 21, 'starter skill total is 21');
+        assertEqual(win.combatLevel(hero), 3, 'starter derived combat is 3');
+        assertEqual(hero.level, 3, 'hero.level is derived combat not skill total');
+        assertEqual(levelEl.textContent, '3', 'HUD combat is 3');
+        assertEqual(totalEl.textContent, '21', 'HUD total is 21');
+
+        hero.skills.cooking.level = 2;
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        assertEqual(win.skillTotal(hero), 22, 'Cooking 2 raises skill total');
+        assertEqual(win.combatLevel(hero), 3, 'Cooking does not change combat');
+        assertEqual(hero.level, 3, 'hero.level stays combat 3');
+        assertEqual(levelEl.textContent, '3', 'HUD combat stays 3 after Cooking');
+        assertEqual(totalEl.textContent, '22', 'HUD total is 22 after Cooking');
+
+        hero.skills.attack.level = 10;
+        hero.skills.strength.level = 10;
+        if (hero.skills.agility) {
+            hero.skills.agility.level = 99;
+        }
+        win.applyCombatLevel(hero, false);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        assertEqual(win.combatLevel(hero), 9, 'Attack+Strength 10 is combat 9');
+        assertEqual(win.skillTotal(hero), 40, 'Attack+Strength+Cooking total is 40');
+        assertEqual(hero.level, 9, 'hero.level is combat 9 not skill total');
+        assertEqual(levelEl.textContent, '9', 'HUD combat is 9');
+        assertEqual(totalEl.textContent, '40', 'HUD total ignores unused Agility');
+
+        win.game.registry.set('hero', win.makeHero());
+        win.game.registry.set('quest', { id: 'goblins', stage: 0, progress: 0, goal: 5 });
+        H.enterZone(win, 'haven');
+        world.placePlayer(spawn.x, spawn.y);
+        world.refreshHud();
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        assertEqual(typeof win.lightFire, 'undefined', 'Firemaking still not this tick');
     });
 });
 
@@ -9726,7 +9805,6 @@ EmberwoodTests.add('skills: cowhide to leather or string plus leather grants Cra
         assertEqual(win.itemDefaultVerb('string'), 'drop', 'string default is drop');
         assertEqual(typeof win.lightFire, 'undefined', 'Firemaking is not this tick');
         assertEqual(typeof win.firemakeAt, 'undefined', 'Firemaking helper is not this tick');
-        assertEqual(typeof win.skillTotal, 'undefined', 'side HUD skill total is not this tick');
 
         function stackQty(hero, id) {
             var stack = hero.inventory.filter(function (row) { return row.id === id; })[0];
@@ -9863,7 +9941,6 @@ EmberwoodTests.add('skills: cowhide to leather or string plus leather grants Cra
         assert(!win.game.input.keyboard, 'Phaser keyboard still off');
         assertEqual(typeof win.lightFire, 'undefined', 'Firemaking still not this tick');
         assertEqual(typeof win.firemakeAt, 'undefined', 'Firemaking helper still not this tick');
-        assertEqual(typeof win.skillTotal, 'undefined', 'side HUD skill total still not this tick');
         assertEqual(H.hero(win).skills.mining.xp, 0, 'Mining XP still 0');
     });
 });

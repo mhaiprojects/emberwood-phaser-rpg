@@ -17,6 +17,7 @@ var Hud = {
             gold: document.getElementById('hud-gold'),
             xp: document.getElementById('hud-xp'),
             level: document.getElementById('hud-level'),
+            total: document.getElementById('hud-total'),
             quest: document.getElementById('hud-quest'),
             questTab: document.getElementById('hud-quest-tab'),
             minimap: document.getElementById('minimap'),
@@ -1499,6 +1500,13 @@ var Hud = {
         this.el.gold.textContent = String(state.gold);
         this.el.xp.textContent = String(state.xp);
         this.el.level.textContent = String(state.level);
+        if (this.el.total) {
+            this.el.total.textContent = String(
+                state.total != null
+                    ? state.total
+                    : (typeof skillTotal === 'function' ? skillTotal(this.hero()) : 0)
+            );
+        }
         this.el.quest.textContent = state.quest;
         if (this.el.questTab) {
             this.el.questTab.textContent = state.quest;
@@ -1536,6 +1544,11 @@ var Hud = {
         if (this.el.level) {
             this.el.level.textContent = String(
                 typeof combatLevel === 'function' ? combatLevel(hero) : hero.level
+            );
+        }
+        if (this.el.total) {
+            this.el.total.textContent = String(
+                typeof skillTotal === 'function' ? skillTotal(hero) : 0
             );
         }
         this.paintHpFill(hero.hp, hero.maxHp);

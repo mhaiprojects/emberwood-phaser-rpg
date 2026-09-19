@@ -750,6 +750,15 @@ function heroSkillLevel(hero, skill) {
     return level;
 }
 
+function skillTotal(hero) {
+    var total = 0;
+    var i;
+    for (i = 0; i < SKILL_NAMES.length; i++) {
+        total += heroSkillLevel(hero, SKILL_NAMES[i][0]);
+    }
+    return total;
+}
+
 function combatLevel(hero) {
     var attack = heroSkillLevel(hero, 'attack');
     var strength = heroSkillLevel(hero, 'strength');

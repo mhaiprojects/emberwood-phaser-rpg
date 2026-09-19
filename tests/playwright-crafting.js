@@ -1,7 +1,7 @@
 /**
  * Playwright proof: from spawn (328, 248), tan cowhide → leather
  * or Use string on leather grants Crafting XP. Phaser keyboard stays off.
- * Firemaking and the side-HUD skill total are not this tick.
+ * Firemaking is not this tick.
  *
  * Headless via tests/playwright-session.js (reuses a live server, or starts
  * python3 -m http.server on this port and kills that PID on exit).
@@ -57,9 +57,6 @@
             }
             if (typeof window.lightFire === 'function' || typeof window.firemakeAt === 'function') {
                 throw new Error('Firemaking started this tick');
-            }
-            if (typeof window.skillTotal === 'function') {
-                throw new Error('side HUD skill total started this tick');
             }
             if (!window.ITEM_DB.cowhide || window.ITEM_DB.cowhide.tan !== 'leather') {
                 throw new Error('cowhide missing');

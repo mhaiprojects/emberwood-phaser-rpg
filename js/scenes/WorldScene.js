@@ -962,6 +962,7 @@ var WorldScene = new Phaser.Class({
             gold: hero.gold,
             xp: hero.xp,
             level: typeof combatLevel === 'function' ? combatLevel(hero) : hero.level,
+            total: typeof skillTotal === 'function' ? skillTotal(hero) : 0,
             quest: questText
         });
         this.refreshQuestIcons();
