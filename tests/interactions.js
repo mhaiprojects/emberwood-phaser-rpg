@@ -2731,6 +2731,79 @@ EmberwoodTests.add('combat: Attack auto-hits the only foe and winning loots', fu
     });
 });
 
+EmberwoodTests.add('combat: Accurate Attack XP, Aggressive Strength XP, Defensive Defence XP on win', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        world.placePlayer(spawn.x, spawn.y);
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assertEqual(win.combatSkill({ style: 'accurate' }), 'attack', 'Accurate maps to Attack');
+        assertEqual(win.combatSkill({ style: 'aggressive' }), 'strength', 'Aggressive maps to Strength');
+        assertEqual(win.combatSkill({ style: 'defensive' }), 'defence', 'Defensive maps to Defence');
+
+        var styles = [
+            { style: 'accurate', skill: 'attack', others: ['strength', 'defence'] },
+            { style: 'aggressive', skill: 'strength', others: ['attack', 'defence'] },
+            { style: 'defensive', skill: 'defence', others: ['attack', 'strength'] }
+        ];
+
+        function winWithStyle(row) {
+            return H.cleanupBattle(win).then(function () {
+                H.enterZone(win, 'haven');
+                H.setAutoAttack(win, false);
+                var hero = win.makeHero();
+                win.game.registry.set('hero', hero);
+                world.refreshHud();
+                world.placePlayer(spawn.x, spawn.y);
+                H.click(win, '#tab-bar button[data-tab="combat"]');
+                H.click(win, '#style-row button[data-style="' + row.style + '"]');
+                hero = H.hero(win);
+                assertEqual(hero.style, row.style, row.style + ' style selected');
+                assertEqual(hero.skills.attack.xp, 0, row.style + ' Attack starts 0');
+                assertEqual(hero.skills.strength.xp, 0, row.style + ' Strength starts 0');
+                assertEqual(hero.skills.defence.xp, 0, row.style + ' Defence starts 0');
+                assertEqual(hero.skills.hitpoints.xp, 1154, row.style + ' Hitpoints starts 1154');
+                assertEqual(hero.xp, 0, row.style + ' combat XP starts 0');
+                var chicken = H.findMob(win, 'Chicken');
+                var xp = chicken.mobDef.xp || 10;
+                var hpXp = Math.max(1, Math.ceil(xp / 3));
+                return H.startFight(win, chicken).then(function () {
+                    var battle = H.battle(win);
+                    assertEqual(battle.enemies.length, 1, row.style + ' one foe');
+                    win.Hud.tryAttack();
+                    return H.waitWorld(win);
+                }).then(function () {
+                    hero = H.hero(win);
+                    assertEqual(hero.style, row.style, row.style + ' style persisted through win');
+                    assertEqual(win.combatSkill(hero), row.skill, row.style + ' still maps to ' + row.skill);
+                    assertEqual(hero.skills[row.skill].xp, xp, row.style + ' grants ' + row.skill + ' XP');
+                    row.others.forEach(function (id) {
+                        assertEqual(hero.skills[id].xp, 0, row.style + ' does not grant ' + id + ' XP');
+                    });
+                    assertEqual(hero.skills.hitpoints.xp, 1154 + hpXp, row.style + ' still grants Hitpoints XP');
+                    assertEqual(hero.xp, xp, row.style + ' grants combat XP');
+                    assert(H.chatHas(win, 'collapses'), row.style + ' win chat');
+                    assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+                });
+            });
+        }
+
+        return winWithStyle(styles[0])
+            .then(function () { return winWithStyle(styles[1]); })
+            .then(function () { return winWithStyle(styles[2]); })
+            .then(function () {
+                H.enterZone(win, 'haven');
+            });
+    }).catch(function (err) {
+        return H.cleanupBattle(win).then(function () {
+            throw err;
+        });
+    });
+});
+
 EmberwoodTests.add('combat: Attack auto-selects index 0 and rolls damage -2..+2 min 1', function (win, H) {
     H.enterZone(win, 'haven');
     H.setAutoAttack(win, false);
