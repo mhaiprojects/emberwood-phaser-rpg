@@ -173,6 +173,14 @@ var Hud = {
             }
             self.useItem(slot.getAttribute('data-item'));
         });
+        this.el.inv.addEventListener('contextmenu', function (event) {
+            event.preventDefault();
+            var slot = event.target.closest('[data-item]');
+            if (!slot) {
+                return;
+            }
+            self.showInvDropMenu(slot.getAttribute('data-item'), event);
+        });
         if (this.el.ctx) {
             this.el.ctx.addEventListener('click', function (event) {
                 var btn = event.target.closest('[data-ctx]');
@@ -389,6 +397,27 @@ var Hud = {
             return;
         }
         this.log(itemName(id) + '.');
+    },
+
+    dropItem: function (id, qty) {
+        var world = window.game && window.game.scene.getScene('WorldScene');
+        if (!world || !world.dropFromInventory) {
+            return false;
+        }
+        return world.dropFromInventory(id, qty || 1);
+    },
+
+    showInvDropMenu: function (id, event) {
+        if (this.mode !== 'world' || !id) {
+            this.hideContextMenu();
+            return;
+        }
+        this.showContextMenu([{ label: 'Drop', action: 'drop' }], {
+            kind: 'inv',
+            itemId: id,
+            clientX: event && event.clientX != null ? event.clientX : 16,
+            clientY: event && event.clientY != null ? event.clientY : 16
+        });
     },
 
     onStart: function () {
@@ -833,6 +862,10 @@ var Hud = {
             if (world.examineAt) {
                 world.examineAt(target.worldX, target.worldY);
             }
+            return;
+        }
+        if (action === 'drop') {
+            this.dropItem(target.itemId);
             return;
         }
         if (action !== 'walk-here' || !world.setWalk) {

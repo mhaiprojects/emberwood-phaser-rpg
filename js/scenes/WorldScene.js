@@ -1872,7 +1872,8 @@ var WorldScene = new Phaser.Class({
             qty: drop.qty,
             sprite: sprite,
             taken: false,
-            until: until
+            until: until,
+            skipAuto: !!drop.skipAuto
         };
         sprite.on('pointerdown', function () {
             self.tryPickup(entry);
@@ -1907,7 +1908,8 @@ var WorldScene = new Phaser.Class({
                 qty: drop.qty,
                 x: drop.sprite ? drop.sprite.x : drop.x,
                 y: drop.sprite ? drop.sprite.y : drop.y,
-                until: drop.until
+                until: drop.until,
+                skipAuto: !!drop.skipAuto
             });
         }
         this.lootZoneState[this.zoneId] = saved;
@@ -1959,6 +1961,30 @@ var WorldScene = new Phaser.Class({
         return true;
     },
 
+    dropFromInventory: function (id, qty) {
+        qty = qty || 1;
+        if (this.encounterLock || Hud.mode === 'battle' || Hud.mode === 'title' || Hud.mode === 'dead') {
+            return false;
+        }
+        if (!id || qty < 1 || !this.player) {
+            return false;
+        }
+        var hero = this.registry.get('hero');
+        if (!takeItem(hero, id, qty)) {
+            Hud.log('You do not have that.');
+            return false;
+        }
+        this.registry.set('hero', hero);
+        var entry = this.placeLoot(this.player.x, this.player.y, {
+            id: id,
+            qty: qty,
+            skipAuto: true
+        }, this.time.now + 20000);
+        Hud.log('You drop ' + (qty > 1 ? qty + ' ' : '') + itemName(id) + '.');
+        this.refreshHud();
+        return entry;
+    },
+
     autoPickupOn: function () {
         var hero = this.registry.get('hero');
         return !!(hero && hero.autoPickup !== false);
@@ -1971,7 +1997,7 @@ var WorldScene = new Phaser.Class({
         var i;
         for (i = this.groundLoot.length - 1; i >= 0; i--) {
             var drop = this.groundLoot[i];
-            if (!drop || drop.taken || !drop.sprite) {
+            if (!drop || drop.taken || !drop.sprite || drop.skipAuto) {
                 continue;
             }
             if (Phaser.Math.Distance.Between(this.player.x, this.player.y, drop.sprite.x, drop.sprite.y) < 18) {

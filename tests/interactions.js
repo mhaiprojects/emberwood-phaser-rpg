@@ -2059,6 +2059,145 @@ EmberwoodTests.add('inv: 28-stack cap refuses loot shop buy and gather with inve
     });
 });
 
+EmberwoodTests.add('inv: drop from inventory creates groundLoot at the player', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.setAutoPickup(win, true);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.clearLoot();
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(typeof world.dropFromInventory, 'function', 'dropFromInventory helper');
+        assertEqual(typeof win.Hud.dropItem, 'function', 'Hud.dropItem helper');
+        assertEqual(win.Hud.mode, 'world', 'world mode');
+
+        var hero = win.makeHero();
+        win.addItem(hero, 'bones', 2);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(hero.autoPickup, true, 'auto-pickup stays on');
+        assertEqual(hero.inventory.filter(function (row) { return row.id === 'bones'; })[0].qty, 2, 'starter bones 2');
+        var bread = hero.inventory.filter(function (row) { return row.id === 'bread'; })[0];
+        var breadQty = bread.qty;
+        var gold = hero.gold;
+
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        var inv = win.document.getElementById('inv-grid');
+        assert(inv.querySelector('[data-item="bones"]'), 'bones slot before drop');
+
+        H.click(win, '#inv-grid [data-item="bones"]');
+        assertEqual(H.lastChat(win), 'Bones.', 'left-click still only logs the name');
+        assertEqual(H.hero(win).inventory.filter(function (row) { return row.id === 'bones'; })[0].qty, 2, 'left-click does not drop');
+        assertEqual(H.lootLive(win).length, 0, 'left-click does not spawn loot');
+
+        var menu = win.document.getElementById('ctx-menu');
+        assert(menu, 'ctx-menu element exists');
+        if (win.Hud.hideContextMenu) {
+            win.Hud.hideContextMenu();
+        }
+        assert(menu.hidden, 'menu starts hidden');
+        var slot = inv.querySelector('[data-item="bones"]');
+        slot.dispatchEvent(new win.MouseEvent('contextmenu', {
+            bubbles: true,
+            cancelable: true,
+            view: win,
+            button: 2,
+            clientX: 40,
+            clientY: 80
+        }));
+        assert(!menu.hidden, 'right-click inventory opens Drop menu');
+        var dropBtn = menu.querySelector('[data-ctx="drop"]');
+        assert(dropBtn, 'Drop action is listed');
+        assertEqual(dropBtn.textContent, 'Drop', 'Drop label');
+        assertEqual(win.Hud.ctxTarget.itemId, 'bones', 'menu stores bones id');
+        assertEqual(win.Hud.ctxTarget.kind, 'inv', 'menu is inventory drop');
+
+        var droppedAt = world.time.now;
+        H.mouseClick(win, dropBtn);
+        assert(menu.hidden, 'Drop closes the menu');
+        hero = H.hero(win);
+        assertEqual(hero.inventory.filter(function (row) { return row.id === 'bones'; })[0].qty, 1, 'Drop takes one bones');
+        assertEqual(H.lastChat(win), 'You drop Bones.', 'drop chat');
+        var live = H.lootLive(win);
+        assertEqual(live.length, 1, 'one ground pile after Drop');
+        assertEqual(live[0].id, 'bones', 'dropped bones id');
+        assertEqual(live[0].qty, 1, 'dropped bones qty 1');
+        assertEqual(live[0].skipAuto, true, 'dropped pile skips auto-pickup');
+        assertEqual(Math.round(live[0].sprite.x), 328, 'bones pile at player x');
+        assertEqual(Math.round(live[0].sprite.y), 248, 'bones pile at player y');
+        assertEqual(live[0].until, droppedAt + 20000, 'dropped until is now + 20000');
+        assert(inv.querySelector('[data-item="bones"]'), 'bones slot still filled');
+
+        world.collectNearbyLoot();
+        live = H.lootLive(win);
+        assertEqual(live.length, 1, 'auto-pickup does not vacuum a dropped pile');
+        assertEqual(live[0].taken, false, 'dropped bones stay on the ground');
+        assertEqual(H.hero(win).inventory.filter(function (row) { return row.id === 'bones'; })[0].qty, 1, 'inventory bones unchanged by vacuum');
+
+        var breadDrop = world.dropFromInventory('bread', 1);
+        assert(breadDrop && breadDrop.sprite, 'dropFromInventory returns a loot entry');
+        hero = H.hero(win);
+        assertEqual(hero.inventory.filter(function (row) { return row.id === 'bread'; })[0].qty, breadQty - 1, 'bread stack decrements');
+        assertEqual(H.lastChat(win), 'You drop Bread.', 'bread drop chat');
+        live = H.lootLive(win);
+        assertEqual(live.length, 2, 'bones and bread on the ground');
+        var breadPile = live.filter(function (drop) { return drop.id === 'bread'; })[0];
+        assert(breadPile, 'bread pile exists');
+        assertEqual(Math.round(breadPile.sprite.x), 328, 'bread pile at player x');
+        assertEqual(Math.round(breadPile.sprite.y), 248, 'bread pile at player y');
+        assertEqual(breadPile.skipAuto, true, 'bread pile skips auto-pickup');
+
+        var coinDrop = win.Hud.dropItem('coins', 1);
+        assert(coinDrop && coinDrop.id === 'coins', 'Hud.dropItem drops coins');
+        hero = H.hero(win);
+        assertEqual(hero.gold, gold - 1, 'dropping a coin decrements gold');
+        assertEqual(hero.inventory.filter(function (row) { return row.id === 'coins'; })[0].qty, gold - 1, 'coin stack syncs');
+        assertEqual(win.document.getElementById('hud-gold').textContent, String(gold - 1), 'HUD gold after coin drop');
+        assertEqual(H.lastChat(win), 'You drop Coins.', 'coin drop chat');
+
+        world.collectNearbyLoot();
+        assertEqual(H.lootLive(win).length, 3, 'three skipped piles stay at the player');
+
+        var bonesPile = H.lootLive(win).filter(function (drop) { return drop.id === 'bones'; })[0];
+        assertEqual(world.tryPickup(bonesPile), true, 'click pickup still takes a dropped pile');
+        hero = H.hero(win);
+        assertEqual(hero.inventory.filter(function (row) { return row.id === 'bones'; })[0].qty, 2, 'bones return on pickup');
+        assert(H.chatHas(win, 'You pick up Bones.'), 'pickup chat after drop');
+
+        world.dropFromInventory('bones', 2);
+        hero = H.hero(win);
+        assertEqual(hero.inventory.filter(function (row) { return row.id === 'bones'; }).length, 0, 'last bones drop the stack');
+        assert(!win.document.querySelector('#inv-grid [data-item="bones"]'), 'bones slot gone after last drop');
+
+        world.encounterLock = true;
+        var locked = world.dropFromInventory('bread', 1);
+        assertEqual(locked, false, 'encounterLock refuses drop');
+        world.encounterLock = false;
+        win.Hud.mode = 'battle';
+        assertEqual(world.dropFromInventory('bread', 1), false, 'battle mode refuses drop');
+        win.Hud.mode = 'world';
+        hero = H.hero(win);
+        assertEqual(hero.inventory.filter(function (row) { return row.id === 'bread'; })[0].qty, breadQty - 1, 'refused drops do not take bread');
+
+        world.clearLoot();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('hud: eat food from inventory', function (win, H) {
     H.click(win, '#tab-bar button[data-tab="inv"]');
     H.click(win, '#inv-grid [data-item="shrimp"]');
