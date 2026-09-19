@@ -18,7 +18,7 @@ var BootScene = new Phaser.Class({
         ['chicken', 'goblin', 'cow', 'slime', 'crab', 'bat', 'skeleton', 'drake'].forEach(function (name) {
             self.load.svg('mob-' + name, 'assets/svg/mobs/' + name + '.svg');
         });
-        ['guild', 'banker', 'guard', 'ranger', 'farmer', 'fisher', 'wanderer', 'ghost', 'miner', 'hermit', 'witch'].forEach(function (name) {
+        ['guild', 'banker', 'guard', 'ranger', 'farmer', 'fisher', 'wanderer', 'ghost', 'miner', 'hermit', 'witch', 'cook', 'priest', 'shopkeeper'].forEach(function (name) {
             self.load.svg('npc-' + name, 'assets/svg/npcs/' + name + '.svg');
         });
         ['coins', 'bones', 'shrimp', 'bread'].forEach(function (name) {

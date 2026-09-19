@@ -4346,6 +4346,78 @@ EmberwoodTests.add('npcs: Shopkeeper Mira Trade window opens shop-overlay', func
     });
 });
 
+EmberwoodTests.add('npcs: cook priest shopkeeper original CC0 SVGs from generate_svgs', function (win, H) {
+    var roles = [
+        { key: 'cook', name: 'Cook Pell', x: 280, y: 280, texture: 'npc-cook', file: 'cook' },
+        { key: 'priest', name: 'Priest Alden', x: 296, y: 168, texture: 'npc-priest', file: 'priest' },
+        { key: 'shopkeep', name: 'Shopkeeper Mira', x: 376, y: 216, texture: 'npc-shopkeeper', file: 'shopkeeper' }
+    ];
+
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        var world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(win.Hud.mode, 'world', 'world mode');
+
+        roles.forEach(function (want) {
+            assert(win.game.textures.exists(want.texture), want.texture + ' is loaded');
+            var npc = H.findNpc(win, want.key);
+            assert(npc, want.name + ' spawned in Emberhaven');
+            assertEqual(npc.npcDef.name, want.name, want.name + ' display name');
+            assertEqual(Math.round(npc.x), want.x, want.name + ' x');
+            assertEqual(Math.round(npc.y), want.y, want.name + ' y');
+            assertEqual(npc.texture.key, want.texture, want.name + ' uses original ' + want.texture);
+            assert(want.texture !== 'npc-farmer', want.name + ' is not the farmer pack-in');
+        });
+
+        var mira = H.findNpc(win, 'shopkeep');
+        assertEqual(mira.texture.key, 'npc-shopkeeper', 'Mira no longer borrows npc-farmer');
+        assertEqual(win.examineNpcText(mira.npcDef), 'The town shopkeeper. She minds the general store.', 'Mira examine stays');
+
+        return win.fetch('assets/svg/manifest.json').then(function (res) {
+            assert(res.ok, 'manifest HTTP ' + res.status);
+            assertEqual(res.status, 200, 'manifest status 200');
+            return res.json();
+        }).then(function (manifest) {
+            assertEqual(manifest.license, 'Original Emberwood artwork. CC0-1.0.', 'SVGs stay original CC0');
+            roles.forEach(function (want) {
+                assert(manifest.npcs.indexOf(want.file) !== -1, want.file + ' is in the CC0 manifest');
+            });
+            assert(manifest.npcs.indexOf('farmer') !== -1, 'farmer SVG remains for Willa');
+            return Promise.all(roles.map(function (want) {
+                var path = 'assets/svg/npcs/' + want.file + '.svg';
+                return win.fetch(path).then(function (res) {
+                    assert(res.ok, want.file + ' svg HTTP ' + res.status);
+                    assertEqual(res.status, 200, want.file + ' svg status 200');
+                    return res.text();
+                }).then(function (body) {
+                    assert(body.indexOf('<svg') !== -1, want.file + ' body is SVG');
+                    assert(body.indexOf('shape-rendering="crispEdges"') !== -1, want.file + ' is original pixel SVG');
+                    assert(body.indexOf('<rect') !== -1, want.file + ' is drawn as pixel rects');
+                    assert(body.toLowerCase().indexOf('kenney') === -1, want.file + ' is not a commercial pack');
+                    assert(body.toLowerCase().indexOf('itch.io') === -1, want.file + ' is not an itch pack');
+                });
+            }));
+        }).then(function () {
+            world.placePlayer(spawn.x, spawn.y);
+            world.player.body.setVelocity(0, 0);
+            assertEqual(Math.round(world.player.x), 328, 'returned to spawn x');
+            assertEqual(Math.round(world.player.y), 248, 'returned to spawn y');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        });
+    });
+});
+
 EmberwoodTests.add('npcs: right-click Examine on NPCs logs a flavor sentence', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');

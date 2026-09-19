@@ -11,6 +11,7 @@
   ],
   "npcs": [
     "banker",
+    "cook",
     "farmer",
     "fisher",
     "ghost",
@@ -18,7 +19,9 @@
     "guild",
     "hermit",
     "miner",
+    "priest",
     "ranger",
+    "shopkeeper",
     "wanderer",
     "witch"
   ],
