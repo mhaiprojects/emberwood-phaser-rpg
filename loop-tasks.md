@@ -277,7 +277,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 
 ## 11. HUD / UX / chat / minimap (23)
 
-- [verify] F1 Combat, F2 Skills, F3 Quest, F4 Inv, F5 Worn, F6 Prayer, F7 Magic, F8 Settings switch panels and `is-on`. — Conclusion: —
+- [done] F1 Combat, F2 Skills, F3 Quest, F4 Inv, F5 Worn, F6 Prayer, F7 Magic, F8 Settings switch panels and `is-on`. — Conclusion: From spawn (328,248) F1–F8 open Combat/Skills/Quest/Inv/Worn/Prayer/Magic/Settings and mark that tab `is-on`; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [verify] Clicking the tab bar does the same as F-keys and only one `.tab-panel` is visible. — Conclusion: —
 - [verify] Accurate / Aggressive / Defensive highlight and persist on `hero.style`. — Conclusion: —
 - [verify] All three Auto-attack buttons (Combat, Settings, battle panel) stay in sync and log on/off. — Conclusion: —
@@ -466,4 +466,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 93 | 2026-09-19 | Any def.type Goblin kill counts (Northwood and Westmead) | done — spawn (328,248) Northwood +1 and Westmead +1; chicken does not; HUD still Northwood; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 94 | 2026-09-19 | Fifth goblin sets stage 2 and chats to return to Bram | done — spawn (328,248) fifth kill 4→5 sets stage 2, chats `That should be enough goblins. Return to Bram.`, HUD+journal return-to-Bram; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 95 | 2026-09-19 | Post-quest Bram line after stage 3 | done — spawn (328,248) stage 3/4 talk is only `Emberhaven stands because of you.`; gold 8, XP 0, no pay; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 96 | 2026-09-19 | F1–F8 switch panels and matching tab is-on | done — spawn (328,248) F1–F8 open Combat/Skills/Quest/Inv/Worn/Prayer/Magic/Settings and mark that tab is-on; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 

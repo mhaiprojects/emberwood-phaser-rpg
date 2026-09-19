@@ -97,13 +97,34 @@ EmberwoodTests.add('hud: tab bar opens every panel', function (win, H) {
 });
 
 EmberwoodTests.add('hud: F1–F8 switch panels', function (win, H) {
-    var map = [
-        ['F1', 'combat'], ['F2', 'skills'], ['F3', 'quest'], ['F4', 'inv'],
-        ['F5', 'equip'], ['F6', 'prayer'], ['F7', 'magic'], ['F8', 'settings']
-    ];
-    map.forEach(function (pair) {
-        win.dispatchEvent(new KeyboardEvent('keydown', { key: pair[0], code: pair[0], bubbles: true, cancelable: true }));
-        assert(H.panelVisible(win, pair[1]), pair[0] + ' opens ' + pair[1]);
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        var map = [
+            ['F1', 'combat'], ['F2', 'skills'], ['F3', 'quest'], ['F4', 'inv'],
+            ['F5', 'equip'], ['F6', 'prayer'], ['F7', 'magic'], ['F8', 'settings']
+        ];
+        map.forEach(function (pair) {
+            win.dispatchEvent(new win.KeyboardEvent('keydown', { key: pair[0], code: pair[0], bubbles: true, cancelable: true }));
+            assert(H.panelVisible(win, pair[1]), pair[0] + ' opens ' + pair[1]);
+            assertEqual(win.Hud.tab, pair[1], pair[0] + ' sets hud.tab ' + pair[1]);
+            var onBtn = win.document.querySelector('#tab-bar button[data-tab="' + pair[1] + '"]');
+            assert(onBtn.classList.contains('is-on'), pair[0] + ' marks ' + pair[1] + ' is-on');
+            var onTabs = win.document.querySelectorAll('#tab-bar button.is-on');
+            assertEqual(onTabs.length, 1, pair[0] + ' leaves only one tab is-on');
+            assertEqual(onTabs[0].getAttribute('data-tab'), pair[1], pair[0] + ' is-on matches ' + pair[1]);
+        });
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off after F-keys');
     });
 });
 
