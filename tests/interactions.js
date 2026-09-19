@@ -598,6 +598,139 @@ EmberwoodTests.add('inv: addItem coins increments gold and syncCoins; takeItem d
     });
 });
 
+EmberwoodTests.add('inv: stacks merge by id and drop when qty hits 0', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(typeof win.addItem, 'function', 'addItem merges by id');
+        assertEqual(typeof win.takeItem, 'function', 'takeItem drops empty stacks');
+        assertEqual(typeof win.eatItem, 'function', 'eatItem uses takeItem');
+
+        function stacksOf(hero, id) {
+            return hero.inventory.filter(function (row) { return row.id === id; });
+        }
+
+        function qtyOf(hero, id) {
+            var rows = stacksOf(hero, id);
+            return rows.reduce(function (sum, row) { return sum + row.qty; }, 0);
+        }
+
+        function assertOneStack(hero, id, qty, label) {
+            var rows = stacksOf(hero, id);
+            assertEqual(rows.length, qty > 0 ? 1 : 0, label + ' stack count for ' + id);
+            assertEqual(qtyOf(hero, id), qty, label + ' qty for ' + id);
+            var slot = win.document.querySelector('#inv-grid [data-item="' + id + '"]');
+            if (qty > 0) {
+                assert(slot, label + ' Inv slot for ' + id);
+                assertEqual(win.document.querySelectorAll('#inv-grid [data-item="' + id + '"]').length, 1, label + ' one Inv slot for ' + id);
+                if (qty > 1) {
+                    assertMatch(slot.textContent, String(qty), label + ' Inv qty badge for ' + id);
+                }
+            } else {
+                assert(!slot, label + ' no Inv slot for ' + id);
+            }
+        }
+
+        var hero = H.hero(win);
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        assertEqual(hero.inventory.length, 5, 'starter has five stacks');
+        assertOneStack(hero, 'shrimp', 8, 'starter shrimp');
+        assertOneStack(hero, 'bread', 3, 'starter bread');
+        assert(!stacksOf(hero, 'bones')[0], 'starter has no bones');
+
+        win.addItem(hero, 'shrimp', 3);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertOneStack(hero, 'shrimp', 11, 'addItem shrimp +3 merges');
+
+        win.addItem(hero, 'bones', 2);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertOneStack(hero, 'bones', 2, 'addItem bones creates one stack');
+
+        win.addItem(hero, 'bones', 3);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertOneStack(hero, 'bones', 5, 'addItem bones +3 merges');
+        assertEqual(hero.inventory.filter(function (row) { return row.id === 'bones'; }).length, 1, 'still a single bones stack');
+
+        var took = win.takeItem(hero, 'bones', 4);
+        assertEqual(took, true, 'takeItem bones 4 succeeds');
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertOneStack(hero, 'bones', 1, 'takeItem leaves qty 1');
+
+        took = win.takeItem(hero, 'bones', 1);
+        assertEqual(took, true, 'takeItem last bones succeeds');
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertOneStack(hero, 'bones', 0, 'takeItem last qty drops bones');
+        assertEqual(win.takeItem(hero, 'bones', 1), false, 'takeItem missing stack fails');
+
+        hero.inventory.forEach(function (row) {
+            if (row.id === 'shrimp') {
+                row.qty = 1;
+            }
+        });
+        hero.hp = 70;
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        H.click(win, '#inv-grid [data-item="shrimp"]');
+        hero = H.hero(win);
+        assertEqual(hero.hp, 82, 'last shrimp heals 12');
+        assertOneStack(hero, 'shrimp', 0, 'eat last shrimp drops stack');
+        assert(H.chatHas(win, 'You eat Cooked shrimp and recover 12 HP.'), 'eat last shrimp chat');
+
+        hero.inventory.forEach(function (row) {
+            if (row.id === 'bread') {
+                row.qty = 1;
+            }
+        });
+        hero.hp = 70;
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        var eaten = win.eatItem(hero, 'bread');
+        assert(eaten && eaten.heal === 20, 'eatItem last bread heals 20');
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertOneStack(hero, 'bread', 0, 'eatItem last bread drops stack');
+        assertEqual(win.eatItem(hero, 'bread'), null, 'eatItem with no bread returns null');
+
+        assertOneStack(hero, 'shrimp', 0, 'shrimp still gone');
+        win.addItem(hero, 'shrimp', 2);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertOneStack(hero, 'shrimp', 2, 'addItem after drop makes one new stack');
+
+        took = win.takeItem(hero, 'coins', hero.gold);
+        assertEqual(took, true, 'takeItem all coins succeeds');
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertEqual(hero.gold, 0, 'gold is 0 after last coins');
+        assertOneStack(hero, 'coins', 0, 'last coins drop the stack');
+
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('hud: eat food from inventory', function (win, H) {
     H.click(win, '#tab-bar button[data-tab="inv"]');
     H.click(win, '#inv-grid [data-item="shrimp"]');

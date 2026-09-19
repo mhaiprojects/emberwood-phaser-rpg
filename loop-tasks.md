@@ -154,7 +154,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Click bread heals 20 (capped) and decrements the stack. — Conclusion: From spawn (328,248) Inv click bread at 70 HP heals 20→90 and at 85 caps at maxHp 100; qty −1 each; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Click coins / sword / shield / bones only logs the item name (no crash). — Conclusion: From spawn (328,248) Inv click coins/sword/shield/bones logs Coins./Bronze sword./Wooden shield./Bones.; qty/HP/gold unchanged; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] `addItem('coins')` increments `hero.gold` and `syncCoins`; `takeItem('coins')` decrements both. — Conclusion: From spawn (328,248) addItem coins +5/+1 and takeItem −3/−1 keep hero.gold, syncCoins stack, and HUD gold in sync. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [verify] Stacks merge by `id` and a stack is removed when `qty` hits 0. — Conclusion: —
+- [done] Stacks merge by `id` and a stack is removed when `qty` hits 0. — Conclusion: From spawn (328,248) addItem merges shrimp/bones by id (one stack); takeItem last bones and eat last shrimp/bread drop the stack; last coins drop too. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [todo] A hard 28-stack inventory cap: loot / shop buy / gather refuse with `inventory full`. — Conclusion: —
 - [todo] Drop-to-ground from inventory (creates `groundLoot` at the player). — Conclusion: —
 - [todo] Shift-click drop once a Settings toggle exists (OSRS default). — Conclusion: —
@@ -450,4 +450,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 77 | 2026-09-19 | Click bread heals 20 (capped) and decrements the stack | done — spawn (328,248) Inv click bread 70→90 and 85→100 cap; qty −1 each; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 78 | 2026-09-19 | Click coins / sword / shield / bones only logs the item name | done — spawn (328,248) Inv click logs Coins./Bronze sword./Wooden shield./Bones.; qty/HP/gold unchanged; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 79 | 2026-09-19 | addItem coins increments gold and syncCoins; takeItem decrements both | done — spawn (328,248) addItem +5/+1 and takeItem −3/−1 keep gold, stack, HUD in sync; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 80 | 2026-09-19 | Stacks merge by id and drop when qty hits 0 | done — spawn (328,248) addItem merges by id; takeItem/eat last qty drops the stack; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 
