@@ -522,6 +522,82 @@ EmberwoodTests.add('hud: click coins/sword/shield/bones only logs the item name'
     });
 });
 
+EmberwoodTests.add('inv: addItem coins increments gold and syncCoins; takeItem decrements both', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(typeof win.addItem, 'function', 'addItem is the coin-add helper');
+        assertEqual(typeof win.takeItem, 'function', 'takeItem is the coin-removal helper');
+        assertEqual(typeof win.syncCoins, 'function', 'syncCoins keeps gold and stack together');
+
+        function coinQty(hero) {
+            var stack = hero.inventory.filter(function (row) { return row.id === 'coins'; })[0];
+            return stack ? stack.qty : 0;
+        }
+
+        function assertCoins(hero, gold, label) {
+            assertEqual(hero.gold, gold, label + ' hero.gold');
+            assertEqual(coinQty(hero), gold, label + ' syncCoins stack');
+            assertEqual(win.document.getElementById('hud-gold').textContent, String(gold), label + ' HUD gold');
+            var badge = win.document.querySelector('#inv-grid [data-item="coins"]');
+            if (gold > 1) {
+                assert(badge, label + ' coins slot');
+                assertMatch(badge.textContent, String(gold), label + ' Inv coin badge');
+            } else if (gold === 1) {
+                assert(badge, label + ' coins slot');
+            } else {
+                assert(!badge, label + ' no coins slot at 0');
+            }
+        }
+
+        var hero = H.hero(win);
+        var shrimp = hero.inventory.filter(function (row) { return row.id === 'shrimp'; })[0];
+        var shrimpQty = shrimp ? shrimp.qty : 0;
+        H.click(win, '#tab-bar button[data-tab="inv"]');
+        assertCoins(hero, 8, 'starter');
+
+        win.addItem(hero, 'coins', 5);
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertCoins(hero, 13, 'addItem +5');
+
+        win.addItem(hero, 'coins');
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertCoins(hero, 14, 'addItem default +1');
+
+        var took = win.takeItem(hero, 'coins', 3);
+        assertEqual(took, true, 'takeItem +3 succeeds');
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertCoins(hero, 11, 'takeItem -3');
+
+        took = win.takeItem(hero, 'coins');
+        assertEqual(took, true, 'takeItem default -1 succeeds');
+        win.game.registry.set('hero', hero);
+        world.refreshHud();
+        hero = H.hero(win);
+        assertCoins(hero, 10, 'takeItem default -1');
+
+        var shrimpAfter = hero.inventory.filter(function (row) { return row.id === 'shrimp'; })[0];
+        assertEqual(shrimpAfter ? shrimpAfter.qty : 0, shrimpQty, 'food stack untouched');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
+});
+
 EmberwoodTests.add('hud: eat food from inventory', function (win, H) {
     H.click(win, '#tab-bar button[data-tab="inv"]');
     H.click(win, '#inv-grid [data-item="shrimp"]');
