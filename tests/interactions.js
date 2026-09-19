@@ -864,6 +864,158 @@ EmberwoodTests.add('hud: death overlay copy You are dead and retry keeps focus',
     });
 });
 
+EmberwoodTests.add('hud: shop-overlay and bank overlay use hidden CSS like title/dead not a Phaser text menu', function (win, H) {
+    function hiddenCssRule(doc, id) {
+        var needle = '#' + id + '[hidden]';
+        var sheets = doc.styleSheets;
+        for (var s = 0; s < sheets.length; s++) {
+            var rules;
+            try {
+                rules = sheets[s].cssRules;
+            } catch (err) {
+                continue;
+            }
+            if (!rules) {
+                continue;
+            }
+            for (var r = 0; r < rules.length; r++) {
+                var sel = rules[r].selectorText || '';
+                if (sel.indexOf(needle) !== -1) {
+                    return rules[r];
+                }
+            }
+        }
+        return null;
+    }
+
+    function assertHtmlOverlayHiddenPattern(doc, id, el) {
+        var rule = hiddenCssRule(doc, id);
+        assert(rule, '#' + id + '[hidden] CSS exists like title/dead');
+        assertEqual(rule.style.getPropertyValue('display'), 'none', '#' + id + '[hidden] is display:none');
+        assertEqual(el.style.display, '', '#' + id + ' uses the hidden attribute, not inline display');
+        assert(el.tagName !== 'CANVAS', '#' + id + ' is HTML, not a Phaser canvas menu');
+        el.hidden = true;
+        assert(el.hidden, '#' + id + ' hidden attribute is true');
+        assertEqual(doc.defaultView.getComputedStyle(el).display, 'none', '#' + id + ' computed display is none while hidden');
+    }
+
+    function assertNoPhaserShopBankMenu(gameWin) {
+        var texts = [];
+        var menus = [];
+        gameWin.game.scene.getScenes(true).forEach(function (scene) {
+            if (!scene || !scene.children || !scene.children.list) {
+                return;
+            }
+            scene.children.list.forEach(function (child) {
+                if (gameWin.Menu && child instanceof gameWin.Menu) {
+                    menus.push(child);
+                }
+                if (gameWin.MenuItem && child instanceof gameWin.MenuItem) {
+                    texts.push(String(child.text || ''));
+                }
+            });
+        });
+        menus.forEach(function (menu) {
+            var labels = (menu.menuItems || []).map(function (item) {
+                return String(item.text || '').toLowerCase();
+            }).join(' ');
+            assert(
+                labels.indexOf('shop') === -1 && labels.indexOf('bank') === -1 &&
+                    labels.indexOf('buy') === -1 && labels.indexOf('sell') === -1 &&
+                    labels.indexOf('deposit') === -1 && labels.indexOf('withdraw') === -1,
+                'leftover Phaser Menu is not a shop/bank text menu: ' + labels
+            );
+        });
+        texts.forEach(function (text) {
+            var low = text.toLowerCase();
+            assert(
+                low.indexOf('shop') === -1 && low.indexOf('buy') === -1 &&
+                    low.indexOf('sell') === -1 && low.indexOf('deposit') === -1 &&
+                    low.indexOf('withdraw') === -1,
+                'Phaser MenuItem is not shop/bank copy: ' + text
+            );
+        });
+        assert(!gameWin.ShopMenu, 'no Phaser ShopMenu class');
+        assert(!gameWin.BankMenu, 'no Phaser BankMenu class');
+    }
+
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+        world.refreshHud();
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        var title = win.document.getElementById('title-overlay');
+        var dead = win.document.getElementById('dead-overlay');
+        assert(title && title === win.Hud.el.title, '#title-overlay is Hud.el.title');
+        assert(dead && dead === win.Hud.el.dead, '#dead-overlay is Hud.el.dead');
+        assertEqual(title.tagName, 'DIV', 'title overlay is an HTML div');
+        assertEqual(dead.tagName, 'DIV', 'dead overlay is an HTML div');
+        assertHtmlOverlayHiddenPattern(win.document, 'title-overlay', title);
+        assertHtmlOverlayHiddenPattern(win.document, 'dead-overlay', dead);
+
+        win.Hud.hideDead();
+        win.Hud.hideTitle();
+        assert(title.hidden, 'title starts hidden in world');
+        assert(dead.hidden, 'dead starts hidden in world');
+        assertEqual(win.getComputedStyle(title).display, 'none', 'title computed none in world');
+        assertEqual(win.getComputedStyle(dead).display, 'none', 'dead computed none in world');
+
+        win.Hud.showTitle();
+        assertEqual(win.Hud.mode, 'title', 'showTitle sets mode title');
+        assertEqual(title.hidden, false, 'showTitle clears title.hidden');
+        assert(dead.hidden, 'showTitle keeps dead hidden');
+        assertEqual(win.getComputedStyle(title).display, 'flex', 'visible title uses flex CSS, not Phaser text');
+        win.Hud.hideTitle();
+        assert(title.hidden, 'hideTitle sets title.hidden');
+        assertEqual(win.getComputedStyle(title).display, 'none', 'hideTitle computed none');
+
+        win.Hud.showDead('Combat level 1. Overlay pattern check.');
+        assertEqual(win.Hud.mode, 'dead', 'showDead sets mode dead');
+        assertEqual(dead.hidden, false, 'showDead clears dead.hidden');
+        assertEqual(win.getComputedStyle(dead).display, 'flex', 'visible dead uses flex CSS, not Phaser text');
+        win.Hud.hideDead();
+        win.Hud.mode = 'world';
+        assert(dead.hidden, 'hideDead sets dead.hidden');
+        assertEqual(win.getComputedStyle(dead).display, 'none', 'hideDead computed none');
+
+        ['shop-overlay', 'bank-overlay'].forEach(function (id) {
+            var el = win.document.getElementById(id);
+            if (!el) {
+                return;
+            }
+            assertHtmlOverlayHiddenPattern(win.document, id, el);
+            el.hidden = true;
+            assert(el.hidden, '#' + id + ' stub stays hidden until a shop/bank UI is added');
+        });
+        assert(
+            !win.document.getElementById('shop-overlay') || win.document.getElementById('shop-overlay').hidden,
+            'shop overlay stub, if present, stays hidden'
+        );
+        assert(
+            !win.document.getElementById('bank-overlay') || win.document.getElementById('bank-overlay').hidden,
+            'bank overlay stub, if present, stays hidden'
+        );
+        assert(!win.Hud.el.shop, 'Hud has no shop element yet (shop UI not implemented)');
+        assert(!win.Hud.el.bank, 'Hud has no bank element yet (bank UI not implemented)');
+        assertEqual(typeof win.Hud.showShop, 'undefined', 'Hud.showShop is not a Phaser text menu');
+        assertEqual(typeof win.Hud.showBank, 'undefined', 'Hud.showBank is not a Phaser text menu');
+
+        assertNoPhaserShopBankMenu(win);
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off after overlay check');
+        assertEqual(Math.round(world.player.x), 328, 'player still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player still at spawn y');
+    });
+});
+
 EmberwoodTests.add('skills: Hitpoints level-up sets maxHp to 10 * level and chats Skill increased to N', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         var world = H.world(win);

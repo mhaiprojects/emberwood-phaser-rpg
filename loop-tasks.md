@@ -298,7 +298,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [todo] Update the chat hint line when bury / shop / fish / bank verbs exist. — Conclusion: —
 - [todo] Add a document `<title>` (currently none) — `Emberwood`. — Conclusion: —
 - [todo] Keep HUD HTML/Verdana and the world as a pixel Phaser canvas (no canvas-drawn F-keys). — Conclusion: —
-- [verify] `#shop-overlay` / bank overlay (when added) use `hidden` CSS like title/dead, not a Phaser text menu. — Conclusion: —
+- [done] `#shop-overlay` / bank overlay (when added) use `hidden` CSS like title/dead, not a Phaser text menu. — Conclusion: From spawn (328,248) title/dead use HTML `hidden` + `#id[hidden]{display:none}`; no shop/bank overlay stub yet; leftover Phaser Menu.js is not a shop/bank text menu. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [todo] Compass / XP orb are optional polish; do not block shops, bank, or gathering. — Conclusion: —
 
 ## 12. Settings / persistence (12)
@@ -476,4 +476,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 103 | 2026-09-19 | Click here to play starts WorldScene in Emberhaven; Credits toggles #credit-text | done — play starts WorldScene in Emberhaven (328,248); Credits toggles `#credit-text`; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 104 | 2026-09-19 | #btn-start stays disabled until TitleScene binds Hud.setStartHandler | done — unbound click stays on title; setStartHandler enables and starts Emberhaven (328,248); Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 105 | 2026-09-19 | Death overlay HUD copy You are dead and retry keeps focus | done — spawn (328,248) `#dead-overlay` You are dead, Combat level subtitle, retry keeps focus; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 106 | 2026-09-19 | Shop/bank overlays use hidden CSS like title/dead not a Phaser text menu | done — title/dead hidden CSS; no shop/bank stub; leftover Menu.js unused; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 
