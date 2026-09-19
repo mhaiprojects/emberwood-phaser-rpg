@@ -70,6 +70,7 @@ var Keys = {
         if (key === 'arrowleft') { add('ArrowLeft'); }
         if (key === 'arrowright') { add('ArrowRight'); }
         if (key === ' ' || key === 'spacebar' || key === 'space') { add('Space'); }
+        if (key === 'escape') { add('Escape'); }
         if (keyCode === 87) { add('KeyW'); }
         if (keyCode === 65) { add('KeyA'); }
         if (keyCode === 83) { add('KeyS'); }
@@ -79,6 +80,7 @@ var Keys = {
         if (keyCode === 39) { add('ArrowRight'); }
         if (keyCode === 40) { add('ArrowDown'); }
         if (keyCode === 32) { add('Space'); }
+        if (keyCode === 27) { add('Escape'); }
         return names;
     },
 

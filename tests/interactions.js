@@ -6328,6 +6328,53 @@ EmberwoodTests.add('movement: click path goes through the courtyard gate', funct
     });
 });
 
+EmberwoodTests.add('movement: Esc and click-self cancel walk and hide the purple line', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        world.encounterLock = false;
+        world.onClick({ worldX: spawn.x - 96, worldY: spawn.y });
+        assert(world.walkTarget, 'path started');
+        assert(world.walkPath && world.walkPath.length, 'A* path set');
+        assert(world.pathGfx.visible, 'purple line shown');
+        assert(world.marker.visible, 'yellow marker shown');
+        H.key(win, 'Escape', 'Escape', 'keydown');
+        assert(win.Keys.isDown('Escape'), 'Keys.js recorded Escape');
+        assert(win.Keys.pressed.Escape === true, 'Escape is just-pressed via Keys.js');
+        world.update();
+        assert(!world.walkTarget, 'Esc cancels walkTarget');
+        assert(!world.walkPath, 'Esc clears walkPath');
+        assert(!world.marker.visible, 'Esc hides marker');
+        assert(!world.pathGfx.visible, 'Esc hides purple line');
+        assert(!world.talkTarget, 'Esc clears talk target');
+        H.key(win, 'Escape', 'Escape', 'keyup');
+        H.clearKeys(win);
+
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0);
+        world.onClick({ worldX: spawn.x - 96, worldY: spawn.y });
+        assert(world.walkTarget, 'second path started');
+        assert(world.pathGfx.visible, 'purple line shown again');
+        world.onClick({ worldX: world.player.x, worldY: world.player.y });
+        assert(!world.walkTarget, 'click-self cancels walkTarget');
+        assert(!world.walkPath, 'click-self clears walkPath');
+        assert(!world.marker.visible, 'click-self hides marker');
+        assert(!world.pathGfx.visible, 'click-self hides purple line');
+
+        world.onClick({ worldX: spawn.x - 64, worldY: spawn.y });
+        assert(world.walkTarget, 'nearby ground click still walks');
+        assert(world.pathGfx.visible, 'nearby ground still draws purple line');
+        world.clearWalk();
+        assert(!win.game.input.keyboard, 'Phaser keyboard stays off');
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0);
+    });
+});
+
 EmberwoodTests.add('movement: WASD cancels click path and hides the purple line', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');

@@ -256,6 +256,10 @@ var WorldScene = new Phaser.Class({
         }
         this.engageTarget = null;
         this.talkTarget = null;
+        if (Phaser.Math.Distance.Between(x, y, this.player.x, this.player.y) < 10) {
+            this.clearWalk();
+            return;
+        }
         this.setWalk(x, y);
     },
 
@@ -786,6 +790,10 @@ var WorldScene = new Phaser.Class({
         var vx = 0;
         var vy = 0;
         var move = this.moveFlags();
+        if (Keys.justPressed('Escape')) {
+            this.clearWalk();
+            this.talkTarget = null;
+        }
         if (move.left || move.right || move.up || move.down) {
             this.clearWalk();
             this.talkTarget = null;
