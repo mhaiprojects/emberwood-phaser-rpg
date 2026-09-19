@@ -3198,6 +3198,70 @@ EmberwoodTests.add('combat: Run flees back to the world', function (win, H) {
     });
 });
 
+EmberwoodTests.add('combat: Run succeeds on Between(0,99) < 70 and flees without XP or loot', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        world.placePlayer(spawn.x, spawn.y);
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        world.placePlayer(spawn.x, spawn.y);
+        var chicken = H.findMob(win, 'Chicken');
+        var hero = H.hero(win);
+        var gold = hero.gold;
+        var xp = hero.xp;
+        var attackXp = hero.skills.attack.xp;
+        var hpXp = hero.skills.hitpoints.xp;
+        var lootBefore = (world.groundLoot || []).length;
+        var orig = win.Phaser.Math.Between;
+        var fleeArgs = null;
+        win.Phaser.Math.Between = function (lo, hi) {
+            if (lo === 0 && hi === 99) {
+                fleeArgs = [lo, hi];
+                return 0;
+            }
+            return orig.apply(this, arguments);
+        };
+        return H.startFight(win, chicken).then(function () {
+            assert(H.battle(win).waitingForPlayer, 'player turn before run');
+            win.document.querySelector('#battle-actions [data-action="flee"]').click();
+            var battle = H.battle(win);
+            assert(fleeArgs, 'Run rolls Between(0,99)');
+            assertEqual(fleeArgs[0], 0, 'Between lo is 0');
+            assertEqual(fleeArgs[1], 99, 'Between hi is 99');
+            assertEqual(battle.outcome, 'flee', 'outcome flee on success roll');
+            assert(H.chatHas(win, 'You run from the fight.'), 'run chat');
+            return H.waitWorld(win);
+        }).then(function () {
+            win.Phaser.Math.Between = orig;
+            hero = H.hero(win);
+            assert(H.chatHas(win, 'You break away from the fight.'), 'break-away chat');
+            assertEqual(win.Hud.mode, 'world', 'back in world after run');
+            assertEqual(win.game.registry.get('battleOutcome'), null, 'battleOutcome cleared after wake');
+            assertEqual(hero.xp, xp, 'no combat XP on flee');
+            assertEqual(hero.gold, gold, 'no gold on flee');
+            assertEqual(hero.skills.attack.xp, attackXp, 'no Attack XP on flee');
+            assertEqual(hero.skills.hitpoints.xp, hpXp, 'no Hitpoints XP on flee');
+            assertEqual((H.world(win).groundLoot || []).length, lootBefore, 'no loot spawned on flee');
+            assert(chicken.aliveMob, 'chicken still alive after flee');
+            assert(!H.chatHas(win, 'collapses'), 'no win collapse chat');
+            assert(!H.chatHas(win, 'Loot drops'), 'no loot drop chat');
+            assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+        }).catch(function (err) {
+            win.Phaser.Math.Between = orig;
+            throw err;
+        });
+    }).catch(function (err) {
+        return H.cleanupBattle(win).then(function () {
+            throw err;
+        });
+    });
+});
+
 EmberwoodTests.add('combat: manual list click hits the chosen foe', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.setAutoAttack(win, false);

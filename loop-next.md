@@ -7,39 +7,39 @@ Do not paste `AGENT.md` or `loop-tasks.md` into the Task prompt.
 
 Pick **#1**. One spawned tick = one item. Refresh this file after commit.
 
-## 1. [verify] Run succeeds on `Between(0,99) < 70`, chats run/break-away, outcome `flee`, no XP/loot.
-
-- Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
-- Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
-- Test: `add a dedicated case; nearest existing: hud: start skills Hitpoints 10 / 1154 XP / 100 HP; others 1 / 0`
-- URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
-
-## 2. [verify] Run fail chats `You fail to get away!` and the enemy still gets a turn.
+## 1. [verify] Run fail chats `You fail to get away!` and the enemy still gets a turn.
 
 - Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
 - Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
 - Test: `combat: Eat with no food chats You have no food and returns the turn`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
-## 3. [verify] Player death shows `#dead-overlay` “You are dead”, `Hud.mode === 'dead'`, and combat level in the subtitle.
+## 2. [verify] Player death shows `#dead-overlay` “You are dead”, `Hud.mode === 'dead'`, and combat level in the subtitle.
 
 - Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
 - Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
 - Test: `combat: defeat shows You are dead and retry returns to title`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
-## 4. [verify] Return to title stops scenes and shows `#title-overlay` again.
+## 3. [verify] Return to title stops scenes and shows `#title-overlay` again.
 
 - Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
 - Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
 - Test: `add a dedicated case; nearest existing: combat: defeat shows You are dead and retry returns to title`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
-## 5. [verify] HP bars go green / amber / red at 65% and 35% and that ± floaters appear on hit/heal.
+## 4. [verify] HP bars go green / amber / red at 65% and 35% and that ± floaters appear on hit/heal.
 
 - Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
 - Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
 - Test: `add a dedicated case; nearest existing: hud: start skills Hitpoints 10 / 1154 XP / 100 HP; others 1 / 0`
+- URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
+
+## 5. [verify] Worn sword/shield are **display-only** today; then apply weapon `damage` and shield `defence` to the hit formula.
+
+- Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
+- Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
+- Test: `add a dedicated case; nearest existing: hud: skills, worn, combat style, inventory`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
 After `done` + tests: commit, then `python3 tools/loop-next.py`.

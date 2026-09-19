@@ -127,7 +127,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Eat food in combat uses shrimp then bread (`eatBestFood`), heals, consumes one, and spends the turn. — Conclusion: On player turn, Eat food calls `eatBestFood` (shrimp then bread): heals 12/20, consumes one, `queueTurn(800)`. Full HP does not spend the turn. Phaser 3.90 keyboard off. Dedicated case + Playwright; ?only=Eat food uses 1/1.
 - [done] Eat at full HP does not consume food and returns the turn. — Conclusion: From spawn (328,248) full-HP Eat food chats already at full health, shrimp/bread qty unchanged, `waitingForPlayer` stays true, busy false. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Eat with no food chats `You have no food.` and returns the turn. — Conclusion: damaged no-food Eat chats `You have no food.`, HP/inventory unchanged, waitingForPlayer true, busy false; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1
-- [verify] Run succeeds on `Between(0,99) < 70`, chats run/break-away, outcome `flee`, no XP/loot. — Conclusion: —
+- [done] Run succeeds on `Between(0,99) < 70`, chats run/break-away, outcome `flee`, no XP/loot. — Conclusion: spawn (328,248) Between(0,99) return 0 succeeds; chats run/break-away; outcome flee; no XP/loot; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1.
 - [verify] Run fail chats `You fail to get away!` and the enemy still gets a turn. — Conclusion: —
 - [verify] Player death shows `#dead-overlay` “You are dead”, `Hud.mode === 'dead'`, and combat level in the subtitle. — Conclusion: —
 - [verify] Return to title stops scenes and shows `#title-overlay` again. — Conclusion: —
@@ -437,4 +437,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 64 | 2026-09-19 | Eat food in combat uses shrimp then bread (eatBestFood) | done — shrimp then bread heals 12/20, consumes one, spends the turn; full HP does not; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 65 | 2026-09-19 | Eat at full HP does not consume food and returns the turn | done — spawn (328,248) full-HP Eat food chats already at full health, shrimp/bread unchanged, waitingForPlayer true, busy false; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 66 | 2026-09-19 | Eat with no food chats You have no food. and returns the turn | done — spawn (328,248) damaged no-food Eat chats `You have no food.`, HP 60 unchanged, waitingForPlayer true, busy false; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 67 | 2026-09-19 | Run succeeds on Between(0,99) < 70, chats run/break-away, outcome flee, no XP/loot | done — spawn (328,248) Between(0,99) return 0 succeeds; chats run/break-away; outcome flee; no XP/loot; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 
