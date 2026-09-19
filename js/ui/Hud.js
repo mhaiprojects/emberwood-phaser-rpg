@@ -21,6 +21,7 @@ var Hud = {
             minimap: document.getElementById('minimap'),
             minimapChrome: document.getElementById('minimap-chrome'),
             worldMap: document.getElementById('world-map-overlay'),
+            worldMapList: document.getElementById('world-map-list'),
             worldMapClose: document.getElementById('btn-world-map-close'),
             enemies: document.getElementById('battle-enemies'),
             actions: document.getElementById('battle-actions'),
@@ -38,6 +39,7 @@ var Hud = {
         };
         this.ctxTarget = null;
         this.buildMinimap();
+        this.renderWorldMap();
         this.bindInterface();
         this.bindHudBlur();
         this.hideContextMenu();
@@ -164,6 +166,15 @@ var Hud = {
         if (this.el.minimapChrome) {
             this.el.minimapChrome.addEventListener('click', function () {
                 self.showWorldMap();
+            });
+        }
+        if (this.el.worldMapList) {
+            this.el.worldMapList.addEventListener('click', function (event) {
+                var row = event.target.closest('[data-zone]');
+                var zoneId = row && row.getAttribute('data-zone');
+                if (zoneId) {
+                    self.clickMinimap(zoneId);
+                }
             });
         }
         if (this.el.worldMapClose) {
@@ -349,8 +360,12 @@ var Hud = {
             return;
         }
         this.hideContextMenu();
+        this.renderWorldMap();
         if (this.el.worldMap) {
             this.el.worldMap.hidden = false;
+        }
+        if (this.el.worldMapList) {
+            this.el.worldMapList.hidden = false;
         }
     },
 
@@ -416,6 +431,9 @@ var Hud = {
             this.el.questTab.textContent = state.quest;
         }
         this.highlightMinimap(state.zoneId);
+        if (this.el.worldMap && !this.el.worldMap.hidden) {
+            this.renderWorldMap();
+        }
         this.paintHpFill(state.hp, state.maxHp);
         this.renderHero(this.hero());
     },
@@ -590,6 +608,46 @@ var Hud = {
                 cell.textContent = labels[order[r][c]];
                 this.el.minimap.appendChild(cell);
             }
+        }
+    },
+
+    renderWorldMap: function () {
+        var list = this.el && this.el.worldMapList;
+        if (!list || typeof ZONE_LIST === 'undefined') {
+            return;
+        }
+        list.hidden = false;
+        list.innerHTML = '';
+        var head = document.createElement('div');
+        head.className = 'wm-row wm-head';
+        head.innerHTML = '<span>Land</span><span>Biome</span><span>Danger</span>';
+        list.appendChild(head);
+        var hereId = null;
+        var world = window.game && window.game.scene && window.game.scene.getScene('WorldScene');
+        if (world && world.zoneId) {
+            hereId = world.zoneId;
+        }
+        for (var i = 0; i < ZONE_LIST.length; i++) {
+            var zone = ZONE_LIST[i];
+            var row = document.createElement('div');
+            row.className = 'wm-row';
+            row.setAttribute('data-zone', zone.id);
+            if (zone.id === hereId) {
+                row.classList.add('is-here');
+            }
+            var name = document.createElement('span');
+            name.className = 'wm-name';
+            name.textContent = zone.name;
+            var biome = document.createElement('span');
+            biome.className = 'wm-biome';
+            biome.textContent = zone.biome;
+            var danger = document.createElement('span');
+            danger.className = 'wm-danger';
+            danger.textContent = typeof zoneDanger === 'function' ? zoneDanger(zone.id) : '';
+            row.appendChild(name);
+            row.appendChild(biome);
+            row.appendChild(danger);
+            list.appendChild(row);
         }
     },
 

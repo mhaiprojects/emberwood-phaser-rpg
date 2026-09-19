@@ -6671,6 +6671,142 @@ EmberwoodTests.add('hud: minimap chrome click opens the world-map panel', functi
     });
 });
 
+EmberwoodTests.add('hud: world-map panel lists nine lands, biome, and danger', function (win, H) {
+    function hiddenCssRule(doc, id) {
+        var needle = '#' + id + '[hidden]';
+        var sheets = doc.styleSheets;
+        for (var s = 0; s < sheets.length; s++) {
+            var rules;
+            try {
+                rules = sheets[s].cssRules;
+            } catch (err) {
+                continue;
+            }
+            if (!rules) {
+                continue;
+            }
+            for (var r = 0; r < rules.length; r++) {
+                var sel = rules[r].selectorText || '';
+                if (sel.indexOf(needle) !== -1) {
+                    return rules[r];
+                }
+            }
+        }
+        return null;
+    }
+
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, false);
+        H.clearKeys(win);
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        world.engageTarget = null;
+        world.talkTarget = null;
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assertEqual(win.Hud.mode, 'world', 'world mode');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        assertEqual(typeof win.zoneDanger, 'function', 'zoneDanger helper exists');
+
+        var overlay = win.document.getElementById('world-map-overlay');
+        var list = win.document.getElementById('world-map-list');
+        var chrome = win.document.getElementById('minimap-chrome');
+        var mill = win.document.querySelector('#minimap .mm-cell[data-zone="millfields"]');
+        assert(overlay && overlay === win.Hud.el.worldMap, '#world-map-overlay is Hud.el.worldMap');
+        assert(list && list === win.Hud.el.worldMapList, '#world-map-list is Hud.el.worldMapList');
+        assert(chrome && mill, 'minimap chrome and Millfields cell exist');
+        assert(overlay.hidden, 'world-map starts hidden');
+        assertEqual(overlay.tagName, 'DIV', 'world-map overlay is an HTML div');
+        assertEqual(list.tagName, 'DIV', 'world-map list is an HTML div');
+
+        var overlayRule = hiddenCssRule(win.document, 'world-map-overlay');
+        assert(overlayRule, '#world-map-overlay[hidden] CSS exists like title/dead');
+        assertEqual(overlayRule.style.getPropertyValue('display'), 'none', '#world-map-overlay[hidden] is display:none');
+        assertEqual(win.getComputedStyle(overlay).display, 'none', 'hidden world-map computed display is none');
+
+        H.click(win, chrome);
+        assertEqual(overlay.hidden, false, 'minimap chrome click opens the world-map panel');
+        assertEqual(win.Hud.mode, 'world', 'world-map panel keeps Hud.mode world');
+        assertEqual(win.getComputedStyle(overlay).display, 'flex', 'visible world-map uses flex CSS, not Phaser text');
+        assertEqual(list.hidden, false, 'land list is not hidden once the panel opens');
+        assert(win.getComputedStyle(list).display !== 'none', 'land list is visible inside the overlay');
+        assertMatch(overlay.innerText, 'World map', 'panel heading is World map');
+        assertMatch(overlay.innerText, 'Land', 'list has a Land column');
+        assertMatch(overlay.innerText, 'Biome', 'list has a Biome column');
+        assertMatch(overlay.innerText, 'Danger', 'list has a Danger column');
+
+        var rows = list.querySelectorAll('.wm-row[data-zone]');
+        assertEqual(rows.length, 9, 'list has nine land rows');
+        assertEqual(win.ZONE_LIST.length, 9, 'ZONE_LIST is still nine lands');
+        var chicken = false;
+        var drake = false;
+        for (var i = 0; i < win.ZONE_LIST.length; i++) {
+            var zone = win.ZONE_LIST[i];
+            var row = list.querySelector('.wm-row[data-zone="' + zone.id + '"]');
+            assert(row, 'list has a row for ' + zone.id);
+            var nameEl = row.querySelector('.wm-name');
+            var biomeEl = row.querySelector('.wm-biome');
+            var dangerEl = row.querySelector('.wm-danger');
+            assert(nameEl && biomeEl && dangerEl, zone.id + ' shows name, biome, and danger');
+            assertEqual(nameEl.textContent, zone.name, zone.id + ' name');
+            assertEqual(biomeEl.textContent, zone.biome, zone.id + ' biome');
+            var danger = win.zoneDanger(zone.id);
+            assertEqual(dangerEl.textContent, danger, zone.id + ' danger');
+            if (zone.id === 'haven') {
+                assertEqual(danger, 'Chicken', 'Emberhaven danger is Chicken');
+                chicken = true;
+            }
+            if (zone.id === 'highlands') {
+                assertEqual(danger, 'Drake', 'Windrock Highlands danger is Drake');
+                drake = true;
+            }
+        }
+        assert(chicken && drake, 'list spans chickens vs drakes');
+        var here = list.querySelector('.wm-row.is-here');
+        assert(here, 'current land is marked is-here');
+        assertEqual(here.getAttribute('data-zone'), 'haven', 'is-here is Emberhaven at spawn');
+
+        win.Hud.hideWorldMap();
+        assert(overlay.hidden, 'Close hides the overlay');
+        H.click(win, mill);
+        assert(overlay.hidden, 'cell click does not open the world-map panel');
+        assert(world.walkTarget, 'Millfields cell still starts a walk');
+        var east = win.tileCenter(win.MAP_W - 1, Math.floor(win.MAP_H / 2));
+        assertEqual(Math.round(world.walkTarget.x), Math.round(east.x), 'walk x is still the east exit');
+        assertEqual(Math.round(world.walkTarget.y), Math.round(east.y), 'walk y is still the east exit');
+        world.clearWalk();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+
+        win.Hud.showWorldMap();
+        assertEqual(overlay.hidden, false, 'showWorldMap opens the overlay');
+        var millRow = list.querySelector('.wm-row[data-zone="millfields"]');
+        assert(millRow, 'Millfields row exists');
+        H.click(win, millRow);
+        assert(overlay.hidden, 'list row click closes the overlay via clickMinimap');
+        assert(world.walkTarget, 'list row still starts a walk');
+        assertEqual(Math.round(world.walkTarget.x), Math.round(east.x), 'list row walk x is the east exit');
+        assertEqual(Math.round(world.walkTarget.y), Math.round(east.y), 'list row walk y is the east exit');
+        world.clearWalk();
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off after world-map list');
+        assertEqual(Math.round(world.player.x), 328, 'player still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player still at spawn y');
+    });
+});
+
 EmberwoodTests.add('movement: click path goes through the courtyard gate', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');

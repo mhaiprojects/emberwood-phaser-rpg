@@ -40,6 +40,21 @@ function neighborId(zone, dir) {
     return next ? next.id : null;
 }
 
+function zoneDanger(zoneId) {
+    var defs = MOB_DEFS[zoneId] || [];
+    var seen = {};
+    var types = [];
+    for (var i = 0; i < defs.length; i++) {
+        var type = defs[i] && defs[i].type;
+        if (!type || seen[type]) {
+            continue;
+        }
+        seen[type] = true;
+        types.push(type);
+    }
+    return types.length ? types.join(', ') : 'None';
+}
+
 var NPC_DEFS = {
     haven: [
         { key: 'guild', name: 'Guildmaster Bram', x: 210, y: 150, tint: 0xffffff, lines: ['Welcome to Emberhaven, adventurer.', 'Goblins from Northwood raid our stores.', 'Slay 5 goblins and return. The militia will pay.'] },

@@ -64,7 +64,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [done] Default spawn (20,15 tiles) and edge spawns do not start the player inside a solid tile. — Conclusion: From spawn (328,248) tile (20,15) is PATH; 24 directed edge landings stay off WATER/TREE/ROCK/SHRINE; Keys.js W walks from courtyard and Northwood south-edge. Phaser 3.90 keyboard off. Dedicated case pass; suite 69/70 (tilemap doing case failed).
 - [done] Map is 36×28 tiles at 16px via Phaser 3 `make.tilemap` + `createLayer` (not Phaser 4). — Conclusion: From spawn (328,248) all 9 lands are 36×28×16 via `make.tilemap` + `map.createLayer` (TilemapLayer, ARRAY_2D, 576×448); scene has no Phaser 4 `createLayer`. Keys.js W still walks. Phaser 3.90 keyboard off. Dedicated case pass; suite 70/71 (adj12 doing case failed).
 - [done] Click-minimap to open a world-map panel (or stop using `<button>` if cells are display-only). — Conclusion: From spawn (328,248) Minimap chrome click opens HTML `#world-map-overlay` (mode stays world); `.mm-cell` are divs not buttons and still walk toward that land; title/battle ignore chrome; Phaser 3.90 keyboard off. Dedicated + Playwright 1/1.
-- [todo] A world-map panel listing all nine lands, biome, and danger (chickens vs drakes). — Conclusion: —
+- [done] A world-map panel listing all nine lands, biome, and danger (chickens vs drakes). — Conclusion: From spawn (328,248) `#world-map-list` shows all 9 lands with biome and danger (Chicken…Drake); minimap cells still walk; overlay stays HTML `hidden` CSS, not Phaser text. Phaser 3.90 keyboard off. Dedicated + Playwright 1/1.
 - [todo] Persist mob alive/dead/respawn timers when leaving a zone and returning (currently full respawn). — Conclusion: —
 - [todo] Persist ground loot when leaving a zone (currently `clearLoot` wipes it). — Conclusion: —
 - [todo] Enterable interiors (bank, shop, guild hall) as a second tilemap or indoor scene. — Conclusion: —
@@ -486,4 +486,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 113 | 2026-09-19 | Keep game.input.keyboard false after any input change | done — spawn (328,248) Keys.js pins keyboard === false after keys/pointer/re-enable; W still walks; Phaser 3.90; dedicated + WASD 1/1 |
 | 114 | 2026-09-19 | A visible destination X (OSRS yellow X) in addition to the tiny rectangle | done — spawn (328,248) click shows yellow dest X + 6×6 rect; Esc/arrive hide both; Phaser keyboard off; dedicated + Playwright 1/1 |
 | 115 | 2026-09-19 | Click-minimap chrome opens a world-map panel; cells are not buttons | done — spawn (328,248) chrome opens `#world-map-overlay`; cells are divs and still walk; Phaser keyboard off; dedicated + Playwright 1/1 |
+| 116 | 2026-09-19 | World-map panel lists nine lands, biome, and danger | done — spawn (328,248) list shows all 9 lands + biome + Chicken…Drake; cells still walk; HTML hidden CSS; Phaser keyboard off; dedicated + Playwright 1/1 |
 

@@ -450,6 +450,44 @@ button.ghost {
     color: #ffe08a;
 }
 
+#world-map-overlay .title-card {
+    width: min(480px, 92vw);
+}
+
+#world-map-list {
+    margin: 12px 0 16px;
+    text-align: left;
+}
+
+#world-map-list .wm-row {
+    display: grid;
+    grid-template-columns: 1.6fr 0.8fr 0.9fr;
+    gap: 6px;
+    padding: 4px 6px;
+    color: #e6d5b0;
+    font-size: 12px;
+}
+
+#world-map-list .wm-row[data-zone] {
+    cursor: pointer;
+}
+
+#world-map-list .wm-row[data-zone]:hover {
+    background: #5c4a32;
+}
+
+#world-map-list .wm-head {
+    color: #ffe08a;
+    font-weight: bold;
+    border-bottom: 1px solid #6a5638;
+    cursor: default;
+}
+
+#world-map-list .wm-row.is-here {
+    background: #6b5420;
+    color: #fff4c8;
+}
+
 #btn-start {
     display: block;
     width: 100%;
