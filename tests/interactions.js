@@ -6057,6 +6057,64 @@ EmberwoodTests.add('hud: auto-pickup toggle persists on the hero', function (win
     H.enterZone(win, 'haven');
 });
 
+EmberwoodTests.add('hud: settings experiment never sets input.keyboard true', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        var world = H.world(win);
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        H.enterZone(win, 'haven');
+        H.setAutoAttack(win, true);
+        H.setAutoPickup(win, true);
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+
+        var keyboardOff = function (label) {
+            var kb = win.game.input.keyboard;
+            assert(kb !== true, label + ': input.keyboard is not true');
+            assert(!kb, label + ': Phaser keyboard plugin stays off');
+        };
+        keyboardOff('before settings');
+
+        H.click(win, '#tab-bar button[data-tab="settings"]');
+        assert(H.panelVisible(win, 'settings'), 'Settings panel visible');
+        keyboardOff('open Settings tab');
+
+        var settingsAttack = win.document.querySelector('#panel-settings [data-auto-attack]');
+        var settingsPickup = win.document.querySelector('#panel-settings [data-auto-pickup]');
+        assert(settingsAttack && settingsPickup, 'Settings auto-attack and auto-pickup exist');
+
+        H.mouseClick(win, settingsAttack);
+        assertEqual(H.hero(win).autoAttack, false, 'settings auto-attack toggles off');
+        keyboardOff('auto-attack off');
+
+        H.mouseClick(win, settingsAttack);
+        assertEqual(H.hero(win).autoAttack, true, 'settings auto-attack toggles on');
+        keyboardOff('auto-attack on');
+
+        H.mouseClick(win, settingsPickup);
+        assertEqual(H.hero(win).autoPickup, false, 'settings auto-pickup toggles off');
+        keyboardOff('auto-pickup off');
+
+        H.mouseClick(win, settingsPickup);
+        assertEqual(H.hero(win).autoPickup, true, 'settings auto-pickup toggles on');
+        keyboardOff('auto-pickup on');
+
+        win.dispatchEvent(new win.KeyboardEvent('keydown', {
+            key: 'F8', code: 'F8', bubbles: true, cancelable: true
+        }));
+        assert(H.panelVisible(win, 'settings'), 'F8 keeps Settings open');
+        keyboardOff('F8 Settings');
+
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off after settings');
+        assertEqual(Math.round(world.player.x), 328, 'still at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'still at spawn y');
+    });
+});
+
 EmberwoodTests.add('world: auto-pickup off skips walk-over and click still takes', function (win, H) {
     H.enterZone(win, 'haven');
     H.setAutoAttack(win, false);

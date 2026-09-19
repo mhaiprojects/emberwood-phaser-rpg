@@ -312,7 +312,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 - [todo] Export / import save JSON for debugging. — Conclusion: —
 - [todo] Settings zoom / integer scale for the 512×320 canvas (Phaser 3 Scale.FIT stays). — Conclusion: —
 - [todo] Optional show-FPS toggle. — Conclusion: —
-- [verify] A settings experiment never sets `input.keyboard` true. — Conclusion: —
+- [done] A settings experiment never sets `input.keyboard` true. — Conclusion: From spawn (328,248) Settings auto-attack/auto-pickup toggles and F8 leave Phaser `input.keyboard` off (never true). Dedicated case + Playwright 1/1.
 - [todo] Character display name on the HUD (even a default “Adventurer”). — Conclusion: —
 - [todo] Refuse to load a save from a newer schema; reset gracefully. — Conclusion: —
 
@@ -477,4 +477,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 104 | 2026-09-19 | #btn-start stays disabled until TitleScene binds Hud.setStartHandler | done — unbound click stays on title; setStartHandler enables and starts Emberhaven (328,248); Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 105 | 2026-09-19 | Death overlay HUD copy You are dead and retry keeps focus | done — spawn (328,248) `#dead-overlay` You are dead, Combat level subtitle, retry keeps focus; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
 | 106 | 2026-09-19 | Shop/bank overlays use hidden CSS like title/dead not a Phaser text menu | done — title/dead hidden CSS; no shop/bank stub; leftover Menu.js unused; Phaser 3.90 keyboard off; dedicated case + Playwright 1/1 |
+| 107 | 2026-09-19 | A settings experiment never sets input.keyboard true | done — spawn (328,248) Settings toggles + F8 leave Phaser keyboard off; dedicated case + Playwright 1/1 |
 
