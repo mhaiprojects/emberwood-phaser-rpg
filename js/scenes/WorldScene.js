@@ -675,7 +675,12 @@ var WorldScene = new Phaser.Class({
             }).setOrigin(0.5).setDepth(7);
             sprite.nameLabel = label;
             self.floatLabels.push(label);
+            if (def.questGiver) {
+                sprite.questIcon = self.makeQuestHeadIcon();
+                self.floatLabels.push(sprite.questIcon);
+            }
         });
+        this.refreshQuestIcons();
 
         (MOB_DEFS[zoneId] || []).forEach(function (def, index) {
             var sprite = self.physics.add.sprite(def.x, def.y, def.texture, def.frame || 0);
@@ -898,6 +903,107 @@ var WorldScene = new Phaser.Class({
             xp: hero.xp,
             level: hero.level,
             quest: questText
+        });
+        this.refreshQuestIcons();
+    },
+
+    makeQuestHeadIcon: function () {
+        var gfx = this.add.graphics();
+        gfx.setDepth(8);
+        gfx.setVisible(false);
+        gfx.kind = null;
+        gfx.iconColor = 0;
+        return gfx;
+    },
+
+    drawStarHeadIcon: function (gfx, color) {
+        var outer = 5;
+        var inner = 2.2;
+        gfx.fillStyle(color, 1);
+        gfx.lineStyle(1, 0x0a2040, 0.9);
+        gfx.beginPath();
+        var i;
+        for (i = 0; i < 10; i++) {
+            var rad = i % 2 === 0 ? outer : inner;
+            var ang = -Math.PI / 2 + i * Math.PI / 5;
+            var px = Math.cos(ang) * rad;
+            var py = Math.sin(ang) * rad;
+            if (i === 0) {
+                gfx.moveTo(px, py);
+            } else {
+                gfx.lineTo(px, py);
+            }
+        }
+        gfx.closePath();
+        gfx.fillPath();
+        gfx.strokePath();
+    },
+
+    drawCompassHeadIcon: function (gfx, color) {
+        gfx.fillStyle(color, 1);
+        gfx.lineStyle(1, 0x403010, 0.95);
+        gfx.beginPath();
+        gfx.moveTo(0, -5.5);
+        gfx.lineTo(1.8, 0);
+        gfx.lineTo(0, 5.5);
+        gfx.lineTo(-1.8, 0);
+        gfx.closePath();
+        gfx.fillPath();
+        gfx.strokePath();
+        gfx.beginPath();
+        gfx.moveTo(-5.5, 0);
+        gfx.lineTo(0, -1.8);
+        gfx.lineTo(5.5, 0);
+        gfx.lineTo(0, 1.8);
+        gfx.closePath();
+        gfx.fillPath();
+        gfx.strokePath();
+        gfx.fillStyle(0xfff6c8, 1);
+        gfx.fillCircle(0, 0, 1.2);
+    },
+
+    drawQuestHeadIcon: function (gfx, spec) {
+        gfx.clear();
+        if (!spec) {
+            gfx.kind = null;
+            gfx.iconColor = 0;
+            gfx.setVisible(false);
+            return;
+        }
+        gfx.kind = spec.kind;
+        gfx.iconColor = spec.color;
+        if (spec.kind === 'star') {
+            this.drawStarHeadIcon(gfx, spec.color);
+        } else {
+            this.drawCompassHeadIcon(gfx, spec.color);
+        }
+        gfx.setVisible(true);
+    },
+
+    refreshQuestIcons: function () {
+        if (!this.npcs) {
+            return;
+        }
+        var quest = this.registry.get('quest');
+        var self = this;
+        this.npcs.children.iterate(function (npc) {
+            if (!npc || !npc.npcDef) {
+                return;
+            }
+            var spec = typeof questHeadIconFor === 'function'
+                ? questHeadIconFor(npc.npcDef, quest)
+                : null;
+            if (!npc.questIcon) {
+                if (!spec) {
+                    return;
+                }
+                npc.questIcon = self.makeQuestHeadIcon();
+                self.floatLabels.push(npc.questIcon);
+            }
+            self.drawQuestHeadIcon(npc.questIcon, spec);
+            if (spec) {
+                npc.questIcon.setPosition(npc.x, npc.y - 24);
+            }
         });
     },
 

@@ -2880,33 +2880,106 @@ EmberwoodTests.add('npcs: click NPC clears engageTarget and does not fight', fun
 });
 
 EmberwoodTests.add('npcs: Bram stage 0 accepts militia quest and updates journal', function (win, H) {
-    H.enterZone(win, 'haven');
-    var spawn = win.defaultWorldSpawn();
-    assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
-    assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
-    var world = H.world(win);
-    world.placePlayer(spawn.x, spawn.y);
-    assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
-    assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
-    assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
-    win.game.registry.set('quest', { id: 'goblins', stage: 0, progress: 0, goal: 5 });
-    world.refreshHud();
-    assertEqual(H.quest(win).stage, 0, 'starts unaccepted');
-    assertEqual(win.document.getElementById('hud-quest').textContent, 'Talk to Guildmaster Bram in Emberhaven.', 'side task before talk');
-    assertEqual(win.document.getElementById('hud-quest-tab').textContent, 'Talk to Guildmaster Bram in Emberhaven.', 'journal before talk');
-    var gold = H.hero(win).gold;
-    var xp = H.hero(win).xp;
-    var bram = H.findNpc(win, 'guild');
-    assert(bram, 'Bram is in Emberhaven');
-    world.tryTalk(bram);
-    assertEqual(H.quest(win).stage, 1, 'stage 0 talk accepts the militia task');
-    assertEqual(H.quest(win).progress, 0, 'progress starts at 0');
-    assertEqual(H.hero(win).gold, gold, 'accept does not pay gold');
-    assertEqual(H.hero(win).xp, xp, 'accept does not grant XP');
-    assert(H.chatHas(win, 'Goblins plague Northwood'), 'briefing chat');
-    assert(H.chatHas(win, 'Bring me 5 kills'), 'kill count in briefing');
-    assertEqual(win.document.getElementById('hud-quest').textContent, 'Kill goblins in Northwood (0/5).', 'side HUD updates');
-    assertEqual(win.document.getElementById('hud-quest-tab').textContent, 'Kill goblins in Northwood (0/5).', 'Quest tab journal updates');
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        var world = H.world(win);
+        world.placePlayer(spawn.x, spawn.y);
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+        win.game.registry.set('quest', { id: 'goblins', stage: 0, progress: 0, goal: 5 });
+        world.refreshHud();
+        assertEqual(H.quest(win).stage, 0, 'starts unaccepted');
+        assertEqual(win.document.getElementById('hud-quest').textContent, 'Talk to Guildmaster Bram in Emberhaven.', 'side task before talk');
+        assertEqual(win.document.getElementById('hud-quest-tab').textContent, 'Talk to Guildmaster Bram in Emberhaven.', 'journal before talk');
+        var gold = H.hero(win).gold;
+        var xp = H.hero(win).xp;
+        var bram = H.findNpc(win, 'guild');
+        assert(bram, 'Bram is in Emberhaven');
+        world.tryTalk(bram);
+        assertEqual(H.quest(win).stage, 1, 'stage 0 talk accepts the militia task');
+        assertEqual(H.quest(win).progress, 0, 'progress starts at 0');
+        assertEqual(H.hero(win).gold, gold, 'accept does not pay gold');
+        assertEqual(H.hero(win).xp, xp, 'accept does not grant XP');
+        assert(H.chatHas(win, 'Goblins plague Northwood'), 'briefing chat');
+        assert(H.chatHas(win, 'Bring me 5 kills'), 'kill count in briefing');
+        assertEqual(win.document.getElementById('hud-quest').textContent, 'Kill goblins in Northwood (0/5).', 'side HUD updates');
+        assertEqual(win.document.getElementById('hud-quest-tab').textContent, 'Kill goblins in Northwood (0/5).', 'Quest tab journal updates');
+    });
+});
+
+EmberwoodTests.add('npcs: Bram shows blue star then gold compass until militia is done', function (win, H) {
+    return ensureWorldPlay(win, H).then(function () {
+        H.enterZone(win, 'haven');
+        var spawn = win.defaultWorldSpawn();
+        assertEqual(spawn.x, 328, 'spawn x is courtyard tile center');
+        assertEqual(spawn.y, 248, 'spawn y is courtyard tile center');
+        var world = H.world(win);
+        var hero = win.makeHero();
+        win.game.registry.set('hero', hero);
+        win.game.registry.set('quest', { id: 'goblins', stage: 0, progress: 0, goal: 5 });
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
+        world.refreshHud();
+        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
+        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
+        assert(String(win.Phaser.VERSION).indexOf('3.90') === 0, 'Phaser 3.90');
+        assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
+
+        var spec0 = win.questHeadIconFor({ questGiver: true }, { stage: 0 });
+        var spec1 = win.questHeadIconFor({ questGiver: true }, { stage: 1 });
+        var spec2 = win.questHeadIconFor({ questGiver: true }, { stage: 2 });
+        var spec3 = win.questHeadIconFor({ questGiver: true }, { stage: 3 });
+        var specRowan = win.questHeadIconFor({ key: 'guard' }, { stage: 0 });
+        assert(spec0 && spec0.kind === 'star', 'stage 0 helper is a blue star');
+        assertEqual(spec0.color, win.QUEST_HEAD_STAR, 'star fill is blue');
+        assert(spec1 && spec1.kind === 'compass', 'stage 1 helper is a gold compass');
+        assertEqual(spec1.color, win.QUEST_HEAD_COMPASS, 'compass fill is gold');
+        assert(spec2 && spec2.kind === 'compass', 'stage 2 helper stays a gold compass');
+        assertEqual(spec3, null, 'stage 3 helper hides the icon');
+        assertEqual(specRowan, null, 'non-quest NPCs have no head icon');
+
+        var bram = H.findNpc(win, 'guild');
+        var rowan = H.findNpc(win, 'guard');
+        assert(bram, 'Bram is in Emberhaven');
+        assert(rowan, 'Rowan is in Emberhaven');
+        assert(bram.npcDef.questGiver, 'Bram is marked as a quest-giver');
+        assert(!rowan.npcDef.questGiver, 'Rowan is not a quest-giver');
+        assert(bram.questIcon, 'Bram has a quest head icon');
+        assert(!rowan.questIcon, 'Rowan has no quest head icon');
+        assert(bram.questIcon.visible, 'stage 0 star is visible');
+        assertEqual(bram.questIcon.kind, 'star', 'stage 0 icon is a star');
+        assertEqual(bram.questIcon.iconColor, win.QUEST_HEAD_STAR, 'stage 0 icon is blue');
+        assertEqual(Math.round(bram.questIcon.x), Math.round(bram.x), 'star sits over Bram x');
+        assert(bram.questIcon.y < bram.nameLabel.y, 'star sits above the name label');
+        assert(world.floatLabels.indexOf(bram.questIcon) !== -1, 'icon is tracked in floatLabels');
+
+        var gold = H.hero(win).gold;
+        world.tryTalk(bram);
+        assertEqual(H.quest(win).stage, 1, 'stage 0 talk still accepts the militia task');
+        assertEqual(H.hero(win).gold, gold, 'accept still does not pay');
+        assertEqual(win.document.getElementById('hud-quest').textContent, 'Kill goblins in Northwood (0/5).', 'journal still updates on accept');
+        assert(bram.questIcon.visible, 'in-progress compass is visible');
+        assertEqual(bram.questIcon.kind, 'compass', 'accept swaps the star for a compass');
+        assertEqual(bram.questIcon.iconColor, win.QUEST_HEAD_COMPASS, 'in-progress icon is gold');
+
+        var quest = H.quest(win);
+        quest.stage = 2;
+        quest.progress = 5;
+        win.game.registry.set('quest', quest);
+        world.refreshHud();
+        assertEqual(bram.questIcon.kind, 'compass', 'return-to-Bram still shows the gold compass');
+        assert(bram.questIcon.visible, 'stage 2 compass stays visible');
+
+        world.tryTalk(bram);
+        assertEqual(H.quest(win).stage, 3, 'stage 2 talk still completes the militia task');
+        assert(!bram.questIcon.visible, 'icon hides when the militia task is done');
+        assertEqual(bram.questIcon.kind, null, 'completed icon has no kind');
+        assert(!win.game.input.keyboard, 'Phaser keyboard still off');
+    });
 });
 
 EmberwoodTests.add('npcs: Bram stage 1 reports progress of 5 goblins and does not pay', function (win, H) {
