@@ -7,39 +7,39 @@ Do not paste `AGENT.md` or `loop-tasks.md` into the Task prompt.
 
 Pick **#1**. One spawned tick = one item. Refresh this file after commit.
 
-## 1. [verify] Eat at full HP does not consume food and returns the turn.
+## 1. [verify] Eat with no food chats `You have no food.` and returns the turn.
 
 - Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
 - Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
-- Test: `combat: Eat food uses inventory on your turn`
+- Test: `combat: Eat at full HP does not consume food and returns the turn`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
-## 2. [verify] Eat with no food chats `You have no food.` and returns the turn.
-
-- Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
-- Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
-- Test: `combat: Eat food uses inventory on your turn`
-- URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
-
-## 3. [verify] Run succeeds on `Between(0,99) < 70`, chats run/break-away, outcome `flee`, no XP/loot.
+## 2. [verify] Run succeeds on `Between(0,99) < 70`, chats run/break-away, outcome `flee`, no XP/loot.
 
 - Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
 - Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
 - Test: `add a dedicated case; nearest existing: hud: start skills Hitpoints 10 / 1154 XP / 100 HP; others 1 / 0`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
-## 4. [verify] Run fail chats `You fail to get away!` and the enemy still gets a turn.
+## 3. [verify] Run fail chats `You fail to get away!` and the enemy still gets a turn.
 
 - Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
 - Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
 - Test: `add a dedicated case; nearest existing: world: walking off a path at N/S/E/W enters the neighbor and chats You enter`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
-## 5. [verify] Player death shows `#dead-overlay` “You are dead”, `Hud.mode === 'dead'`, and combat level in the subtitle.
+## 4. [verify] Player death shows `#dead-overlay` “You are dead”, `Hud.mode === 'dead'`, and combat level in the subtitle.
 
 - Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
 - Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
 - Test: `combat: defeat shows You are dead and retry returns to title`
+- URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
+
+## 5. [verify] Return to title stops scenes and shows `#title-overlay` again.
+
+- Section: 4. Combat — styles, auto-retaliate, targeting, flee, death (32)
+- Files: `js/scenes/WorldScene.js`, `js/scenes/BattleScene.js`, `js/ui/Hud.js`, `tests/interactions.js`
+- Test: `add a dedicated case; nearest existing: combat: defeat shows You are dead and retry returns to title`
 - URL: reuse live `http://127.0.0.1:<port>/` (suite: `/tests/run.html?only=` + the test name)
 
 After `done` + tests: commit, then `python3 tools/loop-next.py`.
