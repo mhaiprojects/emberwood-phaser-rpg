@@ -2502,6 +2502,14 @@ function itemIcon(id) {
     return (def && def.icon) || 'assets/svg/items/coins.svg';
 }
 
+/** Phaser texture key for ground loot — same SVG basename as inventory `itemIcon`. */
+function itemTextureKey(id) {
+    var icon = itemIcon(id);
+    var file = String(icon).split('/').pop() || 'coins.svg';
+    var base = file.replace(/\.svg$/i, '') || 'coins';
+    return 'item-' + base;
+}
+
 function skillIcon(id) {
     return 'assets/svg/skills/' + id + '.svg';
 }

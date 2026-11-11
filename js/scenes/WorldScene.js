@@ -4839,7 +4839,11 @@ var WorldScene = new Phaser.Class({
 
     placeLoot: function (x, y, drop, until) {
         var now = this.time.now;
-        var sprite = this.add.image(x, y, 'item-' + drop.id);
+        var tex = typeof itemTextureKey === 'function' ? itemTextureKey(drop.id) : ('item-' + drop.id);
+        if (!this.textures.exists(tex)) {
+            tex = 'item-coins';
+        }
+        var sprite = this.add.image(x, y, tex);
         sprite.setDepth(5 + this.groundLoot.length * 0.01);
         sprite.setDisplaySize(16, 16);
         sprite.setInteractive({
