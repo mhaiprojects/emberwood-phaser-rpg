@@ -77,6 +77,7 @@ var Hud = {
             stationTitle: document.getElementById('station-title'),
             stationCopy: document.getElementById('station-copy'),
             stationList: document.getElementById('station-list'),
+            stationActions: document.getElementById('station-actions'),
             stationClose: document.getElementById('btn-station-close'),
             levelUp: document.getElementById('level-up-overlay'),
             levelUpIcon: document.getElementById('level-up-icon'),
@@ -107,6 +108,7 @@ var Hud = {
         this.bankSel = null;
         this.bankTab = 'all';
         this.stationKind = null;
+        this.stationSel = null;
         this.shopKey = null;
         this.shopSelStock = null;
         this.shopSelInv = null;
@@ -644,6 +646,15 @@ var Hud = {
         }
         if (this.el.station) {
             this.el.station.addEventListener('click', function (event) {
+                var select = event.target && event.target.closest && event.target.closest('[data-station-select]');
+                if (select) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    select.blur();
+                    self.stationSel = select.getAttribute('data-station-select');
+                    self.renderStation();
+                    return;
+                }
                 var recipe = event.target && event.target.closest && event.target.closest('[data-station-recipe]');
                 if (recipe) {
                     event.preventDefault();
@@ -652,12 +663,20 @@ var Hud = {
                     self.chooseStationRecipe(recipe.getAttribute('data-station-recipe'));
                     return;
                 }
-                var closeBtn = event.target && event.target.closest && event.target.closest('[data-station-action="close"]');
-                if (closeBtn) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    closeBtn.blur();
+                var actionBtn = event.target && event.target.closest && event.target.closest('[data-station-action]');
+                if (!actionBtn) {
+                    return;
+                }
+                event.preventDefault();
+                event.stopPropagation();
+                actionBtn.blur();
+                var action = actionBtn.getAttribute('data-station-action');
+                if (action === 'close') {
                     self.hideStation();
+                    return;
+                }
+                if (action === 'cook') {
+                    self.chooseStationCook(actionBtn.getAttribute('data-station-qty'));
                 }
             });
         }
@@ -2413,9 +2432,13 @@ var Hud = {
         return 'Station';
     },
 
+    stationIsCook: function (kind) {
+        return kind === 'range' || kind === 'fire';
+    },
+
     stationCopyFor: function (kind) {
         if (kind === 'range' || kind === 'fire') {
-            return 'Choose raw food from your pack to cook.';
+            return 'Select raw food, then cook 1, 5, or all.';
         }
         if (kind === 'stall') {
             return 'Tan hides, fletch bows, or craft tools and gear.';
@@ -2447,11 +2470,15 @@ var Hud = {
         this.pauseWorldForUi();
         this.stationKind = kind;
         this.stationOpts = opts || {};
+        this.stationSel = null;
         if (this.el.stationTitle) {
             this.el.stationTitle.textContent = this.stationTitleFor(kind);
         }
         if (this.el.stationCopy) {
             this.el.stationCopy.textContent = this.stationCopyFor(kind);
+        }
+        if (this.el.stationActions) {
+            this.el.stationActions.hidden = !this.stationIsCook(kind);
         }
         this.el.station.hidden = false;
         this.el.station.setAttribute('data-station', kind);
@@ -2469,8 +2496,12 @@ var Hud = {
         if (this.el && this.el.stationList) {
             this.el.stationList.innerHTML = '';
         }
+        if (this.el && this.el.stationActions) {
+            this.el.stationActions.hidden = true;
+        }
         this.stationKind = null;
         this.stationOpts = null;
+        this.stationSel = null;
     },
 
     stationOpen: function () {
@@ -2482,24 +2513,154 @@ var Hud = {
         var rows;
         var html = '';
         var i;
+        var cookMode;
+        var stillThere = false;
         if (!this.el || !this.el.stationList || !this.stationKind) {
             return;
         }
+        cookMode = this.stationIsCook(this.stationKind);
         rows = typeof stationRecipesFor === 'function'
             ? stationRecipesFor(this.stationKind, hero, this.stationOpts || {})
             : [];
+        if (cookMode) {
+            for (i = 0; i < rows.length; i++) {
+                if (rows[i].enabled && rows[i].id === this.stationSel) {
+                    stillThere = true;
+                    break;
+                }
+            }
+            if (!stillThere) {
+                this.stationSel = null;
+                for (i = 0; i < rows.length; i++) {
+                    if (rows[i].enabled) {
+                        this.stationSel = rows[i].id;
+                        break;
+                    }
+                }
+            }
+        }
         for (i = 0; i < rows.length; i++) {
             var row = rows[i];
-            html += '<button type="button" data-station-recipe="' + row.id + '"' +
-                (row.enabled ? '' : ' disabled') + '>' + row.label + '</button>';
+            var label = row.label;
+            var itemId;
+            var qty;
+            if (cookMode && row.id && row.id.indexOf('cook:') === 0 && row.enabled) {
+                itemId = row.id.split(':')[1];
+                qty = typeof itemQty === 'function' ? itemQty(hero, itemId) : 0;
+                label = itemName(itemId) + (qty > 0 ? (' ×' + qty) : '');
+                html += '<button type="button" data-station-select="' + row.id + '"'
+                    + (this.stationSel === row.id ? ' class="is-on"' : '')
+                    + '>' + label + '</button>';
+            } else {
+                html += '<button type="button" data-station-recipe="' + row.id + '"'
+                    + (row.enabled ? '' : ' disabled') + '>' + label + '</button>';
+            }
         }
         this.el.stationList.innerHTML = html;
+        if (this.el.stationActions) {
+            this.el.stationActions.hidden = !cookMode;
+        }
+    },
+
+    chooseStationCook: function (qtyAttr) {
+        var hero;
+        var recipeId;
+        var itemId;
+        var have;
+        var want;
+        var n;
+        var i;
+        var result;
+        var cooked = 0;
+        var burned = 0;
+        var lastFail = null;
+        if (!this.stationOpen() || this.mode !== 'world' || !this.stationIsCook(this.stationKind)) {
+            return;
+        }
+        recipeId = this.stationSel;
+        if (!recipeId || recipeId.indexOf('cook:') !== 0) {
+            this.log('Select something to cook.');
+            return;
+        }
+        itemId = recipeId.split(':')[1];
+        if (!itemId || itemId === 'none') {
+            this.log('You have nothing to cook.');
+            return;
+        }
+        hero = this.hero();
+        have = typeof itemQty === 'function' ? itemQty(hero, itemId) : 0;
+        if (have < 1) {
+            this.log('You have nothing to cook.');
+            this.renderStation();
+            return;
+        }
+        if (qtyAttr === 'all') {
+            want = have;
+        } else {
+            want = Math.floor(Number(qtyAttr || 1));
+            if (!(want > 0)) {
+                want = 1;
+            }
+        }
+        n = Math.min(want, have);
+        for (i = 0; i < n; i++) {
+            result = typeof runStationRecipe === 'function'
+                ? runStationRecipe(hero, this.stationKind, recipeId, this.stationOpts || {})
+                : null;
+            if (!result) {
+                lastFail = { ok: false };
+                break;
+            }
+            if (result.empty) {
+                lastFail = result;
+                break;
+            }
+            if (!result.ok) {
+                lastFail = result;
+                break;
+            }
+            if (result.burned) {
+                burned += 1;
+            } else if (result.cooked) {
+                cooked += 1;
+            }
+        }
+        if (cooked + burned < 1) {
+            if (lastFail && lastFail.empty) {
+                this.log('You have nothing to cook.');
+            } else if (lastFail && lastFail.full) {
+                this.log('inventory full');
+            } else {
+                this.log('Nothing interesting happens.');
+            }
+            this.renderStation();
+            return;
+        }
+        this.saveHero(hero);
+        if (cooked > 0 && burned > 0) {
+            this.log('You cook ' + cooked + ' and burn ' + burned + ' x ' + itemName(itemId) + '.');
+        } else if (burned > 0) {
+            this.log(burned > 1
+                ? ('You accidentally burn ' + burned + ' x ' + itemName(itemId) + '.')
+                : ('You accidentally burn the ' + itemName(itemId) + '.'));
+        } else if (cooked > 1) {
+            this.log('You cook ' + cooked + ' x ' + itemName(itemId) + '.');
+        } else {
+            this.log('You cook the ' + itemName(itemId) + '.');
+        }
+        this.renderStation();
+        this.renderHero(hero);
     },
 
     chooseStationRecipe: function (recipeId) {
         var hero;
         var result;
         if (!this.stationOpen() || this.mode !== 'world' || !this.stationKind) {
+            return;
+        }
+        if (this.stationIsCook(this.stationKind)) {
+            this.stationSel = recipeId;
+            this.chooseStationCook(1);
             return;
         }
         hero = this.hero();

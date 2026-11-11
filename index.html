@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Emberwood</title>
     <link rel="icon" href="assets/svg/ui/combat.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/style.css?v=chat1">
+    <link rel="stylesheet" href="css/style.css?v=cookqty1">
 </head>
 <body>
     <div id="shell">
@@ -324,6 +324,11 @@
                     <h1 id="station-title">Station</h1>
                     <p id="station-copy">Choose a recipe.</p>
                     <div id="station-list" v-manual></div>
+                    <div id="station-actions" hidden>
+                        <button type="button" data-station-action="cook" data-station-qty="1">Cook-1</button>
+                        <button type="button" data-station-action="cook" data-station-qty="5">Cook-5</button>
+                        <button type="button" data-station-action="cook" data-station-qty="all">Cook-all</button>
+                    </div>
                     <button type="button" id="btn-station-close" data-station-action="close">Close</button>
                 </div>
             </div>
@@ -338,7 +343,7 @@
     <script src="js/data/Scales.js?v=den1"></script>
     <script src="js/ui/HudApp.js?v=viz1"></script>
     <script src="js/ui/Sfx.js?v=music1"></script>
-    <script src="js/ui/Hud.js?v=resume1"></script>
+    <script src="js/ui/Hud.js?v=cookqty1"></script>
     <script src="js/world/MapGen.js?v=ore1"></script>
     <script src="js/world/Pathfind.js?v=rng4"></script>
     <script src="js/world/Zones.js?v=den1"></script>

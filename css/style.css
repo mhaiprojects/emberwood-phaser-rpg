@@ -136,6 +136,7 @@ body.is-shell-resize-y {
 #world-map-overlay,
 #shop-overlay,
 #bank-overlay,
+#station-overlay,
 #quest-complete-overlay,
 #level-up-overlay,
 #dialogue-overlay,
@@ -683,7 +684,8 @@ button.ghost {
 }
 
 #shop-actions,
-#bank-actions {
+#bank-actions,
+#station-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
@@ -916,11 +918,21 @@ button.ghost {
     gap: 6px;
     margin: 10px 0 12px;
     max-width: 280px;
+    max-height: 240px;
+    overflow: auto;
 }
 
 #station-list button {
     width: 100%;
     text-align: left;
+}
+
+#station-list button.is-on {
+    outline: 1px solid #c9a227;
+}
+
+#station-actions[hidden] {
+    display: none !important;
 }
 
 #title-overlay[hidden],
