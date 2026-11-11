@@ -66,6 +66,7 @@ var WorldScene = new Phaser.Class({
         this.mineTarget = null;
         this.mineAction = null;
         this.oreNodeMarkers = {};
+        this.shaftMarkers = [];
         this.mineFx = null;
         this.depletedTiles = {};
         this.dialogueNpc = null;
@@ -85,6 +86,8 @@ var WorldScene = new Phaser.Class({
         this.lockChatUntil = 0;
         this.shortcutChatUntil = 0;
         this.shortcutLockUntil = 0;
+        this.shaftChatUntil = 0;
+        this.shaftChatKey = '';
         this.dungeonFloor = this.registry.get('dungeonFloor') || 0;
         this.dungeonMeta = null;
         this._regenAcc = 0;
@@ -770,6 +773,7 @@ var WorldScene = new Phaser.Class({
         this.restoreGraves(zoneId);
         this.spawnZoneCampfires(zoneId);
         this.refreshOreNodeMarkers();
+        this.refreshShaftMarkers();
         this.buildBiomeFx();
         this.applyDayNightTint();
         this.playZoneMusic();
@@ -905,6 +909,7 @@ var WorldScene = new Phaser.Class({
                 campfire: true
             });
         }
+        this.refreshShaftMarkers();
         this.buildBiomeFx();
         this.applyDayNightTint();
         this.playZoneMusic();
@@ -1018,6 +1023,7 @@ var WorldScene = new Phaser.Class({
         this.restoreGraves(this.zoneId);
         this.spawnZoneCampfires(this.zoneId);
         this.refreshOreNodeMarkers();
+        this.refreshShaftMarkers();
         this.refreshHud();
         this.engageGrace = this.time.now + 800;
         Hud.log('You enter ' + zone.name + '.');
@@ -1032,12 +1038,14 @@ var WorldScene = new Phaser.Class({
         this.clearDoorFx();
         this.clearBiomeFx();
         this.clearOreNodeMarkers();
+        this.clearShaftMarkers();
         this.clearMineFx();
         this.engageTarget = null;
         this.talkTarget = null;
         this.clearGather();
         this.dialogueNpc = null;
         this.tileGrid = null;
+        this.shaftChatKey = '';
         if (this.groundCollider) {
             this.groundCollider.destroy();
             this.groundCollider = null;
@@ -2486,6 +2494,200 @@ var WorldScene = new Phaser.Class({
             }
         }
         this.oreNodeMarkers = {};
+    },
+
+    clearShaftMarkers: function () {
+        var i;
+        var entry;
+        if (!this.shaftMarkers) {
+            this.shaftMarkers = [];
+            return;
+        }
+        for (i = 0; i < this.shaftMarkers.length; i++) {
+            entry = this.shaftMarkers[i];
+            if (entry && entry.root && entry.root.destroy) {
+                entry.root.destroy();
+            }
+            if (entry && this.ground && this.ground.getTileAt) {
+                var tile = this.ground.getTileAt(entry.tx, entry.ty);
+                if (tile) {
+                    tile.tint = 0xffffff;
+                }
+            }
+        }
+        this.shaftMarkers = [];
+    },
+
+    paintShaftMarker: function (tx, ty, kind) {
+        var style = typeof shaftMarkerStyle === 'function' ? shaftMarkerStyle(kind) : null;
+        var pos;
+        var root;
+        var glow;
+        var core;
+        var rim;
+        var glyph;
+        var label;
+        var depth;
+        var tile;
+        var labelText;
+        if (!style || !this.tileGrid || !inBounds(tx, ty)) {
+            return null;
+        }
+        pos = tileCenter(tx, ty);
+        depth = (typeof DEPTH !== 'undefined' && DEPTH.LABEL) ? DEPTH.LABEL : 7;
+        root = this.add.container(pos.x, pos.y);
+        glow = this.add.circle(0, 2, 7, style.color, 0.38);
+        core = this.add.circle(0, 2, 3.2, style.color, 0.92);
+        rim = this.add.circle(0, 2, 5.5, style.color, 0);
+        if (rim.setStrokeStyle) {
+            rim.setStrokeStyle(1, 0xffffff, 0.5);
+        }
+        glyph = this.add.text(0, 1, style.glyph || '', {
+            fontSize: '9px',
+            fontFamily: 'Verdana, Geneva, sans-serif',
+            color: '#ffffff',
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setOrigin(0.5);
+        labelText = style.label;
+        if (kind === 'stairs-up' && (this.dungeonFloor || 0) <= 1) {
+            labelText = 'Exit';
+        }
+        label = this.add.text(0, -11, labelText, {
+            fontSize: '8px',
+            fontFamily: 'Verdana, Geneva, sans-serif',
+            color: style.labelColor || '#ffe08a',
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setOrigin(0.5);
+        root.add([glow, core, rim, glyph, label]);
+        root.setDepth(depth);
+        root._shaftPulse = true;
+        root._shaftGlow = glow;
+        root._shaftCore = core;
+        if (this.ground && this.ground.getTileAt) {
+            tile = this.ground.getTileAt(tx, ty);
+            if (tile) {
+                tile.tint = style.color;
+            }
+        }
+        this.shaftMarkers = this.shaftMarkers || [];
+        this.shaftMarkers.push({
+            tx: tx,
+            ty: ty,
+            kind: kind,
+            root: root,
+            approach: style.approach || ''
+        });
+        return root;
+    },
+
+    refreshShaftMarkers: function () {
+        var bag;
+        var key;
+        var parts;
+        var tx;
+        var ty;
+        var interact;
+        var meta;
+        this.clearShaftMarkers();
+        if (!this.tileGrid || this.interiorId) {
+            return;
+        }
+        if (this.zoneId === 'darkmine') {
+            bag = typeof ZONE_INTERACT !== 'undefined' ? ZONE_INTERACT.darkmine : null;
+            if (bag) {
+                for (key in bag) {
+                    if (!Object.prototype.hasOwnProperty.call(bag, key)) {
+                        continue;
+                    }
+                    interact = bag[key];
+                    if (!interact || interact.kind !== 'dungeon-enter') {
+                        continue;
+                    }
+                    parts = String(key).split(',');
+                    tx = parseInt(parts[0], 10);
+                    ty = parseInt(parts[1], 10);
+                    if (!isNaN(tx) && !isNaN(ty)) {
+                        this.paintShaftMarker(tx, ty, 'dungeon-enter');
+                    }
+                }
+            }
+            return;
+        }
+        if (this.zoneId !== 'dungeon') {
+            return;
+        }
+        meta = this.dungeonMeta || {};
+        if (meta.stairsUp) {
+            this.paintShaftMarker(meta.stairsUp.x, meta.stairsUp.y, 'stairs-up');
+        }
+        if (meta.stairsDown) {
+            this.paintShaftMarker(meta.stairsDown.x, meta.stairsDown.y, 'stairs-down');
+        }
+        if (meta.surface) {
+            this.paintShaftMarker(meta.surface.x, meta.surface.y, 'surface-portal');
+        }
+    },
+
+    tickShaftMarkers: function (time) {
+        var i;
+        var entry;
+        var root;
+        var t = (time || 0) / 1000;
+        var pulse = 0.28 + 0.18 * (0.5 + 0.5 * Math.sin(t * 2.4));
+        if (!this.shaftMarkers) {
+            return;
+        }
+        for (i = 0; i < this.shaftMarkers.length; i++) {
+            entry = this.shaftMarkers[i];
+            root = entry && entry.root;
+            if (!root || !root.active || !root._shaftPulse) {
+                continue;
+            }
+            if (root._shaftGlow && root._shaftGlow.setAlpha) {
+                root._shaftGlow.setAlpha(pulse);
+            }
+            if (root._shaftCore && root._shaftCore.setAlpha) {
+                root._shaftCore.setAlpha(0.75 + 0.2 * (0.5 + 0.5 * Math.sin(t * 3.1 + i)));
+            }
+            root.y = tileCenter(entry.tx, entry.ty).y + Math.sin(t * 2.1 + i) * 0.6;
+        }
+    },
+
+    tryShaftApproachChat: function () {
+        var at;
+        var i;
+        var entry;
+        var now;
+        var key;
+        var dist;
+        if (!this.player || !this.shaftMarkers || !this.shaftMarkers.length) {
+            return;
+        }
+        if (this.encounterLock || this.exitLock) {
+            return;
+        }
+        at = worldToTile(this.player.x, this.player.y);
+        now = this.time ? this.time.now : 0;
+        for (i = 0; i < this.shaftMarkers.length; i++) {
+            entry = this.shaftMarkers[i];
+            if (!entry || !entry.approach) {
+                continue;
+            }
+            dist = Math.abs(at.tx - entry.tx) + Math.abs(at.ty - entry.ty);
+            if (dist > 2) {
+                continue;
+            }
+            key = entry.kind + ':' + entry.tx + ',' + entry.ty;
+            if (this.shaftChatKey === key && now && now < this.shaftChatUntil) {
+                return;
+            }
+            this.shaftChatKey = key;
+            this.shaftChatUntil = now + 4500;
+            Hud.log(entry.approach);
+            return;
+        }
     },
 
     removeOreNodeMarker: function (tx, ty) {
@@ -6494,6 +6696,8 @@ var WorldScene = new Phaser.Class({
         this.pruneLoot();
         this.pruneGroundFires();
         this.tickBiomeFx(time);
+        this.tickShaftMarkers(time);
+        this.tryShaftApproachChat();
         if (this.nameplate && this.player) {
             var heroName = this.registry.get('hero');
             this.nameplate.setText((heroName && heroName.displayName) || 'Adventurer');

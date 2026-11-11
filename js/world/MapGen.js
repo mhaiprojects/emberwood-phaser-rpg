@@ -210,10 +210,10 @@ var SCENERY_EXAMINE = {
     'door-bank': 'The old bank door. Use the courtyard counter to bank.',
     'door-shop': 'An old shop door. Mira sells from the courtyard stall.',
     'door-guild': 'The guild hall door. Bram drills in the courtyard.',
-    'stairs-down': 'Stairs down into the depths.',
-    'stairs-up': 'Stairs leading upward.',
-    'surface-portal': 'A rune-cut escape shaft. It remembers the floor you leave from.',
-    'dungeon-enter': 'The Endless Dungeon shaft. It drops you at your last escape floor.',
+    'stairs-down': 'Marked stairs down — delve deeper into the Endless Dungeon.',
+    'stairs-up': 'Marked stairs up — climb toward the surface (or the floor above).',
+    'surface-portal': 'A rune-cut escape shaft. Escape here to remember this floor for next delve.',
+    'dungeon-enter': 'The Endless Dungeon shaft mouth. Delve here; it drops you at your last escape floor.',
     campfire: 'A warm campfire. Rest here to mend faster.',
     altar: 'A rune altar. Essence pressed here becomes runes.',
     'den-boulder': 'A massive boulder seals a dark cave mouth. Only a diamond pickaxe could crack it.',
@@ -591,6 +591,7 @@ function generateMap(seed, biome, neighbors, zoneId) {
             verb: 'delve',
             stairs: 'down'
         });
+        /* Keep doorway walkable; WorldScene paints a shaft marker + label on top. */
     } else if (biome === 'plains') {
         scatter(grid, TILE.FLOWER, 24, seed, true);
         scatter(grid, TILE.TREE, 14, seed + 6, true);
@@ -679,6 +680,7 @@ function generateDungeonFloor(floor) {
         setCell(grid, 17, y, TILE.PATH);
         setCell(grid, 19, y, TILE.PATH);
     }
+    /* Stairs-up stays walkable PATH (stand to climb); down/escape stay click scenery. */
     setCell(grid, DUNGEON_STAIRS_UP.x, DUNGEON_STAIRS_UP.y, TILE.PATH);
     setCell(grid, DUNGEON_STAIRS_DOWN.x, DUNGEON_STAIRS_DOWN.y, TILE.DOOR);
     setCell(grid, DUNGEON_SURFACE.x, DUNGEON_SURFACE.y, TILE.SHRINE);
@@ -878,6 +880,42 @@ var ORE_NODE_COLORS = {
 
 function oreNodeColor(ore) {
     return (ORE_NODE_COLORS && ORE_NODE_COLORS[ore]) || 0x9a9088;
+}
+
+/* Shaft / stairs / escape cues — match ore glows + campfire warmth. */
+var SHAFT_MARKER_STYLE = {
+    'dungeon-enter': {
+        color: 0x9b6cff,
+        label: 'Endless Dungeon',
+        glyph: '▼',
+        labelColor: '#dcc8ff',
+        approach: 'A marked shaft mouth — the Endless Dungeon. Click or step in to delve.'
+    },
+    'stairs-down': {
+        color: 0xe07030,
+        label: 'Deeper',
+        glyph: '▼',
+        labelColor: '#ffd0a8',
+        approach: 'Stairs marked Deeper — click to descend another floor.'
+    },
+    'stairs-up': {
+        color: 0xe8c050,
+        label: 'Climb',
+        glyph: '▲',
+        labelColor: '#ffe9a0',
+        approach: 'Stairs marked Climb — step on them to go up (floor 1 exits to Darkmine).'
+    },
+    'surface-portal': {
+        color: 0x6ec8ff,
+        label: 'Escape',
+        glyph: '◎',
+        labelColor: '#b8e8ff',
+        approach: 'Escape shaft — click to return to Darkmine; it remembers this floor.'
+    }
+};
+
+function shaftMarkerStyle(kind) {
+    return (SHAFT_MARKER_STYLE && SHAFT_MARKER_STYLE[kind]) || null;
 }
 
 function oreNodeLabel(ore) {
