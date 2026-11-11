@@ -13,11 +13,13 @@ var MOB_SCALES = {
     Skeleton: { world: 1, battle: 2 },
     Slime: { world: 1, battle: 2 },
     Cow: { world: 1.25, battle: 3 },
-    Drake: { world: 2, battle: 3 }
+    Drake: { world: 2, battle: 3 },
+    Dragon: { world: 2.35, battle: 3.4 }
 };
 
 var GIANT_MOB_TYPES = {
-    Drake: true
+    Drake: true,
+    Dragon: true
 };
 var GIANT_FOOTPRINT_TILES = 2;
 
@@ -46,6 +48,9 @@ function mobScaleFor(type, mode) {
     var row = MOB_SCALES[type];
     if (row) {
         return row[mode] || 1;
+    }
+    if (type === 'Dragon' || (typeof type === 'string' && type.toLowerCase() === 'dragon')) {
+        return mode === 'battle' ? 3.4 : 2.35;
     }
     if (type === 'Drake' || (typeof type === 'string' && type.toLowerCase() === 'drake')) {
         return mode === 'battle' ? 3 : 2;
@@ -148,6 +153,17 @@ function lootForMob(def) {
         }
         if (Math.random() < 0.2) {
             drops.push({ id: 'firerune', qty: 3 });
+        }
+    } else if (def && def.type === 'Dragon') {
+        drops.push({ id: 'drakescale', qty: 1 + (Math.random() < 0.5 ? 1 : 0) });
+        if (Math.random() < 0.55) {
+            drops.push({ id: 'dragoniteore', qty: 1 });
+        }
+        if (Math.random() < 0.35) {
+            drops.push({ id: 'diamondore', qty: 1 });
+        }
+        if (Math.random() < 0.4) {
+            drops.push({ id: 'firerune', qty: 5 });
         }
     }
     return drops;

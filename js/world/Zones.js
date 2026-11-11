@@ -8,7 +8,8 @@ var ZONE_LIST = [
     { id: 'darkmine', name: 'Darkmine', gx: -1, gy: 1, biome: 'mine', seed: 77 },
     { id: 'southshore', name: 'Southshore', gx: 0, gy: 1, biome: 'shore', seed: 88 },
     { id: 'mire', name: 'Mirefen', gx: 1, gy: 1, biome: 'swamp', seed: 99 },
-    { id: 'dungeon', name: 'Endless Dungeon', gx: -99, gy: -99, biome: 'mine', seed: 9001, hidden: true }
+    { id: 'dungeon', name: 'Endless Dungeon', gx: -99, gy: -99, biome: 'mine', seed: 9001, hidden: true },
+    { id: 'dragonden', name: 'Dragon Den', gx: 99, gy: 99, biome: 'den', seed: 4242, hidden: true }
 ];
 
 var ZONES = {};
@@ -215,7 +216,7 @@ var NPC_DEFS = {
         { key: 'miner', name: 'Miner Corb', x: 210, y: 200, tint: 0xffffff, options: ['talk', 'quest'], questGiver: true, sideQuest: 'bats', tutor: 'mining', examine: 'A Darkmine digger. He will not go down the Endless Dungeon.', lines: ['That shaft leads to the Endless Dungeon. Deeper floors hit harder.', 'Escape marks the floor — the shaft drops you back there next time.', 'Every fifth floor has a campfire. Ore still waits up here with a pickaxe.'] }
     ],
     highlands: [
-        { key: 'hermit', name: 'Hermit Ola', x: 240, y: 160, tint: 0xffffff, options: ['talk'], examine: 'A windrock hermit. Drake-scale grit is stuck in her cloak.', lines: ['Drakes nest on the windrock.', 'Bring a stout shield.'] }
+        { key: 'hermit', name: 'Hermit Ola', x: 240, y: 160, tint: 0xffffff, options: ['talk'], examine: 'A windrock hermit. Drake-scale grit is stuck in her cloak.', lines: ['Drakes nest on the windrock.', 'Bring a stout shield.', 'East of here a boulder seals a deeper den — only a diamond pickaxe cracks it.'] }
     ],
     mire: [
         { key: 'witch', name: 'Fen Witch', x: 200, y: 180, tint: 0xffffff, options: ['talk'], examine: 'A fen healer. Marsh-light clings to her sleeves.', lines: ['The fen drinks the lost.', 'I can stitch wounds... for a price.'] }
@@ -269,6 +270,50 @@ var MOB_DEFS = {
         { type: 'Skeleton', texture: 'mob-skeleton', tint: 0xffffff, level: 14, hp: 34, damage: 10, gold: 8, xp: 16, x: 160, y: 150 },
         { type: 'Skeleton', texture: 'mob-skeleton', tint: 0xffffff, level: 15, hp: 36, damage: 11, gold: 9, xp: 16, x: 300, y: 210 },
         { type: 'Skeleton', texture: 'mob-skeleton', tint: 0xeeeeff, level: 14, hp: 34, damage: 10, gold: 8, xp: 16, x: 400, y: 120 }
+    ],
+    dragonden: [
+        {
+            type: 'Dragon',
+            texture: 'mob-drake',
+            tint: 0xff6644,
+            level: 48,
+            alwaysAgro: true,
+            hp: 140,
+            damage: 26,
+            gold: 90,
+            xp: 110,
+            attackRange: 110,
+            x: 220,
+            y: 160
+        },
+        {
+            type: 'Dragon',
+            texture: 'mob-drake',
+            tint: 0xff4422,
+            level: 52,
+            alwaysAgro: true,
+            hp: 160,
+            damage: 28,
+            gold: 110,
+            xp: 130,
+            attackRange: 110,
+            x: 320,
+            y: 200
+        },
+        {
+            type: 'Dragon',
+            texture: 'mob-drake',
+            tint: 0xdd2200,
+            level: 55,
+            alwaysAgro: true,
+            hp: 180,
+            damage: 30,
+            gold: 140,
+            xp: 150,
+            attackRange: 120,
+            x: 280,
+            y: 280
+        }
     ]
 };
 

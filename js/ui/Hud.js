@@ -2787,6 +2787,13 @@ var Hud = {
             }
             return;
         }
+        if (action === 'mine-boulder') {
+            var boulderHit = world.pickScenery ? world.pickScenery(target.worldX, target.worldY) : null;
+            if (boulderHit && boulderHit.kind === 'den-boulder' && world.clickMineBoulder) {
+                world.clickMineBoulder(boulderHit);
+            }
+            return;
+        }
         if (action !== 'walk-here' || !world.setWalk) {
             return;
         }

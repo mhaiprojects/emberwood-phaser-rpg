@@ -1,5 +1,5 @@
 var OW_COMBAT_TICK_MS = 600;
-var POISON_MOB_TYPES = { Slime: true, Skeleton: true, Drake: true };
+var POISON_MOB_TYPES = { Slime: true, Skeleton: true, Drake: true, Dragon: true };
 var COMBAT_POISON_CHANCE = 35;
 var MOB_CHASE_SPEED = 78;
 /* Detection radius for mob-initiated agro (chase / open fight). */
@@ -13,7 +13,8 @@ var MOB_BASE_LEVEL = {
     Goblin: 9,
     Slime: 10,
     Skeleton: 14,
-    Drake: 28
+    Drake: 28,
+    Dragon: 50
 };
 var MOB_TYPE_ATTACK_RANGE = {
     Chicken: 22,
@@ -24,7 +25,8 @@ var MOB_TYPE_ATTACK_RANGE = {
     Skeleton: 26,
     Bat: 96,
     Slime: 72,
-    Drake: 100
+    Drake: 100,
+    Dragon: 120
 };
 
 function mobLevel(def) {

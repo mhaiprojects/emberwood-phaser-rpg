@@ -126,6 +126,29 @@ var AGILITY_SHORTCUT = {
     verb: 'squeeze'
 };
 var MINE_SHAFT_HOUSE = { x: 6, y: 8, w: 6, h: 5 };
+/* Highlands cave mouth: diamond-tier pick clears the sealing boulder. */
+var DRAGON_DEN_GATE = {
+    zoneId: 'highlands',
+    boulder: { x: 30, y: 12 },
+    seal: [
+        { x: 30, y: 11 },
+        { x: 30, y: 12 },
+        { x: 30, y: 13 }
+    ],
+    cave: { x: 32, y: 12 },
+    alcove: [
+        { x: 31, y: 11 },
+        { x: 31, y: 12 },
+        { x: 31, y: 13 },
+        { x: 32, y: 11 },
+        { x: 32, y: 12 },
+        { x: 32, y: 13 }
+    ],
+    returnSpawn: { x: 28, y: 12 },
+    denExit: { x: 18, y: 24 },
+    denSpawn: { x: 18, y: 22 }
+};
+var DEN_BOULDER_PICK_TIER = 5;
 var MINE_PROPS = {
     copper: [
         { x: 14, y: 16 },
@@ -192,7 +215,10 @@ var SCENERY_EXAMINE = {
     'surface-portal': 'A rune-cut escape shaft. It remembers the floor you leave from.',
     'dungeon-enter': 'The Endless Dungeon shaft. It drops you at your last escape floor.',
     campfire: 'A warm campfire. Rest here to mend faster.',
-    altar: 'A rune altar. Essence pressed here becomes runes.'
+    altar: 'A rune altar. Essence pressed here becomes runes.',
+    'den-boulder': 'A massive boulder seals a dark cave mouth. Only a diamond pickaxe could crack it.',
+    'dragon-den': 'A scorched cave mouth. Heat and sulphur roll out from the Dragon Den.',
+    'dragon-den-exit': 'The tunnel back to Windrock Highlands.'
 };
 
 function tagKey(tx, ty) {
@@ -521,6 +547,9 @@ function generateMap(seed, biome, neighbors, zoneId) {
     } else if (biome === 'hills') {
         scatter(grid, TILE.ROCK, 36, seed, true);
         scatter(grid, TILE.TREE, 16, seed + 2, true);
+        placeDragonDenGate(grid, zoneId || 'highlands', false);
+    } else if (biome === 'den') {
+        generateDragonDenMap(grid, seed, zoneId || 'dragonden');
     } else if (biome === 'farm') {
         scatter(grid, TILE.FLOWER, 40, seed, true);
         scatter(grid, TILE.TREE, 10, seed + 3, true);
@@ -866,6 +895,116 @@ function placeRuneAltar(grid, zoneId) {
     });
 }
 
+function isDragonDenOpen(hero) {
+    return !!(hero && hero.flags && hero.flags.dragonDenOpen);
+}
+
+function markDragonDenOpen(hero) {
+    if (!hero) {
+        return false;
+    }
+    if (!hero.flags) {
+        hero.flags = {};
+    }
+    hero.flags.dragonDenOpen = true;
+    return true;
+}
+
+function clearTileInteract(zoneId, tx, ty) {
+    var bag;
+    if (!zoneId || typeof ZONE_INTERACT === 'undefined') {
+        return;
+    }
+    bag = ZONE_INTERACT[zoneId];
+    if (!bag) {
+        return;
+    }
+    delete bag[tagKey(tx, ty)];
+}
+
+function placeDragonDenGate(grid, zoneId, cleared) {
+    var gate = DRAGON_DEN_GATE;
+    var i;
+    var cell;
+    if (!grid || !gate || zoneId !== gate.zoneId) {
+        return;
+    }
+    for (i = 0; i < gate.alcove.length; i++) {
+        cell = gate.alcove[i];
+        setCell(grid, cell.x, cell.y, TILE.PATH);
+    }
+    setCell(grid, gate.cave.x, gate.cave.y, TILE.PATH);
+    if (cleared) {
+        for (i = 0; i < gate.seal.length; i++) {
+            cell = gate.seal[i];
+            setCell(grid, cell.x, cell.y, TILE.PATH);
+            clearTileInteract(zoneId, cell.x, cell.y);
+        }
+        clearTileInteract(zoneId, gate.boulder.x, gate.boulder.y);
+        setTileInteract(zoneId, gate.cave.x, gate.cave.y, {
+            kind: 'dragon-den',
+            verb: 'enter'
+        });
+    } else {
+        for (i = 0; i < gate.seal.length; i++) {
+            cell = gate.seal[i];
+            setCell(grid, cell.x, cell.y, TILE.ROCK);
+        }
+        setCell(grid, gate.boulder.x, gate.boulder.y, TILE.ROCK);
+        clearTileInteract(zoneId, gate.cave.x, gate.cave.y);
+        setTileInteract(zoneId, gate.boulder.x, gate.boulder.y, {
+            kind: 'den-boulder',
+            verb: 'mine',
+            needPickTier: DEN_BOULDER_PICK_TIER
+        });
+    }
+}
+
+function applyDragonDenGateState(grid, zoneId, hero) {
+    if (!grid || zoneId !== (DRAGON_DEN_GATE && DRAGON_DEN_GATE.zoneId)) {
+        return;
+    }
+    placeDragonDenGate(grid, zoneId, isDragonDenOpen(hero));
+}
+
+function generateDragonDenMap(grid, seed, zoneId) {
+    var x;
+    var y;
+    var gate = DRAGON_DEN_GATE;
+    clearZoneTags(zoneId);
+    for (y = 0; y < MAP_H; y++) {
+        for (x = 0; x < MAP_W; x++) {
+            setCell(grid, x, y, TILE.ROCK);
+        }
+    }
+    for (y = 6; y < MAP_H - 3; y++) {
+        for (x = 8; x < MAP_W - 8; x++) {
+            if (hash2(x, y, seed) % 7 === 0) {
+                continue;
+            }
+            setCell(grid, x, y, TILE.PATH);
+        }
+    }
+    for (x = 16; x <= 20; x++) {
+        setCell(grid, x, MAP_H - 4, TILE.PATH);
+        setCell(grid, x, MAP_H - 3, TILE.PATH);
+    }
+    setCell(grid, gate.denExit.x, gate.denExit.y, TILE.PATH);
+    setTileInteract(zoneId, gate.denExit.x, gate.denExit.y, {
+        kind: 'dragon-den-exit',
+        verb: 'leave'
+    });
+    setCell(grid, 18, 10, TILE.SHRINE);
+    setTileInteract(zoneId, 18, 10, {
+        kind: 'altar',
+        verb: 'craft',
+        rune: 'firerune'
+    });
+    if (CAMPFIRE_SPOTS) {
+        CAMPFIRE_SPOTS.dragonden = [{ x: 14, y: 14 }];
+    }
+}
+
 function mineRockAt(tx, ty, zoneId, grid, opts) {
     var houseRects;
     var ore;
@@ -1044,6 +1183,15 @@ function sceneryPrimaryAction(kind) {
     }
     if (kind === 'altar') {
         return { label: 'Craft runes', action: 'station' };
+    }
+    if (kind === 'den-boulder') {
+        return { label: 'Mine boulder', action: 'mine-boulder' };
+    }
+    if (kind === 'dragon-den') {
+        return { label: 'Enter den', action: 'stairs' };
+    }
+    if (kind === 'dragon-den-exit') {
+        return { label: 'Leave den', action: 'stairs' };
     }
     return null;
 }

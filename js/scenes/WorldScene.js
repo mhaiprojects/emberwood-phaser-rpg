@@ -270,7 +270,39 @@ var WorldScene = new Phaser.Class({
         this.player.setScale(PLAYER_WORLD_SCALE);
         applyPlayerWorldBody(this.player);
         this.applyUnlockedDoors();
+        this.applyDragonDenGate();
         this.applyCollisionDebug();
+    },
+
+    applyDragonDenGate: function () {
+        var hero;
+        var gate;
+        var i;
+        var cell;
+        if (!this.tileGrid || this.zoneId !== (DRAGON_DEN_GATE && DRAGON_DEN_GATE.zoneId)) {
+            return;
+        }
+        hero = this.registry.get('hero');
+        if (typeof applyDragonDenGateState === 'function') {
+            applyDragonDenGateState(this.tileGrid, this.zoneId, hero);
+        }
+        gate = DRAGON_DEN_GATE;
+        if (!gate || !this.ground) {
+            return;
+        }
+        if (typeof isDragonDenOpen === 'function' && isDragonDenOpen(hero)) {
+            for (i = 0; i < gate.seal.length; i++) {
+                cell = gate.seal[i];
+                this.setTileIndex(cell.x, cell.y, TILE.PATH);
+            }
+            this.setTileIndex(gate.cave.x, gate.cave.y, TILE.PATH);
+        } else {
+            for (i = 0; i < gate.seal.length; i++) {
+                cell = gate.seal[i];
+                this.setTileIndex(cell.x, cell.y, TILE.ROCK);
+            }
+            this.setTileIndex(gate.boulder.x, gate.boulder.y, TILE.ROCK);
+        }
     },
 
     setCollisionDebug: function (on) {
@@ -1753,8 +1785,13 @@ var WorldScene = new Phaser.Class({
             return;
         }
         if (scenery && (scenery.kind === 'stairs-down' || scenery.kind === 'stairs-up'
-                || scenery.kind === 'surface-portal' || scenery.kind === 'dungeon-enter')) {
+                || scenery.kind === 'surface-portal' || scenery.kind === 'dungeon-enter'
+                || scenery.kind === 'dragon-den' || scenery.kind === 'dragon-den-exit')) {
             this.clickStairs(scenery);
+            return;
+        }
+        if (scenery && scenery.kind === 'den-boulder') {
+            this.clickMineBoulder(scenery);
             return;
         }
         if (scenery && scenery.kind === 'guild-post') {
@@ -2381,7 +2418,25 @@ var WorldScene = new Phaser.Class({
         }
         this.player.body.setVelocity(0);
         this.clearWalk();
+        if (this.mineTarget.denBoulder || this.mineTarget.kind === 'den-boulder') {
+            return this.tryMineBoulder(this.mineTarget);
+        }
         return this.tryMineRock(this.mineTarget);
+    },
+
+    checkDragonDenTiles: function () {
+        var tile;
+        var interact;
+        if (this.exitLock || this.encounterLock || this.zoneId !== 'dragonden') {
+            return;
+        }
+        tile = worldToTile(this.player.x, this.player.y);
+        interact = typeof getTileInteract === 'function'
+            ? getTileInteract(this.zoneId, tile.tx, tile.ty)
+            : null;
+        if (interact && interact.kind === 'dragon-den-exit') {
+            this.useStairsInteract(interact);
+        }
     },
 
     closeBankIfAway: function () {
@@ -2705,6 +2760,139 @@ var WorldScene = new Phaser.Class({
         }
         this.refreshHud();
         Hud.log('You chop some ' + (typeof itemName === 'function' ? itemName(result.id) : result.id) + '.');
+        return true;
+    },
+
+    clickMineBoulder: function (hit) {
+        this.engageTarget = null;
+        this.talkTarget = null;
+        this.clearGather();
+        if (!hit || this.encounterLock || (window.Hud && Hud.mode === 'battle')) {
+            return false;
+        }
+        this.mineTarget = hit;
+        this.mineTarget.denBoulder = true;
+        if (this.sceneryInRange(hit, 28)) {
+            return this.tryMineBoulder(hit);
+        }
+        var near = typeof nearestWalkableTile === 'function'
+            ? nearestWalkableTile(this.tileGrid, hit.tx, hit.ty)
+            : null;
+        if (!near) {
+            this.mineTarget = null;
+            return this.examineScenery(hit);
+        }
+        var dest = tileCenter(near.tx, near.ty);
+        this.setWalk(dest.x, dest.y, { allowEnd: true, keepMine: true });
+        return true;
+    },
+
+    tryMineBoulder: function (hit) {
+        var ms;
+        var self = this;
+        var hero = this.registry.get('hero');
+        var needTier = typeof DEN_BOULDER_PICK_TIER === 'number' ? DEN_BOULDER_PICK_TIER : 5;
+        if (this.encounterLock || (window.Hud && Hud.mode === 'battle')) {
+            return false;
+        }
+        if (!hit) {
+            return false;
+        }
+        if (typeof isDragonDenOpen === 'function' && isDragonDenOpen(hero)) {
+            Hud.log('The cave mouth is already clear.');
+            return false;
+        }
+        if (typeof hasDiamondPickOrBetter === 'function'
+                ? !hasDiamondPickOrBetter(hero)
+                : (typeof hasToolTierAtLeast === 'function' && !hasToolTierAtLeast(hero, 'pickaxe', needTier))) {
+            Hud.log('You need a diamond pickaxe to mine this boulder.');
+            return false;
+        }
+        if (this.mineAction) {
+            return true;
+        }
+        this.player.body.setVelocity(0);
+        this.clearWalk();
+        this.clearChop();
+        if (this.fishAction) {
+            this.clearFish();
+        }
+        this.mineTarget = hit;
+        this.mineTarget.denBoulder = true;
+        ms = typeof skillActionMs === 'function'
+            ? skillActionMs(MINE_ACTION_MS_MIN, MINE_ACTION_MS_MAX)
+            : 4000;
+        this.mineAction = {
+            hit: hit,
+            denBoulder: true,
+            timer: this.time.delayedCall(ms, function () {
+                self.finishMineBoulder();
+            })
+        };
+        Hud.log('You chip at the sealing boulder…');
+        return true;
+    },
+
+    finishMineBoulder: function () {
+        var hit = this.mineTarget;
+        var hero;
+        this.mineAction = null;
+        if (this.encounterLock || (window.Hud && Hud.mode === 'battle')) {
+            this.mineTarget = null;
+            return false;
+        }
+        if (!hit || !this.sceneryInRange(hit, 28)) {
+            this.mineTarget = null;
+            return false;
+        }
+        hero = this.registry.get('hero');
+        if (typeof hasDiamondPickOrBetter === 'function' && !hasDiamondPickOrBetter(hero)) {
+            Hud.log('You need a diamond pickaxe to mine this boulder.');
+            this.mineTarget = null;
+            return true;
+        }
+        if (typeof markDragonDenOpen === 'function') {
+            markDragonDenOpen(hero);
+        } else {
+            hero.flags = hero.flags || {};
+            hero.flags.dragonDenOpen = true;
+        }
+        this.mineTarget = null;
+        this.applyDragonDenGate();
+        if (typeof gainSkillXp === 'function') {
+            gainSkillXp(hero, 'mining', 80);
+        }
+        if (Hud.saveHero) {
+            Hud.saveHero(hero);
+        }
+        this.refreshHud();
+        Hud.log('The boulder shatters. A scorched cave mouth opens into the Dragon Den.');
+        return true;
+    },
+
+    enterDragonDen: function () {
+        var gate = DRAGON_DEN_GATE;
+        var hero = this.registry.get('hero');
+        var spawn;
+        if (typeof isDragonDenOpen === 'function' && !isDragonDenOpen(hero)) {
+            Hud.log('A boulder still seals the cave.');
+            return false;
+        }
+        spawn = gate ? tileCenter(gate.denSpawn.x, gate.denSpawn.y) : tileCenter(18, 22);
+        this.registry.set('resumeAt', { x: spawn.x, y: spawn.y, interiorId: null });
+        this.enterZone('dragonden', null);
+        Hud.log('Sulphur heat rolls over you.');
+        return true;
+    },
+
+    leaveDragonDen: function () {
+        var gate = DRAGON_DEN_GATE;
+        var out = gate
+            ? tileCenter(gate.returnSpawn.x, gate.returnSpawn.y)
+            : tileCenter(28, 12);
+        this.registry.set('resumeAt', { x: out.x, y: out.y, interiorId: null });
+        this.enterZone('highlands', null);
+        Hud.log('Cool highland wind replaces the den\'s heat.');
         return true;
     },
 
@@ -4526,6 +4714,16 @@ var WorldScene = new Phaser.Class({
             this.exitDungeonToSurface();
             return true;
         }
+        if (kind === 'dragon-den') {
+            this.lockExits();
+            this.enterDragonDen();
+            return true;
+        }
+        if (kind === 'dragon-den-exit') {
+            this.lockExits();
+            this.leaveDragonDen();
+            return true;
+        }
         if (kind === 'stairs-down' && this.zoneId === 'dungeon') {
             this.lockExits();
             this.enterDungeonFloor((this.dungeonFloor || 1) + 1, { from: 'up' });
@@ -4571,8 +4769,12 @@ var WorldScene = new Phaser.Class({
             this.checkDungeonTiles();
             return;
         }
+        if (this.zoneId === 'dragonden') {
+            this.checkDragonDenTiles();
+            return;
+        }
         this.checkDoors();
-        if (this.interiorId || this.exitLock || this.zoneId === 'dungeon') {
+        if (this.interiorId || this.exitLock || this.zoneId === 'dungeon' || this.zoneId === 'dragonden') {
             return;
         }
         var zone = ZONES[this.zoneId];

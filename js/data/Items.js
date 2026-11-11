@@ -610,6 +610,7 @@ function makeHero() {
             bats: { stage: 0, progress: 0, goal: 4 }
         },
         diary: { bram: false, eat: false, bury: false, complete: false },
+        flags: { dragonDenOpen: false },
         tutorials: {},
         running: false,
         runEnergy: 100,
@@ -1023,6 +1024,20 @@ function bestOwnedTool(hero, kind) {
 
 function hasAnyToolKind(hero, kind) {
     return !!bestOwnedTool(hero, kind);
+}
+
+function hasToolTierAtLeast(hero, kind, needTier) {
+    var best = bestOwnedTool(hero, kind);
+    var need = typeof needTier === 'number' ? needTier : 1;
+    if (!best) {
+        return false;
+    }
+    return toolTierOf(best) >= need;
+}
+
+function hasDiamondPickOrBetter(hero) {
+    var need = typeof DEN_BOULDER_PICK_TIER === 'number' ? DEN_BOULDER_PICK_TIER : 5;
+    return hasToolTierAtLeast(hero, 'pickaxe', need);
 }
 
 function fishCatchChance(hero) {
@@ -2481,6 +2496,12 @@ function normalizeHeroCombat(hero) {
     var labels;
     if (!hero) {
         return hero;
+    }
+    if (!hero.flags) {
+        hero.flags = {};
+    }
+    if (typeof hero.flags.dragonDenOpen !== 'boolean') {
+        hero.flags.dragonDenOpen = !!hero.flags.dragonDenOpen;
     }
     if (!hero.style) {
         hero.style = 'shared';
