@@ -867,6 +867,43 @@ function mineOreAt(tx, ty) {
     return (tx + ty) % 2 === 0 ? 'copper' : 'tin';
 }
 
+var ORE_NODE_COLORS = {
+    copper: 0xc47a3a,
+    tin: 0xb0bcc8,
+    iron: 0x8a9098,
+    diamondore: 0x6ec8ff,
+    dragoniteore: 0xe85d3a,
+    runeessence: 0xc9a0ff
+};
+
+function oreNodeColor(ore) {
+    return (ORE_NODE_COLORS && ORE_NODE_COLORS[ore]) || 0x9a9088;
+}
+
+function oreNodeLabel(ore) {
+    if (!ore) {
+        return 'rock';
+    }
+    if (ore === 'runeessence') {
+        return 'rune essence';
+    }
+    if (typeof itemName === 'function') {
+        return String(itemName(ore) || ore).replace(/\s+ore$/i, '').toLowerCase();
+    }
+    return String(ore).replace(/ore$/i, '');
+}
+
+function examineMineRockText(ore) {
+    var label = oreNodeLabel(ore);
+    if (!ore) {
+        return "It's a rock.";
+    }
+    if (ore === 'runeessence') {
+        return 'Rune essence speckles this rock.';
+    }
+    return 'This rock is laced with ' + label + ' ore.';
+}
+
 function placeMineOres(grid) {
     var kinds = ['copper', 'tin', 'iron', 'diamondore', 'dragoniteore', 'runeessence'];
     var k;

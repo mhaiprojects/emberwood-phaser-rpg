@@ -61,6 +61,8 @@ var WorldScene = new Phaser.Class({
         this.chopAction = null;
         this.mineTarget = null;
         this.mineAction = null;
+        this.oreNodeMarkers = {};
+        this.mineFx = null;
         this.depletedTiles = {};
         this.dialogueNpc = null;
         this.exitLock = false;
@@ -753,6 +755,7 @@ var WorldScene = new Phaser.Class({
         this.spawnPeople(zoneId);
         this.restoreLoot(zoneId);
         this.spawnZoneCampfires(zoneId);
+        this.refreshOreNodeMarkers();
         this.buildBiomeFx();
         this.applyDayNightTint();
         this.playZoneMusic();
@@ -996,6 +999,7 @@ var WorldScene = new Phaser.Class({
         this.spawnPeople(this.zoneId);
         this.restoreLoot(this.zoneId);
         this.spawnZoneCampfires(this.zoneId);
+        this.refreshOreNodeMarkers();
         this.refreshHud();
         this.engageGrace = this.time.now + 800;
         Hud.log('You enter ' + zone.name + '.');
@@ -1009,6 +1013,8 @@ var WorldScene = new Phaser.Class({
         this.clearWalk();
         this.clearDoorFx();
         this.clearBiomeFx();
+        this.clearOreNodeMarkers();
+        this.clearMineFx();
         this.engageTarget = null;
         this.talkTarget = null;
         this.clearGather();
@@ -2393,6 +2399,184 @@ var WorldScene = new Phaser.Class({
         }
         this.mineAction = null;
         this.mineTarget = null;
+        this.clearMineFx();
+    },
+
+    clearOreNodeMarkers: function () {
+        var key;
+        if (!this.oreNodeMarkers) {
+            this.oreNodeMarkers = {};
+            return;
+        }
+        for (key in this.oreNodeMarkers) {
+            if (this.oreNodeMarkers[key] && this.oreNodeMarkers[key].destroy) {
+                this.oreNodeMarkers[key].destroy();
+            }
+        }
+        this.oreNodeMarkers = {};
+    },
+
+    removeOreNodeMarker: function (tx, ty) {
+        var key = this.depleteKey(tx, ty);
+        var marker = this.oreNodeMarkers && this.oreNodeMarkers[key];
+        var tile;
+        if (marker && marker.destroy) {
+            marker.destroy();
+        }
+        if (this.oreNodeMarkers) {
+            delete this.oreNodeMarkers[key];
+        }
+        if (this.ground && this.ground.getTileAt) {
+            tile = this.ground.getTileAt(tx, ty);
+            if (tile) {
+                tile.tint = 0xffffff;
+            }
+        }
+    },
+
+    paintOreNodeAt: function (tx, ty, ore) {
+        var key = this.depleteKey(tx, ty);
+        var color = typeof oreNodeColor === 'function' ? oreNodeColor(ore) : 0x9a9088;
+        var pos;
+        var marker;
+        var tile;
+        if (!this.tileGrid || !this.tileGrid[ty] || this.tileGrid[ty][tx] !== TILE.ROCK) {
+            return;
+        }
+        if (this.isTileDepleted(tx, ty)) {
+            return;
+        }
+        this.removeOreNodeMarker(tx, ty);
+        pos = tileCenter(tx, ty);
+        marker = this.add.container(pos.x, pos.y);
+        marker.add([
+            this.add.circle(0, 1, 5, color, 0.42),
+            this.add.circle(-2, -1, 2, color, 0.9),
+            this.add.circle(2, 0, 1.5, 0xffffff, 0.55)
+        ]);
+        marker.setDepth(3);
+        this.oreNodeMarkers = this.oreNodeMarkers || {};
+        this.oreNodeMarkers[key] = marker;
+        if (this.ground && this.ground.getTileAt) {
+            tile = this.ground.getTileAt(tx, ty);
+            if (tile) {
+                tile.tint = color;
+            }
+        }
+    },
+
+    refreshOreNodeMarkers: function () {
+        var y;
+        var x;
+        var rock;
+        this.clearOreNodeMarkers();
+        if (!this.tileGrid || this.interiorId || this.zoneId === 'dungeon') {
+            return;
+        }
+        for (y = 0; y < this.tileGrid.length; y++) {
+            if (!this.tileGrid[y]) {
+                continue;
+            }
+            for (x = 0; x < this.tileGrid[y].length; x++) {
+                if (this.tileGrid[y][x] !== TILE.ROCK) {
+                    continue;
+                }
+                rock = typeof mineRockAt === 'function'
+                    ? mineRockAt(x, y, this.zoneId, this.tileGrid, {
+                        houseRects: this.houseRectsNow(),
+                        interior: !!this.interiorId
+                    })
+                    : null;
+                if (rock && rock.ore) {
+                    this.paintOreNodeAt(x, y, rock.ore);
+                }
+            }
+        }
+    },
+
+    clearMineFx: function () {
+        var fx = this.mineFx;
+        if (!fx) {
+            return;
+        }
+        if (fx.sparkTimer && fx.sparkTimer.remove) {
+            fx.sparkTimer.remove(false);
+        }
+        if (fx.flash && fx.flash.destroy) {
+            fx.flash.destroy();
+        }
+        if (fx.bobTween) {
+            if (fx.bobTween.stop) {
+                fx.bobTween.stop();
+            }
+            if (this.player && typeof fx.baseX === 'number') {
+                this.player.x = fx.baseX;
+            }
+        }
+        this.mineFx = null;
+    },
+
+    spawnMineSpark: function (x, y, color) {
+        var spark;
+        var dx = Phaser.Math.Between(-5, 5);
+        var dy = Phaser.Math.Between(-8, -2);
+        spark = this.add.circle(x + dx * 0.2, y - 2, Phaser.Math.Between(1, 2), color, 0.95);
+        spark.setDepth(12);
+        this.tweens.add({
+            targets: spark,
+            x: x + dx,
+            y: y + dy,
+            alpha: 0,
+            duration: 220,
+            ease: 'Quad.easeOut',
+            onComplete: function () {
+                if (spark && spark.destroy) {
+                    spark.destroy();
+                }
+            }
+        });
+    },
+
+    startMineFx: function (hit, ore) {
+        var self = this;
+        var pos;
+        var color;
+        var baseX;
+        this.clearMineFx();
+        if (!hit || !this.player) {
+            return;
+        }
+        pos = tileCenter(hit.tx, hit.ty);
+        color = typeof oreNodeColor === 'function' ? oreNodeColor(ore) : 0xd4a35a;
+        baseX = this.player.x;
+        this.mineFx = {
+            baseX: baseX,
+            flash: this.add.rectangle(pos.x, pos.y, 14, 14, color, 0.18).setDepth(4),
+            sparkTimer: this.time.addEvent({
+                delay: 260,
+                loop: true,
+                callback: function () {
+                    self.spawnMineSpark(pos.x, pos.y, color);
+                    if (self.mineFx && self.mineFx.flash) {
+                        self.mineFx.flash.setAlpha(0.28);
+                        self.tweens.add({
+                            targets: self.mineFx.flash,
+                            alpha: 0.12,
+                            duration: 140
+                        });
+                    }
+                }
+            }),
+            bobTween: this.tweens.add({
+                targets: this.player,
+                x: baseX + 1.5,
+                duration: 110,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            })
+        };
+        this.spawnMineSpark(pos.x, pos.y, color);
     },
 
     depleteKey: function (tx, ty) {
@@ -2436,6 +2620,7 @@ var WorldScene = new Phaser.Class({
     scheduleDepleteRestore: function (key, tx, ty, emptyIndex, fullIndex, ms) {
         var self = this;
         this.time.delayedCall(Math.max(0, ms), function () {
+            var rock;
             if (!self.tileGrid || self.zoneId !== key.split(':')[0]) {
                 return;
             }
@@ -2444,6 +2629,17 @@ var WorldScene = new Phaser.Class({
             }
             if (self.tileGrid[ty] && self.tileGrid[ty][tx] === emptyIndex) {
                 self.setTileIndex(tx, ty, fullIndex);
+            }
+            if (fullIndex === TILE.ROCK) {
+                rock = typeof mineRockAt === 'function'
+                    ? mineRockAt(tx, ty, self.zoneId, self.tileGrid, {
+                        houseRects: self.houseRectsNow(),
+                        interior: !!self.interiorId
+                    })
+                    : null;
+                if (rock && rock.ore) {
+                    self.paintOreNodeAt(tx, ty, rock.ore);
+                }
             }
         });
     },
@@ -2457,6 +2653,9 @@ var WorldScene = new Phaser.Class({
             emptyIndex: emptyIndex,
             fullIndex: fullIndex
         };
+        if (fullIndex === TILE.ROCK || (this.tileGrid && this.tileGrid[ty] && this.tileGrid[ty][tx] === TILE.ROCK)) {
+            this.removeOreNodeMarker(tx, ty);
+        }
         this.setTileIndex(tx, ty, emptyIndex);
         this.scheduleDepleteRestore(key, tx, ty, emptyIndex, fullIndex, ms);
     },
@@ -3167,12 +3366,16 @@ var WorldScene = new Phaser.Class({
     },
 
     clickMineRock: function (hit) {
-        this.engageTarget = null;
-        this.talkTarget = null;
-        this.clearGather();
         if (!hit || this.encounterLock || (window.Hud && Hud.mode === 'battle')) {
             return false;
         }
+        if (this.mineAction && this.mineTarget
+                && this.mineTarget.tx === hit.tx && this.mineTarget.ty === hit.ty) {
+            return true;
+        }
+        this.engageTarget = null;
+        this.talkTarget = null;
+        this.clearGather();
         if (this.isTileDepleted(hit.tx, hit.ty)) {
             Hud.log('The rock is exhausted.');
             return false;
@@ -3205,6 +3408,7 @@ var WorldScene = new Phaser.Class({
             : null;
         var ore = rock && rock.ore;
         var gate;
+        var label;
         if (this.encounterLock || (window.Hud && Hud.mode === 'battle')) {
             return false;
         }
@@ -3248,7 +3452,9 @@ var WorldScene = new Phaser.Class({
                 self.finishMineAction();
             })
         };
-        Hud.log('You swing your pickaxe…');
+        this.startMineFx(hit, ore);
+        label = typeof oreNodeLabel === 'function' ? oreNodeLabel(ore) : 'ore';
+        Hud.log('You swing your pickaxe at the ' + label + ' rock…');
         return true;
     },
 
@@ -3257,6 +3463,8 @@ var WorldScene = new Phaser.Class({
         var ore = hit && hit.ore;
         var hero;
         var result;
+        var label;
+        this.clearMineFx();
         this.mineAction = null;
         if (this.encounterLock || (window.Hud && Hud.mode === 'battle')) {
             this.mineTarget = null;
@@ -3294,15 +3502,30 @@ var WorldScene = new Phaser.Class({
             Hud.saveHero(hero);
         }
         this.refreshHud();
-        Hud.log('You mine the rock.');
+        label = typeof itemName === 'function' ? itemName(ore) : (ore || 'ore');
+        Hud.log('You mine some ' + label + '.');
         return true;
     },
 
     examineScenery: function (hit) {
+        var line;
+        var rock;
         if (!hit || !hit.kind) {
             return false;
         }
-        var line = typeof examineSceneryText === 'function' ? examineSceneryText(hit.kind) : '';
+        if (hit.kind === 'rock') {
+            rock = typeof mineRockAt === 'function'
+                ? mineRockAt(hit.tx, hit.ty, this.zoneId, this.tileGrid, {
+                    houseRects: this.houseRectsNow(),
+                    interior: !!this.interiorId
+                })
+                : null;
+            line = typeof examineMineRockText === 'function'
+                ? examineMineRockText(rock && rock.ore)
+                : (typeof examineSceneryText === 'function' ? examineSceneryText(hit.kind) : '');
+        } else {
+            line = typeof examineSceneryText === 'function' ? examineSceneryText(hit.kind) : '';
+        }
         if (!line) {
             return false;
         }
