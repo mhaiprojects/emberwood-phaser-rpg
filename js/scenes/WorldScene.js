@@ -31,6 +31,9 @@ var COLLIDE_TILES = [
 ];
 var GROUND_FIRE_MS = 45000;
 var STATION_RANGE = 28;
+var MELEE_ENGAGE_PX = 24;
+var RANGED_ENGAGE_PX = 120;
+var MAGIC_ENGAGE_PX = 104;
 var COLLISION_DEBUG_FILL = 0xf38630;
 var COLLISION_DEBUG_FACE = 0xffff66;
 
@@ -3033,13 +3036,24 @@ var WorldScene = new Phaser.Class({
         return null;
     },
 
+    heroEngageRangePx: function () {
+        var hero = this.registry.get('hero');
+        if (typeof rangedWeaponEquipped === 'function' && rangedWeaponEquipped(hero)) {
+            return RANGED_ENGAGE_PX;
+        }
+        if (typeof magicWeaponEquipped === 'function' && magicWeaponEquipped(hero)) {
+            return MAGIC_ENGAGE_PX;
+        }
+        return MELEE_ENGAGE_PX;
+    },
+
     chaseInRange: function (chase) {
         if (!chase || !this.player) {
             return false;
         }
         var dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, chase.x, chase.y);
         if (this.engageTarget === chase) {
-            return dist < 24;
+            return dist < this.heroEngageRangePx();
         }
         if (this.talkTarget === chase) {
             return dist < 22 && !this.talkBlockedByWall(chase);
@@ -4248,11 +4262,18 @@ var WorldScene = new Phaser.Class({
     },
 
     tryAutoEngage: function () {
+        var range;
+        var dist;
         if (this.encounterLock || this.uiPaused() || this.time.now < this.engageGrace) {
             return false;
         }
+        range = this.heroEngageRangePx();
         if (this.engageTarget && this.engageTarget.aliveMob) {
-            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.engageTarget.x, this.engageTarget.y) < 24) {
+            dist = Phaser.Math.Distance.Between(
+                this.player.x, this.player.y,
+                this.engageTarget.x, this.engageTarget.y
+            );
+            if (dist < range) {
                 this.beginFight(this.engageTarget);
                 return true;
             }
@@ -4260,7 +4281,8 @@ var WorldScene = new Phaser.Class({
         if (!this.autoAttackOn()) {
             return false;
         }
-        var near = this.pickSprite(this.mobs, this.player.x, this.player.y, 20);
+        /* Bump-into auto-attack stays melee; click-target uses weapon range above. */
+        var near = this.pickSprite(this.mobs, this.player.x, this.player.y, MELEE_ENGAGE_PX);
         if (near && near.aliveMob) {
             this.beginFight(near);
             return true;
