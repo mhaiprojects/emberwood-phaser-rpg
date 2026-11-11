@@ -496,7 +496,7 @@ Actionable pitfalls from project rules and recent combat/gather/save work:
 | Item | Status / note |
 |------|----------------|
 | Testing reopen | **Blocked** until human says otherwise |
-| Full diamond/dragonite plate sets | **(aspirational)** tools/weapons/staves exist; dedicated plate bodies/helms still open per design plan |
+| Full diamond/dragonite plate sets | `[done]` — iron / diamond / dragonite helm·body·legs·shield; smith + arms shop |
 | Legacy `BattleScene` | Still in repo for harness/custom fights; normal play uses overworld ticks — keep both coherent if touched |
 | Prayer/Magic depth | Lite set shipped; more prayers/spells **(aspirational)** |
 | GE / multiplayer | Explicitly not planned |
