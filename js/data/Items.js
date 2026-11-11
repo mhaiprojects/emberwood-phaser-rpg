@@ -19,6 +19,9 @@ var ITEM_DB = {
 var WIND_STRIKE_XP = 5;
 var WIND_STRIKE_DAMAGE = 2;
 var FISH_SPOT_XP = 10;
+var FISH_CATCH_ID = 'rawshrimp';
+var FISH_ACTION_MS_MIN = 3000;
+var FISH_ACTION_MS_MAX = 5000;
 var WOODCUT_TREE_XP = 10;
 var MINE_ROCK_XP = 10;
 var CRAFT_HIDE_XP = 14;
@@ -424,12 +427,54 @@ function lightFire(hero) {
     return firemakeAt(hero);
 }
 
-function fishAtSpot(hero) {
+function fishRoll(rand) {
+    if (typeof rand === 'function') {
+        return rand();
+    }
+    if (typeof rand === 'number') {
+        return rand;
+    }
+    return Math.random();
+}
+
+function fishActionMs(rand) {
+    var span = FISH_ACTION_MS_MAX - FISH_ACTION_MS_MIN;
+    var ms = FISH_ACTION_MS_MIN + Math.floor(fishRoll(rand) * (span + 1));
+    if (ms < FISH_ACTION_MS_MIN) {
+        return FISH_ACTION_MS_MIN;
+    }
+    if (ms > FISH_ACTION_MS_MAX) {
+        return FISH_ACTION_MS_MAX;
+    }
+    return ms;
+}
+
+function fishCatchChance(hero) {
+    var level = heroSkillLevel(hero, 'fishing') || 1;
+    return Math.min(0.95, 0.35 + level * 0.03);
+}
+
+function catchFish(hero, opts) {
+    var chance;
+    var rand;
     if (!hero || !hero.skills || !hero.skills.fishing) {
         return null;
     }
+    opts = opts || {};
+    rand = opts.rand;
+    chance = typeof opts.chance === 'number' ? opts.chance : fishCatchChance(hero);
+    if (!(fishRoll(rand) < chance)) {
+        return { ok: false, miss: true };
+    }
+    if (!addItem(hero, FISH_CATCH_ID, 1)) {
+        return { ok: false, full: true };
+    }
     gainSkillXp(hero, 'fishing', FISH_SPOT_XP);
-    return { ok: true, xp: FISH_SPOT_XP };
+    return { ok: true, id: FISH_CATCH_ID, xp: FISH_SPOT_XP };
+}
+
+function fishAtSpot(hero, opts) {
+    return catchFish(hero, opts);
 }
 
 function chopAtTree(hero) {

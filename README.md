@@ -4,7 +4,11 @@ A playable client-side Phaser 3 RPG with a RuneScape-style overworld: click-to-w
 
 There is no build step. Serve the folder with any static HTTP server.
 
-## How to run
+## Play online
+
+**GitHub Pages:** https://mhaiprojects.github.io/emberwood-phaser-rpg/
+
+## How to run locally
 
 A local static server is required (`file://` will fail CORS).
 

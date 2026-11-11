@@ -135,53 +135,34 @@ Same origin; Glass is optional and human-requested only:
 - Mob / NPC / item / HUD / skill SVGs: `python3 tools/generate_svgs.py`.
 - Do not drop in third-party sprites. New characters stay original SVGs.
 
-## Tests
+## Tests (manual only — loop stopped)
 
-- Interaction suite: `tests/run.html` → `tests/runner.js` + `tests/harness.js` + `tests/interactions.js`. Targeted tick: `/tests/run.html?only=<substring>` (matches case names). Full suite when shared files change.
-- Cases already cover title, HUD tabs/F-keys, skills/worn/styles/inv, eat, W-from-spawn (Keys.js only, Phaser keyboard off), WASD, arrows, HUD-focus walk (all 8 tabs + `bindHudBlur`), click-to-walk, HUD-then-world click-to-walk (canvas unfocused), purple A* path + courtyard-gate / house-door path + WASD cancel, zone NPC/mob spawn, `enterZone` cleanup (old tilemap/colliders/NPCs/mobs/labels/loot), talk (Space + click), talking blocked during `Hud.mode === 'battle'` / `encounterLock`, Bram / Elise / Witch (refuse below 10 gp; ≥10 gp heals via `takeItem`), flavor NPCs (Rowan/Kett/Willa/Ned/Sila/Wisp/Corb/Ola `{Name}:` + one of their lines), every `NPC_DEFS` spawn at def x,y with a yellow `#ffe08a` name label, player–NPC arcade collider immovable (Keys.js shove does not move NPCs), click-mob, win+loot, combat eat/flee/target, goblin quest, player/mob scales (1-tile world player; giant drake multi-tile), 1-tile door walk + wall block, auto-attack on (nearest living mob <20px after engageGrace; exactly 20px and grace do not fight), auto-attack HUD three-button sync (Combat/Settings/battle panel log on/off), auto-pickup (default on; off skips walk-over; click still takes), walk-loot, death+retry, Space not `preventDefault` on title/dead (`Keys.shouldBlockBrowser`).
-- Playwright is the extra proof for movement and HUD smoke. Default is **headless** via `tests/playwright-session.js` / `node tests/playwright-*.js <port>` (see Background playtest). The parent opens Glass **only if the human asked** to see the sidebar. Keep WASD green if you touch input. Always close browsers / owned servers / MCP tabs this tick opened.
-- Add a case in `tests/interactions.js` when you ship a matching feature. Extend `tests/harness.js` instead of copying scene guts.
+- **No automatic test loop.** Do not arm `/loop`, sleep wakeups, git-HEAD watchers, or spawn workers that autorun Playwright / `tests/run.html`.
+- Suite still exists for **on-request** checks: `tests/run.html` → `tests/runner.js` + `tests/harness.js` + `tests/interactions.js`. Targeted: `/tests/run.html?only=<substring>`. Headless: `node tests/playwright-*.js <port>` when the human asks.
+- Default workflow: **implement → human playtest in browser** (`python3 -m http.server 8765`). Do not burn tokens on suite runs unless asked or a regression is reported.
+- Keep WASD / Keys.js green if you touch input. Add or update a case in `tests/interactions.js` only when the human asks for coverage, or when fixing a reported suite failure.
 
-## Project management
+## Project management (feature-first)
 
-- `loop-tasks.md` is the **flat-file PM** (not a wiki). Filename is `loop-tasks.md` (not `loops-tasks.md`).
-- Max nesting 3: `#` title, `##` area, then a simple list. Each item has a status (`todo` | `doing` | `done` | `blocked` | `verify`) and a one-line Conclusion (`—` if not started).
-- `loop-next.md` is the **tick card** (next 5 items). Refresh it with `python3 tools/loop-next.py` after a commit. Parent ticks read **only** that file + `git status` — do not paste this brief or the full PM into the Task prompt.
-- Pick the first `verify` anywhere above Stretch, else the next `todo`. One item per **spawned** tick. Mark `done` only after tests pass. Do not invent dones. Then **commit that tick's work** (see Loop-tick commits).
-- **Parent coordinator:** **event-paced**, not 30 seconds. One worker at a time. Wake when a tick **commits** (git HEAD advances) or on an **8–10 minute** fallback heartbeat if the worker died silently. Read `loop-next.md`. If Busy / `doing` is set, **skip with no user-facing essay** (do not spawn, do not dump a skip report). Else spawn one worker for item #1. Task prompt ~15 lines: item text, 2–4 file paths, one test name, live `http://127.0.0.1:<port>/`. **Do not** `open_resource` every tick (see Background playtest). Open Glass only if the human asked to playtest in the inline browser.
-- Default tests: run **one** matching case via `/tests/run.html?only=<substring>` (headless Playwright). Also run a WASD case only if the tick touched `js/input/Keys.js`. Full suite only when `WorldScene.js`, `Keys.js`, `Hud.js`, or the harness changed, or the dedicated case is flaky.
+- `loop-tasks.md` is the **flat-file PM** (not a wiki). Max nesting 3: `#` title, `##` area, list items with status (`todo` | `doing` | `done` | `blocked` | `verify`) and a one-line Conclusion (`—` if not started).
+- `loop-next.md` is a **short next-5 card**. Refresh with `python3 tools/loop-next.py` when useful. Prefer reading that + `git status` over the full PM.
+- **Auto loop is OFF.** Work only when the human asks (chat). One feature/fix at a time. Mark `doing` while in progress, `done` when the feature works in playtest — suite pass is not required to mark done unless the human asked for tests.
 - Do **not** rewrite the whole task list unless the human asks for a format change.
+- Commit only when the human asks. Do not push unless asked.
 
-### Loop-tick commits
+### New game-design work
 
-Every loop tick that completes an item **must** create a git commit of that tick's work. The human asked for commits after each loop; this overrides “do not commit unless asked.”
-
-- Follow git safety: NEVER update git config; NEVER `--no-verify` / `--no-gpg-sign`; NEVER force push; NEVER destructive git; NEVER commit secrets (`.env`, credentials).
-- After finishing a PM item (status `done` + tests), stage only the relevant files and commit with a concise 1–2 sentence message focused on WHY (e.g. “Verify Bram stage 3 post-quest line.” or “Fix east/south zone entry spawning off-map.”).
-- Use HEREDOC for the message: `git commit -m "$(cat <<'EOF'
-...
-EOF
-)"`
-- Run `git status` after the commit.
-- Do **not** push unless the human asks.
-- If there is nothing to commit, skip (no empty commit).
-- If a tick only verified existing behavior and added a test, still commit the test + `loop-tasks.md` + `AGENT.md` updates.
-
-### New game-design work goes on the PM first
-
-- New game-design / feature ideas are **added to `loop-tasks.md`** as `todo` (status + short `Conclusion: —`) and are **not implemented in the same pass**.
-- Event-paced loop ticks **action** items from the PM — one item per spawned tick.
-- **Exception — implement immediately** only if the user explicitly says to do it now (e.g. “implement now”, “fix this bug”, “redo this code”) or the change is process/docs (`AGENT.md` / `loop-tasks.md` format).
-- When the user describes a feature, the correct response is: write well-specified PM items (and related follow-ups), then **stop**.
+- Capture new ideas on `loop-tasks.md` as `todo` when the human is brainstorming.
+- When the human says implement / fix / do it now — implement in the same pass.
 
 ## Hard no's
 
-- Do not commit unless the human asks, **except** after each completed loop tick (see Loop-tick commits). Do not push unless asked.
+- Do not commit or push unless the human asks.
+- Do not re-arm the event-paced / heartbeat loop or auto-spawn test workers.
 - Do not enable Phaser keyboard or Phaser audio.
 - Do not introduce a bundler or Phaser 4.
 - Do not use commercial / third-party game art.
 - Do not implement a Grand Exchange, multiplayer, or a full 23-skill dump before local shop + bank + core gathering exist (see Stretch in `loop-tasks.md`).
-- Do not implement new gameplay/features in the same pass as capturing them — add them to `loop-tasks.md` first (unless the user says implement now, or it is process/docs).
 
 ## Scenes and key files
 

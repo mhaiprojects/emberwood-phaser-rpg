@@ -1,20 +1,18 @@
 # Emberwood loop tasks
 
-Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0 client-side RuneScape-like (no bundler, no Phaser 4). Each tick compares play to Old School RuneScape / classic point-and-click MMORPGs: click-to-act, skills with XP, shops, bank, gathering loops, context menus, and a persistent character.
+Flat-file project manager for Emberwood (Phaser 3.90.0, no bundler, no Phaser 4). OSRS-like: click-to-act, skills/XP, shops, bank, gathering, context menus.
 
-**How a loop tick picks the next item**
+**Process (2026-11-11): auto loop STOPPED.** Feature-first chat work. No wakeups, no spawned test workers. Suite only when the human asks. Commit only when asked.
 
-1. Scan top to bottom. Do not start a new system if an earlier item in the same section is still `todo`/`verify` and blocking (e.g. do not add Magic until Prayer bury-bones works if you are in Skills).
-2. Prefer the first remaining `verify` anywhere above Stretch (prove the existing action still plays). If no `verify` remains, take the next `todo`. Stretch stays last.
-3. One spawned tick = one item (or that item plus its matching test). Finish game logic, UI/UX, and a test before setting `done`.
-4. Statuses: `todo` (build it), `doing` (this tick), `done` (verified in play or tests), `blocked` (cannot proceed), `verify` (behavior exists — prove it).
-5. Conclusion is `—` until work starts. After work, one short line of what was found or shipped. Mark `done` only after tests pass. Code review is not play verification.
-6. Never re-enable Phaser keyboard. WASD/arrows stay on `js/input/Keys.js` only (`input.keyboard: false` in `js/main.js`). Keep WASD working if you touch input.
-7. After a tick completes an item (`done` + tests), commit that tick's work: stage only the relevant files (never secrets), HEREDOC message focused on WHY, then `git status`. Do not push unless asked. Skip if nothing to commit. A verify-only tick still commits the test + this file + `AGENT.md`. Then run `python3 tools/loop-next.py`. Do not rewrite this whole file; update the one item you actioned and the tick log.
-8. **Agents add tasks here; ticks implement one item.** New game-design / feature ideas are appended as `todo` (status + `Conclusion: —`) and are **not** built in the same pass. Event-paced ticks pick and implement one item. Exception: implement immediately only if the user says so (“implement now”, “fix this bug”, “redo this code”) or the change is process/docs (`AGENT.md` / this file’s format). When the user describes a feature, write well-specified items (and related follow-ups), then stop.
-9. **Parent coordinator (spawn vs skip).** Cadence is **event-paced**: wake on git commit (worker finished) or an **8–10 minute** heartbeat if the worker died. Parent reads **`loop-next.md` + `git status` only** — do not paste `AGENT.md` or this file into the Task prompt. Spawn **one** worker for item #1 when Busy is empty. If `doing` is set, **skip with no user-facing essay** (do not spawn). Task prompt ~15 lines: item, files, one test name, live `http://127.0.0.1:<port>/`. Default test is `/tests/run.html?only=<substring>` (full suite only for shared-file ticks). **Do not** `open_resource` / Glass every tick. Close browsers, MCP tabs, and any `http.server` PID **this tick started** when the tick finishes.
+**How to pick the next item**
 
-**Last updated:** 2026-09-16 — Process: event-paced loop; `loop-next.md` tick card; targeted `?only=` tests; no Glass unless asked.
+1. Scan top to bottom; respect section blockers. Prefer first `doing`, else first `todo` / `verify` above Stretch.
+2. Statuses: `todo` | `doing` | `done` (works in playtest) | `blocked` | `verify`.
+3. One feature at a time. Conclusion is `—` until shipped; then one short line.
+4. Never re-enable Phaser keyboard (`Keys.js` only).
+5. Refresh `loop-next.md` with `python3 tools/loop-next.py` when useful — do not rewrite this whole file.
+
+**Last updated:** 2026-11-11 — Auto loop off; feature-first; manual playtest.
 
 **Total tasks: 294** (289 in the 14 playable sections + 5 stretch). All unique.
 
@@ -199,7 +197,7 @@ Flat-file project manager for the event-paced loop. Emberwood is a Phaser 3.90.0
 ## 7. Gathering / processing / skilling loops (20)
 
 - [done] Clickable fishing spots in Southshore; Fisher Ned explains the net. — Conclusion: From spawn (328,248) Ned explains click-the-spots + small fishing net; far-click walks to shore then Fish; right-click Fish first; in-range Fishing +10, no shrimp/net. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [todo] Catch raw shrimp (or equivalent) with a success roll, Fishing XP, and a 3–5s action that cancels on walk/combat. — Conclusion: —
+- [done] Catch raw shrimp (or equivalent) with a success roll, Fishing XP, and a 3–5s action that cancels on walk/combat. — Conclusion: Southshore Fish runs 3–5s (`You fish…`); success adds raw shrimp + Fishing +10, miss chats fail; walk/combat/Esc/WASD cancel mid-cast. Net gate not this item.
 - [todo] Require a small fishing net (shop or starter) and chat `You need a fishing net` without one. — Conclusion: —
 - [todo] Clickable trees in Northwood; chop with a bronze axe for logs + Woodcutting XP; tree respawns. — Conclusion: —
 - [todo] Clickable rocks in Darkmine; mine copper/tin with a bronze pickaxe; rock depletes and respawns. — Conclusion: —

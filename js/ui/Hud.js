@@ -1476,7 +1476,11 @@ var Hud = {
         }
         world.engageTarget = null;
         world.talkTarget = null;
-        world.fishTarget = null;
+        if (world.clearFish) {
+            world.clearFish();
+        } else {
+            world.fishTarget = null;
+        }
         world.setWalk(target.worldX, target.worldY);
     },
 
