@@ -91,7 +91,7 @@ Mobs may **not** enter the outer **`MOB_EDGE_MARGIN_TILES = 2`** border. Player 
 | Bank interior | **Removed** — courtyard booth + Elise only |
 | Endless Dungeon | Darkmine shaft → floor N; mobs scale ~5%/floor; stairs up/down; escape shaft remembers floor; campfire on floors |
 | Dungeon cues | Pulsing shaft/stairs markers + approach chat (throttled) |
-| Dragon Den | Highlands boulder needs pick **tier ≥ 5** (diamond+); sets `hero.flags.dragonDenOpen` |
+| Dragon Den | Highlands boulder needs pick **tier ≥ 5** (diamond+); sets `hero.flags.dragonDenOpen`; pulsing markers + approach chat; step/click enter & exit |
 
 ---
 
@@ -219,7 +219,7 @@ World clicks ignored while title, `encounterLock` (pre-fight shake), or legacy `
 4. Win → XP by style + Hitpoints share; loot **on ground** (not auto-bag); mob respawn ~18 s
 5. Flee: push + grace; Run success chance on legacy battle path still exists for harness
 
-**Auto-attack (default on):** walking near a living mob can engage (with grace after zone/battle).  
+**Auto-attack (default off):** walking near a living mob can engage (with grace after zone/battle).  
 **Auto-retaliate (default on, separate):** only when a foe **agros you first** — walk into weapon range and fight back; does **not** pick passive nearby mobs.
 
 **In-fight chase gate:** while already fighting, player auto-close toward the mob only if **inside the mob’s attack range** but outside weapon range (and retaliate on). Safe ranging outside mob attack range does **not** auto-walk into the foe.
@@ -369,7 +369,7 @@ While mining: flash + spark FX tinted to ore; cleared on finish/cancel.
 
 | Toggle | Default | Where | Meaning |
 |--------|---------|-------|---------|
-| Auto-attack | On | Combat, Settings, battle panel | Engage nearby foes when walking close |
+| Auto-attack | Off | Combat, Settings, battle panel | Engage nearby foes when walking close |
 | Auto-retaliate | On | Combat, Settings, battle panel | Only after **mob agros first**; walk into range |
 | Auto-pickup | On | Combat, Settings | Walk-over loot vs click-only |
 | Shift-click drop | On | Settings | Shift+LMB drops inv item |
@@ -419,8 +419,9 @@ Full obtainability matrix (gather zones, smelt/smith/craft, shops, tutors, start
 
 ### 8.3 Dragon Den
 
-- Unlock: Highlands sealing boulder + diamond+ pick
-- Dragon mobs / fire altar access; high-tier drops (scales, ores, fire runes)
+- Unlock path: mine diamondore (Darkmine / Highlands) → smelt diamondbar → smith (or buy) diamondpick → mine Highlands sealing boulder (pick tier ≥ 5) → `hero.flags.dragonDenOpen`
+- Markers + approach chat on sealed boulder / open cave / den exit; step or click to enter/leave
+- Den biome: Dragon mobs, fire altar, campfire; high-tier drops (scales, ores, fire runes)
 
 ### 8.4 Starter kit (highlights)
 

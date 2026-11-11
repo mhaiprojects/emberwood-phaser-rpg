@@ -2591,37 +2591,58 @@ var WorldScene = new Phaser.Class({
         return root;
     },
 
-    refreshShaftMarkers: function () {
+    paintInteractMarkersForKinds: function (zoneId, kinds) {
         var bag;
         var key;
         var parts;
         var tx;
         var ty;
         var interact;
+        var want = {};
+        var i;
+        if (!zoneId || !kinds || !kinds.length) {
+            return;
+        }
+        for (i = 0; i < kinds.length; i++) {
+            want[kinds[i]] = true;
+        }
+        bag = typeof ZONE_INTERACT !== 'undefined' ? ZONE_INTERACT[zoneId] : null;
+        if (!bag) {
+            return;
+        }
+        for (key in bag) {
+            if (!Object.prototype.hasOwnProperty.call(bag, key)) {
+                continue;
+            }
+            interact = bag[key];
+            if (!interact || !interact.kind || !want[interact.kind]) {
+                continue;
+            }
+            parts = String(key).split(',');
+            tx = parseInt(parts[0], 10);
+            ty = parseInt(parts[1], 10);
+            if (!isNaN(tx) && !isNaN(ty)) {
+                this.paintShaftMarker(tx, ty, interact.kind);
+            }
+        }
+    },
+
+    refreshShaftMarkers: function () {
         var meta;
         this.clearShaftMarkers();
         if (!this.tileGrid || this.interiorId) {
             return;
         }
         if (this.zoneId === 'darkmine') {
-            bag = typeof ZONE_INTERACT !== 'undefined' ? ZONE_INTERACT.darkmine : null;
-            if (bag) {
-                for (key in bag) {
-                    if (!Object.prototype.hasOwnProperty.call(bag, key)) {
-                        continue;
-                    }
-                    interact = bag[key];
-                    if (!interact || interact.kind !== 'dungeon-enter') {
-                        continue;
-                    }
-                    parts = String(key).split(',');
-                    tx = parseInt(parts[0], 10);
-                    ty = parseInt(parts[1], 10);
-                    if (!isNaN(tx) && !isNaN(ty)) {
-                        this.paintShaftMarker(tx, ty, 'dungeon-enter');
-                    }
-                }
-            }
+            this.paintInteractMarkersForKinds('darkmine', ['dungeon-enter']);
+            return;
+        }
+        if (this.zoneId === 'highlands') {
+            this.paintInteractMarkersForKinds('highlands', ['den-boulder', 'dragon-den']);
+            return;
+        }
+        if (this.zoneId === 'dragonden') {
+            this.paintInteractMarkersForKinds('dragonden', ['dragon-den-exit']);
             return;
         }
         if (this.zoneId !== 'dungeon') {
@@ -3647,6 +3668,8 @@ var WorldScene = new Phaser.Class({
         }
         this.mineTarget = null;
         this.applyDragonDenGate();
+        this.refreshOreNodeMarkers();
+        this.refreshShaftMarkers();
         if (typeof gainSkillXp === 'function') {
             gainSkillXp(hero, 'mining', 80);
         }
@@ -6084,7 +6107,8 @@ var WorldScene = new Phaser.Class({
         var interact = typeof getTileInteract === 'function'
             ? getTileInteract(this.zoneId, tile.tx, tile.ty)
             : null;
-        if (interact && (interact.kind === 'dungeon-enter' || interact.kind === 'stairs-down')) {
+        if (interact && (interact.kind === 'dungeon-enter' || interact.kind === 'stairs-down'
+                || interact.kind === 'dragon-den')) {
             this.useStairsInteract(interact);
             return;
         }
@@ -6424,7 +6448,7 @@ var WorldScene = new Phaser.Class({
 
     autoAttackOn: function () {
         var hero = this.registry.get('hero');
-        return !!(hero && hero.autoAttack);
+        return typeof autoAttackOn === 'function' ? autoAttackOn(hero) : !!(hero && hero.autoAttack);
     },
 
     combatVisualsOn: function () {

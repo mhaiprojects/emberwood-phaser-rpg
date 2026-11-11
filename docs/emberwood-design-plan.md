@@ -17,6 +17,7 @@ Completed design work (layers, Ranger/Mage, tiers, same-plane shop/guild, bank c
 | New test cases written | `[done]` (not run) |
 | Suite / keep-green / browser proof | `[blocked]` (5 lines) — testing disabled |
 | Full plate bodies/helms for high tiers | `[done]` — iron / diamond / dragonite helm·body·legs·shield + smith + shop |
+| Dragon Den + ore→diamond-pick unlock | `[done]` — highland boulder/markers, den biome, all Darkmine ores + highland diamond nodes |
 
 ---
 
@@ -90,5 +91,5 @@ Discuss with an id + letter, e.g. `1.1 A` or `1.2 B`.
 - [`loop-tasks.md`](../loop-tasks.md) — blocked test lines  
 - [`js/data/Items.js`](../js/data/Items.js) — tiers / plate armour (done)  
 - [`tests/run.html`](../tests/run.html) — suite entry when testing returns  
-- [`js/world/MapGen.js`](../js/world/MapGen.js) — bank counter / tags (done)  
-- [`js/scenes/WorldScene.js`](../js/scenes/WorldScene.js) — overworld combat / spawns (done)
+- [`js/world/MapGen.js`](../js/world/MapGen.js) — bank counter / tags / Dragon Den gate + ore props (done)  
+- [`js/scenes/WorldScene.js`](../js/scenes/WorldScene.js) — overworld combat / spawns / den markers (done)

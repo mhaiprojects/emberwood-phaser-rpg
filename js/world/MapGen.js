@@ -42,7 +42,8 @@ var CAMPFIRE_SPOTS = {
     westmead: [{ x: 20, y: 14 }],
     southshore: [{ x: 18, y: 18 }],
     highlands: [{ x: 16, y: 12 }],
-    graves: [{ x: 18, y: 14 }]
+    graves: [{ x: 18, y: 14 }],
+    dragonden: [{ x: 14, y: 14 }]
 };
 var DUNGEON_ZONE_ID = 'dungeon';
 var DUNGEON_FLOOR_SCALE = 1.05;
@@ -90,10 +91,11 @@ var SHORE_PROPS = {
         { x: 12, y: 22 },
         { x: 12, y: 23 }
     ],
+    /* Shore-adjacent water so FISH_RANGE (28px) reaches from land/dock. */
     spots: [
-        { x: 16, y: 24 },
-        { x: 20, y: 24 },
-        { x: 24, y: 23 }
+        { x: 13, y: 22 },
+        { x: 15, y: 21 },
+        { x: 23, y: 21 }
     ]
 };
 var GRAVE_PROPS = {
@@ -173,6 +175,16 @@ var MINE_PROPS = {
         { x: 12, y: 18 },
         { x: 13, y: 20 },
         { x: 18, y: 22 }
+    ]
+};
+/* Windrock Highlands: fixed nodes so diamond is findable near the den path (plus hash rocks). */
+var HIGHLANDS_MINE_PROPS = {
+    diamondore: [
+        { x: 26, y: 12 },
+        { x: 24, y: 10 }
+    ],
+    iron: [
+        { x: 22, y: 14 }
     ]
 };
 /* Rune altars: shrine tile + interact.kind altar. */
@@ -547,6 +559,7 @@ function generateMap(seed, biome, neighbors, zoneId) {
     } else if (biome === 'hills') {
         scatter(grid, TILE.ROCK, 36, seed, true);
         scatter(grid, TILE.TREE, 16, seed + 2, true);
+        placeHighlandsMineOres(grid);
         placeDragonDenGate(grid, zoneId || 'highlands', false);
     } else if (biome === 'den') {
         generateDragonDenMap(grid, seed, zoneId || 'dragonden');
@@ -851,12 +864,16 @@ function woodcutTreeAt(tx, ty, zoneId, grid) {
     };
 }
 
-function mineOreAt(tx, ty) {
+function oreFromPropTable(table, tx, ty) {
     var kinds = ['dragoniteore', 'diamondore', 'iron', 'runeessence', 'tin', 'copper'];
     var k;
     var i;
+    var list;
+    if (!table) {
+        return null;
+    }
     for (k = 0; k < kinds.length; k++) {
-        var list = MINE_PROPS && MINE_PROPS[kinds[k]];
+        list = table[kinds[k]];
         if (!list) {
             continue;
         }
@@ -866,7 +883,29 @@ function mineOreAt(tx, ty) {
             }
         }
     }
+    return null;
+}
+
+function mineOreAt(tx, ty) {
+    var ore = oreFromPropTable(MINE_PROPS, tx, ty);
+    if (ore) {
+        return ore;
+    }
     return (tx + ty) % 2 === 0 ? 'copper' : 'tin';
+}
+
+function highlandsOreAt(tx, ty) {
+    var ore = oreFromPropTable(HIGHLANDS_MINE_PROPS, tx, ty);
+    if (ore) {
+        return ore;
+    }
+    if ((tx + ty) % 5 === 0) {
+        return 'diamondore';
+    }
+    if ((tx + ty) % 2 === 0) {
+        return 'iron';
+    }
+    return 'copper';
 }
 
 var ORE_NODE_COLORS = {
@@ -911,6 +950,27 @@ var SHAFT_MARKER_STYLE = {
         glyph: '◎',
         labelColor: '#b8e8ff',
         approach: 'Escape shaft — click to return to Darkmine; it remembers this floor.'
+    },
+    'den-boulder': {
+        color: 0xc07040,
+        label: 'Sealed Den',
+        glyph: '◆',
+        labelColor: '#ffd0a8',
+        approach: 'A sealing boulder — mine it with a diamond pickaxe to open the Dragon Den.'
+    },
+    'dragon-den': {
+        color: 0xe85d3a,
+        label: 'Dragon Den',
+        glyph: '▼',
+        labelColor: '#ffb090',
+        approach: 'Scorched cave mouth — click or step in to enter the Dragon Den.'
+    },
+    'dragon-den-exit': {
+        color: 0x6ec8ff,
+        label: 'Highlands',
+        glyph: '▲',
+        labelColor: '#b8e8ff',
+        approach: 'Tunnel back to Windrock Highlands — click or step on it to leave.'
     }
 };
 
@@ -942,12 +1002,16 @@ function examineMineRockText(ore) {
     return 'This rock is laced with ' + label + ' ore.';
 }
 
-function placeMineOres(grid) {
+function placeOrePropTable(grid, table) {
     var kinds = ['copper', 'tin', 'iron', 'diamondore', 'dragoniteore', 'runeessence'];
     var k;
     var i;
+    var list;
+    if (!grid || !table) {
+        return;
+    }
     for (k = 0; k < kinds.length; k++) {
-        var list = MINE_PROPS && MINE_PROPS[kinds[k]];
+        list = table[kinds[k]];
         if (!list) {
             continue;
         }
@@ -955,6 +1019,14 @@ function placeMineOres(grid) {
             setCell(grid, list[i].x, list[i].y, TILE.ROCK);
         }
     }
+}
+
+function placeMineOres(grid) {
+    placeOrePropTable(grid, MINE_PROPS);
+}
+
+function placeHighlandsMineOres(grid) {
+    placeOrePropTable(grid, HIGHLANDS_MINE_PROPS);
 }
 
 function placeRuneAltar(grid, zoneId) {
@@ -1075,9 +1147,6 @@ function generateDragonDenMap(grid, seed, zoneId) {
         verb: 'craft',
         rune: 'firerune'
     });
-    if (CAMPFIRE_SPOTS) {
-        CAMPFIRE_SPOTS.dragonden = [{ x: 14, y: 14 }];
-    }
 }
 
 function mineRockAt(tx, ty, zoneId, grid, opts) {
@@ -1109,7 +1178,7 @@ function mineRockAt(tx, ty, zoneId, grid, opts) {
     if (zoneId === 'darkmine') {
         ore = mineOreAt(tx, ty);
     } else if (zoneId === 'highlands') {
-        ore = (tx + ty) % 5 === 0 ? 'diamondore' : ((tx + ty) % 2 === 0 ? 'iron' : 'copper');
+        ore = highlandsOreAt(tx, ty);
     } else if (zoneId === 'graves') {
         ore = (tx + ty) % 4 === 0 ? 'iron' : ((tx + ty) % 2 === 0 ? 'copper' : 'tin');
     } else {

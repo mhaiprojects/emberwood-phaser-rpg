@@ -23,9 +23,9 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 4. Never re-enable Phaser keyboard (`Keys.js` only).
 5. Refresh `loop-next.md` with `python3 tools/loop-next.py` when useful — do not rewrite this whole file.
 
-**Last updated:** 2026-11-11 — Full plate armour sets (2.1 A) added to §0; session polish earlier.
+**Last updated:** 2026-11-11 — Auto-attack defaults off; auto-retaliate stays on.
 
-**Total tasks: 331** (36 priority + 290 in the 14 playable sections + 5 stretch). Unfinished gathering/bank/craft todos promoted into §0 (not duplicated as active work).
+**Total tasks: 333** (38 priority + 290 in the 14 playable sections + 5 stretch). Unfinished gathering/bank/craft todos promoted into §0 (not duplicated as active work).
 
 ---
 ## 0. Priority: Bank / crafting / resizable UI / gathering & hunting
@@ -59,6 +59,7 @@ Active queue — implement top-down before returning to sections 1–14.
 - [done] Death/ground loot only on walkable tiles near the drop. — Conclusion: Loot/death drops snap to nearest ground tiles; no piles on solids.
 - [done] Mob agro only if mob combat level > player (`alwaysAgro` excepted). — Conclusion: Proactive chase gated by levels; `alwaysAgro` still engages; chase stops if player outlevels.
 - [done] Auto-retaliate chases agroing mobs into weapon range. — Conclusion: Agro-first retaliate walks into range then fights (not melee-only instant).
+- [done] Auto-attack defaults **off**; auto-retaliate defaults **on**. — Conclusion: `makeHero` / normalize: missing `autoAttack` → false, missing `autoRetaliate` → true; HudApp labels Off/On; README + GDD updated.
 - [done] Mob speeds ≤ half player walk by type; no chase speed-up. — Conclusion: Per-type `MOB_MOVE_SPEED` ≤45; wander and chase share one speed.
 - [done] Campfire heal within 5 tiles + faint effect radius ring. — Conclusion: Campfire HP regen radius 5 tiles; ring GFX matches combat range style.
 - [done] Zone exit trigger widened to 2 tiles. — Conclusion: Edge exit strips are 2 tiles (was 14px); opposite-side spawn unchanged.
@@ -69,6 +70,8 @@ Active queue — implement top-down before returning to sections 1–14.
 - [done] Dark title overlay after refresh auto-continue fixed. — Conclusion: Title scrim cleared when auto-continue resumes `WorldScene`.
 - [done] Docs: `emberwood-resource-obtainability.md` + `emberwood-game-design.md`. — Conclusion: Resource paths and GDD checked into `docs/`; grounded in live code.
 - [done] Full plate armour sets (design plan 2.1 A): iron / diamond / dragonite helm·body·legs·shield with smithing recipes + arms shop stock. — Conclusion: Twelve plate pieces in `ITEM_DB`; anvil smith recipes; weapon shop restocks; human playtest (suite blocked).
+- [done] Full ore mining ladder (copper/tin/iron/diamondore/dragoniteore/runeessence) with colors, level gates, Darkmine fixed nodes + Highlands diamond/iron props; smelt/smith to diamond pick. — Conclusion: `MINE_PROPS` + `HIGHLANDS_MINE_PROPS`; `RESOURCE_LEVEL` + furnace/anvil recipes + Mira stock; any pickaxe mines ores; diamond pick is craftable/buyable.
+- [done] Dragon Den: Highlands sealing boulder (diamond+ pick) → `dragonden` biome with dragons, fire altar, campfire, exit; persist `flags.dragonDenOpen`; entrance/exit markers + approach chat. — Conclusion: Gate/markers/step-in; den map + Dragon spawns; flag saved with hero; Hermit Ola tip.
 
 Related unfinished (kept in later sections): depleted fish-spot move. (Firemaking / cooking / smithing / shop UI already `[done]` in §§7–8.)
 
@@ -613,4 +616,5 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | loot-top | 2026-11-11 | Left-click takes top loot; menu on right-click or 2s hold | done — pending take top; `LONG_PRESS_MS` 2000 |
 | no-test | 2026-11-11 | Reaffirm: all testing + agent browser proof disabled | blocked — `.cursor/rules/no-testing.mdc` + README + §14 + loop-next |
 | plan-track | 2026-11-11 | Track session plan/action items as `[done]` in §0 | done — 20 new §0 rows (combat FX, ore nodes, loot icons, examine value, ranges, cook 1/5/all, gravestone, agro, speeds, campfire, exits, dungeon cues, stat bars, overlay, docs); weaker older rows extended; suite proof not claimed |
+| den-ore | 2026-11-11 | Dragon Den + full ore→diamond-pick unlock | done — highland boulder/markers/step-in; den biome; HIGHLANDS_MINE_PROPS; loop-tasks §0 + design-plan status; suite proof not claimed |
 

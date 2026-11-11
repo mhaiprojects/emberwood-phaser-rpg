@@ -81,9 +81,18 @@ Failure chat: `You need level N.`
 | dragoniteore | (28,18) |
 | runeessence | (12,18), (13,20), (18,22) |
 
-- **Other zones** with rocks: hash of tile coords — copper/tin by default; Graves mixes iron; Highlands mixes iron and diamondore.
+- **Highlands** fixed nodes (`HIGHLANDS_MINE_PROPS`) plus hash rocks:
+
+| Ore | Fixed tiles |
+|-----|-------------|
+| diamondore | (26,12), (24,10) |
+| iron | (22,14) |
+
+- **Other zones** with rocks: hash of tile coords — copper/tin by default; Graves mixes iron; Highlands hash also mixes iron / diamondore.
+- Tool: any owned pickaxe (`tool: 'pickaxe'`). Level gates in `RESOURCE_LEVEL` (iron 15, diamondore 40, dragoniteore 60).
 - Rock depletes → respawns (~10s). Mining XP 10 per success.
-- **Dragon Den boulder** (Highlands): needs pickaxe **tier ≥ 5** (diamond+). Clears seal into `dragonden`.
+- **Unlock path:** mine `diamondore` (Darkmine or Highlands) → furnace `diamondbar` (Smithing 40) → anvil `diamondpick` → Highlands sealing boulder (pick tier ≥ 5). Mira also stocks diamond ore/pick.
+- **Dragon Den boulder** (Highlands): needs pickaxe **tier ≥ 5** (diamond+). Clears seal into `dragonden`; persists `hero.flags.dragonDenOpen`.
 
 ### Hunting / combat skins (not a gather click)
 
