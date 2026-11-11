@@ -265,15 +265,16 @@ img.pix {
 }
 
 .skill-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
     align-items: center;
-    justify-content: space-between;
+    column-gap: 4px;
     background: #2b2418;
     padding: 3px 6px;
 }
 
-.skill-row span {
-    flex: 1;
+.skill-row > span {
+    min-width: 0;
 }
 
 .stat span {
@@ -308,14 +309,6 @@ img.pix {
     grid-template-columns: 1fr 1fr;
     gap: 3px 10px;
     font-size: 12px;
-}
-
-.skill-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: #2b2418;
-    padding: 3px 6px;
 }
 
 #magic-list {
@@ -428,17 +421,87 @@ canvas {
     margin: 3px 0;
 }
 
-.hp-bar {
-    height: 10px;
-    background: #2a1515;
-    border: 1px solid #111;
-    margin: 4px 0 8px;
+.stat-with-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
 }
 
-#hp-fill {
+.stat-with-bar > span {
+    justify-content: flex-start;
+}
+
+.stat-bar,
+.hp-bar {
+    position: relative;
+    height: 16px;
+    background: #1c1510;
+    border: 1px solid #111;
+    margin: 2px 0 6px;
+    overflow: hidden;
+}
+
+.stat-bar--hp {
+    background: #2a1515;
+}
+
+.stat-bar--run {
+    background: #15202a;
+}
+
+.stat-bar--xp {
+    background: #2a2210;
+}
+
+.stat-bar--prayer {
+    background: #241c12;
+}
+
+.stat-bar--special {
+    background: #2a1c10;
+}
+
+.stat-bar-fill,
+#hp-fill,
+#run-fill,
+#xp-fill,
+#prayer-fill,
+#special-fill {
     height: 100%;
     width: 100%;
     background: #3dcc6a;
+}
+
+#run-fill {
+    background: #6a9ad4;
+}
+
+#xp-fill {
+    background: #c9a227;
+}
+
+#prayer-fill {
+    background: #c9a227;
+}
+
+#special-fill {
+    background: #e8a030;
+}
+
+.stat-bar-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff8d0;
+    text-shadow: 0 1px 1px #000, 0 0 3px #000, 0 0 6px #000;
+    pointer-events: none;
+    letter-spacing: 0.02em;
 }
 
 .run-bar {
@@ -449,10 +512,14 @@ canvas {
     border-color: #e6c56a;
 }
 
-#run-fill {
-    height: 100%;
-    width: 100%;
-    background: #6a9ad4;
+.skill-row .stat-bar {
+    grid-column: 1 / -1;
+    margin: 2px 0 0;
+    height: 14px;
+}
+
+.skill-row .stat-bar-label {
+    font-size: 9px;
 }
 
 #minimap-chrome {

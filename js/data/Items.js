@@ -2559,6 +2559,21 @@ function skillXpToNext(skill) {
     return remain > 0 ? remain : 0;
 }
 
+function skillXpBar(skill) {
+    var xp = skill && typeof skill.xp === 'number' ? skill.xp : 0;
+    var level = skill && typeof skill.level === 'number' && skill.level >= 1
+        ? Math.floor(skill.level)
+        : 1;
+    var next = xpForNextSkillLevel(level);
+    var pct = next > 0 ? Math.max(0, Math.min(100, (xp / next) * 100)) : 0;
+    return {
+        xp: xp,
+        next: next,
+        pct: pct,
+        label: xp + '/' + next
+    };
+}
+
 function skillXpText(name, skill) {
     var xp = skill && typeof skill.xp === 'number' ? skill.xp : 0;
     return name + ': ' + xp + ' XP (' + skillXpToNext(skill) + ' XP to next level)';

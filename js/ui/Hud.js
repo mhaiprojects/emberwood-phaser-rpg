@@ -1066,13 +1066,17 @@ var Hud = {
     renderPrayers: function (hero) {
         var points = hero && typeof hero.prayerPoints === 'number' ? hero.prayerPoints : 1;
         var max = hero && typeof hero.maxPrayerPoints === 'number' ? hero.maxPrayerPoints : points;
-        var el = document.getElementById('prayer-points');
         var buttons;
         var i;
         var id;
-        if (el) {
-            el.textContent = 'Prayer points: ' + points + ' / ' + max;
-        }
+        this.paintStatBar(
+            document.getElementById('prayer-fill'),
+            document.getElementById('prayer-points'),
+            points,
+            max,
+            '#c9a227',
+            points + ' / ' + max
+        );
         buttons = document.querySelectorAll('[data-prayer]');
         for (i = 0; i < buttons.length; i++) {
             id = buttons[i].getAttribute('data-prayer');
@@ -3171,6 +3175,7 @@ var Hud = {
             : (typeof skillTotal === 'function' ? skillTotal(this.hero()) : 0);
         var vue = this.vueState();
         var hpText = state.hp + ' / ' + state.maxHp;
+        var xpBar = this.combatXpBar(state.xp);
         if (vue) {
             vue.zone = state.zone;
             vue.zoneId = state.zoneId;
@@ -3179,6 +3184,9 @@ var Hud = {
             vue.hpText = hpText;
             vue.gold = state.gold;
             vue.xp = state.xp;
+            vue.xpText = xpBar.label;
+            vue.xpFillPct = xpBar.pct;
+            vue.xpFillColor = '#c9a227';
             vue.level = state.level;
             vue.total = total;
             vue.quest = state.quest;
@@ -3198,7 +3206,7 @@ var Hud = {
                 this.el.gold.textContent = String(state.gold);
             }
             if (this.el.xp) {
-                this.el.xp.textContent = String(state.xp);
+                this.el.xp.textContent = xpBar.label;
             }
             if (this.el.level) {
                 this.el.level.textContent = String(state.level);
@@ -3218,13 +3226,48 @@ var Hud = {
             this.renderWorldMap();
         }
         this.paintHpFill(state.hp, state.maxHp);
+        this.paintXpBar(state.xp);
         this.renderHero(this.hero());
+    },
+
+    paintStatBar: function (fillEl, labelEl, cur, max, color, labelText) {
+        var cap = max > 0 ? max : 0;
+        var amount = typeof cur === 'number' ? cur : 0;
+        var pct = cap ? Math.max(0, Math.min(100, (amount / cap) * 100)) : 0;
+        var text = labelText != null
+            ? String(labelText)
+            : (Math.round(amount) + ' / ' + Math.round(cap));
+        if (fillEl) {
+            fillEl.style.width = pct + '%';
+            if (color) {
+                fillEl.style.backgroundColor = color;
+            }
+        }
+        if (labelEl) {
+            labelEl.textContent = text;
+        }
+        return pct;
+    },
+
+    combatXpBar: function (xp) {
+        var amount = typeof xp === 'number' ? xp : 0;
+        var band = 40;
+        var next = (Math.floor(amount / band) + 1) * band;
+        var into = amount - (next - band);
+        var pct = Math.max(0, Math.min(100, (into / band) * 100));
+        return {
+            xp: amount,
+            next: next,
+            pct: pct,
+            label: amount + ' / ' + next
+        };
     },
 
     paintHpFill: function (hp, maxHp) {
         var ratio = maxHp ? hp / maxHp : 0;
         var pct = Math.max(0, Math.min(100, ratio * 100));
         var color = '#3dcc6a';
+        var hpText = hp + ' / ' + maxHp;
         if (ratio < 0.35) {
             color = '#cc3d3d';
         } else if (ratio < 0.65) {
@@ -3234,14 +3277,36 @@ var Hud = {
         if (vue) {
             vue.hpFillPct = pct;
             vue.hpFillColor = color;
-            vue.hpText = hp + ' / ' + maxHp;
+            vue.hpText = hpText;
             vue.hp = hp;
             vue.maxHp = maxHp;
         }
         var fill = document.getElementById('hp-fill');
+        var label = document.getElementById('hud-hp');
+        if (!vue) {
+            this.paintStatBar(fill, label, hp, maxHp, color, hpText);
+        } else if (label) {
+            label.textContent = hpText;
+        }
+    },
+
+    paintXpBar: function (xp) {
+        var bar = this.combatXpBar(xp);
+        var vue = this.vueState();
+        if (vue) {
+            vue.xp = bar.xp;
+            vue.xpText = bar.label;
+            vue.xpFillPct = bar.pct;
+            vue.xpFillColor = '#c9a227';
+        }
+        var fill = document.getElementById('xp-fill');
+        var label = document.getElementById('hud-xp');
+        if (label) {
+            label.textContent = bar.label;
+        }
         if (fill && !vue) {
-            fill.style.width = pct + '%';
-            fill.style.backgroundColor = color;
+            fill.style.width = bar.pct + '%';
+            fill.style.backgroundColor = '#c9a227';
         }
     },
 
@@ -3270,6 +3335,7 @@ var Hud = {
             }
         }
         this.paintHpFill(hero.hp, hero.maxHp);
+        this.paintXpBar(hero.xp);
         this.renderInventory(hero);
         this.renderSkills(hero);
         this.renderEquip(hero);
@@ -3343,9 +3409,11 @@ var Hud = {
         var ratio = cap ? amount / cap : 0;
         var pct = Math.max(0, Math.min(100, ratio * 100));
         var color = running ? '#e6c56a' : '#6a9ad4';
+        var runText = Math.round(amount) + ' / ' + Math.round(cap);
         var vue = this.vueState();
         if (vue) {
             vue.runEnergy = amount;
+            vue.runText = runText;
             vue.runFillPct = pct;
             vue.runFillColor = color;
             vue.running = !!running;
@@ -3353,12 +3421,10 @@ var Hud = {
         var fill = document.getElementById('run-fill');
         var label = document.getElementById('hud-run');
         var bar = document.getElementById('run-bar');
-        if (label && !vue) {
-            label.textContent = String(Math.round(amount));
-        }
-        if (fill && !vue) {
-            fill.style.width = pct + '%';
-            fill.style.backgroundColor = color;
+        if (!vue) {
+            this.paintStatBar(fill, label, amount, cap, color, runText);
+        } else if (label) {
+            label.textContent = runText;
         }
         if (bar) {
             bar.classList.toggle('is-on', !!running);
@@ -3477,9 +3543,16 @@ var Hud = {
             var skill = hero.skills && hero.skills[pair[0]];
             var level = skill ? skill.level : 1;
             var hint = typeof skillXpText === 'function' ? skillXpText(pair[1], skill) : pair[1];
+            var bar = typeof skillXpBar === 'function'
+                ? skillXpBar(skill)
+                : { pct: 0, label: '0/50' };
             html += '<div class="skill-row" data-skill="' + pair[0] + '" title="' + hint + '">' +
                 '<img class="pix" src="' + skillIcon(pair[0]) + '" alt="">' +
-                '<span>' + pair[1] + '</span><strong>' + level + '</strong></div>';
+                '<span>' + pair[1] + '</span><strong>' + level + '</strong>' +
+                '<div class="stat-bar stat-bar--xp">' +
+                '<div class="stat-bar-fill" style="width:' + bar.pct + '%;background:#c9a227"></div>' +
+                '<strong class="stat-bar-label">' + bar.label + '</strong>' +
+                '</div></div>';
         });
         this.el.skills.innerHTML = html;
     },
@@ -3888,12 +3961,14 @@ var Hud = {
     renderSpecialEnergy: function (hero) {
         var el = document.getElementById('special-energy');
         var fill = document.getElementById('special-fill');
+        var label = document.getElementById('special-label');
         var pct;
         if (!el || !fill) {
             return;
         }
         pct = hero && typeof hero.specialEnergy === 'number' ? hero.specialEnergy : 100;
-        fill.style.width = Math.max(0, Math.min(100, pct)) + '%';
+        pct = Math.max(0, Math.min(100, pct));
+        this.paintStatBar(fill, label, pct, 100, '#e8a030', Math.round(pct) + '%');
         el.hidden = false;
     },
 

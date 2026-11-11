@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Emberwood</title>
     <link rel="icon" href="assets/svg/ui/combat.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/style.css?v=cookqty1">
+    <link rel="stylesheet" href="css/style.css?v=statbar1">
 </head>
 <body>
     <div id="shell">
@@ -25,12 +25,28 @@
                     <div class="stat"><span>Name</span><strong id="hud-name">{{ displayName }}</strong></div>
                     <div class="stat"><span><img class="pix" src="assets/svg/ui/combat.svg" alt=""> Combat</span><strong id="hud-level">{{ level }}</strong></div>
                     <div class="stat"><span><img class="pix" src="assets/svg/ui/skills.svg" alt=""> Total</span><strong id="hud-total">{{ total }}</strong></div>
-                    <div class="stat"><span><img class="pix" src="assets/svg/skills/hitpoints.svg" alt=""> Hitpoints</span><strong id="hud-hp">{{ hpText }}</strong></div>
-                    <div class="hp-bar"><div id="hp-fill" :style="{ width: hpFillPct + '%', backgroundColor: hpFillColor }"></div></div>
-                    <div class="stat"><span>Run energy</span><strong id="hud-run">{{ Math.round(runEnergy) }}</strong></div>
-                    <div class="hp-bar run-bar" id="run-bar" data-run-toggle title="Click to toggle walk or run (Ctrl)" :class="{ 'is-on': running }"><div id="run-fill" :style="{ width: runFillPct + '%', backgroundColor: runFillColor }"></div></div>
+                    <div class="stat stat-with-bar">
+                        <span><img class="pix" src="assets/svg/skills/hitpoints.svg" alt=""> Hitpoints</span>
+                        <div class="stat-bar stat-bar--hp" id="hp-bar">
+                            <div class="stat-bar-fill" id="hp-fill" :style="{ width: hpFillPct + '%', backgroundColor: hpFillColor }"></div>
+                            <strong class="stat-bar-label" id="hud-hp">{{ hpText }}</strong>
+                        </div>
+                    </div>
+                    <div class="stat stat-with-bar">
+                        <span>Run energy</span>
+                        <div class="stat-bar stat-bar--run run-bar" id="run-bar" data-run-toggle title="Click to toggle walk or run (Ctrl)" :class="{ 'is-on': running }">
+                            <div class="stat-bar-fill" id="run-fill" :style="{ width: runFillPct + '%', backgroundColor: runFillColor }"></div>
+                            <strong class="stat-bar-label" id="hud-run">{{ runText }}</strong>
+                        </div>
+                    </div>
                     <div class="stat"><span><img class="pix" src="assets/svg/ui/gold.svg" alt=""> Gold</span><strong id="hud-gold">{{ gold }}</strong></div>
-                    <div class="stat"><span><img class="pix" src="assets/svg/ui/xp.svg" alt=""> XP</span><strong id="hud-xp">{{ xp }}</strong></div>
+                    <div class="stat stat-with-bar">
+                        <span><img class="pix" src="assets/svg/ui/xp.svg" alt=""> XP</span>
+                        <div class="stat-bar stat-bar--xp" id="xp-bar">
+                            <div class="stat-bar-fill" id="xp-fill" :style="{ width: xpFillPct + '%', backgroundColor: xpFillColor }"></div>
+                            <strong class="stat-bar-label" id="hud-xp">{{ xpText }}</strong>
+                        </div>
+                    </div>
                 </div>
                 <div class="panel">
                     <h2>Task</h2>
@@ -96,7 +112,10 @@
                             <button type="button" class="run-mode-btn" data-run-toggle title="Toggle walk or run (Ctrl)" :class="{ 'is-on': running }">{{ runLabel }}</button>
                             <h3>Special attack</h3>
                             <p>Builds on successful hits. Uses 25% energy for a stronger strike.</p>
-                            <div class="hp-bar" id="special-energy"><div id="special-fill" style="width:100%;background:#e8a030"></div></div>
+                            <div class="stat-bar stat-bar--special" id="special-energy">
+                                <div class="stat-bar-fill" id="special-fill" style="width:100%;background:#e8a030"></div>
+                                <strong class="stat-bar-label" id="special-label">100%</strong>
+                            </div>
                             <button type="button" id="btn-special" data-special-attack title="Special attack (25% energy)">Special</button>
                         </div>
                         <div id="panel-skills" class="tab-panel" v-show="tab === 'skills'">
@@ -116,7 +135,10 @@
                         </div>
                         <div id="panel-prayer" class="tab-panel" v-show="tab === 'prayer'">
                             <h3>Prayer</h3>
-                            <p id="prayer-points">Prayer points: 1 / 1</p>
+                            <div class="stat-bar stat-bar--prayer" id="prayer-bar">
+                                <div class="stat-bar-fill" id="prayer-fill" style="width:100%;background:#c9a227"></div>
+                                <strong class="stat-bar-label" id="prayer-points">1 / 1</strong>
+                            </div>
                             <div id="prayer-list" v-manual>
                                 <button type="button" data-prayer="thickskin" title="+Defence while active">Thick Skin</button>
                                 <button type="button" data-prayer="burststrength" title="+Strength while active">Burst of Strength</button>
@@ -338,12 +360,12 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
     <script src="js/input/Keys.js?v=run1"></script>
-    <script src="js/data/Items.js?v=retal1"></script>
+    <script src="js/data/Items.js?v=statbar1"></script>
     <script src="js/data/Save.js?v=resume1"></script>
     <script src="js/data/Scales.js?v=den1"></script>
-    <script src="js/ui/HudApp.js?v=viz1"></script>
+    <script src="js/ui/HudApp.js?v=statbar1"></script>
     <script src="js/ui/Sfx.js?v=music1"></script>
-    <script src="js/ui/Hud.js?v=respawn1"></script>
+    <script src="js/ui/Hud.js?v=statbar1"></script>
     <script src="js/world/MapGen.js?v=shaft1"></script>
     <script src="js/world/Pathfind.js?v=mobedge1"></script>
     <script src="js/world/Zones.js?v=den1"></script>
