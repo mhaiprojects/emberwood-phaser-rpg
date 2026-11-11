@@ -22,10 +22,11 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 3. One feature at a time. Conclusion is `—` until shipped; then one short line.
 4. Never re-enable Phaser keyboard (`Keys.js` only).
 5. Refresh `loop-next.md` with `python3 tools/loop-next.py` when useful — do not rewrite this whole file.
+6. **Every new user request** (feature/fix/content/process) is logged here immediately as `[todo]`/`[doing]` and status-tracked to `[done]`/`[blocked]` — see `.cursor/rules/loop-tasks-track-requests.mdc`.
 
-**Last updated:** 2026-11-11 — Zone gather mix + Mine / Endless Mine scaling.
+**Last updated:** 2026-11-11 — Loop-tasks request-tracking rule + meta backlog rows.
 
-**Total tasks: 336** (41 priority + 290 in the 14 playable sections + 5 stretch). Unfinished gathering/bank/craft todos promoted into §0 (not duplicated as active work).
+**Total tasks: 338** (43 priority + 290 in the 14 playable sections + 5 stretch). Unfinished gathering/bank/craft todos promoted into §0 (not duplicated as active work).
 
 ---
 ## 0. Priority: Bank / crafting / resizable UI / gathering & hunting
@@ -77,6 +78,8 @@ Active queue — implement top-down before returning to sections 1–14.
 - [done] Overworld mob density + 5-level zone bands (≈10–20/map; starter lean high). — Conclusion: `ZONE_LEVEL_BAND` + rebuilt `MOB_DEFS` (haven/millfields/westmead 1–5; southshore/northwood/darkmine 6–10; mire 11–15; graves 16–20; highlands 26–30; dragonden 51–55 alwaysAgro×4); dungeon counts unchanged; edge inset spawns.
 - [done] Zone gather mix by band + Mine hardest + Endless Mine scaling. — Conclusion: Trees/ores align early→late (Mine magic + full ores, band 36–40); Endless Mine UX rename (keys stable); mobs level 20+(N−1); Dragon every 21st floor; early-zone copper rocks.
 - [done] Click-walk pauses auto-attack + auto-retaliate until path ends. — Conclusion: `playerClickWalkActive` on ground/Walk-here/fight click `setWalk({playerClick})`; cleared in `clearWalk`; gates `tryAutoEngage` / `queueRetaliate` / `chaseFightPlayerClose`; mob agro hits still apply.
+- [done] Sync design-plan actions into loop-tasks (meta). — Conclusion: Plan 2.1 plate sets, Dragon Den, ore ladder, fishing access, pathing, combat defaults, zone bands/gather mix, click-walk pause logged in §0; no duplicate identical rows.
+- [done] Rule: track every new user request in loop-tasks. — Conclusion: Always-apply `.cursor/rules/loop-tasks-track-requests.mdc`; process step 6; backfill of recent chat requests into §0.
 
 Related unfinished (kept in later sections): depleted fish-spot move. (Firemaking / cooking / smithing / shop UI already `[done]` in §§7–8.)
 

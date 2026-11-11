@@ -1,0 +1,32 @@
+---
+description: Log every new user feature/fix/content request in loop-tasks.md and keep statuses current
+alwaysApply: true
+---
+
+# Track every request in loop-tasks.md
+
+When the user makes a **new feature, fix, content, or process request**, log it in `loop-tasks.md` before or as you start work. Do not skip logging even if you implement immediately.
+
+## On new request
+
+1. Add a row under the right section (prefer **§0** Priority when it is active work; otherwise the matching numbered section).
+2. Status: `[todo]` if queued, `[doing]` if you start now.
+3. Prefer extending a weaker/existing row over creating a duplicate identical row.
+
+## While working
+
+- Keep the row at `[doing]`.
+- Update wording if scope clarifies mid-task.
+
+## On completion
+
+- Mark `[done]` with a brief conclusion (one short line).
+- Do **not** claim suite/smoke proof while testing is disabled (see `no-testing.mdc`).
+- Use `[blocked]` when stuck on a real dependency; say what blocks it.
+
+## Examples
+
+```markdown
+- [doing] Click-walk pauses auto-attack until path ends.
+- [done] Campfire heal within 5 tiles + effect radius ring. — Conclusion: regen radius 5; ring GFX matches combat range style.
+```
