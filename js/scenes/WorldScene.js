@@ -741,7 +741,7 @@ var WorldScene = new Phaser.Class({
             }
             if (this.zoneId && this.zoneId !== zoneId) {
                 this.snapshotLoot();
-                this.snapshotGraves();
+                this.snapshotGraves({ force: true });
             }
         }
         this.interiorId = null;
@@ -823,7 +823,7 @@ var WorldScene = new Phaser.Class({
         if (!this.interiorId) {
             this.snapshotMobs();
             this.snapshotLoot();
-            this.snapshotGraves();
+            this.snapshotGraves({ force: true });
         }
         this.interiorId = interiorId;
         this.clearWorldObjects();
@@ -874,7 +874,7 @@ var WorldScene = new Phaser.Class({
         if (this.zoneId !== 'dungeon') {
             this.snapshotMobs();
             this.snapshotLoot();
-            this.snapshotGraves();
+            this.snapshotGraves({ force: true });
         }
         this.interiorId = null;
         this.dungeonFloor = floor;
@@ -4575,8 +4575,7 @@ var WorldScene = new Phaser.Class({
             if (this.spawnDeathGravestone) {
                 this.spawnDeathGravestone();
             }
-            this.scene.stop('UIScene');
-            this.scene.start('GameOverScene');
+            this.goToGameOver();
         }
     },
 
@@ -5094,8 +5093,7 @@ var WorldScene = new Phaser.Class({
             if (this.spawnDeathGravestone) {
                 this.spawnDeathGravestone();
             }
-            this.scene.stop('UIScene');
-            this.scene.start('GameOverScene');
+            this.goToGameOver();
             return;
         }
         if (outcome === 'flee') {
@@ -5551,19 +5549,37 @@ var WorldScene = new Phaser.Class({
         this.groundLoot.length = 0;
     },
 
+    /* scene.start(GameOver) would shut down WorldScene and destroy grave sprites.
+       Sleep + launch keeps graveZoneState / sprites until respawn wakes the world. */
+    goToGameOver: function () {
+        this.scene.stop('UIScene');
+        if (this.scene.isActive('GameOverScene') || this.scene.isSleeping('GameOverScene')) {
+            if (this.scene.isSleeping('GameOverScene')) {
+                this.scene.wake('GameOverScene');
+            }
+        } else {
+            this.scene.launch('GameOverScene');
+        }
+        this.scene.sleep();
+    },
+
     ensureGravestoneTexture: function () {
-        if (this.textures.exists('gravestone')) {
+        if (this.textures.exists('playergrave')) {
             return;
         }
         var g = this.make.graphics({ x: 0, y: 0, add: false });
-        g.fillStyle(0x5a5a64, 1);
-        g.fillRect(3, 6, 10, 10);
-        g.fillStyle(0x8a8a96, 1);
-        g.fillCircle(8, 6, 5);
-        g.fillStyle(0x2e2e36, 1);
-        g.fillRect(7, 8, 2, 6);
+        g.fillStyle(0x1a1a22, 1);
+        g.fillRect(2, 7, 12, 9);
+        g.fillStyle(0xc8c8d4, 1);
+        g.fillRect(3, 6, 10, 9);
+        g.fillStyle(0xe8e8f0, 1);
+        g.fillCircle(8, 6, 6);
+        g.fillStyle(0x3a3a48, 1);
+        g.fillRect(7, 7, 2, 7);
         g.fillRect(5, 10, 6, 2);
-        g.generateTexture('gravestone', 16, 16);
+        g.lineStyle(1, 0xffe08a, 1);
+        g.strokeRect(2, 5, 12, 11);
+        g.generateTexture('playergrave', 16, 16);
         g.destroy();
     },
 
@@ -5574,6 +5590,9 @@ var WorldScene = new Phaser.Class({
             return;
         }
         for (i = 0; i < this.gravestones.length; i++) {
+            if (this.gravestones[i] && this.gravestones[i].label) {
+                this.gravestones[i].label.destroy();
+            }
             if (this.gravestones[i] && this.gravestones[i].sprite) {
                 this.gravestones[i].sprite.destroy();
             }
@@ -5582,10 +5601,13 @@ var WorldScene = new Phaser.Class({
         this.graveTarget = null;
     },
 
-    snapshotGraves: function () {
+    snapshotGraves: function (opts) {
         var saved = [];
         var i;
         var grave;
+        var force;
+        opts = opts || {};
+        force = !!opts.force;
         if (!this.graveZoneState) {
             this.graveZoneState = {};
         }
@@ -5605,9 +5627,10 @@ var WorldScene = new Phaser.Class({
                 })
             });
         }
-        /* Live list is authoritative when the zone is mounted. If sprites were never
-           created (death while asleep), keep graves already queued for this zone. */
-        if (this.gravestones) {
+        /* Live sprites are authoritative when present, or when force (zone leave / reclaim).
+           An empty live list without force must NOT wipe graves queued only in state
+           (death while asleep / shut down before draw). */
+        if (force || (this.gravestones && this.gravestones.length > 0)) {
             this.graveZoneState[this.zoneId] = saved;
         } else if (!this.graveZoneState[this.zoneId]) {
             this.graveZoneState[this.zoneId] = [];
@@ -5629,16 +5652,22 @@ var WorldScene = new Phaser.Class({
 
     placeGravestone: function (zoneId, x, y, items, fromRestore) {
         var sprite;
+        var label;
         var entry;
         this.ensureGravestoneTexture();
-        sprite = this.add.image(x, y, 'gravestone');
-        sprite.setDepth(5.5);
-        sprite.setDisplaySize(16, 16);
+        sprite = this.add.image(x, y, 'playergrave');
+        sprite.setDepth(9);
+        sprite.setDisplaySize(20, 20);
         sprite.setInteractive({
             useHandCursor: true,
-            hitArea: new Phaser.Geom.Rectangle(-4, -4, 24, 24),
+            hitArea: new Phaser.Geom.Rectangle(-6, -6, 28, 28),
             hitAreaCallback: Phaser.Geom.Rectangle.Contains
         });
+        label = this.add.text(x, y - 14, 'Gravestone', {
+            fontFamily: 'Verdana, sans-serif',
+            fontSize: '8px',
+            color: '#ffe08a'
+        }).setOrigin(0.5, 1).setDepth(9.1);
         entry = {
             zoneId: zoneId || this.zoneId,
             x: x,
@@ -5648,16 +5677,38 @@ var WorldScene = new Phaser.Class({
             }).filter(function (row) {
                 return row.id && row.qty > 0;
             }),
-            sprite: sprite
+            sprite: sprite,
+            label: label
         };
         if (!this.gravestones) {
             this.gravestones = [];
         }
         this.gravestones.push(entry);
         if (!fromRestore) {
-            this.snapshotGraves();
+            this.snapshotGraves({ force: true });
         }
         return entry;
+    },
+
+    queueGraveData: function (zoneId, x, y, items) {
+        var row;
+        if (!this.graveZoneState) {
+            this.graveZoneState = {};
+        }
+        if (!this.graveZoneState[zoneId]) {
+            this.graveZoneState[zoneId] = [];
+        }
+        row = {
+            x: x,
+            y: y,
+            items: (items || []).map(function (entry) {
+                return { id: entry.id, qty: entry.qty };
+            }).filter(function (entry) {
+                return entry.id && entry.qty > 0;
+            })
+        };
+        this.graveZoneState[zoneId].push(row);
+        return row;
     },
 
     spawnDeathGravestone: function () {
@@ -5667,6 +5718,7 @@ var WorldScene = new Phaser.Class({
         var y;
         var zoneId;
         var grave;
+        var canPlace;
         if (!hero) {
             return null;
         }
@@ -5694,26 +5746,15 @@ var WorldScene = new Phaser.Class({
             }
             return null;
         }
-        if (!this.graveZoneState) {
-            this.graveZoneState = {};
-        }
-        if (this.add) {
-            /* Place even if this is not the active/running scene (e.g. sleeping under Battle). */
-            if (this.zoneId !== zoneId) {
-                if (!this.graveZoneState[zoneId]) {
-                    this.graveZoneState[zoneId] = [];
-                }
-                this.graveZoneState[zoneId].push({ x: x, y: y, items: items });
-                grave = this.graveZoneState[zoneId][this.graveZoneState[zoneId].length - 1];
-            } else {
-                grave = this.placeGravestone(zoneId, x, y, items);
-            }
-        } else {
-            if (!this.graveZoneState[zoneId]) {
-                this.graveZoneState[zoneId] = [];
-            }
-            grave = { x: x, y: y, items: items };
-            this.graveZoneState[zoneId].push(grave);
+        /* Always persist first — GameOver used to scene.start and shut World down,
+           destroying any sprite before the player could see or restore it. */
+        grave = this.queueGraveData(zoneId, x, y, items);
+        canPlace = !!(this.add && this.sys && this.zoneId === zoneId
+            && (this.sys.isActive() || this.sys.isSleeping()));
+        if (canPlace) {
+            /* Drop the state-only row; placeGravestone re-snapshots with a sprite. */
+            this.graveZoneState[zoneId].pop();
+            grave = this.placeGravestone(zoneId, x, y, items);
         }
         Hud.log('Your items tumble into a gravestone.');
         if (typeof this.exportWorldSave === 'function') {
@@ -5844,9 +5885,13 @@ var WorldScene = new Phaser.Class({
         grave.items = remain;
         if (remain.length) {
             Hud.log('Your inventory is full. Some items remain on the gravestone.');
-            this.snapshotGraves();
+            this.snapshotGraves({ force: true });
             this.refreshHud();
             return false;
+        }
+        if (grave.label) {
+            grave.label.destroy();
+            grave.label = null;
         }
         if (grave.sprite) {
             grave.sprite.destroy();
@@ -5857,7 +5902,7 @@ var WorldScene = new Phaser.Class({
                 return row !== grave;
             });
         }
-        this.snapshotGraves();
+        this.snapshotGraves({ force: true });
         Hud.log('You reclaim everything from the gravestone.');
         if (window.Sfx && Sfx.pickup) {
             Sfx.pickup();

@@ -1930,10 +1930,16 @@ var Hud = {
             reg.set('playerY', null);
         }
         world = window.game.scene.getScene('WorldScene');
-        if (window.game.scene.isActive('WorldScene') && world && world.player && world.respawnInHaven) {
+        /* Overworld death sleeps World under GameOver so graves stay in memory;
+           battle death stops World and relies on worldSave + a fresh start. */
+        if (world && world.player && world.respawnInHaven
+            && (window.game.scene.isActive('WorldScene') || window.game.scene.isSleeping('WorldScene'))) {
+            if (window.game.scene.isSleeping('WorldScene')) {
+                window.game.scene.wake('WorldScene');
+            }
             world.respawnInHaven();
             this.log('You wake in Emberhaven, barely standing.');
-            if (window.game.scene.isActive('GameOverScene')) {
+            if (window.game.scene.getScene('GameOverScene')) {
                 window.game.scene.stop('GameOverScene');
             }
             this.saveGame();
@@ -1946,6 +1952,9 @@ var Hud = {
                 window.game.scene.stop(key);
             }
         });
+        if (window.game.scene.isSleeping('WorldScene')) {
+            window.game.scene.stop('WorldScene');
+        }
         if (window.game.scene.getScene('GameOverScene')) {
             window.game.scene.stop('GameOverScene');
         }
