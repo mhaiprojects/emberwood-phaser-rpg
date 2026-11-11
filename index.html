@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Emberwood</title>
     <link rel="icon" href="assets/svg/ui/combat.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/style.css?v=statbar1">
+    <link rel="stylesheet" href="css/style.css?v=darklayer1">
 </head>
 <body>
     <div id="shell">
@@ -212,7 +212,7 @@
                 </div>
             </div>
 
-            <div id="title-overlay" v-show="titleVisible">
+            <div id="title-overlay" :hidden="!titleVisible">
                 <div class="title-card">
                     <h1>EMBERWOOD</h1>
                     <p>A free-roam adventure in the style of classic RuneScape.</p>
@@ -263,7 +263,7 @@
                 </div>
             </div>
 
-            <div id="dead-overlay" v-show="deadVisible">
+            <div id="dead-overlay" :hidden="!deadVisible">
                 <div class="title-card">
                     <h1>You are dead</h1>
                     <p id="dead-text">{{ deadText }}</p>
@@ -363,9 +363,9 @@
     <script src="js/data/Items.js?v=statbar1"></script>
     <script src="js/data/Save.js?v=resume1"></script>
     <script src="js/data/Scales.js?v=den1"></script>
-    <script src="js/ui/HudApp.js?v=statbar1"></script>
+    <script src="js/ui/HudApp.js?v=darklayer1"></script>
     <script src="js/ui/Sfx.js?v=music1"></script>
-    <script src="js/ui/Hud.js?v=grave2"></script>
+    <script src="js/ui/Hud.js?v=darklayer1"></script>
     <script src="js/world/MapGen.js?v=shaft1"></script>
     <script src="js/world/Pathfind.js?v=mobedge1"></script>
     <script src="js/world/Zones.js?v=den1"></script>
@@ -377,8 +377,8 @@
     <script src="js/ui/Message.js"></script>
     -->
     <script src="js/scenes/BootScene.js?v=looticon1"></script>
-    <script src="js/scenes/TitleScene.js?v=move4"></script>
-    <script src="js/scenes/WorldScene.js?v=fightclose1"></script>
+    <script src="js/scenes/TitleScene.js?v=darklayer1"></script>
+    <script src="js/scenes/WorldScene.js?v=darklayer1"></script>
     <script src="js/world/OverworldCombat.js?v=mobspd2"></script>
     <script src="js/world/StretchLite.js?v=noghost1"></script>
     <script src="js/scenes/BattleScene.js?v=grave1"></script>

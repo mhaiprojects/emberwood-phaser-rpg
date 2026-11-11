@@ -1445,15 +1445,18 @@ var WorldScene = new Phaser.Class({
         if (this.ground) {
             this.ground.setTint(tint);
         }
+        /* Fill at full opacity; Game Object alpha carries the hour strength so day
+           never leaves an opaque full-screen rect if fillAlpha were ignored. */
         if (!this.dayNightOverlay) {
-            this.dayNightOverlay = this.add.rectangle(0, 0, 2048, 2048, overlayColor, overlayAlpha)
+            this.dayNightOverlay = this.add.rectangle(0, 0, 2048, 2048, overlayColor, 1)
                 .setOrigin(0, 0)
                 .setScrollFactor(0)
                 .setDepth(40)
                 .setName('dayNight');
-        } else {
-            this.dayNightOverlay.setFillStyle(overlayColor, overlayAlpha);
         }
+        this.dayNightOverlay.setFillStyle(overlayColor, 1);
+        this.dayNightOverlay.setAlpha(overlayAlpha);
+        this.dayNightOverlay.setVisible(overlayAlpha > 0.001);
     },
 
     playZoneMusic: function () {

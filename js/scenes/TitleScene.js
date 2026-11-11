@@ -18,7 +18,10 @@ var TitleScene = new Phaser.Class({
         Hud.setStartHandler(function () {
             self.startGame();
         });
-        Hud.showTitle();
+        /* Auto-continue: do not call showTitle first. Re-showing the title scrim then
+           relying on hideTitle raced Vue v-show vs [hidden], leaving the dark
+           rgba(8,6,10,0.82) layer over WorldScene after refresh. startGame→hideTitle
+           clears the boot-time title from Hud.onVueMounted. */
         if (this.registry.get('autoContinueSave') && typeof hasSave === 'function' && hasSave()) {
             this.registry.set('autoContinueSave', false);
             Hud.log('Continuing your Emberwood save…');
@@ -28,6 +31,7 @@ var TitleScene = new Phaser.Class({
             return;
         }
         this.registry.set('autoContinueSave', false);
+        Hud.showTitle();
         Hud.log('Click “Click here to play”, then click the world to walk.');
     },
 

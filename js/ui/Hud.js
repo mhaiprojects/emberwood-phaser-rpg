@@ -1842,10 +1842,16 @@ var Hud = {
     },
 
     hideTitle: function () {
+        /* Mode first so Vue :hidden="!titleVisible" matches before any flush. */
+        this.setMode('world');
+        var vue = this.vueState();
+        if (vue) {
+            vue.titleVisible = false;
+            vue.shellTitle = false;
+        }
         if (this.el && this.el.title) {
             this.el.title.hidden = true;
         }
-        this.setMode('world');
         if (this.el && this.el.start) {
             this.el.start.blur();
         }
