@@ -986,6 +986,7 @@ var WorldScene = new Phaser.Class({
             sprite.nameLabel = label;
             self.floatLabels.push(label);
             self.physics.add.collider(sprite, self.ground);
+            self.nudgeMobOffMapEdge(sprite);
         });
     },
 
@@ -1128,8 +1129,43 @@ var WorldScene = new Phaser.Class({
             sprite.nameLabel = label;
             self.floatLabels.push(label);
             self.physics.add.collider(sprite, self.ground);
+            self.nudgeMobOffMapEdge(sprite);
             self.restoreMobState(sprite, zoneId, scale);
+            self.nudgeMobOffMapEdge(sprite);
         });
+    },
+
+    /* Soft-push mobs out of the outer MOB_EDGE_MARGIN_TILES map border. */
+    nudgeMobOffMapEdge: function (sprite) {
+        var tile;
+        var allowed;
+        var center;
+        var scale;
+        if (!sprite || typeof mobEdgeForbiddenAt !== 'function') {
+            return;
+        }
+        if (!mobEdgeForbiddenAt(sprite.x, sprite.y)) {
+            return;
+        }
+        tile = worldToTile(sprite.x, sprite.y);
+        allowed = typeof nearestMobAllowedTile === 'function'
+            ? nearestMobAllowedTile(this.tileGrid, tile.tx, tile.ty)
+            : (typeof clampMobTileToInner === 'function'
+                ? clampMobTileToInner(tile.tx, tile.ty)
+                : { tx: tile.tx, ty: tile.ty });
+        if (!allowed || typeof tileCenter !== 'function') {
+            return;
+        }
+        center = tileCenter(allowed.tx, allowed.ty);
+        sprite.setPosition(center.x, center.y);
+        if (sprite.body) {
+            sprite.body.reset(center.x, center.y);
+            sprite.body.setVelocity(0, 0);
+        }
+        if (sprite.nameLabel) {
+            scale = sprite.scaleX || 1;
+            sprite.nameLabel.setPosition(center.x, center.y - Math.round(8 * scale) - 6);
+        }
     },
 
     npcTileBlocked: function (zoneId, tx, ty) {
@@ -4150,6 +4186,8 @@ var WorldScene = new Phaser.Class({
         var dx;
         var dy;
         var len;
+        var vx;
+        var vy;
         if (!mob || !mob.aliveMob || !mob.body || !this.player) {
             return;
         }
@@ -4165,7 +4203,14 @@ var WorldScene = new Phaser.Class({
         dx = this.player.x - mob.x;
         dy = this.player.y - mob.y;
         len = dist || 1;
-        mob.body.setVelocity((dx / len) * speed, (dy / len) * speed);
+        vx = (dx / len) * speed;
+        vy = (dy / len) * speed;
+        if (typeof mobEdgeForbiddenAt === 'function' &&
+            mobEdgeForbiddenAt(mob.x + vx, mob.y + vy)) {
+            mob.body.setVelocity(0, 0);
+            return;
+        }
+        mob.body.setVelocity(vx, vy);
     },
 
     chaseInRange: function (chase) {
@@ -5850,6 +5895,10 @@ var WorldScene = new Phaser.Class({
             var vx = Math.cos(angle) * speed;
             var vy = Math.sin(angle) * speed;
             var type = mob.mobDef && mob.mobDef.type;
+            if (typeof mobEdgeForbiddenAt === 'function' &&
+                mobEdgeForbiddenAt(mob.x + vx, mob.y + vy)) {
+                return;
+            }
             if (isGiantMob(type) && giantBlockedAt(grid, mob.x + vx, mob.y + vy, zoneId)) {
                 return;
             }
@@ -5878,6 +5927,8 @@ var WorldScene = new Phaser.Class({
         var dx;
         var dy;
         var len;
+        var vx;
+        var vy;
         var started = false;
         var retaliate;
         if (!this.player || !this.player.body || this.uiPaused()) {
@@ -5931,7 +5982,14 @@ var WorldScene = new Phaser.Class({
             dx = self.player.x - mob.x;
             dy = self.player.y - mob.y;
             len = dist || 1;
-            mob.body.setVelocity((dx / len) * speed, (dy / len) * speed);
+            vx = (dx / len) * speed;
+            vy = (dy / len) * speed;
+            if (typeof mobEdgeForbiddenAt === 'function' &&
+                mobEdgeForbiddenAt(mob.x + vx, mob.y + vy)) {
+                mob.body.setVelocity(0, 0);
+                return;
+            }
+            mob.body.setVelocity(vx, vy);
         });
     },
 
@@ -5993,6 +6051,37 @@ var WorldScene = new Phaser.Class({
             var lookY = mob.y + vy * 0.2;
             if (giantBlockedAt(grid, mob.x, mob.y, zoneId) ||
                 ((vx || vy) && giantBlockedAt(grid, lookX, lookY, zoneId))) {
+                mob.body.setVelocity(0, 0);
+            }
+        });
+    },
+
+    /* Keep all mobs out of the outer MOB_EDGE_MARGIN_TILES map border. */
+    constrainMobMapEdge: function () {
+        var self = this;
+        if (typeof mobEdgeForbiddenAt !== 'function') {
+            return;
+        }
+        this.mobs.children.iterate(function (mob) {
+            var vx;
+            var vy;
+            var lookX;
+            var lookY;
+            if (!mob || !mob.aliveMob || !mob.body) {
+                return;
+            }
+            if (mobEdgeForbiddenAt(mob.x, mob.y)) {
+                self.nudgeMobOffMapEdge(mob);
+                return;
+            }
+            vx = mob.body.velocity.x;
+            vy = mob.body.velocity.y;
+            if (!vx && !vy) {
+                return;
+            }
+            lookX = mob.x + vx * 0.2;
+            lookY = mob.y + vy * 0.2;
+            if (mobEdgeForbiddenAt(lookX, lookY)) {
                 mob.body.setVelocity(0, 0);
             }
         });
@@ -6469,6 +6558,7 @@ var WorldScene = new Phaser.Class({
         }
         this.updateCombatRangeRings();
         this.constrainGiantMobs();
+        this.constrainMobMapEdge();
         this.tryLockedDoor();
         this.tryAgilityShortcut();
         this.updateDoors();

@@ -1,4 +1,67 @@
 var PATH_LINE_COLOR = 0xaa66ff;
+/* Outer map border tiles mobs may not enter; player still can (zone exits). */
+var MOB_EDGE_MARGIN_TILES = 2;
+
+function mobEdgeForbiddenTile(tx, ty) {
+    var margin = typeof MOB_EDGE_MARGIN_TILES === 'number' ? MOB_EDGE_MARGIN_TILES : 2;
+    var mw = typeof MAP_W === 'number' ? MAP_W : 36;
+    var mh = typeof MAP_H === 'number' ? MAP_H : 28;
+    return tx < margin || ty < margin || tx >= mw - margin || ty >= mh - margin;
+}
+
+function mobEdgeForbiddenAt(wx, wy) {
+    if (typeof worldToTile !== 'function') {
+        return false;
+    }
+    var tile = worldToTile(wx, wy);
+    return mobEdgeForbiddenTile(tile.tx, tile.ty);
+}
+
+function clampMobTileToInner(tx, ty) {
+    var margin = typeof MOB_EDGE_MARGIN_TILES === 'number' ? MOB_EDGE_MARGIN_TILES : 2;
+    var mw = typeof MAP_W === 'number' ? MAP_W : 36;
+    var mh = typeof MAP_H === 'number' ? MAP_H : 28;
+    return {
+        tx: Math.max(margin, Math.min(mw - margin - 1, tx)),
+        ty: Math.max(margin, Math.min(mh - margin - 1, ty))
+    };
+}
+
+/** Nearest walkable tile that is also outside the mob map-edge margin. */
+function nearestMobAllowedTile(grid, tx, ty) {
+    var start = clampMobTileToInner(tx, ty);
+    if (!grid) {
+        return start;
+    }
+    if (tileWalkable(grid, start.tx, start.ty) && !mobEdgeForbiddenTile(start.tx, start.ty)) {
+        return start;
+    }
+    var dirs = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+    var queue = [{ tx: start.tx, ty: start.ty }];
+    var seen = {};
+    seen[start.tx + ',' + start.ty] = true;
+    var i = 0;
+    while (i < queue.length && i < 800) {
+        var cur = queue[i++];
+        if (tileWalkable(grid, cur.tx, cur.ty) && !mobEdgeForbiddenTile(cur.tx, cur.ty)) {
+            return { tx: cur.tx, ty: cur.ty };
+        }
+        for (var d = 0; d < dirs.length; d++) {
+            var nx = cur.tx + dirs[d][0];
+            var ny = cur.ty + dirs[d][1];
+            var key = nx + ',' + ny;
+            if (seen[key] || mobEdgeForbiddenTile(nx, ny)) {
+                continue;
+            }
+            if (ny < 0 || nx < 0 || ny >= grid.length || !grid[ny] || nx >= grid[ny].length) {
+                continue;
+            }
+            seen[key] = true;
+            queue.push({ tx: nx, ty: ny });
+        }
+    }
+    return start;
+}
 
 function tileBlockedByTerrain(index) {
     return index === TILE.WATER || index === TILE.TREE || index === TILE.ROCK || index === TILE.SHRINE
