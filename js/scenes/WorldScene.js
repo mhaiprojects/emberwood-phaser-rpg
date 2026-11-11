@@ -1785,15 +1785,7 @@ var WorldScene = new Phaser.Class({
             var ev = pointer.event;
             var onMob = this.pickSprite(this.mobs, x, y, 18);
             var onNpc = this.pickSprite(this.npcs, x, y, 18);
-            var onGrave = this.pickGravestone(x, y, 18);
             var lootPile = this.pickLootPile(x, y, 18);
-            if (onGrave) {
-                this.showGraveContextAt(onGrave, {
-                    clientX: ev && ev.clientX != null ? ev.clientX : 16,
-                    clientY: ev && ev.clientY != null ? ev.clientY : 16
-                });
-                return;
-            }
             if (lootPile && lootPile.length) {
                 this.showLootContextAt(lootPile, {
                     clientX: ev && ev.clientX != null ? ev.clientX : 16,
@@ -3779,18 +3771,6 @@ var WorldScene = new Phaser.Class({
             if (Hud.hideContextMenu) {
                 Hud.hideContextMenu();
             }
-            return;
-        }
-        var grave = this.pickGravestone(x, y, 18);
-        if (grave) {
-            if (this.clearWalk) {
-                this.clearWalk();
-            }
-            this.talkTarget = null;
-            this.engageTarget = null;
-            this.lootTarget = null;
-            this.clearFish();
-            this.showGraveContextAt(grave, pos);
             return;
         }
         var lootPile = this.pickLootPile(x, y, 18);
