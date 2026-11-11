@@ -1,6 +1,51 @@
 var OW_COMBAT_TICK_MS = 600;
 var POISON_MOB_TYPES = { Slime: true, Skeleton: true, Drake: true };
 var COMBAT_POISON_CHANCE = 35;
+var MOB_CHASE_SPEED = 78;
+var MOB_TYPE_ATTACK_RANGE = {
+    Chicken: 22,
+    Rabbit: 20,
+    Cow: 26,
+    Goblin: 24,
+    Crab: 24,
+    Skeleton: 26,
+    Bat: 96,
+    Slime: 72,
+    Drake: 100
+};
+
+function mobAttackRangePx(mob) {
+    var def = mob && (mob.mobDef || mob);
+    var type;
+    var cls;
+    if (def && typeof def.attackRange === 'number') {
+        return def.attackRange;
+    }
+    type = def && def.type;
+    if (type && MOB_TYPE_ATTACK_RANGE[type] != null) {
+        return MOB_TYPE_ATTACK_RANGE[type];
+    }
+    cls = typeof mobCombatClass === 'function' ? mobCombatClass(def) : 'melee';
+    if (cls === 'ranged') {
+        return typeof DEFAULT_RANGED_ATTACK_RANGE === 'number' ? DEFAULT_RANGED_ATTACK_RANGE : 96;
+    }
+    if (cls === 'magic') {
+        return typeof DEFAULT_MAGIC_ATTACK_RANGE === 'number' ? DEFAULT_MAGIC_ATTACK_RANGE : 88;
+    }
+    return typeof DEFAULT_MELEE_ATTACK_RANGE === 'number' ? DEFAULT_MELEE_ATTACK_RANGE : 24;
+}
+
+function combatDistancePx(a, b) {
+    if (!a || !b) {
+        return Infinity;
+    }
+    return Phaser.Math.Distance.Between(a.x, a.y, b.x, b.y);
+}
+
+function inAttackRange(attacker, defender, rangePx) {
+    var range = typeof rangePx === 'number' ? rangePx : 24;
+    return combatDistancePx(attacker, defender) <= range;
+}
 
 function showWorldHitSplat(scene, x, y, text, kind) {
     if (!scene) {

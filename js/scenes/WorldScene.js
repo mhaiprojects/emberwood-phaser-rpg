@@ -32,8 +32,6 @@ var COLLIDE_TILES = [
 var GROUND_FIRE_MS = 45000;
 var STATION_RANGE = 28;
 var MELEE_ENGAGE_PX = 24;
-var RANGED_ENGAGE_PX = 120;
-var MAGIC_ENGAGE_PX = 104;
 var COLLISION_DEBUG_FILL = 0xf38630;
 var COLLISION_DEBUG_FACE = 0xffff66;
 
@@ -1436,7 +1434,22 @@ var WorldScene = new Phaser.Class({
     },
 
     onClick: function (pointer) {
-        if (this.encounterLock || Hud.mode === 'battle' || Hud.mode === 'title') {
+        if (Hud.mode === 'title') {
+            this.cancelLongPress();
+            return;
+        }
+        if (this.overworldFight) {
+            this.cancelLongPress();
+            if (Hud.hideContextMenu) {
+                Hud.hideContextMenu();
+            }
+            this.engageTarget = null;
+            this.talkTarget = null;
+            this.clearGather();
+            this.setWalk(pointer.worldX, pointer.worldY, { allowEnd: true });
+            return;
+        }
+        if (this.encounterLock || Hud.mode === 'battle') {
             this.cancelLongPress();
             if (Hud.hideContextMenu) {
                 Hud.hideContextMenu();
@@ -3038,13 +3051,45 @@ var WorldScene = new Phaser.Class({
 
     heroEngageRangePx: function () {
         var hero = this.registry.get('hero');
-        if (typeof rangedWeaponEquipped === 'function' && rangedWeaponEquipped(hero)) {
-            return RANGED_ENGAGE_PX;
-        }
-        if (typeof magicWeaponEquipped === 'function' && magicWeaponEquipped(hero)) {
-            return MAGIC_ENGAGE_PX;
+        if (typeof weaponAttackRangePx === 'function') {
+            return weaponAttackRangePx(hero);
         }
         return MELEE_ENGAGE_PX;
+    },
+
+    fightDistancePx: function (mob) {
+        if (!this.player || !mob) {
+            return Infinity;
+        }
+        if (typeof combatDistancePx === 'function') {
+            return combatDistancePx(this.player, mob);
+        }
+        return Phaser.Math.Distance.Between(this.player.x, this.player.y, mob.x, mob.y);
+    },
+
+    chaseFightMob: function () {
+        var fight = this.overworldFight;
+        var mob = fight && fight.mob;
+        var range;
+        var dist;
+        var speed;
+        var dx;
+        var dy;
+        var len;
+        if (!mob || !mob.aliveMob || !mob.body || !this.player) {
+            return;
+        }
+        range = typeof mobAttackRangePx === 'function' ? mobAttackRangePx(mob) : MELEE_ENGAGE_PX;
+        dist = this.fightDistancePx(mob);
+        if (dist <= range * 0.9) {
+            mob.body.setVelocity(0, 0);
+            return;
+        }
+        speed = typeof MOB_CHASE_SPEED === 'number' ? MOB_CHASE_SPEED : 78;
+        dx = this.player.x - mob.x;
+        dy = this.player.y - mob.y;
+        len = dist || 1;
+        mob.body.setVelocity((dx / len) * speed, (dy / len) * speed);
     },
 
     chaseInRange: function (chase) {
@@ -3452,6 +3497,10 @@ var WorldScene = new Phaser.Class({
         var hero;
         var dealt;
         var hpBefore;
+        var dist;
+        var playerRange;
+        var mobRange;
+        var specialQueued;
         if (!fight || !mob || !mob.aliveMob || fight.busy) {
             return;
         }
@@ -3461,15 +3510,23 @@ var WorldScene = new Phaser.Class({
             this.endOverworldFight('lose');
             return;
         }
+        dist = this.fightDistancePx(mob);
+        playerRange = typeof weaponAttackRangePx === 'function' ? weaponAttackRangePx(hero) : MELEE_ENGAGE_PX;
+        mobRange = typeof mobAttackRangePx === 'function' ? mobAttackRangePx(mob) : MELEE_ENGAGE_PX;
         if (forcePlayer || autoRetaliateOn(hero)) {
             hpBefore = fight.hp;
             dealt = 0;
+            specialQueued = !!fight.specialQueued;
             fight.specialQueued = false;
-            if (typeof magicWeaponEquipped === 'function' && magicWeaponEquipped(hero)) {
+            if (dist > playerRange) {
+                if (forcePlayer || specialQueued) {
+                    Hud.log('You are out of attack range.');
+                }
+            } else if (typeof magicWeaponEquipped === 'function' && magicWeaponEquipped(hero)) {
                 if (typeof hasWindStrikeRunes === 'function' && !hasWindStrikeRunes(hero)) {
                     Hud.log('You need Air and Mind runes to attack with a staff.');
                 } else if (typeof consumeAirStrikeRunes === 'function' && consumeAirStrikeRunes(hero)) {
-                    dealt = rollOverworldDamage('player', mob, hero, { special: !!fight.specialQueued });
+                    dealt = rollOverworldDamage('player', mob, hero, { special: specialQueued });
                 } else {
                     Hud.log('You need Air and Mind runes to attack with a staff.');
                 }
@@ -3477,13 +3534,13 @@ var WorldScene = new Phaser.Class({
                 if (typeof canShoot === 'function' && !canShoot(hero)) {
                     Hud.log('Your bow needs suitable arrows (or leave ammo empty for wooden shafts).');
                 } else {
-                    dealt = rollOverworldDamage('player', mob, hero, { special: !!fight.specialQueued });
+                    dealt = rollOverworldDamage('player', mob, hero, { special: specialQueued });
                     if (typeof consumeAmmo === 'function') {
                         consumeAmmo(hero);
                     }
                 }
             } else {
-                dealt = rollOverworldDamage('player', mob, hero, { special: !!fight.specialQueued });
+                dealt = rollOverworldDamage('player', mob, hero, { special: specialQueued });
             }
             if (dealt > 0) {
                 fight.hp = Math.max(0, fight.hp - dealt);
@@ -3505,21 +3562,25 @@ var WorldScene = new Phaser.Class({
                 return;
             }
         }
-        dealt = rollOverworldDamage(mob, 'player', hero);
-        if (dealt > 0) {
-            hero.hp = Math.max(0, hero.hp - dealt);
-            showWorldHitSplat(this, this.player.x, this.player.y, '-' + dealt, 'hit');
-            applyHeroPoison(hero, mob.mobDef && mob.mobDef.type);
-            this.registry.set('hero', hero);
-            if (Hud.renderHero) {
-                Hud.renderHero(hero);
+        if (dist <= mobRange) {
+            dealt = rollOverworldDamage(mob, 'player', hero);
+            if (dealt > 0) {
+                hero.hp = Math.max(0, hero.hp - dealt);
+                showWorldHitSplat(this, this.player.x, this.player.y, '-' + dealt, 'hit');
+                applyHeroPoison(hero, mob.mobDef && mob.mobDef.type);
+                this.registry.set('hero', hero);
+                if (Hud.renderHero) {
+                    Hud.renderHero(hero);
+                }
+                if (window.Sfx && Sfx.hit) {
+                    Sfx.hit();
+                }
             }
-            if (window.Sfx && Sfx.hit) {
-                Sfx.hit();
+            if (hero.hp <= 0) {
+                this.endOverworldFight('lose');
+                fight.busy = false;
+                return;
             }
-        }
-        if (hero.hp <= 0) {
-            this.endOverworldFight('lose');
         }
         fight.busy = false;
     },
@@ -3598,11 +3659,17 @@ var WorldScene = new Phaser.Class({
         var fn;
         var dealt;
         var hpBefore;
+        var range;
         if (!fight || !spellId) {
             return false;
         }
         mob = fight.mob;
         hero = this.registry.get('hero');
+        range = typeof weaponAttackRangePx === 'function' ? weaponAttackRangePx(hero) : MELEE_ENGAGE_PX;
+        if (this.fightDistancePx(mob) > range) {
+            Hud.log('You are out of attack range.');
+            return false;
+        }
         fn = typeof spellCastFn === 'function' ? spellCastFn(spellId) : null;
         var cast = fn ? fn(hero) : null;
         if (!cast) {
@@ -4064,8 +4131,12 @@ var WorldScene = new Phaser.Class({
     wanderMobs: function () {
         var grid = this.tileGrid;
         var zoneId = this.zoneId;
+        var fightMob = this.overworldFight && this.overworldFight.mob;
         this.mobs.children.iterate(function (mob) {
             if (!mob || !mob.aliveMob || !mob.body) {
+                return;
+            }
+            if (mob === fightMob) {
                 return;
             }
             if (Phaser.Math.Between(0, 80) !== 0) {
@@ -4335,7 +4406,6 @@ var WorldScene = new Phaser.Class({
             return;
         }
         if (this.overworldFight) {
-            this.tickRunEnergy(dt, false);
             var heroPoison = this.registry.get('hero');
             if (heroPoison && typeof tickHeroPoison === 'function') {
                 tickHeroPoison(heroPoison, this);
@@ -4343,13 +4413,8 @@ var WorldScene = new Phaser.Class({
             if (typeof this.tickPrayerDrainLite === 'function') {
                 this.tickPrayerDrainLite(dt);
             }
-            this.mobs.children.iterate(function (mob) {
-                if (mob && mob.nameLabel) {
-                    var lift = 8 + Math.round((mob.displayHeight || 16) / 2);
-                    mob.nameLabel.setPosition(mob.x, mob.y - lift);
-                }
-            });
-            return;
+            this.chaseFightMob();
+            /* Fall through so the player can kite while the mob closes distance. */
         }
 
         this.mobs.children.iterate(function (mob) {
@@ -4558,6 +4623,9 @@ var WorldScene = new Phaser.Class({
 
         this.wanderMobs();
         this.wanderNpcs();
+        if (this.overworldFight) {
+            this.chaseFightMob();
+        }
         this.constrainGiantMobs();
         this.tryLockedDoor();
         this.tryAgilityShortcut();

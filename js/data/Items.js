@@ -7,24 +7,24 @@ var ITEM_DB = {
     beef: { name: 'Cooked beef', icon: 'assets/svg/items/beef.svg', heal: 16, stack: true, value: 8, buyPrice: 12, sellPrice: 3, examine: 'A seared cut of beef.' },
     burntbeef: { name: 'Burnt beef', icon: 'assets/svg/items/burntbeef.svg', stack: true, value: 1, sellPrice: 1, examine: 'Blackened beef. Best left alone.' },
     bread: { name: 'Bread', icon: 'assets/svg/items/bread.svg', heal: 20, stack: true, value: 12, buyPrice: 16, sellPrice: 4, examine: 'A dense loaf baked for the road.' },
-    sword: { name: 'Bronze sword', icon: 'assets/svg/items/sword.svg', slot: 'weapon', damage: 16, combatClass: 'melee', tier: 'bronze', value: 26, buyPrice: 40, sellPrice: 10, examine: 'A short bronze blade, nicked but serviceable.' },
-    bronzedagger: { name: 'Bronze dagger', icon: 'assets/svg/items/bronzedagger.svg', slot: 'weapon', damage: 10, combatClass: 'melee', tier: 'bronze', value: 14, buyPrice: 22, sellPrice: 5, examine: 'A short bronze dagger, freshly forged.' },
-    woodclub: { name: 'Wood club', icon: 'assets/svg/items/sword.svg', slot: 'weapon', damage: 8, combatClass: 'melee', tier: 'wood', value: 4, buyPrice: 6, sellPrice: 1, examine: 'A crude wooden club.' },
-    copperdagger: { name: 'Copper dagger', icon: 'assets/svg/items/bronzedagger.svg', slot: 'weapon', damage: 9, combatClass: 'melee', tier: 'copper', value: 10, buyPrice: 14, sellPrice: 3, examine: 'A soft copper dagger.' },
-    ironsword: { name: 'Iron sword', icon: 'assets/svg/items/sword.svg', slot: 'weapon', damage: 20, combatClass: 'melee', tier: 'iron', value: 40, buyPrice: 60, sellPrice: 16, examine: 'A sturdy iron blade.' },
-    shortbow: { name: 'Shortbow', icon: 'assets/svg/items/shortbow.svg', slot: 'weapon', damage: 16, combatClass: 'ranged', tier: 'bronze', bowTier: 2, value: 32, buyPrice: 48, sellPrice: 12, examine: 'A shortbow suited to bronze arrows.' },
-    woodbow: { name: 'Wood bow', icon: 'assets/svg/items/shortbow.svg', slot: 'weapon', damage: 10, combatClass: 'ranged', tier: 'wood', bowTier: 1, value: 12, buyPrice: 18, sellPrice: 4, examine: 'A simple wooden bow.' },
-    oakbow: { name: 'Oak bow', icon: 'assets/svg/items/shortbow.svg', slot: 'weapon', damage: 18, combatClass: 'ranged', tier: 'iron', bowTier: 3, value: 48, buyPrice: 72, sellPrice: 18, examine: 'An oak bow with a firm draw.' },
-    yewbow: { name: 'Yew bow', icon: 'assets/svg/items/shortbow.svg', slot: 'weapon', damage: 24, combatClass: 'ranged', tier: 'diamond', bowTier: 4, value: 90, buyPrice: 140, sellPrice: 36, examine: 'A yew war bow.' },
-    magicbow: { name: 'Magic bow', icon: 'assets/svg/items/shortbow.svg', slot: 'weapon', damage: 30, combatClass: 'ranged', tier: 'dragonite', bowTier: 5, value: 160, buyPrice: 240, sellPrice: 64, examine: 'A rare magic bow.' },
+    sword: { name: 'Bronze sword', icon: 'assets/svg/items/sword.svg', slot: 'weapon', damage: 16, attackRange: 24, combatClass: 'melee', tier: 'bronze', value: 26, buyPrice: 40, sellPrice: 10, examine: 'A short bronze blade, nicked but serviceable.' },
+    bronzedagger: { name: 'Bronze dagger', icon: 'assets/svg/items/bronzedagger.svg', slot: 'weapon', damage: 10, attackRange: 22, combatClass: 'melee', tier: 'bronze', value: 14, buyPrice: 22, sellPrice: 5, examine: 'A short bronze dagger, freshly forged.' },
+    woodclub: { name: 'Wood club', icon: 'assets/svg/items/sword.svg', slot: 'weapon', damage: 8, attackRange: 24, combatClass: 'melee', tier: 'wood', value: 4, buyPrice: 6, sellPrice: 1, examine: 'A crude wooden club.' },
+    copperdagger: { name: 'Copper dagger', icon: 'assets/svg/items/bronzedagger.svg', slot: 'weapon', damage: 9, attackRange: 22, combatClass: 'melee', tier: 'copper', value: 10, buyPrice: 14, sellPrice: 3, examine: 'A soft copper dagger.' },
+    ironsword: { name: 'Iron sword', icon: 'assets/svg/items/sword.svg', slot: 'weapon', damage: 20, attackRange: 26, combatClass: 'melee', tier: 'iron', value: 40, buyPrice: 60, sellPrice: 16, examine: 'A sturdy iron blade.' },
+    shortbow: { name: 'Shortbow', icon: 'assets/svg/items/shortbow.svg', slot: 'weapon', damage: 16, attackRange: 120, combatClass: 'ranged', tier: 'bronze', bowTier: 2, value: 32, buyPrice: 48, sellPrice: 12, examine: 'A shortbow suited to bronze arrows.' },
+    woodbow: { name: 'Wood bow', icon: 'assets/svg/items/shortbow.svg', slot: 'weapon', damage: 10, attackRange: 112, combatClass: 'ranged', tier: 'wood', bowTier: 1, value: 12, buyPrice: 18, sellPrice: 4, examine: 'A simple wooden bow.' },
+    oakbow: { name: 'Oak bow', icon: 'assets/svg/items/shortbow.svg', slot: 'weapon', damage: 18, attackRange: 128, combatClass: 'ranged', tier: 'iron', bowTier: 3, value: 48, buyPrice: 72, sellPrice: 18, examine: 'An oak bow with a firm draw.' },
+    yewbow: { name: 'Yew bow', icon: 'assets/svg/items/shortbow.svg', slot: 'weapon', damage: 24, attackRange: 136, combatClass: 'ranged', tier: 'diamond', bowTier: 4, value: 90, buyPrice: 140, sellPrice: 36, examine: 'A yew war bow.' },
+    magicbow: { name: 'Magic bow', icon: 'assets/svg/items/shortbow.svg', slot: 'weapon', damage: 30, attackRange: 144, combatClass: 'ranged', tier: 'dragonite', bowTier: 5, value: 160, buyPrice: 240, sellPrice: 64, examine: 'A rare magic bow.' },
     arrow: { name: 'Bronze arrows', icon: 'assets/svg/items/arrow.svg', slot: 'ammo', stack: true, ammoTier: 2, value: 1, buyPrice: 2, sellPrice: 1, examine: 'A sheaf of bronze arrows with grey-goose fletching.' },
     woodarrow: { name: 'Wooden arrows', icon: 'assets/svg/items/arrow.svg', slot: 'ammo', stack: true, ammoTier: 1, value: 1, buyPrice: 1, sellPrice: 1, examine: 'Simple wooden shafts. Infinite while unequipped ammo.' },
     ironarrow: { name: 'Iron arrows', icon: 'assets/svg/items/arrow.svg', slot: 'ammo', stack: true, ammoTier: 3, value: 2, buyPrice: 4, sellPrice: 1, examine: 'Iron-tipped arrows.' },
-    staff: { name: 'Wood staff', icon: 'assets/svg/items/bronzeaxe.svg', slot: 'weapon', damage: 12, combatClass: 'magic', tier: 'wood', value: 20, buyPrice: 30, sellPrice: 8, examine: 'A carved staff. Channels Air Strike.' },
-    bronzestaff: { name: 'Bronze staff', icon: 'assets/svg/items/bronzeaxe.svg', slot: 'weapon', damage: 16, combatClass: 'magic', tier: 'bronze', value: 36, buyPrice: 54, sellPrice: 14, examine: 'A bronze-shod staff.' },
-    ironstaff: { name: 'Iron staff', icon: 'assets/svg/items/bronzeaxe.svg', slot: 'weapon', damage: 20, combatClass: 'magic', tier: 'iron', value: 55, buyPrice: 80, sellPrice: 22, examine: 'An iron-banded casting staff.' },
-    diamondstaff: { name: 'Diamond staff', icon: 'assets/svg/items/bronzeaxe.svg', slot: 'weapon', damage: 26, combatClass: 'magic', tier: 'diamond', value: 100, buyPrice: 150, sellPrice: 40, examine: 'A crystal casting staff.' },
-    dragonitestaff: { name: 'Dragonite staff', icon: 'assets/svg/items/bronzeaxe.svg', slot: 'weapon', damage: 32, combatClass: 'magic', tier: 'dragonite', value: 180, buyPrice: 270, sellPrice: 72, examine: 'A legendary dragonite staff.' },
+    staff: { name: 'Wood staff', icon: 'assets/svg/items/bronzeaxe.svg', slot: 'weapon', damage: 12, attackRange: 104, combatClass: 'magic', tier: 'wood', value: 20, buyPrice: 30, sellPrice: 8, examine: 'A carved staff. Channels Air Strike.' },
+    bronzestaff: { name: 'Bronze staff', icon: 'assets/svg/items/bronzeaxe.svg', slot: 'weapon', damage: 16, attackRange: 112, combatClass: 'magic', tier: 'bronze', value: 36, buyPrice: 54, sellPrice: 14, examine: 'A bronze-shod staff.' },
+    ironstaff: { name: 'Iron staff', icon: 'assets/svg/items/bronzeaxe.svg', slot: 'weapon', damage: 20, attackRange: 120, combatClass: 'magic', tier: 'iron', value: 55, buyPrice: 80, sellPrice: 22, examine: 'An iron-banded casting staff.' },
+    diamondstaff: { name: 'Diamond staff', icon: 'assets/svg/items/bronzeaxe.svg', slot: 'weapon', damage: 26, attackRange: 128, combatClass: 'magic', tier: 'diamond', value: 100, buyPrice: 150, sellPrice: 40, examine: 'A crystal casting staff.' },
+    dragonitestaff: { name: 'Dragonite staff', icon: 'assets/svg/items/bronzeaxe.svg', slot: 'weapon', damage: 32, attackRange: 136, combatClass: 'magic', tier: 'dragonite', value: 180, buyPrice: 270, sellPrice: 72, examine: 'A legendary dragonite staff.' },
     wizardhat: { name: 'Wizard hat', icon: 'assets/svg/items/feather.svg', slot: 'head', defence: 0, magicBonus: 1, tier: 'wood', value: 12, buyPrice: 18, sellPrice: 4, examine: 'A soft hat that helps focus spells.' },
     wizardrobe: { name: 'Wizard robe', icon: 'assets/svg/items/gloves.svg', slot: 'body', defence: 1, magicBonus: 2, tier: 'wood', value: 24, buyPrice: 36, sellPrice: 8, examine: 'A light robe for casting.' },
     shield: { name: 'Wooden shield', icon: 'assets/svg/items/shield.svg', slot: 'shield', defence: 1, tier: 'wood', value: 20, buyPrice: 30, sellPrice: 8, examine: 'A round wooden shield bound with iron.' },
@@ -1619,6 +1619,30 @@ function equippedWeaponDamage(hero, fallback) {
         return def.damage;
     }
     return base;
+}
+
+var DEFAULT_MELEE_ATTACK_RANGE = 24;
+var DEFAULT_RANGED_ATTACK_RANGE = 120;
+var DEFAULT_MAGIC_ATTACK_RANGE = 104;
+
+function weaponAttackRangePx(hero) {
+    var id;
+    var def;
+    if (!hero || !hero.equipment || !hero.equipment.weapon) {
+        return DEFAULT_MELEE_ATTACK_RANGE;
+    }
+    id = hero.equipment.weapon;
+    def = ITEM_DB[id];
+    if (def && typeof def.attackRange === 'number') {
+        return def.attackRange;
+    }
+    if (def && def.combatClass === 'ranged') {
+        return DEFAULT_RANGED_ATTACK_RANGE;
+    }
+    if (def && def.combatClass === 'magic') {
+        return DEFAULT_MAGIC_ATTACK_RANGE;
+    }
+    return DEFAULT_MELEE_ATTACK_RANGE;
 }
 
 function equippedShieldDefence(hero) {
