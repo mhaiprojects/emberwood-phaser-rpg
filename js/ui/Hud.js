@@ -370,6 +370,24 @@ var Hud = {
             }
         });
         document.addEventListener('click', function (event) {
+            var btn = event.target.closest('[data-combat-visuals]');
+            if (!btn) {
+                return;
+            }
+            var hero = self.hero();
+            if (!hero) {
+                return;
+            }
+            hero.showCombatVisuals = hero.showCombatVisuals === false;
+            self.saveHero(hero);
+            self.renderCombatVisuals(hero);
+            self.log('Combat visuals ' + (hero.showCombatVisuals !== false ? 'on' : 'off') + '.');
+            var world = window.game && window.game.scene.getScene('WorldScene');
+            if (world && world.clearCombatRangeRings && hero.showCombatVisuals === false) {
+                world.clearCombatRangeRings();
+            }
+        });
+        document.addEventListener('click', function (event) {
             var btn = event.target.closest('[data-prayer]');
             var id = btn && btn.getAttribute('data-prayer');
             if (!id) {
@@ -3045,6 +3063,7 @@ var Hud = {
         this.renderAutoPickup(hero);
         this.renderShiftClickDrop(hero);
         this.renderHideBones(hero);
+        this.renderCombatVisuals(hero);
         this.renderPrayers(hero);
         this.renderRun(hero);
         this.renderSpecialEnergy(hero);
@@ -3425,6 +3444,22 @@ var Hud = {
         for (var i = 0; i < buttons.length; i++) {
             buttons[i].classList.toggle('is-on', on);
             buttons[i].textContent = 'Hide bones: ' + (on ? 'On' : 'Off');
+        }
+    },
+
+    renderCombatVisuals: function (hero) {
+        var on = typeof showCombatVisualsOn === 'function'
+            ? showCombatVisualsOn(hero)
+            : (!hero || hero.showCombatVisuals !== false);
+        var vue = this.vueState();
+        if (vue) {
+            vue.combatVisualsOn = on;
+            vue.combatVisualsLabel = 'Combat visuals: ' + (on ? 'On' : 'Off');
+        }
+        var buttons = document.querySelectorAll('[data-combat-visuals]');
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].classList.toggle('is-on', on);
+            buttons[i].textContent = 'Combat visuals: ' + (on ? 'On' : 'Off');
         }
     },
 

@@ -594,6 +594,7 @@ function makeHero() {
         autoPickup: true,
         shiftClickDrop: true,
         hideBones: false,
+        showCombatVisuals: true,
         displayName: 'Adventurer',
         ironman: false,
         prayerPoints: 1,
@@ -2587,6 +2588,10 @@ function styleLabelsForHero(hero) {
     };
 }
 
+function showCombatVisualsOn(hero) {
+    return !hero || hero.showCombatVisuals !== false;
+}
+
 function normalizeHeroCombat(hero) {
     var labels;
     if (!hero) {
@@ -2597,6 +2602,9 @@ function normalizeHeroCombat(hero) {
     }
     if (typeof hero.flags.dragonDenOpen !== 'boolean') {
         hero.flags.dragonDenOpen = !!hero.flags.dragonDenOpen;
+    }
+    if (typeof hero.showCombatVisuals !== 'boolean') {
+        hero.showCombatVisuals = true;
     }
     if (!hero.style) {
         hero.style = 'shared';

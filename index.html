@@ -150,6 +150,9 @@
                             <h3>Hide bones</h3>
                             <p>When on, bone piles on the ground are hidden (OSRS ground-item overlay lite).</p>
                             <button type="button" class="hide-bones-btn" data-hide-bones title="When on, bones on the ground are hidden." :class="{ 'is-on': hideBonesOn }">{{ hideBonesLabel }}</button>
+                            <h3>Combat visuals</h3>
+                            <p>When on, attack-range rings and ranged/magic projectiles are shown in fights. New games start with this on.</p>
+                            <button type="button" class="combat-visuals-btn" data-combat-visuals title="When on, show attack-range rings and projectiles." :class="{ 'is-on': combatVisualsOn }">{{ combatVisualsLabel }}</button>
                             <h3>Controls</h3>
                             <p>WASD / arrows move, Ctrl run, Space talk, F1–F8 panels, click to walk/act.</p>
                             <h3>Audio</h3>
@@ -330,12 +333,12 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
     <script src="js/input/Keys.js?v=run1"></script>
-    <script src="js/data/Items.js?v=verb1"></script>
+    <script src="js/data/Items.js?v=viz1"></script>
     <script src="js/data/Save.js?v=dung1"></script>
     <script src="js/data/Scales.js?v=den1"></script>
-    <script src="js/ui/HudApp.js?v=vue1"></script>
+    <script src="js/ui/HudApp.js?v=viz1"></script>
     <script src="js/ui/Sfx.js?v=music1"></script>
-    <script src="js/ui/Hud.js?v=verb1"></script>
+    <script src="js/ui/Hud.js?v=viz1"></script>
     <script src="js/world/MapGen.js?v=den1"></script>
     <script src="js/world/Pathfind.js?v=fm1"></script>
     <script src="js/world/Zones.js?v=den1"></script>
@@ -348,8 +351,8 @@
     -->
     <script src="js/scenes/BootScene.js?v=furnace1"></script>
     <script src="js/scenes/TitleScene.js?v=move4"></script>
-    <script src="js/scenes/WorldScene.js?v=noghost1"></script>
-    <script src="js/world/OverworldCombat.js?v=den1"></script>
+    <script src="js/scenes/WorldScene.js?v=viz1"></script>
+    <script src="js/world/OverworldCombat.js?v=viz1"></script>
     <script src="js/world/StretchLite.js?v=noghost1"></script>
     <script src="js/scenes/BattleScene.js?v=magic1"></script>
     <script src="js/scenes/UIScene.js"></script>

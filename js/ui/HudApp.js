@@ -48,6 +48,8 @@ var HudApp = {
             shiftClickDropOn: true,
             hideBonesLabel: 'Hide bones: Off',
             hideBonesOn: false,
+            combatVisualsLabel: 'Combat visuals: On',
+            combatVisualsOn: true,
             runLabel: 'Run: Off',
             collisionDebugLabel: 'Collision debug: Off',
             collisionDebugOn: false,

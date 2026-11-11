@@ -93,6 +93,9 @@ var WorldScene = new Phaser.Class({
         this.collisionDebugGfx = this.add.graphics();
         this.collisionDebugGfx.setDepth(20);
         this.collisionDebugGfx.setVisible(false);
+        this.combatRangeGfx = this.add.graphics();
+        this.combatRangeGfx.setDepth(4);
+        this.combatRangeGfx.setVisible(true);
         this.npcs = this.physics.add.group({ immovable: true });
         this.mobs = this.physics.add.group();
         this.floatLabels = [];
@@ -4110,6 +4113,14 @@ var WorldScene = new Phaser.Class({
                 dealt = rollOverworldDamage('player', mob, hero, { special: specialQueued });
             }
             if (dealt > 0) {
+                if (typeof showCombatVisualsOn === 'function' ? showCombatVisualsOn(hero) : true) {
+                    var playerShot = typeof combatProjectileKind === 'function'
+                        ? combatProjectileKind('player', hero)
+                        : null;
+                    if (playerShot && typeof spawnCombatProjectile === 'function') {
+                        spawnCombatProjectile(this, this.player.x, this.player.y, mob.x, mob.y, playerShot);
+                    }
+                }
                 fight.hp = Math.max(0, fight.hp - dealt);
                 showWorldHitSplat(this, mob.x, mob.y, '-' + dealt, 'hit');
                 grantOverworldHitXp(hero, fight, mob, dealt, hpBefore);
@@ -4132,6 +4143,14 @@ var WorldScene = new Phaser.Class({
         if (dist <= mobRange) {
             dealt = rollOverworldDamage(mob, 'player', hero);
             if (dealt > 0) {
+                if (typeof showCombatVisualsOn === 'function' ? showCombatVisualsOn(hero) : true) {
+                    var mobShot = typeof combatProjectileKind === 'function'
+                        ? combatProjectileKind(mob, hero)
+                        : null;
+                    if (mobShot && typeof spawnCombatProjectile === 'function') {
+                        spawnCombatProjectile(this, mob.x, mob.y, this.player.x, this.player.y, mobShot);
+                    }
+                }
                 hero.hp = Math.max(0, hero.hp - dealt);
                 showWorldHitSplat(this, this.player.x, this.player.y, '-' + dealt, 'hit');
                 applyHeroPoison(hero, mob.mobDef && mob.mobDef.type);
@@ -4160,6 +4179,7 @@ var WorldScene = new Phaser.Class({
             this.overworldTick = null;
         }
         this.overworldFight = null;
+        this.clearCombatRangeRings();
         if (Hud.hideOverworldBattle) {
             Hud.hideOverworldBattle();
         }
@@ -4246,6 +4266,10 @@ var WorldScene = new Phaser.Class({
         this.registry.set('hero', hero);
         hpBefore = fight.hp;
         dealt = typeof cast.damage === 'number' ? cast.damage : 2;
+        if (dealt > 0 && (typeof showCombatVisualsOn === 'function' ? showCombatVisualsOn(hero) : true)
+            && typeof spawnCombatProjectile === 'function') {
+            spawnCombatProjectile(this, this.player.x, this.player.y, mob.x, mob.y, 'magic');
+        }
         fight.hp = Math.max(0, fight.hp - dealt);
         showWorldHitSplat(this, mob.x, mob.y, '-' + dealt, 'hit');
         if (cast.xp > 0) {
@@ -4944,6 +4968,50 @@ var WorldScene = new Phaser.Class({
         return !!(hero && hero.autoAttack);
     },
 
+    combatVisualsOn: function () {
+        var hero = this.registry.get('hero');
+        return typeof showCombatVisualsOn === 'function' ? showCombatVisualsOn(hero) : true;
+    },
+
+    clearCombatRangeRings: function () {
+        if (this.combatRangeGfx) {
+            this.combatRangeGfx.clear();
+        }
+    },
+
+    updateCombatRangeRings: function () {
+        var hero;
+        var mob;
+        var playerRange;
+        var mobRange;
+        var gfx = this.combatRangeGfx;
+        if (!gfx) {
+            return;
+        }
+        gfx.clear();
+        if (!this.combatVisualsOn() || !this.player) {
+            return;
+        }
+        hero = this.registry.get('hero');
+        mob = (this.overworldFight && this.overworldFight.mob)
+            || (this.engageTarget && this.engageTarget.aliveMob ? this.engageTarget : null);
+        if (!mob && !this.overworldFight) {
+            return;
+        }
+        playerRange = typeof weaponAttackRangePx === 'function'
+            ? weaponAttackRangePx(hero)
+            : MELEE_ENGAGE_PX;
+        gfx.lineStyle(1, 0x88b4ff, 0.28);
+        gfx.strokeCircle(this.player.x, this.player.y, Math.max(8, playerRange));
+        if (mob && mob.active) {
+            mobRange = typeof mobAttackRangePx === 'function'
+                ? mobAttackRangePx(mob)
+                : MELEE_ENGAGE_PX;
+            gfx.lineStyle(1, 0xff8a7a, 0.28);
+            gfx.strokeCircle(mob.x, mob.y, Math.max(8, mobRange));
+        }
+    },
+
     autoRetaliateOn: function () {
         var hero = this.registry.get('hero');
         return typeof autoRetaliateOn === 'function' ? autoRetaliateOn(hero) : !!(hero && hero.autoRetaliate);
@@ -5361,6 +5429,7 @@ var WorldScene = new Phaser.Class({
         if (this.overworldFight) {
             this.chaseFightMob();
         }
+        this.updateCombatRangeRings();
         this.constrainGiantMobs();
         this.tryLockedDoor();
         this.tryAgilityShortcut();

@@ -107,6 +107,69 @@ function inAttackRange(attacker, defender, rangePx) {
     return combatDistancePx(attacker, defender) <= range;
 }
 
+function combatProjectileKind(attacker, hero) {
+    var def;
+    var cls;
+    if (attacker === 'player') {
+        if (typeof magicWeaponEquipped === 'function' && magicWeaponEquipped(hero)) {
+            return 'magic';
+        }
+        if (typeof rangedWeaponEquipped === 'function' && rangedWeaponEquipped(hero)) {
+            return 'arrow';
+        }
+        return null;
+    }
+    def = attacker && (attacker.mobDef || attacker);
+    cls = typeof mobCombatClass === 'function' ? mobCombatClass(def) : 'melee';
+    if (cls === 'ranged' || cls === 'magic') {
+        return cls === 'magic' ? 'magic' : 'arrow';
+    }
+    if (def && (def.type === 'Bat' || def.type === 'Slime' || def.type === 'Drake' || def.type === 'Dragon')) {
+        return def.type === 'Bat' || def.type === 'Drake' || def.type === 'Dragon' ? 'arrow' : 'magic';
+    }
+    return null;
+}
+
+function spawnCombatProjectile(scene, fromX, fromY, toX, toY, kind) {
+    var color;
+    var size;
+    var disc;
+    var duration;
+    var dx;
+    var dy;
+    var dist;
+    if (!scene || !kind) {
+        return null;
+    }
+    if (kind === 'magic') {
+        color = 0x66ccff;
+        size = 5;
+    } else {
+        color = 0xd4a35a;
+        size = 3;
+    }
+    dx = toX - fromX;
+    dy = toY - fromY;
+    dist = Math.sqrt(dx * dx + dy * dy) || 1;
+    duration = Math.min(280, Math.max(90, Math.round(dist * 1.1)));
+    disc = scene.add.circle(fromX, fromY, size, color, 0.95);
+    disc.setDepth(28);
+    disc.setStrokeStyle(1, kind === 'magic' ? 0xb8ecff : 0x8a6230, 0.9);
+    scene.tweens.add({
+        targets: disc,
+        x: toX,
+        y: toY,
+        duration: duration,
+        ease: 'Quad.easeOut',
+        onComplete: function () {
+            if (disc && disc.destroy) {
+                disc.destroy();
+            }
+        }
+    });
+    return disc;
+}
+
 function showWorldHitSplat(scene, x, y, text, kind) {
     if (!scene) {
         return;
