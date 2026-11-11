@@ -4,242 +4,250 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="assets/svg/ui/combat.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/style.css?v=magic1">
+    <link rel="stylesheet" href="css/style.css?v=vue1">
 </head>
 <body>
     <div id="shell">
+        <!-- Phaser owns #content; Vue must not mount here -->
         <div id="content"></div>
-        <aside id="side">
-            <div class="panel">
-                <h2 id="minimap-chrome" title="Open world map">Minimap</h2>
-                <div id="minimap"></div>
-            </div>
-            <div class="panel">
-                <h2 id="hud-zone">Emberhaven</h2>
-                <div class="stat"><span><img class="pix" src="assets/svg/ui/combat.svg" alt=""> Combat</span><strong id="hud-level">3</strong></div>
-                <div class="stat"><span><img class="pix" src="assets/svg/ui/skills.svg" alt=""> Total</span><strong id="hud-total">22</strong></div>
-                <div class="stat"><span><img class="pix" src="assets/svg/skills/hitpoints.svg" alt=""> Hitpoints</span><strong id="hud-hp">100 / 100</strong></div>
-                <div class="hp-bar"><div id="hp-fill"></div></div>
-                <div class="stat"><span>Run energy</span><strong id="hud-run">100</strong></div>
-                <div class="hp-bar run-bar" id="run-bar" data-run-toggle title="Click to toggle walk or run (Ctrl)"><div id="run-fill"></div></div>
-                <div class="stat"><span><img class="pix" src="assets/svg/ui/gold.svg" alt=""> Gold</span><strong id="hud-gold">0</strong></div>
-                <div class="stat"><span><img class="pix" src="assets/svg/ui/xp.svg" alt=""> XP</span><strong id="hud-xp">0</strong></div>
-            </div>
-            <div class="panel">
-                <h2>Task</h2>
-                <p id="hud-quest">Talk to Guildmaster Bram in Emberhaven.</p>
-            </div>
-            <div id="battle-panel" class="panel battle" hidden>
-                <h2>Combat</h2>
-                <p id="battle-message">A foe approaches.</p>
-                <div id="battle-enemies"></div>
-                <div id="battle-actions">
-                    <button type="button" data-action="attack"><img class="pix" src="assets/svg/ui/attack.svg" alt=""> Attack</button>
-                    <button type="button" data-action="heal"><img class="pix" src="assets/svg/ui/heal.svg" alt=""> Eat food</button>
-                    <button type="button" data-action="flee"><img class="pix" src="assets/svg/ui/flee.svg" alt=""> Run</button>
+
+        <div id="hud-root">
+            <aside id="side">
+                <div class="panel">
+                    <h2 id="minimap-chrome" title="Open world map">Minimap</h2>
+                    <div id="minimap" v-manual></div>
                 </div>
-                <button type="button" class="auto-attack-btn" data-auto-attack>Auto-attack: On</button>
-                <button type="button" class="auto-retaliate-btn" data-auto-retaliate title="When on, Attack is chosen for you in combat.">Auto-retaliate: On</button>
-            </div>
-        </aside>
-        <div id="bottom">
-            <div id="chat-col" class="panel">
-                <h2>Chat</h2>
-                <div id="chat-log"></div>
-                <p class="hint">WASD or arrows to walk. Ctrl toggles run. Click ground, NPCs, or monsters. F1–F8 switch panels. Auto-attack, auto-retaliate, and auto-pickup are in Combat and Settings. Loot drops on the ground — walk over it when auto-pickup is on, or click it. Click food in Inventory to eat.</p>
-            </div>
-            <div id="iface">
-                <div id="tab-panels">
-                    <div id="panel-combat" class="tab-panel">
-                        <h3>Combat</h3>
-                        <p>Accurate trains Attack, Aggressive trains Strength, Defensive trains Defence. Each successful hit grants a share of the foe's XP, including Hitpoints.</p>
-                        <div id="style-row">
-                            <button type="button" data-style="accurate"><img class="pix" src="assets/svg/ui/accurate.svg" alt=""> Accurate</button>
-                            <button type="button" data-style="aggressive"><img class="pix" src="assets/svg/ui/aggressive.svg" alt=""> Aggressive</button>
-                            <button type="button" data-style="defensive"><img class="pix" src="assets/svg/ui/defensive.svg" alt=""> Defensive</button>
+                <div class="panel">
+                    <h2 id="hud-zone">{{ zone }}</h2>
+                    <div class="stat"><span><img class="pix" src="assets/svg/ui/combat.svg" alt=""> Combat</span><strong id="hud-level">{{ level }}</strong></div>
+                    <div class="stat"><span><img class="pix" src="assets/svg/ui/skills.svg" alt=""> Total</span><strong id="hud-total">{{ total }}</strong></div>
+                    <div class="stat"><span><img class="pix" src="assets/svg/skills/hitpoints.svg" alt=""> Hitpoints</span><strong id="hud-hp">{{ hpText }}</strong></div>
+                    <div class="hp-bar"><div id="hp-fill" :style="{ width: hpFillPct + '%', backgroundColor: hpFillColor }"></div></div>
+                    <div class="stat"><span>Run energy</span><strong id="hud-run">{{ Math.round(runEnergy) }}</strong></div>
+                    <div class="hp-bar run-bar" id="run-bar" data-run-toggle title="Click to toggle walk or run (Ctrl)" :class="{ 'is-on': running }"><div id="run-fill" :style="{ width: runFillPct + '%', backgroundColor: runFillColor }"></div></div>
+                    <div class="stat"><span><img class="pix" src="assets/svg/ui/gold.svg" alt=""> Gold</span><strong id="hud-gold">{{ gold }}</strong></div>
+                    <div class="stat"><span><img class="pix" src="assets/svg/ui/xp.svg" alt=""> XP</span><strong id="hud-xp">{{ xp }}</strong></div>
+                </div>
+                <div class="panel">
+                    <h2>Task</h2>
+                    <p id="hud-quest">{{ quest }}</p>
+                </div>
+                <div id="battle-panel" class="panel battle" v-show="battleVisible">
+                    <h2>Combat</h2>
+                    <p id="battle-message">{{ battleMessage }}</p>
+                    <div id="battle-enemies" v-manual></div>
+                    <div id="battle-actions">
+                        <button type="button" data-action="attack"><img class="pix" src="assets/svg/ui/attack.svg" alt=""> Attack</button>
+                        <button type="button" data-action="heal"><img class="pix" src="assets/svg/ui/heal.svg" alt=""> Eat food</button>
+                        <button type="button" data-action="flee"><img class="pix" src="assets/svg/ui/flee.svg" alt=""> Run</button>
+                    </div>
+                    <button type="button" class="auto-attack-btn" data-auto-attack :class="{ 'is-on': autoAttackOn }">{{ autoAttackLabel }}</button>
+                    <button type="button" class="auto-retaliate-btn" data-auto-retaliate title="When on, Attack is chosen for you in combat." :class="{ 'is-on': autoRetaliateOn }">{{ autoRetaliateLabel }}</button>
+                </div>
+            </aside>
+            <div id="bottom">
+                <div id="chat-col" class="panel">
+                    <h2>Chat</h2>
+                    <div id="chat-log" ref="chatLog">
+                        <div v-for="(line, i) in chatLines" :key="i" class="chat-line" :class="line.kind || undefined">{{ line.text }}</div>
+                    </div>
+                    <p class="hint">WASD or arrows to walk. Ctrl toggles run. Click ground, NPCs, or monsters. F1–F8 switch panels. Auto-attack, auto-retaliate, and auto-pickup are in Combat and Settings. Loot drops on the ground — walk over it when auto-pickup is on, or click it. Click food in Inventory to eat.</p>
+                </div>
+                <div id="iface">
+                    <div id="tab-panels">
+                        <div id="panel-combat" class="tab-panel" v-show="tab === 'combat'">
+                            <h3>Combat</h3>
+                            <p>Accurate trains Attack, Aggressive trains Strength, Defensive trains Defence. Each successful hit grants a share of the foe's XP, including Hitpoints.</p>
+                            <div id="style-row">
+                                <button type="button" data-style="accurate" :class="{ 'is-on': styleAccurateOn }"><img class="pix" src="assets/svg/ui/accurate.svg" alt=""> Accurate</button>
+                                <button type="button" data-style="aggressive" :class="{ 'is-on': styleAggressiveOn }"><img class="pix" src="assets/svg/ui/aggressive.svg" alt=""> Aggressive</button>
+                                <button type="button" data-style="defensive" :class="{ 'is-on': styleDefensiveOn }"><img class="pix" src="assets/svg/ui/defensive.svg" alt=""> Defensive</button>
+                            </div>
+                            <h3>Auto-attack</h3>
+                            <p>When on, walking into a nearby foe starts a fight.</p>
+                            <button type="button" class="auto-attack-btn" data-auto-attack title="When on, walking into a nearby foe starts a fight." :class="{ 'is-on': autoAttackOn }">{{ autoAttackLabel }}</button>
+                            <h3>Auto-retaliate</h3>
+                            <p>When on, Attack is chosen for you in combat. Separate from world auto-attack.</p>
+                            <button type="button" class="auto-retaliate-btn" data-auto-retaliate title="When on, Attack is chosen for you in combat." :class="{ 'is-on': autoRetaliateOn }">{{ autoRetaliateLabel }}</button>
+                            <h3>Auto-pickup</h3>
+                            <p>When on, walking near a loot pile picks it up. When off, click the pile to take it.</p>
+                            <button type="button" class="auto-pickup-btn" data-auto-pickup title="When on, walking near a loot pile picks it up." :class="{ 'is-on': autoPickupOn }">{{ autoPickupLabel }}</button>
+                            <h3>Run</h3>
+                            <p>Ctrl or this toggle sprints. Run energy drains while running and restores while walking or idle.</p>
+                            <button type="button" class="run-mode-btn" data-run-toggle title="Toggle walk or run (Ctrl)" :class="{ 'is-on': running }">{{ runLabel }}</button>
                         </div>
-                        <h3>Auto-attack</h3>
-                        <p>When on, walking into a nearby foe starts a fight.</p>
-                        <button type="button" class="auto-attack-btn" data-auto-attack title="When on, walking into a nearby foe starts a fight.">Auto-attack: On</button>
-                        <h3>Auto-retaliate</h3>
-                        <p>When on, Attack is chosen for you in combat. Separate from world auto-attack.</p>
-                        <button type="button" class="auto-retaliate-btn" data-auto-retaliate title="When on, Attack is chosen for you in combat.">Auto-retaliate: On</button>
-                        <h3>Auto-pickup</h3>
-                        <p>When on, walking near a loot pile picks it up. When off, click the pile to take it.</p>
-                        <button type="button" class="auto-pickup-btn" data-auto-pickup title="When on, walking near a loot pile picks it up.">Auto-pickup: On</button>
-                        <h3>Run</h3>
-                        <p>Ctrl or this toggle sprints. Run energy drains while running and restores while walking or idle.</p>
-                        <button type="button" class="run-mode-btn" data-run-toggle title="Toggle walk or run (Ctrl)">Run: Off</button>
-                    </div>
-                    <div id="panel-skills" class="tab-panel" hidden>
-                        <h3>Skills</h3>
-                        <div id="skills-list"></div>
-                    </div>
-                    <div id="panel-quest" class="tab-panel" hidden>
-                        <h3>Quest journal</h3>
-                        <p id="hud-quest-tab">Talk to Guildmaster Bram in Emberhaven.</p>
-                    </div>
-                    <div id="panel-inv" class="tab-panel" hidden>
-                        <h3>Inventory</h3>
-                        <div id="inv-grid"></div>
-                    </div>
-                    <div id="panel-equip" class="tab-panel" hidden>
-                        <h3>Worn equipment</h3>
-                        <div id="equip-grid"></div>
-                        <div id="equip-stats"></div>
-                    </div>
-                    <div id="panel-prayer" class="tab-panel" hidden>
-                        <h3>Prayer</h3>
-                        <p>No prayers unlocked yet.</p>
-                    </div>
-                    <div id="panel-magic" class="tab-panel" hidden>
-                        <h3>Magic</h3>
-                        <div id="magic-list">
-                            <button type="button" id="btn-wind-strike" data-spell="windstrike" title="Air rune + Mind rune">Wind Strike</button>
+                        <div id="panel-skills" class="tab-panel" v-show="tab === 'skills'">
+                            <h3>Skills</h3>
+                            <div id="skills-list" v-manual></div>
+                        </div>
+                        <div id="panel-quest" class="tab-panel" v-show="tab === 'quest'">
+                            <h3>Quest journal</h3>
+                            <p id="hud-quest-tab">{{ quest }}</p>
+                        </div>
+                        <div id="panel-inv" class="tab-panel" v-show="tab === 'inv'">
+                            <h3>Inventory</h3>
+                            <div id="inv-grid" v-manual></div>
+                        </div>
+                        <div id="panel-equip" class="tab-panel" v-show="tab === 'equip'">
+                            <h3>Worn equipment</h3>
+                            <div id="equip-grid" v-manual></div>
+                            <div id="equip-stats" v-manual></div>
+                        </div>
+                        <div id="panel-prayer" class="tab-panel" v-show="tab === 'prayer'">
+                            <h3>Prayer</h3>
+                            <p>No prayers unlocked yet.</p>
+                        </div>
+                        <div id="panel-magic" class="tab-panel" v-show="tab === 'magic'">
+                            <h3>Magic</h3>
+                            <div id="magic-list">
+                                <button type="button" id="btn-wind-strike" data-spell="windstrike" title="Air rune + Mind rune">Wind Strike</button>
+                            </div>
+                        </div>
+                        <div id="panel-settings" class="tab-panel" v-show="tab === 'settings'">
+                            <h3>Settings</h3>
+                            <p>Move with WASD or arrow keys. Click to walk. Eat shrimp or bread from Inventory.</p>
+                            <h3>Auto-attack</h3>
+                            <p>Toggle automatic engagement of nearby monsters, like classic RuneScape.</p>
+                            <button type="button" class="auto-attack-btn" data-auto-attack title="When on, walking into a nearby foe starts a fight." :class="{ 'is-on': autoAttackOn }">{{ autoAttackLabel }}</button>
+                            <h3>Auto-retaliate</h3>
+                            <p>When on, Attack is chosen for you in combat. Does not walk you into nearby foes.</p>
+                            <button type="button" class="auto-retaliate-btn" data-auto-retaliate title="When on, Attack is chosen for you in combat." :class="{ 'is-on': autoRetaliateOn }">{{ autoRetaliateLabel }}</button>
+                            <h3>Auto-pickup</h3>
+                            <p>When on, walking near a loot pile picks it up. When off, click the pile to take it. New games start with this on.</p>
+                            <button type="button" class="auto-pickup-btn" data-auto-pickup title="When on, walking near a loot pile picks it up." :class="{ 'is-on': autoPickupOn }">{{ autoPickupLabel }}</button>
+                            <h3>Shift-click drop</h3>
+                            <p>When on, Shift+left-click drops an inventory item, like Old School RuneScape. Right-click Drop still works. New games start with this on.</p>
+                            <button type="button" class="shift-click-drop-btn" data-shift-click-drop title="When on, Shift+left-click drops an inventory item (OSRS default)." :class="{ 'is-on': shiftClickDropOn }">{{ shiftClickDropLabel }}</button>
+                            <h3>Run</h3>
+                            <p>Ctrl toggles run. Energy drains while running and restores while walking or idle.</p>
+                            <button type="button" class="run-mode-btn" data-run-toggle title="Toggle walk or run (Ctrl)" :class="{ 'is-on': running }">{{ runLabel }}</button>
+                            <h3>Collision debug</h3>
+                            <p>F9 toggles arcade body outlines and colliding tiles. Off by default. Does not change WASD.</p>
+                            <button type="button" class="collision-debug-btn" data-collision-debug title="Toggle arcade body and colliding-tile overlay (F9)" :class="{ 'is-on': collisionDebugOn }">{{ collisionDebugLabel }}</button>
                         </div>
                     </div>
-                    <div id="panel-settings" class="tab-panel" hidden>
-                        <h3>Settings</h3>
-                        <p>Move with WASD or arrow keys. Click to walk. Eat shrimp or bread from Inventory.</p>
-                        <h3>Auto-attack</h3>
-                        <p>Toggle automatic engagement of nearby monsters, like classic RuneScape.</p>
-                        <button type="button" class="auto-attack-btn" data-auto-attack title="When on, walking into a nearby foe starts a fight.">Auto-attack: On</button>
-                        <h3>Auto-retaliate</h3>
-                        <p>When on, Attack is chosen for you in combat. Does not walk you into nearby foes.</p>
-                        <button type="button" class="auto-retaliate-btn" data-auto-retaliate title="When on, Attack is chosen for you in combat.">Auto-retaliate: On</button>
-                        <h3>Auto-pickup</h3>
-                        <p>When on, walking near a loot pile picks it up. When off, click the pile to take it. New games start with this on.</p>
-                        <button type="button" class="auto-pickup-btn" data-auto-pickup title="When on, walking near a loot pile picks it up.">Auto-pickup: On</button>
-                        <h3>Shift-click drop</h3>
-                        <p>When on, Shift+left-click drops an inventory item, like Old School RuneScape. Right-click Drop still works. New games start with this on.</p>
-                        <button type="button" class="shift-click-drop-btn" data-shift-click-drop title="When on, Shift+left-click drops an inventory item (OSRS default).">Shift-click drop: On</button>
-                        <h3>Run</h3>
-                        <p>Ctrl toggles run. Energy drains while running and restores while walking or idle.</p>
-                        <button type="button" class="run-mode-btn" data-run-toggle title="Toggle walk or run (Ctrl)">Run: Off</button>
-                        <h3>Collision debug</h3>
-                        <p>F9 toggles arcade body outlines and colliding tiles. Off by default. Does not change WASD.</p>
-                        <button type="button" class="collision-debug-btn" data-collision-debug title="Toggle arcade body and colliding-tile overlay (F9)">Collision debug: Off</button>
+                    <div id="tab-bar">
+                        <button type="button" data-tab="combat" title="Combat (F1)" :class="{ 'is-on': tab === 'combat' }" @click="onTab('combat')"><img class="pix" src="assets/svg/ui/combat.svg" alt=""> Combat</button>
+                        <button type="button" data-tab="skills" title="Skills (F2)" :class="{ 'is-on': tab === 'skills' }" @click="onTab('skills')"><img class="pix" src="assets/svg/ui/skills.svg" alt=""> Skills</button>
+                        <button type="button" data-tab="quest" title="Quests (F3)" :class="{ 'is-on': tab === 'quest' }" @click="onTab('quest')"><img class="pix" src="assets/svg/ui/quest.svg" alt=""> Quest</button>
+                        <button type="button" data-tab="inv" title="Inventory (F4)" :class="{ 'is-on': tab === 'inv' }" @click="onTab('inv')"><img class="pix" src="assets/svg/ui/inv.svg" alt=""> Inv</button>
+                        <button type="button" data-tab="equip" title="Equipment (F5)" :class="{ 'is-on': tab === 'equip' }" @click="onTab('equip')"><img class="pix" src="assets/svg/ui/equip.svg" alt=""> Worn</button>
+                        <button type="button" data-tab="prayer" title="Prayer (F6)" :class="{ 'is-on': tab === 'prayer' }" @click="onTab('prayer')"><img class="pix" src="assets/svg/ui/prayer.svg" alt=""> Pray</button>
+                        <button type="button" data-tab="magic" title="Magic (F7)" :class="{ 'is-on': tab === 'magic' }" @click="onTab('magic')"><img class="pix" src="assets/svg/ui/magic.svg" alt=""> Magic</button>
+                        <button type="button" data-tab="settings" title="Settings (F8)" :class="{ 'is-on': tab === 'settings' }" @click="onTab('settings')"><img class="pix" src="assets/svg/ui/settings.svg" alt=""> Set</button>
                     </div>
                 </div>
-                <div id="tab-bar">
-                    <button type="button" data-tab="combat" title="Combat (F1)"><img class="pix" src="assets/svg/ui/combat.svg" alt=""> Combat</button>
-                    <button type="button" data-tab="skills" title="Skills (F2)"><img class="pix" src="assets/svg/ui/skills.svg" alt=""> Skills</button>
-                    <button type="button" data-tab="quest" title="Quests (F3)"><img class="pix" src="assets/svg/ui/quest.svg" alt=""> Quest</button>
-                    <button type="button" data-tab="inv" title="Inventory (F4)"><img class="pix" src="assets/svg/ui/inv.svg" alt=""> Inv</button>
-                    <button type="button" data-tab="equip" title="Equipment (F5)"><img class="pix" src="assets/svg/ui/equip.svg" alt=""> Worn</button>
-                    <button type="button" data-tab="prayer" title="Prayer (F6)"><img class="pix" src="assets/svg/ui/prayer.svg" alt=""> Pray</button>
-                    <button type="button" data-tab="magic" title="Magic (F7)"><img class="pix" src="assets/svg/ui/magic.svg" alt=""> Magic</button>
-                    <button type="button" data-tab="settings" title="Settings (F8)"><img class="pix" src="assets/svg/ui/settings.svg" alt=""> Set</button>
+            </div>
+
+            <div id="title-overlay" v-show="titleVisible">
+                <div class="title-card">
+                    <h1>EMBERWOOD</h1>
+                    <p>A free-roam adventure in the style of classic RuneScape.</p>
+                    <button type="button" id="btn-start" :disabled="!startEnabled" @click="onStart">Click here to play</button>
+                    <button type="button" id="btn-credits" class="ghost" @click="onCredits">Credits</button>
+                    <p id="credit-text" v-show="creditsOpen">Phaser 3 turn-based combat inspired by the GameDev Academy RPG series. World, NPCs, HUD, and SVG icons are original (CC0). No Zenva or commercial asset packs. HUD mirror uses Vue 3 (CDN, no build).</p>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <div id="title-overlay">
-        <div class="title-card">
-            <h1>EMBERWOOD</h1>
-            <p>A free-roam adventure in the style of classic RuneScape.</p>
-            <button type="button" id="btn-start">Click here to play</button>
-            <button type="button" id="btn-credits" class="ghost">Credits</button>
-            <p id="credit-text" hidden>Phaser 3 turn-based combat inspired by the GameDev Academy RPG series. World, NPCs, HUD, and SVG icons are original (CC0). No Zenva or commercial asset packs.</p>
-        </div>
-    </div>
+            <div id="ctx-menu" v-manual hidden></div>
 
-    <div id="ctx-menu" hidden></div>
-
-    <div id="level-up-overlay" hidden>
-        <div class="level-up-card" role="dialog" aria-labelledby="level-up-title">
-            <img id="level-up-icon" class="pix" alt="">
-            <h2 id="level-up-title">Level up</h2>
-            <p id="level-up-copy"></p>
-            <button type="button" id="btn-level-up-close">Continue</button>
-        </div>
-    </div>
-
-    <div id="dialogue-overlay" hidden>
-        <div class="dialogue-card">
-            <h2 id="dialogue-speaker"></h2>
-            <p id="dialogue-text"></p>
-            <div id="dialogue-options" hidden></div>
-            <p id="dialogue-continue" class="hint">Click to continue</p>
-        </div>
-    </div>
-
-    <div id="world-map-overlay" hidden>
-        <div class="title-card">
-            <h1>World map</h1>
-            <p id="world-map-copy">The nine lands of Emberwood.</p>
-            <div id="world-map-list"></div>
-            <button type="button" id="btn-world-map-close">Close</button>
-        </div>
-    </div>
-
-    <div id="dead-overlay" hidden>
-        <div class="title-card">
-            <h1>You are dead</h1>
-            <p id="dead-text">The world goes dark.</p>
-            <button type="button" id="btn-respawn">Respawn in Emberhaven</button>
-            <button type="button" id="btn-retry" class="ghost">Return to title</button>
-        </div>
-    </div>
-
-    <div id="shop-overlay" hidden>
-        <div class="title-card" id="shop-card">
-            <h1 id="shop-title">Trade</h1>
-            <p id="shop-speaker"></p>
-            <p id="shop-copy">The shelves are still being stocked.</p>
-            <div id="shop-actions">
-                <button type="button" data-shop-action="buy">Buy</button>
-                <button type="button" data-shop-action="sell">Sell</button>
-            </div>
-            <button type="button" id="btn-shop-close" data-shop-action="close">Close</button>
-        </div>
-    </div>
-
-    <div id="bank-overlay" hidden>
-        <div class="title-card" id="bank-card">
-            <h1 id="bank-title">Bank</h1>
-            <p id="bank-speaker"></p>
-            <p id="bank-copy">Your items are safe with Elise.</p>
-            <div id="bank-panes">
-                <div>
-                    <h3>Inventory</h3>
-                    <div id="bank-inv-grid"></div>
+            <div id="level-up-overlay" hidden>
+                <div class="level-up-card" role="dialog" aria-labelledby="level-up-title">
+                    <img id="level-up-icon" class="pix" alt="">
+                    <h2 id="level-up-title">Level up</h2>
+                    <p id="level-up-copy"></p>
+                    <button type="button" id="btn-level-up-close">Continue</button>
                 </div>
-                <div id="bank-chest" data-bank-chest>
-                    <div class="bank-chest-lid" aria-hidden="true"></div>
-                    <h3>Chest</h3>
-                    <div id="bank-tools">
-                        <label id="bank-search-label">Search
-                            <input id="bank-search" type="search" autocomplete="off" spellcheck="false">
+            </div>
+
+            <div id="dialogue-overlay" hidden>
+                <div class="dialogue-card">
+                    <h2 id="dialogue-speaker"></h2>
+                    <p id="dialogue-text"></p>
+                    <div id="dialogue-options" hidden></div>
+                    <p id="dialogue-continue" class="hint">Click to continue</p>
+                </div>
+            </div>
+
+            <div id="world-map-overlay" hidden>
+                <div class="title-card">
+                    <h1>World map</h1>
+                    <p id="world-map-copy">The nine lands of Emberwood.</p>
+                    <div id="world-map-list" v-manual></div>
+                    <button type="button" id="btn-world-map-close">Close</button>
+                </div>
+            </div>
+
+            <div id="dead-overlay" v-show="deadVisible">
+                <div class="title-card">
+                    <h1>You are dead</h1>
+                    <p id="dead-text">{{ deadText }}</p>
+                    <button type="button" id="btn-respawn" @click="onRespawn">Respawn in Emberhaven</button>
+                    <button type="button" id="btn-retry" class="ghost" @click="onRetry">Return to title</button>
+                </div>
+            </div>
+
+            <div id="shop-overlay" hidden>
+                <div class="title-card" id="shop-card">
+                    <h1 id="shop-title">Trade</h1>
+                    <p id="shop-speaker"></p>
+                    <p id="shop-copy">The shelves are still being stocked.</p>
+                    <div id="shop-actions">
+                        <button type="button" data-shop-action="buy">Buy</button>
+                        <button type="button" data-shop-action="sell">Sell</button>
+                    </div>
+                    <button type="button" id="btn-shop-close" data-shop-action="close">Close</button>
+                </div>
+            </div>
+
+            <div id="bank-overlay" hidden>
+                <div class="title-card" id="bank-card">
+                    <h1 id="bank-title">Bank</h1>
+                    <p id="bank-speaker"></p>
+                    <p id="bank-copy">Your items are safe with Elise.</p>
+                    <div id="bank-panes">
+                        <div>
+                            <h3>Inventory</h3>
+                            <div id="bank-inv-grid" v-manual></div>
+                        </div>
+                        <div id="bank-chest" data-bank-chest>
+                            <div class="bank-chest-lid" aria-hidden="true"></div>
+                            <h3>Chest</h3>
+                            <div id="bank-tools">
+                                <label id="bank-search-label">Search
+                                    <input id="bank-search" type="search" autocomplete="off" spellcheck="false">
+                                </label>
+                                <div id="bank-tabs" data-bank-tabs>
+                                    <button type="button" data-bank-tab="all">All</button>
+                                    <button type="button" data-bank-tab="food">Food</button>
+                                </div>
+                            </div>
+                            <div id="bank-vault-grid" v-manual></div>
+                        </div>
+                    </div>
+                    <div id="bank-actions">
+                        <button type="button" data-bank-action="deposit">Deposit</button>
+                        <button type="button" data-bank-action="withdraw">Withdraw</button>
+                        <label id="bank-qty-label">X
+                            <input id="bank-qty" type="number" min="1" step="1" value="1" inputmode="numeric" autocomplete="off">
                         </label>
-                        <div id="bank-tabs" data-bank-tabs>
-                            <button type="button" data-bank-tab="all">All</button>
-                            <button type="button" data-bank-tab="food">Food</button>
-                        </div>
+                        <button type="button" data-bank-action="withdraw-x">Withdraw-X</button>
+                        <button type="button" data-bank-action="withdraw-all">Withdraw-all</button>
+                        <button type="button" data-bank-action="heal">Heal</button>
                     </div>
-                    <div id="bank-vault-grid"></div>
+                    <button type="button" id="btn-bank-close" data-bank-action="close">Close</button>
                 </div>
             </div>
-            <div id="bank-actions">
-                <button type="button" data-bank-action="deposit">Deposit</button>
-                <button type="button" data-bank-action="withdraw">Withdraw</button>
-                <label id="bank-qty-label">X
-                    <input id="bank-qty" type="number" min="1" step="1" value="1" inputmode="numeric" autocomplete="off">
-                </label>
-                <button type="button" data-bank-action="withdraw-x">Withdraw-X</button>
-                <button type="button" data-bank-action="withdraw-all">Withdraw-all</button>
-                <button type="button" data-bank-action="heal">Heal</button>
-            </div>
-            <button type="button" id="btn-bank-close" data-bank-action="close">Close</button>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
     <script src="js/input/Keys.js?v=run1"></script>
     <script src="js/data/Items.js?v=catch1"></script>
     <script src="js/data/Scales.js?v=giant1"></script>
-    <script src="js/ui/Hud.js?v=catch1"></script>
+    <script src="js/ui/HudApp.js?v=vue1"></script>
+    <script src="js/ui/Hud.js?v=vue1"></script>
     <script src="js/world/MapGen.js?v=fish1"></script>
     <script src="js/world/Pathfind.js?v=giant1"></script>
     <script src="js/world/Zones.js?v=fish1"></script>
@@ -254,6 +262,6 @@
     <script src="js/scenes/BattleScene.js?v=magic1"></script>
     <script src="js/scenes/UIScene.js"></script>
     <script src="js/scenes/GameOverScene.js?v=cmb1"></script>
-    <script src="js/main.js?v=move4"></script>
+    <script src="js/main.js?v=vue1"></script>
 </body>
 </html>

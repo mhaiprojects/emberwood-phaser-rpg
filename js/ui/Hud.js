@@ -5,7 +5,14 @@ var Hud = {
     useOnId: null,
     tab: 'inv',
 
-    init: function () {
+    vueState: function () {
+        if (window.HudApp && HudApp.vm) {
+            return HudApp.vm;
+        }
+        return window.HudApp && HudApp.state ? HudApp.state : null;
+    },
+
+    bindEls: function () {
         this.el = {
             shell: document.getElementById('shell'),
             title: document.getElementById('title-overlay'),
@@ -65,42 +72,36 @@ var Hud = {
             levelUpCopy: document.getElementById('level-up-copy'),
             levelUpClose: document.getElementById('btn-level-up-close')
         };
+    },
+
+    onVueMounted: function () {
+        this.bindEls();
+        if (!this._vueReady) {
+            this._vueReady = true;
+            this.ensureLevelUpModal();
+            this.buildMinimap();
+            this.renderWorldMap();
+            this.bindInterface();
+            this.bindHudBlur();
+            this.hideContextMenu();
+            this.showTitle();
+            this.showTab('inv');
+        }
+    },
+
+    init: function () {
         this.ctxTarget = null;
         this.dialogue = null;
         this.bankSel = null;
         this.bankTab = 'all';
-        this.ensureLevelUpModal();
-        this.buildMinimap();
-        this.renderWorldMap();
-        this.bindInterface();
-        this.bindHudBlur();
-        this.hideContextMenu();
-        var self = this;
-        this.el.start.disabled = true;
-        this.el.start.addEventListener('click', function () {
-            self.onStart();
-        });
-        this.el.credits.addEventListener('click', function () {
-            self.el.creditText.hidden = !self.el.creditText.hidden;
-        });
-        this.el.respawn.addEventListener('click', function () {
-            self.respawnInHaven();
-        });
-        this.el.retry.addEventListener('click', function () {
-            self.hideDead();
-            self.showTitle();
-            if (window.game) {
-                window.game.scene.getScenes(true).forEach(function (scene) {
-                    var key = scene.sys.settings.key;
-                    if (key && key !== 'TitleScene') {
-                        window.game.scene.stop(key);
-                    }
-                });
-                window.game.scene.start('TitleScene');
-            }
-        });
-        this.showTitle();
-        this.showTab('inv');
+        this._vueReady = false;
+        if (window.HudApp && typeof HudApp.mount === 'function') {
+            HudApp.mount();
+        }
+        this.bindEls();
+        if (!this._vueReady) {
+            this.onVueMounted();
+        }
     },
 
     bindInterface: function () {
@@ -434,13 +435,15 @@ var Hud = {
 
     showTab: function (id) {
         this.tab = id;
-        var panels = document.querySelectorAll('.tab-panel');
-        for (var i = 0; i < panels.length; i++) {
-            panels[i].hidden = panels[i].id !== 'panel-' + id;
+        var vue = this.vueState();
+        if (vue) {
+            vue.tab = id;
         }
-        var buttons = this.el.tabs.querySelectorAll('button');
-        for (var b = 0; b < buttons.length; b++) {
-            buttons[b].classList.toggle('is-on', buttons[b].getAttribute('data-tab') === id);
+        if (this.el && this.el.tabs) {
+            var buttons = this.el.tabs.querySelectorAll('button');
+            for (var b = 0; b < buttons.length; b++) {
+                buttons[b].classList.toggle('is-on', buttons[b].getAttribute('data-tab') === id);
+            }
         }
     },
 
@@ -929,13 +932,26 @@ var Hud = {
 
     setStartHandler: function (fn) {
         this._startHandler = fn;
+        var vue = this.vueState();
+        if (vue) {
+            vue.startEnabled = true;
+        }
         if (this.el && this.el.start) {
             this.el.start.disabled = false;
         }
     },
 
+    setMode: function (mode) {
+        this.mode = mode;
+        if (window.HudApp && HudApp.syncMode) {
+            HudApp.syncMode(mode);
+        }
+        if (this.el && this.el.shell) {
+            this.el.shell.classList.toggle('is-title', mode === 'title');
+        }
+    },
+
     showTitle: function () {
-        this.mode = 'title';
         this.hideContextMenu();
         this.hideWorldMap();
         this.hideDialogue();
@@ -943,17 +959,24 @@ var Hud = {
         this.hideBank();
         this.hideLevelUp();
         this.clearUseOn();
-        this.el.title.hidden = false;
-        this.el.battle.hidden = true;
-        this.el.dead.hidden = true;
-        this.el.shell.classList.add('is-title');
+        this.setMode('title');
+        if (this.el && this.el.title) {
+            this.el.title.hidden = false;
+        }
+        if (this.el && this.el.battle) {
+            this.el.battle.hidden = true;
+        }
+        if (this.el && this.el.dead) {
+            this.el.dead.hidden = true;
+        }
     },
 
     hideTitle: function () {
-        this.el.title.hidden = true;
-        this.el.shell.classList.remove('is-title');
-        this.mode = 'world';
-        if (this.el.start) {
+        if (this.el && this.el.title) {
+            this.el.title.hidden = true;
+        }
+        this.setMode('world');
+        if (this.el && this.el.start) {
             this.el.start.blur();
         }
     },
@@ -967,13 +990,29 @@ var Hud = {
         this.hideBank();
         this.hideLevelUp();
         this.clearUseOn();
-        this.mode = 'dead';
-        this.el.dead.hidden = false;
-        document.getElementById('dead-text').textContent = text || 'You have been defeated.';
+        var msg = text || 'You have been defeated.';
+        var vue = this.vueState();
+        if (vue) {
+            vue.deadText = msg;
+        }
+        this.setMode('dead');
+        if (this.el && this.el.dead) {
+            this.el.dead.hidden = false;
+        }
+        var deadText = document.getElementById('dead-text');
+        if (deadText && !vue) {
+            deadText.textContent = msg;
+        }
     },
 
     hideDead: function () {
-        this.el.dead.hidden = true;
+        var vue = this.vueState();
+        if (vue) {
+            vue.deadVisible = false;
+        }
+        if (this.el && this.el.dead) {
+            this.el.dead.hidden = true;
+        }
     },
 
     safeDeathHp: function (hero) {
@@ -1498,6 +1537,29 @@ var Hud = {
     },
 
     log: function (line, kind) {
+        var vue = this.vueState();
+        if (vue) {
+            vue.chatLines.push({ text: line, kind: kind || '' });
+            while (vue.chatLines.length > 40) {
+                vue.chatLines.shift();
+            }
+            var self = this;
+            var scrollChat = function () {
+                var logEl = (HudApp.vm && HudApp.vm.$refs && HudApp.vm.$refs.chatLog) || (self.el && self.el.log);
+                if (logEl) {
+                    logEl.scrollTop = logEl.scrollHeight;
+                }
+            };
+            if (typeof Vue !== 'undefined' && Vue.nextTick) {
+                Vue.nextTick(scrollChat);
+            } else {
+                setTimeout(scrollChat, 0);
+            }
+            return;
+        }
+        if (!this.el || !this.el.log) {
+            return;
+        }
         var p = document.createElement('div');
         p.className = kind ? 'chat-line ' + kind : 'chat-line';
         p.textContent = line;
@@ -1509,24 +1571,37 @@ var Hud = {
     },
 
     setWorld: function (state) {
-        this.el.zone.textContent = state.zone;
-        this.el.hp.textContent = state.hp + ' / ' + state.maxHp;
-        this.el.gold.textContent = String(state.gold);
-        this.el.xp.textContent = String(state.xp);
-        this.el.level.textContent = String(state.level);
-        if (this.el.total) {
-            this.el.total.textContent = String(
-                state.total != null
-                    ? state.total
-                    : (typeof skillTotal === 'function' ? skillTotal(this.hero()) : 0)
-            );
-        }
-        this.el.quest.textContent = state.quest;
-        if (this.el.questTab) {
-            this.el.questTab.textContent = state.quest;
+        var total = state.total != null
+            ? state.total
+            : (typeof skillTotal === 'function' ? skillTotal(this.hero()) : 0);
+        var vue = this.vueState();
+        if (vue) {
+            vue.zone = state.zone;
+            vue.zoneId = state.zoneId;
+            vue.hp = state.hp;
+            vue.maxHp = state.maxHp;
+            vue.hpText = state.hp + ' / ' + state.maxHp;
+            vue.gold = state.gold;
+            vue.xp = state.xp;
+            vue.level = state.level;
+            vue.total = total;
+            vue.quest = state.quest;
+        } else if (this.el) {
+            this.el.zone.textContent = state.zone;
+            this.el.hp.textContent = state.hp + ' / ' + state.maxHp;
+            this.el.gold.textContent = String(state.gold);
+            this.el.xp.textContent = String(state.xp);
+            this.el.level.textContent = String(state.level);
+            if (this.el.total) {
+                this.el.total.textContent = String(total);
+            }
+            this.el.quest.textContent = state.quest;
+            if (this.el.questTab) {
+                this.el.questTab.textContent = state.quest;
+            }
         }
         this.highlightMinimap(state.zoneId);
-        if (this.el.worldMap && !this.el.worldMap.hidden) {
+        if (this.el && this.el.worldMap && !this.el.worldMap.hidden) {
             this.renderWorldMap();
         }
         this.paintHpFill(state.hp, state.maxHp);
@@ -1534,18 +1609,26 @@ var Hud = {
     },
 
     paintHpFill: function (hp, maxHp) {
-        var fill = document.getElementById('hp-fill');
-        if (!fill) {
-            return;
-        }
         var ratio = maxHp ? hp / maxHp : 0;
-        fill.style.width = Math.max(0, Math.min(100, ratio * 100)) + '%';
+        var pct = Math.max(0, Math.min(100, ratio * 100));
+        var color = '#3dcc6a';
         if (ratio < 0.35) {
-            fill.style.backgroundColor = '#cc3d3d';
+            color = '#cc3d3d';
         } else if (ratio < 0.65) {
-            fill.style.backgroundColor = '#d4a017';
-        } else {
-            fill.style.backgroundColor = '#3dcc6a';
+            color = '#d4a017';
+        }
+        var vue = this.vueState();
+        if (vue) {
+            vue.hpFillPct = pct;
+            vue.hpFillColor = color;
+            vue.hpText = hp + ' / ' + maxHp;
+            vue.hp = hp;
+            vue.maxHp = maxHp;
+        }
+        var fill = document.getElementById('hp-fill');
+        if (fill && !vue) {
+            fill.style.width = pct + '%';
+            fill.style.backgroundColor = color;
         }
     },
 
@@ -1553,17 +1636,25 @@ var Hud = {
         if (!hero) {
             return;
         }
-        this.el.hp.textContent = hero.hp + ' / ' + hero.maxHp;
-        this.el.gold.textContent = String(hero.gold);
-        if (this.el.level) {
-            this.el.level.textContent = String(
-                typeof combatLevel === 'function' ? combatLevel(hero) : hero.level
-            );
-        }
-        if (this.el.total) {
-            this.el.total.textContent = String(
-                typeof skillTotal === 'function' ? skillTotal(hero) : 0
-            );
+        var vue = this.vueState();
+        var level = typeof combatLevel === 'function' ? combatLevel(hero) : hero.level;
+        var total = typeof skillTotal === 'function' ? skillTotal(hero) : 0;
+        if (vue) {
+            vue.hp = hero.hp;
+            vue.maxHp = hero.maxHp;
+            vue.hpText = hero.hp + ' / ' + hero.maxHp;
+            vue.gold = hero.gold;
+            vue.level = level;
+            vue.total = total;
+        } else if (this.el) {
+            this.el.hp.textContent = hero.hp + ' / ' + hero.maxHp;
+            this.el.gold.textContent = String(hero.gold);
+            if (this.el.level) {
+                this.el.level.textContent = String(level);
+            }
+            if (this.el.total) {
+                this.el.total.textContent = String(total);
+            }
         }
         this.paintHpFill(hero.hp, hero.maxHp);
         this.renderInventory(hero);
@@ -1596,6 +1687,11 @@ var Hud = {
     renderCollisionDebug: function () {
         var world = window.game && window.game.scene && window.game.scene.getScene('WorldScene');
         var on = !!(world && world.collisionDebug);
+        var vue = this.vueState();
+        if (vue) {
+            vue.collisionDebugOn = on;
+            vue.collisionDebugLabel = 'Collision debug: ' + (on ? 'On' : 'Off');
+        }
         var buttons = document.querySelectorAll('[data-collision-debug]');
         for (var i = 0; i < buttons.length; i++) {
             buttons[i].classList.toggle('is-on', on);
@@ -1624,18 +1720,27 @@ var Hud = {
     },
 
     paintRunEnergy: function (energy, max, running) {
+        var amount = typeof energy === 'number' ? energy : 0;
+        var cap = max || 100;
+        var ratio = cap ? amount / cap : 0;
+        var pct = Math.max(0, Math.min(100, ratio * 100));
+        var color = running ? '#e6c56a' : '#6a9ad4';
+        var vue = this.vueState();
+        if (vue) {
+            vue.runEnergy = amount;
+            vue.runFillPct = pct;
+            vue.runFillColor = color;
+            vue.running = !!running;
+        }
         var fill = document.getElementById('run-fill');
         var label = document.getElementById('hud-run');
         var bar = document.getElementById('run-bar');
-        var amount = typeof energy === 'number' ? energy : 0;
-        var cap = max || 100;
-        if (label) {
+        if (label && !vue) {
             label.textContent = String(Math.round(amount));
         }
-        if (fill) {
-            var ratio = cap ? amount / cap : 0;
-            fill.style.width = Math.max(0, Math.min(100, ratio * 100)) + '%';
-            fill.style.backgroundColor = running ? '#e6c56a' : '#6a9ad4';
+        if (fill && !vue) {
+            fill.style.width = pct + '%';
+            fill.style.backgroundColor = color;
         }
         if (bar) {
             bar.classList.toggle('is-on', !!running);
@@ -1645,6 +1750,11 @@ var Hud = {
     renderRun: function (hero) {
         var on = !!(hero && hero.running);
         var energy = hero && hero.runEnergy != null ? hero.runEnergy : 100;
+        var vue = this.vueState();
+        if (vue) {
+            vue.running = on;
+            vue.runLabel = 'Run: ' + (on ? 'On' : 'Off');
+        }
         var buttons = document.querySelectorAll('.run-mode-btn');
         for (var i = 0; i < buttons.length; i++) {
             buttons[i].classList.toggle('is-on', on);
@@ -1734,14 +1844,28 @@ var Hud = {
     },
 
     renderStyles: function (hero) {
-        var buttons = this.el.styles.querySelectorAll('button');
-        for (var i = 0; i < buttons.length; i++) {
-            buttons[i].classList.toggle('is-on', buttons[i].getAttribute('data-style') === hero.style);
+        var style = hero && hero.style;
+        var vue = this.vueState();
+        if (vue) {
+            vue.styleAccurateOn = style === 'accurate';
+            vue.styleAggressiveOn = style === 'aggressive';
+            vue.styleDefensiveOn = style === 'defensive';
+        }
+        if (this.el && this.el.styles) {
+            var buttons = this.el.styles.querySelectorAll('button');
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].classList.toggle('is-on', buttons[i].getAttribute('data-style') === style);
+            }
         }
     },
 
     renderAutoAttack: function (hero) {
         var on = !!(hero && hero.autoAttack);
+        var vue = this.vueState();
+        if (vue) {
+            vue.autoAttackOn = on;
+            vue.autoAttackLabel = 'Auto-attack: ' + (on ? 'On' : 'Off');
+        }
         var buttons = document.querySelectorAll('[data-auto-attack]');
         for (var i = 0; i < buttons.length; i++) {
             buttons[i].classList.toggle('is-on', on);
@@ -1751,6 +1875,11 @@ var Hud = {
 
     renderAutoRetaliate: function (hero) {
         var on = autoRetaliateOn(hero);
+        var vue = this.vueState();
+        if (vue) {
+            vue.autoRetaliateOn = on;
+            vue.autoRetaliateLabel = 'Auto-retaliate: ' + (on ? 'On' : 'Off');
+        }
         var buttons = document.querySelectorAll('[data-auto-retaliate]');
         for (var i = 0; i < buttons.length; i++) {
             buttons[i].classList.toggle('is-on', on);
@@ -1760,6 +1889,11 @@ var Hud = {
 
     renderAutoPickup: function (hero) {
         var on = !hero || hero.autoPickup !== false;
+        var vue = this.vueState();
+        if (vue) {
+            vue.autoPickupOn = on;
+            vue.autoPickupLabel = 'Auto-pickup: ' + (on ? 'On' : 'Off');
+        }
         var buttons = document.querySelectorAll('[data-auto-pickup]');
         for (var i = 0; i < buttons.length; i++) {
             buttons[i].classList.toggle('is-on', on);
@@ -1769,6 +1903,11 @@ var Hud = {
 
     renderShiftClickDrop: function (hero) {
         var on = !hero || hero.shiftClickDrop !== false;
+        var vue = this.vueState();
+        if (vue) {
+            vue.shiftClickDropOn = on;
+            vue.shiftClickDropLabel = 'Shift-click drop: ' + (on ? 'On' : 'Off');
+        }
         var buttons = document.querySelectorAll('[data-shift-click-drop]');
         for (var i = 0; i < buttons.length; i++) {
             buttons[i].classList.toggle('is-on', on);
@@ -1855,24 +1994,34 @@ var Hud = {
         this.clearUseOn();
         this.battle = battle;
         this.selectingEnemy = false;
-        this.el.battle.hidden = false;
-        this.mode = 'battle';
+        if (this.el && this.el.battle) {
+            this.el.battle.hidden = false;
+        }
+        this.setMode('battle');
         battle.autoSelectTarget();
         this.renderBattle();
         this.setActionsEnabled(false);
     },
 
     hideBattle: function () {
-        this.el.battle.hidden = true;
+        if (this.el && this.el.battle) {
+            this.el.battle.hidden = true;
+        }
         this.battle = null;
         this.selectingEnemy = false;
         if (this.mode === 'battle') {
-            this.mode = 'world';
+            this.setMode('world');
         }
     },
 
     battleLog: function (text) {
-        this.el.message.textContent = text;
+        var vue = this.vueState();
+        if (vue) {
+            vue.battleMessage = text;
+        }
+        if (this.el && this.el.message) {
+            this.el.message.textContent = text;
+        }
         this.log(text);
     },
 

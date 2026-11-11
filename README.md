@@ -2,7 +2,7 @@
 
 A playable client-side Phaser 3 RPG with a RuneScape-style overworld: click-to-walk, named NPCs, visible monsters, and nine connected map zones around Emberhaven.
 
-There is no build step. Serve the folder with any static HTTP server.
+There is no build step. Serve the folder with any static HTTP server. The canvas world is Phaser 3.90; the HTML HUD is mirrored with **Vue 3** from a CDN (`js/ui/HudApp.js`). Phaser keeps game state; Vue only displays snapshots pushed through `Hud`.
 
 ## Play online
 
@@ -64,10 +64,11 @@ Starter task: talk to **Guildmaster Bram** in Emberhaven, kill **5 goblins** in 
 
 Useful NPCs: Banker Elise (free heal), Fen Witch in Mirefen (heal for 10 gp).
 
-## Phaser version
+## Phaser / Vue (CDN, no build)
 
-- Phaser **3.90.0**
-- CDN: https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js
+- Phaser **3.90.0** — https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js
+- Vue **3.5** global build — https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js
+- HUD mount: `#hud-root` (Phaser parent `#content` is not Vue-managed)
 
 ## Sources
 

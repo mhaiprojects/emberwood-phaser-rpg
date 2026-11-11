@@ -5,9 +5,10 @@ Standing rules for agents working in this repo. Update this file when a durable 
 ## Stack
 
 - Phaser **3.90.0 only**. Do not upgrade to Phaser 4.
-- CDN script: `https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js` in `index.html`.
-- **No bundler**, no npm build, no Phaser 4 APIs (`createLayer` + arcade, not Phaser 4 tilemap).
-- Vanilla JS files loaded by `<script>` tags. Cache-bust with `?v=` when you change a loaded file.
+- CDN scripts in `index.html`: Phaser 3.90 + **Vue 3.5 global build** (`vue.global.prod.js`). No bundler, no npm build, no SFCs.
+- Phaser owns all game logic/data (`registry`, scenes). Vue is a **display-only** HUD mirror on `#hud-root` (`js/ui/HudApp.js`). Push snapshots via `window.Hud` (`setWorld`, `renderHero`, `log`, mode helpers). Never put live `hero` into Vue `reactive()`.
+- `#content` is Phaser-only — outside Vue. `#hud-root` is a grid overlay (`pointer-events: none` with auto on panels) so Vue never owns the canvas node. Imperative islands (inv, minimap, bank grids) use the `v-manual` directive so Vue patches do not wipe Hud-built DOM.
+- **No Phaser 4** APIs (`createLayer` + arcade, not Phaser 4 tilemap). Vanilla JS `<script>` tags; cache-bust with `?v=` when you change a loaded file.
 - Game config is in `js/main.js`: 512×320, `pixelArt`, `roundPixels`, `Phaser.Scale.FIT`, arcade gravity 0, `input.keyboard: false`, `audio: { noAudio: true }`.
 
 ## How to run
@@ -85,7 +86,7 @@ Same origin; Glass is optional and human-requested only:
 
 ## HUD / UI
 
-- HUD, chat, combat buttons, and title/death overlays are **HTML + Verdana** (`index.html`, `css/style.css`, `js/ui/Hud.js`). Keep them sharp; do not draw F-keys on the canvas.
+- HUD, chat, combat buttons, and title/death overlays are **HTML + Verdana**, mirrored by Vue 3 CDN (`index.html`, `css/style.css`, `js/ui/HudApp.js`, `js/ui/Hud.js`). Keep them sharp; do not draw F-keys on the canvas.
 - Tabs: Combat, Skills, Quest, Inv, Worn, Prayer, Magic, Settings. F1–F8 and the tab bar switch panels.
 - Combat styles: Accurate / Aggressive / Defensive (`hero.style`). Auto-attack toggle lives on Combat, Settings, and the battle panel — keep all three in sync. Auto-pickup toggle lives on Combat and Settings — keep both in sync.
 - Chat log: append, auto-scroll, drop oldest after 40 lines.
