@@ -214,29 +214,42 @@ img.pix {
 }
 
 .inv-slot {
-    min-height: 40px;
+    min-height: 52px;
     position: relative;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 2px;
     background: #2b2418;
     border: 1px solid #6a5638;
     color: #f2e6c9;
     font-size: 11px;
-    padding: 2px;
+    padding: 3px 2px 4px;
     text-align: center;
     line-height: 1.15;
 }
 
 .inv-slot img.pix {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.inv-slot .inv-name {
+    display: block;
+    max-width: 100%;
+    font-size: 9px;
+    color: #e8d9b0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .inv-slot .qty {
     position: absolute;
     right: 2px;
-    bottom: 1px;
+    top: 1px;
     font-size: 10px;
     color: #ffe08a;
 }

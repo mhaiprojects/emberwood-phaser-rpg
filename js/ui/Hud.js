@@ -534,7 +534,7 @@ var Hud = {
                 return;
             }
             var tabs = {
-                F1: 'combat', F2: 'skills', F3: 'quest', F4: 'inv',
+                F1: 'inv', F2: 'combat', F3: 'skills', F4: 'quest',
                 F5: 'equip', F6: 'prayer', F7: 'magic', F8: 'settings'
             };
             var tab = tabs[event.code];
@@ -1911,9 +1911,10 @@ var Hud = {
         for (i = 0; i < INVENTORY_CAP; i++) {
             var stack = hero.inventory[i];
             if (stack) {
-                var def = ITEM_DB[stack.id] || { name: stack.id, icon: '?' };
-                html += '<button type="button" class="inv-slot" data-item="' + stack.id + '" title="' + def.name + '">' +
+                var name = typeof itemName === 'function' ? itemName(stack.id) : ((ITEM_DB[stack.id] && ITEM_DB[stack.id].name) || stack.id);
+                html += '<button type="button" class="inv-slot" data-item="' + stack.id + '" title="' + name + '">' +
                     '<img class="pix" src="' + itemIcon(stack.id) + '" alt="">' +
+                    '<span class="inv-name">' + name + '</span>' +
                     (stack.qty > 1 ? '<span class="qty">' + stack.qty + '</span>' : '') +
                     '</button>';
             } else {

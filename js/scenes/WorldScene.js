@@ -41,6 +41,7 @@ var WorldScene = new Phaser.Class({
         this.interiorId = null;
         this.walkTarget = null;
         this.walkPath = null;
+        this.travelZoneId = null;
         this.walkBlocked = false;
         this.pathCheckAt = 0;
         this.tileGrid = null;
@@ -112,7 +113,7 @@ var WorldScene = new Phaser.Class({
             Hud.log('You wake in Emberhaven, barely standing.');
         } else {
             Hud.log('You arrive in Emberhaven. WASD or arrows to walk, Ctrl to run, or click the ground.');
-            Hud.log('Open Inventory (F4) for food. The Guildmaster by the courtyard has work.');
+            Hud.log('Open Inventory (F1) for food. The Guildmaster by the courtyard has work.');
         }
     },
 
@@ -579,9 +580,11 @@ var WorldScene = new Phaser.Class({
 
     enterZone: function (zoneId, fromDir) {
         var zone = ZONES[zoneId];
+        var pendingTravel;
         if (!zone) {
             return;
         }
+        pendingTravel = this.travelZoneId;
         if (Hud.hideDialogue) {
             Hud.hideDialogue();
         }
@@ -623,6 +626,11 @@ var WorldScene = new Phaser.Class({
         this.refreshHud();
         this.engageGrace = this.time.now + 800;
         Hud.log('You enter ' + zone.name + '.');
+        if (pendingTravel && pendingTravel === zoneId) {
+            this.travelZoneId = null;
+        } else if (pendingTravel) {
+            this.walkTowardZone(pendingTravel);
+        }
     },
 
     enterInterior: function (interiorId) {
@@ -1234,6 +1242,7 @@ var WorldScene = new Phaser.Class({
         this.engageTarget = null;
         this.talkTarget = null;
         this.clearFish();
+        this.travelZoneId = null;
         if (Phaser.Math.Distance.Between(x, y, this.player.x, this.player.y) < 10) {
             this.clearWalk();
             return;
@@ -2076,21 +2085,31 @@ var WorldScene = new Phaser.Class({
         }
         var here = ZONES[this.zoneId];
         var target = ZONES[zoneId];
-        if (!here || !target || target.id === here.id) {
+        if (!here || !target) {
+            return;
+        }
+        if (target.id === here.id) {
+            this.travelZoneId = null;
             return;
         }
         var dir = this.dirTowardZone(here, target);
         if (!dir) {
+            this.travelZoneId = null;
             return;
         }
         var dest = this.exitWalkPoint(dir);
         this.engageTarget = null;
         this.talkTarget = null;
         this.clearFish();
+        this.travelZoneId = zoneId;
         this.setWalk(dest.x, dest.y);
     },
 
-    clearWalk: function () {
+    clearWalk: function (opts) {
+        opts = opts || {};
+        if (!opts.keepTravel) {
+            this.travelZoneId = null;
+        }
         this.walkTarget = null;
         this.walkPath = null;
         this.walkBlocked = false;
@@ -3069,7 +3088,8 @@ var WorldScene = new Phaser.Class({
             this.maybeRepath();
             var destDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.walkTarget.x, this.walkTarget.y);
             if (destDist < 6) {
-                this.clearWalk();
+                var keepTravel = !!(this.travelZoneId && this.travelZoneId !== this.zoneId);
+                this.clearWalk({ keepTravel: keepTravel });
                 this.player.body.setVelocity(0);
             } else {
                 var aim = this.aimWalkPoint();

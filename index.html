@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="assets/svg/ui/combat.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/style.css?v=resize1">
+    <link rel="stylesheet" href="css/style.css?v=invtravel1">
 </head>
 <body>
     <div id="shell">
@@ -58,6 +58,10 @@
                 </div>
                 <div id="iface">
                     <div id="tab-panels">
+                        <div id="panel-inv" class="tab-panel" v-show="tab === 'inv'">
+                            <h3>Inventory</h3>
+                            <div id="inv-grid" v-manual></div>
+                        </div>
                         <div id="panel-combat" class="tab-panel" v-show="tab === 'combat'">
                             <h3>Combat</h3>
                             <p>Accurate trains Attack, Aggressive trains Strength, Defensive trains Defence. Each successful hit grants a share of the foe's XP, including Hitpoints.</p>
@@ -86,10 +90,6 @@
                         <div id="panel-quest" class="tab-panel" v-show="tab === 'quest'">
                             <h3>Quest journal</h3>
                             <p id="hud-quest-tab">{{ quest }}</p>
-                        </div>
-                        <div id="panel-inv" class="tab-panel" v-show="tab === 'inv'">
-                            <h3>Inventory</h3>
-                            <div id="inv-grid" v-manual></div>
                         </div>
                         <div id="panel-equip" class="tab-panel" v-show="tab === 'equip'">
                             <h3>Worn equipment</h3>
@@ -130,10 +130,10 @@
                         </div>
                     </div>
                     <div id="tab-bar">
-                        <button type="button" data-tab="combat" title="Combat (F1)" :class="{ 'is-on': tab === 'combat' }" @click="onTab('combat')"><img class="pix" src="assets/svg/ui/combat.svg" alt=""> Combat</button>
-                        <button type="button" data-tab="skills" title="Skills (F2)" :class="{ 'is-on': tab === 'skills' }" @click="onTab('skills')"><img class="pix" src="assets/svg/ui/skills.svg" alt=""> Skills</button>
-                        <button type="button" data-tab="quest" title="Quests (F3)" :class="{ 'is-on': tab === 'quest' }" @click="onTab('quest')"><img class="pix" src="assets/svg/ui/quest.svg" alt=""> Quest</button>
-                        <button type="button" data-tab="inv" title="Inventory (F4)" :class="{ 'is-on': tab === 'inv' }" @click="onTab('inv')"><img class="pix" src="assets/svg/ui/inv.svg" alt=""> Inv</button>
+                        <button type="button" data-tab="inv" title="Inventory (F1)" :class="{ 'is-on': tab === 'inv' }" @click="onTab('inv')"><img class="pix" src="assets/svg/ui/inv.svg" alt=""> Inv</button>
+                        <button type="button" data-tab="combat" title="Combat (F2)" :class="{ 'is-on': tab === 'combat' }" @click="onTab('combat')"><img class="pix" src="assets/svg/ui/combat.svg" alt=""> Combat</button>
+                        <button type="button" data-tab="skills" title="Skills (F3)" :class="{ 'is-on': tab === 'skills' }" @click="onTab('skills')"><img class="pix" src="assets/svg/ui/skills.svg" alt=""> Skills</button>
+                        <button type="button" data-tab="quest" title="Quests (F4)" :class="{ 'is-on': tab === 'quest' }" @click="onTab('quest')"><img class="pix" src="assets/svg/ui/quest.svg" alt=""> Quest</button>
                         <button type="button" data-tab="equip" title="Equipment (F5)" :class="{ 'is-on': tab === 'equip' }" @click="onTab('equip')"><img class="pix" src="assets/svg/ui/equip.svg" alt=""> Worn</button>
                         <button type="button" data-tab="prayer" title="Prayer (F6)" :class="{ 'is-on': tab === 'prayer' }" @click="onTab('prayer')"><img class="pix" src="assets/svg/ui/prayer.svg" alt=""> Pray</button>
                         <button type="button" data-tab="magic" title="Magic (F7)" :class="{ 'is-on': tab === 'magic' }" @click="onTab('magic')"><img class="pix" src="assets/svg/ui/magic.svg" alt=""> Magic</button>
@@ -253,7 +253,7 @@
     <script src="js/data/Items.js?v=gather2"></script>
     <script src="js/data/Scales.js?v=hunt1"></script>
     <script src="js/ui/HudApp.js?v=vue1"></script>
-    <script src="js/ui/Hud.js?v=resize2"></script>
+    <script src="js/ui/Hud.js?v=invtravel1"></script>
     <script src="js/world/MapGen.js?v=fish1"></script>
     <script src="js/world/Pathfind.js?v=giant1"></script>
     <script src="js/world/Zones.js?v=hunt1"></script>
@@ -264,7 +264,7 @@
     <script src="js/ui/Message.js"></script>
     <script src="js/scenes/BootScene.js?v=gather2"></script>
     <script src="js/scenes/TitleScene.js?v=move4"></script>
-    <script src="js/scenes/WorldScene.js?v=gather2"></script>
+    <script src="js/scenes/WorldScene.js?v=invtravel1"></script>
     <script src="js/scenes/BattleScene.js?v=magic1"></script>
     <script src="js/scenes/UIScene.js"></script>
     <script src="js/scenes/GameOverScene.js?v=cmb1"></script>

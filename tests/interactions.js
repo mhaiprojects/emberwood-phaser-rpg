@@ -197,7 +197,7 @@ EmberwoodTests.add('hud: F1–F8 switch panels', function (win, H) {
         assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
 
         var map = [
-            ['F1', 'combat'], ['F2', 'skills'], ['F3', 'quest'], ['F4', 'inv'],
+            ['F1', 'inv'], ['F2', 'combat'], ['F3', 'skills'], ['F4', 'quest'],
             ['F5', 'equip'], ['F6', 'prayer'], ['F7', 'magic'], ['F8', 'settings']
         ];
         map.forEach(function (pair) {
@@ -229,7 +229,7 @@ EmberwoodTests.add('hud: tab bar clicks match F-keys and only one panel is visib
         assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
 
         var map = [
-            ['F1', 'combat'], ['F2', 'skills'], ['F3', 'quest'], ['F4', 'inv'],
+            ['F1', 'inv'], ['F2', 'combat'], ['F3', 'skills'], ['F4', 'quest'],
             ['F5', 'equip'], ['F6', 'prayer'], ['F7', 'magic'], ['F8', 'settings']
         ];
         var visiblePanels = function () {
