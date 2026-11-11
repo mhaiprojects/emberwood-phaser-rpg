@@ -1776,6 +1776,7 @@ var WorldScene = new Phaser.Class({
                 Hud.hideContextMenu();
             }
             this.engageTarget = null;
+            this._fightPlayerClose = false;
             this.talkTarget = null;
             this.clearGather();
             this.setWalk(pointer.worldX, pointer.worldY, { allowEnd: true });
@@ -4340,6 +4341,15 @@ var WorldScene = new Phaser.Class({
         if (this.engageTarget) {
             if (!this.engageTarget.active || !this.engageTarget.aliveMob) {
                 this.engageTarget = null;
+            } else if (this.overworldFight && this.overworldFight.mob === this.engageTarget) {
+                /* In-fight chase only while already inside mob attack range. */
+                var fightMobRange = typeof mobAttackRangePx === 'function'
+                    ? mobAttackRangePx(this.engageTarget)
+                    : MELEE_ENGAGE_PX;
+                if (this.fightDistancePx(this.engageTarget) > fightMobRange) {
+                    return null;
+                }
+                return this.engageTarget;
             } else {
                 return this.engageTarget;
             }
@@ -4397,22 +4407,91 @@ var WorldScene = new Phaser.Class({
         dist = this.fightDistancePx(mob);
         if (dist <= range * 0.9) {
             mob.body.setVelocity(0, 0);
+        } else {
+            speed = typeof mobMoveSpeed === 'function'
+                ? mobMoveSpeed(mob)
+                : (typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : WALK_SPEED / 2);
+            dx = this.player.x - mob.x;
+            dy = this.player.y - mob.y;
+            len = dist || 1;
+            vx = (dx / len) * speed;
+            vy = (dy / len) * speed;
+            if (typeof mobEdgeForbiddenAt === 'function' &&
+                mobEdgeForbiddenAt(mob.x + vx, mob.y + vy)) {
+                mob.body.setVelocity(0, 0);
+            } else {
+                mob.body.setVelocity(vx, vy);
+            }
+        }
+        /* Player in-fight auto-close (weapon range) — gated below. */
+        this.chaseFightPlayerClose(mob, dist, range);
+    },
+
+    /*
+     * During overworldFight only: auto-path the player toward the fight mob when
+     * out of weapon range, but ONLY if already inside mob attack range.
+     * Safe ranging (outside mobAttackRangePx) stays put. Pre-fight queueRetaliate
+     * engage is separate and unchanged.
+     */
+    chaseFightPlayerClose: function (mob, dist, mobRange) {
+        var playerRange;
+        var move;
+        if (!mob || !mob.aliveMob || !this.player || !this.overworldFight) {
             return;
         }
-        speed = typeof mobMoveSpeed === 'function'
-            ? mobMoveSpeed(mob)
-            : (typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : WALK_SPEED / 2);
-        dx = this.player.x - mob.x;
-        dy = this.player.y - mob.y;
-        len = dist || 1;
-        vx = (dx / len) * speed;
-        vy = (dy / len) * speed;
-        if (typeof mobEdgeForbiddenAt === 'function' &&
-            mobEdgeForbiddenAt(mob.x + vx, mob.y + vy)) {
-            mob.body.setVelocity(0, 0);
+        move = this.moveFlags ? this.moveFlags() : null;
+        if (move && (move.left || move.right || move.up || move.down)) {
+            if (this._fightPlayerClose) {
+                this._fightPlayerClose = false;
+            }
             return;
         }
-        mob.body.setVelocity(vx, vy);
+        if (typeof dist !== 'number') {
+            dist = this.fightDistancePx(mob);
+        }
+        if (typeof mobRange !== 'number') {
+            mobRange = typeof mobAttackRangePx === 'function' ? mobAttackRangePx(mob) : MELEE_ENGAGE_PX;
+        }
+        playerRange = this.heroEngageRangePx();
+
+        /* Gate: outside mob attack range → never auto-walk toward the fight mob. */
+        if (dist > mobRange) {
+            if (this._fightPlayerClose) {
+                this._fightPlayerClose = false;
+                if (this.engageTarget === mob) {
+                    this.engageTarget = null;
+                }
+                this.clearWalk();
+            } else if (this.engageTarget === mob) {
+                this.engageTarget = null;
+            }
+            return;
+        }
+
+        /* Inside mob attack range but outside weapon range → close in when retaliating. */
+        if (dist > playerRange) {
+            if (!this.autoRetaliateOn()) {
+                return;
+            }
+            /* Don't hijack a manual click-to-walk that the player started. */
+            if (this.walkTarget && !this._fightPlayerClose) {
+                return;
+            }
+            this._fightPlayerClose = true;
+            this.engageTarget = mob;
+            if (!this.walkTarget) {
+                this.setWalk(mob.x, mob.y, { allowEnd: true });
+            }
+            return;
+        }
+
+        if (this._fightPlayerClose) {
+            this._fightPlayerClose = false;
+            if (this.engageTarget === mob) {
+                this.engageTarget = null;
+            }
+            this.clearWalk();
+        }
     },
 
     chaseInRange: function (chase) {
@@ -5082,6 +5161,7 @@ var WorldScene = new Phaser.Class({
             this.overworldTick = null;
         }
         this.overworldFight = null;
+        this._fightPlayerClose = false;
         this.clearCombatRangeRings();
         if (Hud.hideOverworldBattle) {
             Hud.hideOverworldBattle();
