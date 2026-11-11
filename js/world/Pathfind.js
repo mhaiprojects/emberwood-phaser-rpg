@@ -72,14 +72,13 @@ function findTilePath(grid, startTx, startTy, endTx, endTy, options) {
         if (!inMap(tx, ty)) {
             return false;
         }
-        if (isEnd && allowEnd) {
-            return true;
-        }
+        /* Terrain (tree/rock/water/wall/…) always blocks, including the end tile. */
         if (!tileWalkable(grid, tx, ty)) {
             return false;
         }
         if (avoid[tx + ',' + ty]) {
-            return false;
+            /* allowEnd only waives NPC/mob occupancy so talk/fight can finish on target. */
+            return !!(isEnd && allowEnd);
         }
         return true;
     }

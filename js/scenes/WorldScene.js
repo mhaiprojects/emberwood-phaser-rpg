@@ -107,7 +107,7 @@ var WorldScene = new Phaser.Class({
         this.player.setScale(PLAYER_WORLD_SCALE);
         applyPlayerWorldBody(this.player);
         this.player.setDepth(6);
-        /* Player phases through NPCs so click-paths are not blocked in town. */
+        /* Player phases through NPCs in physics; pathfinding still avoids their tiles. */
         this.nameplate = this.add.text(spawn0.x, spawn0.y - 14, 'Adventurer', {
             fontFamily: 'Verdana, sans-serif',
             fontSize: '8px',
@@ -3951,15 +3951,17 @@ var WorldScene = new Phaser.Class({
                 }
             }
         };
-        /* NPCs are walk-through; only living mobs block path tiles. */
-        if (!this.mobs) {
-            return occ;
+        /* Path around NPCs and living mobs; physics still phases through NPCs. */
+        if (this.npcs) {
+            this.npcs.children.iterate(markSprite);
         }
-        this.mobs.children.iterate(function (mob) {
-            if (mob && mob.aliveMob) {
-                markSprite(mob);
-            }
-        });
+        if (this.mobs) {
+            this.mobs.children.iterate(function (mob) {
+                if (mob && mob.aliveMob) {
+                    markSprite(mob);
+                }
+            });
+        }
         return occ;
     },
 
