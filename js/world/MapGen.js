@@ -29,8 +29,42 @@ var TOWN_PROPS = {
     range: { x: 16, y: 17 },
     anvil: { x: 21, y: 12 },
     furnace: { x: 22, y: 12 },
-    booth: { x: 14, y: 12 }
+    booth: { x: 14, y: 11 },
+    shopStall: { x: 16, y: 12 },
+    guildPost: { x: 15, y: 18 }
 };
+/* Courtyard bank desk: staff behind, booth counter, counter_front + 2-tile apron. */
+var BANK_COUNTER = {
+    staff: [
+        { x: 13, y: 10 },
+        { x: 14, y: 10 },
+        { x: 15, y: 10 }
+    ],
+    desk: [
+        { x: 13, y: 11 },
+        { x: 14, y: 11 },
+        { x: 15, y: 11 }
+    ],
+    front: { x: 14, y: 12 },
+    apron: [
+        { x: 13, y: 12 },
+        { x: 15, y: 12 },
+        { x: 13, y: 13 },
+        { x: 14, y: 13 },
+        { x: 15, y: 13 }
+    ]
+};
+var DEPTH = {
+    GROUND: 0,
+    PROP: 2,
+    PATH_FX: 4,
+    LOOT: 5,
+    ACTOR: 6,
+    LABEL: 7,
+    OVERLAY: 20
+};
+var ZONE_TILE_TAGS = {};
+var ZONE_INTERACT = {};
 var SHORE_PROPS = {
     dock: { x: 12, y: 22 },
     boat: { x: 11, y: 23 },
@@ -101,8 +135,10 @@ var SCENERY_EXAMINE = {
     anvil: 'A well-used smithing anvil.',
     furnace: 'A brick furnace. Ore melts here into bars.',
     fire: 'A crackling fire. Good for cooking.',
-    booth: 'A bank booth. Your items are safe here.',
-    ge: 'A Grand Exchange booth. Post buy and sell offers here.',
+    booth: 'A bank counter. Step to the front to bank.',
+    ge: 'A Grand Exchange booth. Offers are frozen — use Mira or Cole for trade.',
+    'shop-stall': 'Mira\'s courtyard stall. Click to trade.',
+    'guild-post': 'Bram\'s muster post. Talk to the Guildmaster nearby.',
     craft: 'A crafting stall. Leatherwork tools rest on the counter.',
     dock: 'A weathered wooden dock. The tide slaps the pilings.',
     boat: 'A fishing boat, tied off and empty.',
@@ -110,10 +146,90 @@ var SCENERY_EXAMINE = {
     tomb: 'A weathered tomb marker. The name is worn away.',
     shortcut: 'A narrow gap beside the locked door. You might squeeze through.',
     gate: 'A wooden courtyard gate. The hinges still work.',
-    'door-bank': 'The old bank door. Use the courtyard booth to bank.',
-    'door-shop': 'The shop door. A faded sign hangs above it.',
-    'door-guild': 'The guild hall door. Bram drills the militia inside.'
+    'door-bank': 'The old bank door. Use the courtyard counter to bank.',
+    'door-shop': 'An old shop door. Mira sells from the courtyard stall.',
+    'door-guild': 'The guild hall door. Bram drills in the courtyard.',
+    'stairs-down': 'Stairs down into the mine shaft.'
 };
+
+function tagKey(tx, ty) {
+    return tx + ',' + ty;
+}
+
+function clearZoneTags(zoneId) {
+    ZONE_TILE_TAGS[zoneId] = {};
+    ZONE_INTERACT[zoneId] = {};
+}
+
+function setTileTag(zoneId, tx, ty, tag) {
+    var key;
+    var row;
+    if (!ZONE_TILE_TAGS[zoneId]) {
+        ZONE_TILE_TAGS[zoneId] = {};
+    }
+    key = tagKey(tx, ty);
+    row = ZONE_TILE_TAGS[zoneId][key] || {};
+    row[tag] = true;
+    ZONE_TILE_TAGS[zoneId][key] = row;
+}
+
+function getTileTags(zoneId, tx, ty) {
+    var bag = ZONE_TILE_TAGS[zoneId];
+    return bag ? bag[tagKey(tx, ty)] || null : null;
+}
+
+function tileHasTag(zoneId, tx, ty, tag) {
+    var row = getTileTags(zoneId, tx, ty);
+    return !!(row && row[tag]);
+}
+
+function setTileInteract(zoneId, tx, ty, spec) {
+    if (!ZONE_INTERACT[zoneId]) {
+        ZONE_INTERACT[zoneId] = {};
+    }
+    ZONE_INTERACT[zoneId][tagKey(tx, ty)] = spec;
+}
+
+function getTileInteract(zoneId, tx, ty) {
+    var bag = ZONE_INTERACT[zoneId];
+    return bag ? bag[tagKey(tx, ty)] || null : null;
+}
+
+function paintBankCounter(grid, zoneId) {
+    var i;
+    var cell;
+    for (i = 0; i < BANK_COUNTER.staff.length; i++) {
+        cell = BANK_COUNTER.staff[i];
+        setCell(grid, cell.x, cell.y, TILE.WALL);
+        setTileTag(zoneId, cell.x, cell.y, 'blocked_npc');
+        setTileTag(zoneId, cell.x, cell.y, 'staff');
+        setTileInteract(zoneId, cell.x, cell.y, {
+            kind: 'staff',
+            verb: null,
+            npcKey: 'banker',
+            playerBlocked: true
+        });
+    }
+    for (i = 0; i < BANK_COUNTER.desk.length; i++) {
+        cell = BANK_COUNTER.desk[i];
+        setCell(grid, cell.x, cell.y, TILE.BOOTH);
+        setTileTag(zoneId, cell.x, cell.y, 'counter');
+        setTileTag(zoneId, cell.x, cell.y, 'blocked_npc');
+    }
+    setCell(grid, BANK_COUNTER.front.x, BANK_COUNTER.front.y, TILE.PATH);
+    setTileTag(zoneId, BANK_COUNTER.front.x, BANK_COUNTER.front.y, 'counter_front');
+    setTileTag(zoneId, BANK_COUNTER.front.x, BANK_COUNTER.front.y, 'blocked_npc');
+    setTileInteract(zoneId, BANK_COUNTER.front.x, BANK_COUNTER.front.y, {
+        kind: 'booth',
+        verb: 'bank',
+        npcKey: 'banker'
+    });
+    for (i = 0; i < BANK_COUNTER.apron.length; i++) {
+        cell = BANK_COUNTER.apron[i];
+        setCell(grid, cell.x, cell.y, TILE.PATH);
+        setTileTag(zoneId, cell.x, cell.y, 'apron');
+    }
+}
 
 var TOWN_DOOR_KINDS = ['door-bank', 'door-shop', 'door-guild'];
 
@@ -295,6 +411,8 @@ function generateMap(seed, biome, neighbors) {
 
     if (biome === 'town') {
         var hi;
+        var zoneId = 'haven';
+        clearZoneTags(zoneId);
         for (hi = 0; hi < TOWN_HOUSES.length; hi++) {
             house(grid, TOWN_HOUSES[hi].x, TOWN_HOUSES[hi].y, TOWN_HOUSES[hi].w, TOWN_HOUSES[hi].h);
         }
@@ -317,7 +435,28 @@ function generateMap(seed, biome, neighbors) {
         setCell(grid, TOWN_PROPS.range.x, TOWN_PROPS.range.y, TILE.RANGE);
         setCell(grid, TOWN_PROPS.anvil.x, TOWN_PROPS.anvil.y, TILE.ANVIL);
         setCell(grid, TOWN_PROPS.furnace.x, TOWN_PROPS.furnace.y, TILE.FURNACE);
-        setCell(grid, TOWN_PROPS.booth.x, TOWN_PROPS.booth.y, TILE.BOOTH);
+        if (TOWN_PROPS.shopStall) {
+            setCell(grid, TOWN_PROPS.shopStall.x, TOWN_PROPS.shopStall.y, TILE.STALL);
+            setTileInteract(zoneId, TOWN_PROPS.shopStall.x, TOWN_PROPS.shopStall.y, {
+                kind: 'shop-stall',
+                verb: 'trade',
+                npcKey: 'shopkeep',
+                shopKey: 'mira'
+            });
+        }
+        if (TOWN_PROPS.guildPost) {
+            setCell(grid, TOWN_PROPS.guildPost.x, TOWN_PROPS.guildPost.y, TILE.SHRINE);
+            setTileInteract(zoneId, TOWN_PROPS.guildPost.x, TOWN_PROPS.guildPost.y, {
+                kind: 'guild-post',
+                verb: 'talk',
+                npcKey: 'guild'
+            });
+        }
+        paintBankCounter(grid, zoneId);
+        setTileInteract(zoneId, TOWN_PROPS.stall.x, TOWN_PROPS.stall.y, { kind: 'stall', verb: 'craft' });
+        setTileInteract(zoneId, TOWN_PROPS.range.x, TOWN_PROPS.range.y, { kind: 'range', verb: 'cook' });
+        setTileInteract(zoneId, TOWN_PROPS.anvil.x, TOWN_PROPS.anvil.y, { kind: 'anvil', verb: 'smith' });
+        setTileInteract(zoneId, TOWN_PROPS.furnace.x, TOWN_PROPS.furnace.y, { kind: 'furnace', verb: 'smelt' });
     } else if (biome === 'forest') {
         scatter(grid, TILE.TREE, 70, seed, true);
         scatter(grid, TILE.FLOWER, 12, seed + 1, true);
@@ -354,6 +493,17 @@ function generateMap(seed, biome, neighbors) {
         scatter(grid, TILE.TREE, 8, seed + 5, true);
         house(grid, MINE_SHAFT_HOUSE.x, MINE_SHAFT_HOUSE.y, MINE_SHAFT_HOUSE.w, MINE_SHAFT_HOUSE.h);
         placeMineOres(grid);
+        clearZoneTags('darkmine');
+        var shaftDoor = {
+            x: MINE_SHAFT_HOUSE.x + Math.floor(MINE_SHAFT_HOUSE.w / 2),
+            y: MINE_SHAFT_HOUSE.y + MINE_SHAFT_HOUSE.h - 1
+        };
+        setTileTag('darkmine', shaftDoor.x, shaftDoor.y, 'stairs_down');
+        setTileInteract('darkmine', shaftDoor.x, shaftDoor.y, {
+            kind: 'stairs-down',
+            verb: 'climb',
+            stairs: 'down'
+        });
     } else if (biome === 'plains') {
         scatter(grid, TILE.FLOWER, 24, seed, true);
         scatter(grid, TILE.TREE, 14, seed + 6, true);
@@ -388,12 +538,8 @@ function generateInterior(kind) {
         setCell(grid, ix, y0 + 2, TILE.WALL);
     }
     setCell(grid, x0 + Math.floor(w / 2), y0 + 2, TILE.PATH);
-    if (kind === 'shop') {
-        setCell(grid, x0 + 3, y0 + 5, TILE.FLOWER);
-        setCell(grid, x0 + 8, y0 + 5, TILE.FLOWER);
-    } else if (kind === 'guild') {
-        setCell(grid, x0 + Math.floor(w / 2), y0 + 2, TILE.SHRINE);
-    } else if (kind === 'shaft') {
+    /* Shaft is the only remaining interior (stairs-down). */
+    if (kind === 'shaft') {
         setCell(grid, x0 + 3, y0 + 5, TILE.ROCK);
         setCell(grid, x0 + 8, y0 + 5, TILE.ROCK);
         setCell(grid, x0 + 3, y0 + 8, TILE.ROCK);
@@ -554,11 +700,16 @@ function agilityShortcutAt(tx, ty, zoneId) {
 
 function sceneryKindAt(grid, tx, ty, opts) {
     opts = opts || {};
+    var interact;
     if (!inBounds(tx, ty) || !grid || !grid[ty]) {
         return null;
     }
     if (agilityShortcutAt(tx, ty, opts.zoneId)) {
         return 'shortcut';
+    }
+    interact = opts.zoneId ? getTileInteract(opts.zoneId, tx, ty) : null;
+    if (interact && interact.kind) {
+        return interact.kind;
     }
     if (opts.zoneId === 'haven' && TOWN_PROPS.ge && tx === TOWN_PROPS.ge.x && ty === TOWN_PROPS.ge.y) {
         return 'ge';
@@ -638,6 +789,12 @@ function sceneryPrimaryAction(kind) {
     if (kind === 'stall') {
         return { label: 'Craft', action: 'station' };
     }
+    if (kind === 'shop-stall') {
+        return { label: 'Trade', action: 'trade-stall' };
+    }
+    if (kind === 'guild-post') {
+        return { label: 'Talk', action: 'talk-post' };
+    }
     if (kind === 'anvil') {
         return { label: 'Smith', action: 'station' };
     }
@@ -653,10 +810,13 @@ function sceneryPrimaryAction(kind) {
     if (kind === 'ge') {
         return { label: 'Exchange', action: 'ge' };
     }
+    if (kind === 'stairs-down') {
+        return { label: 'Climb', action: 'stairs' };
+    }
     return null;
 }
 
 function isStationKind(kind) {
     return kind === 'range' || kind === 'stall' || kind === 'anvil' || kind === 'furnace'
-        || kind === 'fire' || kind === 'booth';
+        || kind === 'fire' || kind === 'booth' || kind === 'shop-stall';
 }

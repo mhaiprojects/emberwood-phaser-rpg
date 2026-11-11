@@ -16,14 +16,14 @@ ZONE_LIST.forEach(function (zone) {
 });
 
 var INTERIOR_LIST = [
-    { id: 'shop', name: 'Emberhaven Shop', doorTx: 25, doorTy: 11, zoneId: 'haven' },
-    { id: 'guild', name: 'Emberhaven Guild Hall', doorTx: 15, doorTy: 20, zoneId: 'haven' },
     {
         id: 'shaft',
         name: 'Darkmine Lower Shaft',
         doorTx: MINE_SHAFT_HOUSE.x + Math.floor(MINE_SHAFT_HOUSE.w / 2),
         doorTy: MINE_SHAFT_HOUSE.y + MINE_SHAFT_HOUSE.h - 1,
-        zoneId: 'darkmine'
+        zoneId: 'darkmine',
+        stairs: 'down',
+        enterChat: 'You climb down the mine shaft…'
     }
 ];
 
@@ -183,17 +183,17 @@ function questHeadIconFor(def, quest, hero) {
 
 var NPC_DEFS = {
     haven: [
-        { key: 'guild', name: 'Guildmaster Bram', x: 210, y: 150, tint: 0xffffff, questGiver: true, options: ['talk', 'quest'], examine: 'A scarred militia captain. He still drills the courtyard.', lines: ['Welcome to Emberhaven, adventurer.', 'Goblins from Northwood raid our stores.', 'Slay 5 goblins and return. The militia will pay.'] },
-        { key: 'banker', name: 'Banker Elise', x: 232, y: 184, tint: 0xffffff, options: ['talk', 'bank'], examine: 'The town banker. She minds the courtyard booth.', lines: ['Your coin is safe with me.', 'Deposit what you cannot carry.'] },
+        { key: 'guild', name: 'Guildmaster Bram', x: 248, y: 280, tint: 0xffffff, questGiver: true, options: ['talk', 'quest'], examine: 'A scarred militia captain. He still drills the courtyard.', lines: ['Welcome to Emberhaven, adventurer.', 'Goblins from Northwood raid our stores.', 'Slay 5 goblins and return. The militia will pay.'] },
+        { key: 'banker', name: 'Banker Elise', x: 232, y: 168, tint: 0xffffff, options: ['talk', 'bank'], examine: 'The town banker. She stands behind the courtyard counter.', lines: ['Your coin is safe with me.', 'Deposit what you cannot carry.', 'Step up to the counter when you need the vault.'] },
         { key: 'guard', name: 'Guard Rowan', x: 252, y: 168, tint: 0xffffff, options: ['talk'], examine: 'A watchful town guard. He knows every path from the gate.', lines: ['Keep to the paths.', 'North is woods. East is farms. South is the sea.'] },
-        { key: 'shopkeep', name: 'Shopkeeper Mira', x: 376, y: 216, tint: 0xffffff, texture: 'npc-shopkeeper', options: ['talk', 'trade'], shopKey: 'mira', examine: 'The town shopkeeper. She minds the general store.', lines: ['Take a look at the wares.', 'Bones and spare food fetch a price.'] },
+        { key: 'shopkeep', name: 'Shopkeeper Mira', x: 264, y: 184, tint: 0xffffff, texture: 'npc-shopkeeper', options: ['talk', 'trade'], shopKey: 'mira', examine: 'The town shopkeeper. She minds the courtyard stall.', lines: ['Take a look at the wares.', 'Bones and spare food fetch a price.'] },
         { key: 'dummy', name: 'Training dummy', x: 280, y: 264, tint: 0xcccccc, texture: 'npc-guard', options: ['talk', 'duel'], examine: 'A straw-filled training dummy for duels.', lines: ['Up for a practice duel?', 'No loot, just honour.'] },
-        { key: 'arms', name: 'Armsman Cole', x: 360, y: 200, tint: 0xffffff, texture: 'npc-guard', options: ['talk', 'trade'], shopKey: 'arms', examine: 'A weapons stall keeper. Oil stains his gloves.', lines: ['Blades and bows, if you have the coin.', 'Take a look at the wares.'] },
+        { key: 'arms', name: 'Armsman Cole', x: 312, y: 200, tint: 0xffffff, texture: 'npc-guard', options: ['talk', 'trade'], shopKey: 'arms', examine: 'A weapons stall keeper. Oil stains his gloves.', lines: ['Blades, bows, and staves, if you have the coin.', 'Take a look at the wares.', 'A shortbow trains Ranged; a staff needs Air and Mind runes.'] },
         { key: 'cook', name: 'Cook Pell', x: 280, y: 280, tint: 0xffffff, options: ['talk'], tutor: 'firemaking', examine: 'The town cook. Flour dusts her sleeves and a ladle never leaves her hand.', lines: ['Take this tinderbox.', 'Use it on logs to light a fire on open ground.', 'Cook raw food on that fire or the town range.', 'Burnt food teaches nothing — keep cooking.'] },
         { key: 'priest', name: 'Priest Alden', x: 296, y: 168, tint: 0xffffff, options: ['talk'], examine: 'A quiet shrine priest. Ash marks the collar of his robe.', lines: ['The shrine still hears a prayer.', 'Bury the bones of the fallen, traveler.'] }
     ],
     northwood: [
-        { key: 'ranger', name: 'Ranger Kett', x: 240, y: 200, tint: 0xffffff, options: ['talk'], tutor: 'combat', examine: 'A Northwood ranger. Goblin tracks stain her boots.', lines: ['Goblins nest in these trees.', 'Click a goblin to fight it, like the old days.', 'Open Combat and pick Accurate, Aggressive, or Defensive.', 'Chop the trees with a bronze axe for logs.', 'Accurate trains Attack. Aggressive trains Strength. Defensive trains Defence.'] }
+        { key: 'ranger', name: 'Ranger Kett', x: 240, y: 200, tint: 0xffffff, options: ['talk'], tutor: 'combat', examine: 'A Northwood ranger. Goblin tracks stain her boots.', lines: ['Goblins nest in these trees.', 'Click a goblin to fight it, like the old days.', 'Wield a bow from Armsman Cole — leave ammo empty for infinite wooden arrows, or equip bronze arrows.', 'A wood staff plus Air and Mind runes casts Air Strike.', 'Shared splits XP; Strength, Ranger, or Mage train from your weapon.'] }
     ],
     millfields: [
         { key: 'farmer', name: 'Farmer Willa', x: 200, y: 180, tint: 0xffffff, options: ['talk'], tutor: 'cows', examine: 'A Millfields farmer. Cabbage stains her apron.', lines: ['Cows got into the cabbages again.', 'The mill road runs back to Emberhaven.', 'Click a cow when you need hide and beef.', 'They kick, so keep a combat style ready.'] }

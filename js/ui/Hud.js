@@ -258,14 +258,10 @@ var Hud = {
         this.el.styles.addEventListener('click', function (event) {
             var btn = event.target.closest('[data-style]');
             var style = btn && btn.getAttribute('data-style');
-            var hero = self.hero();
-            if (!style || !hero) {
+            if (!style) {
                 return;
             }
-            hero.style = style;
-            self.saveHero(hero);
-            self.renderStyles(hero);
-            self.log('Combat style: ' + style + '.');
+            self.setStyle(style);
         });
         document.addEventListener('click', function (event) {
             var btn = event.target.closest('[data-auto-attack]');
@@ -778,6 +774,9 @@ var Hud = {
     },
 
     saveHero: function (hero) {
+        if (typeof normalizeHeroCombat === 'function') {
+            normalizeHeroCombat(hero);
+        }
         if (window.game) {
             window.game.registry.set('hero', hero);
         }
@@ -787,6 +786,28 @@ var Hud = {
         } else {
             this.renderHero(hero);
         }
+    },
+
+    setStyle: function (style) {
+        var hero = this.hero();
+        var labels;
+        var label;
+        if (!hero || !style) {
+            return false;
+        }
+        labels = typeof styleLabelsForHero === 'function' ? styleLabelsForHero(hero) : null;
+        if (style === 'aggressive' && labels && labels.powerKey) {
+            style = labels.powerKey;
+        }
+        hero.style = style;
+        this.saveHero(hero);
+        this.renderStyles(hero);
+        label = style === 'shared' ? 'Shared'
+            : (labels && style === labels.powerKey ? labels.power
+                : (style === 'accurate' ? (labels && labels.accurate) || 'Accurate'
+                    : (style === 'defensive' ? (labels && labels.defensive) || 'Defensive' : style)));
+        this.log('Combat style: ' + label + '.');
+        return true;
     },
 
     useItem: function (id) {
@@ -1589,6 +1610,9 @@ var Hud = {
         if (!data || !data.hero || !registry) {
             return false;
         }
+        if (typeof normalizeHeroCombat === 'function') {
+            normalizeHeroCombat(data.hero);
+        }
         registry.set('hero', data.hero);
         registry.set('quest', data.quest || { id: 'goblins', stage: 0, progress: 0, goal: 5, points: 0 });
         registry.set('zone', data.zone || 'haven');
@@ -2093,21 +2117,7 @@ var Hud = {
     },
 
     showGrandExchange: function () {
-        var hero = this.hero();
-        if (hero && hero.ironman) {
-            this.log('Ironman accounts cannot use the Grand Exchange.');
-            return;
-        }
-        this.showShop({ name: 'Grand Exchange clerk', shopKey: 'mira' });
-        if (this.el && this.el.shopTitle) {
-            this.el.shopTitle.textContent = 'Grand Exchange';
-        } else if (this.el && this.el.shopSpeaker) {
-            this.el.shopSpeaker.textContent = 'Grand Exchange';
-        }
-        if (this.el && this.el.shopCopy) {
-            this.el.shopCopy.textContent = 'Post buy/sell offers at Mira stock prices.';
-        }
-        this.log('You open the Grand Exchange booth.');
+        this.log('The Grand Exchange is frozen. Trade with Mira or Armsman Cole instead.');
     },
 
     renderHiscores: function () {
@@ -2684,6 +2694,32 @@ var Hud = {
             }
             return;
         }
+        if (action === 'trade-stall') {
+            if (world.clickStation) {
+                var tradeHit = world.pickScenery(target.worldX, target.worldY);
+                if (tradeHit && (tradeHit.kind === 'shop-stall' || (tradeHit.interact && tradeHit.interact.verb === 'trade'))) {
+                    world.clickStation(tradeHit);
+                }
+            }
+            return;
+        }
+        if (action === 'talk-post') {
+            var postHit = world.pickScenery ? world.pickScenery(target.worldX, target.worldY) : null;
+            var postNpc = world.findNpcByKey
+                ? world.findNpcByKey((postHit && postHit.interact && postHit.interact.npcKey) || 'guild')
+                : null;
+            if (postNpc) {
+                world.talkTarget = postNpc;
+                world.engageTarget = null;
+                if (world.clearFish) {
+                    world.clearFish();
+                }
+                if (world.setWalk) {
+                    world.setWalk(postNpc.x, postNpc.y, { allowEnd: true });
+                }
+            }
+            return;
+        }
         if (action === 'pickpocket') {
             var pickNpc = target.npc;
             if (pickNpc && world.tryPickpocket) {
@@ -3142,17 +3178,35 @@ var Hud = {
     },
 
     renderStyles: function (hero) {
-        var style = hero && hero.style;
+        var style = (hero && hero.style) || 'shared';
+        var labels = typeof styleLabelsForHero === 'function' ? styleLabelsForHero(hero) : null;
+        var cls = typeof heroCombatClass === 'function' ? heroCombatClass(hero) : 'melee';
+        var weaponId = hero && hero.equipment ? hero.equipment.weapon : null;
+        var weaponName = weaponId && typeof itemName === 'function' ? itemName(weaponId) : 'Unarmed';
         var vue = this.vueState();
+        var powerOn = style === 'aggressive' || style === 'rapid' || style === 'blast' || style === 'power';
         if (vue) {
             vue.styleAccurateOn = style === 'accurate';
-            vue.styleAggressiveOn = style === 'aggressive';
+            vue.styleAggressiveOn = powerOn;
             vue.styleDefensiveOn = style === 'defensive';
+            vue.styleSharedOn = style === 'shared';
+            if (labels) {
+                vue.styleAccurateLabel = labels.accurate;
+                vue.stylePowerLabel = labels.power;
+                vue.styleDefensiveLabel = labels.defensive;
+            }
+            vue.combatWeaponLabel = (cls === 'ranged' ? 'Bow — ' : cls === 'magic' ? 'Staff — ' : 'Melee — ') + weaponName;
+            vue.styleHint = cls === 'ranged'
+                ? 'Accurate→Attack, Ranger→Ranged, Longrange→Defence, Shared splits Attack/Defence/Ranged.'
+                : (cls === 'magic'
+                    ? 'Accurate→Attack, Mage→Magic, Ward→Defence, Shared splits Attack/Defence/Magic.'
+                    : 'Accurate→Attack, Strength→Strength, Defensive→Defence, Shared splits Attack/Defence/Strength.');
         }
         if (this.el && this.el.styles) {
             var buttons = this.el.styles.querySelectorAll('button');
             for (var i = 0; i < buttons.length; i++) {
-                buttons[i].classList.toggle('is-on', buttons[i].getAttribute('data-style') === style);
+                var key = buttons[i].getAttribute('data-style');
+                buttons[i].classList.toggle('is-on', key === style || (key === 'aggressive' && powerOn));
             }
         }
     },

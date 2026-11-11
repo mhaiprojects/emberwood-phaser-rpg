@@ -714,7 +714,11 @@ var WorldScene = new Phaser.Class({
         this.clearWalk();
         this.refreshHud();
         this.engageGrace = this.time.now + 800;
-        Hud.log('You enter ' + spec.name + '.');
+        if (spec.enterChat) {
+            Hud.log(spec.enterChat);
+        } else {
+            Hud.log('You enter ' + spec.name + '.');
+        }
         this.lockExits();
         if (window.Hud && Hud.saveGame) {
             Hud.saveGame();
@@ -799,7 +803,10 @@ var WorldScene = new Phaser.Class({
             sprite.homeY = def.y;
             sprite.lastFacing = NPC_FACE_ORDER[index % NPC_FACE_ORDER.length];
             self.applyNpcFacing(sprite);
-            self.physics.add.collider(sprite, self.ground);
+            /* Bankers stand on staff WALL tiles behind the counter. */
+            if (def.key !== 'banker') {
+                self.physics.add.collider(sprite, self.ground);
+            }
             var label = self.add.text(def.x, def.y - 14, def.name, {
                 fontSize: '8px',
                 fontFamily: 'Verdana, Geneva, sans-serif',
@@ -813,7 +820,9 @@ var WorldScene = new Phaser.Class({
                 sprite.questIcon = self.makeQuestHeadIcon();
                 self.floatLabels.push(sprite.questIcon);
             }
+            self.nudgeNpcOffTaggedTiles(sprite, zoneId);
         });
+        this.assertNpcSpawnSafety(zoneId);
         this.refreshQuestIcons();
 
         (MOB_DEFS[zoneId] || []).forEach(function (def, index) {
@@ -846,6 +855,75 @@ var WorldScene = new Phaser.Class({
             self.physics.add.collider(sprite, self.ground);
             self.restoreMobState(sprite, zoneId, scale);
         });
+    },
+
+    npcTileBlocked: function (zoneId, tx, ty) {
+        if (typeof tileHasTag === 'function' && tileHasTag(zoneId, tx, ty, 'blocked_npc')) {
+            return true;
+        }
+        if (typeof tileHasTag === 'function' && tileHasTag(zoneId, tx, ty, 'counter_front')) {
+            return true;
+        }
+        if (typeof tileHasTag === 'function' && tileHasTag(zoneId, tx, ty, 'stairs_down')) {
+            return true;
+        }
+        return false;
+    },
+
+    nudgeNpcOffTaggedTiles: function (sprite, zoneId) {
+        var tile;
+        var dirs;
+        var d;
+        var nx;
+        var ny;
+        var center;
+        if (!sprite || sprite.npcDef && sprite.npcDef.key === 'banker') {
+            return;
+        }
+        tile = worldToTile(sprite.x, sprite.y);
+        if (!this.npcTileBlocked(zoneId, tile.tx, tile.ty)) {
+            return;
+        }
+        dirs = [[0, 1], [0, -1], [1, 0], [-1, 0], [1, 1], [-1, 1], [1, -1], [-1, -1]];
+        for (d = 0; d < dirs.length; d++) {
+            nx = tile.tx + dirs[d][0];
+            ny = tile.ty + dirs[d][1];
+            if (this.npcTileBlocked(zoneId, nx, ny)) {
+                continue;
+            }
+            if (!tileWalkable(this.tileGrid, nx, ny)) {
+                continue;
+            }
+            center = tileCenter(nx, ny);
+            sprite.setPosition(center.x, center.y);
+            sprite.homeX = center.x;
+            sprite.homeY = center.y;
+            if (sprite.nameLabel) {
+                sprite.nameLabel.setPosition(center.x, center.y - 14);
+            }
+            return;
+        }
+    },
+
+    assertNpcSpawnSafety: function (zoneId) {
+        var bad = [];
+        var self = this;
+        this.npcs.children.iterate(function (npc) {
+            var tile;
+            if (!npc || !npc.active) {
+                return;
+            }
+            if (npc.npcDef && npc.npcDef.key === 'banker') {
+                return;
+            }
+            tile = worldToTile(npc.x, npc.y);
+            if (self.npcTileBlocked(zoneId, tile.tx, tile.ty)) {
+                bad.push((npc.npcDef && npc.npcDef.name) || 'npc');
+            }
+        });
+        if (bad.length && typeof console !== 'undefined' && console.warn) {
+            console.warn('[Emberwood] NPC spawn on blocked tile:', bad.join(', '), 'zone=' + zoneId);
+        }
     },
 
     remainingOfTimer: function (timer) {
@@ -1490,6 +1568,16 @@ var WorldScene = new Phaser.Class({
             this.clickStation(scenery);
             return;
         }
+        if (scenery && scenery.kind === 'guild-post') {
+            hit = this.findNpcByKey((scenery.interact && scenery.interact.npcKey) || 'guild');
+            if (hit) {
+                this.talkTarget = hit;
+                this.engageTarget = null;
+                this.clearFish();
+                this.setWalk(hit.x, hit.y, { allowEnd: true });
+                return;
+            }
+        }
         if (scenery && scenery.kind === 'tree' && typeof woodcutTreeAt === 'function'
                 && woodcutTreeAt(scenery.tx, scenery.ty, this.zoneId, this.tileGrid)) {
             this.clickChopTree(scenery);
@@ -1558,10 +1646,12 @@ var WorldScene = new Phaser.Class({
     pickScenery: function (x, y) {
         var tile = worldToTile(x, y);
         var fire = this.groundFireAt(tile.tx, tile.ty);
+        var interact;
+        var kind;
         if (fire) {
             return { tx: tile.tx, ty: tile.ty, kind: 'fire', fire: fire };
         }
-        var kind = typeof sceneryKindAt === 'function'
+        kind = typeof sceneryKindAt === 'function'
             ? sceneryKindAt(this.tileGrid, tile.tx, tile.ty, {
                 houseRects: this.houseRectsNow(),
                 interior: !!this.interiorId,
@@ -1571,7 +1661,10 @@ var WorldScene = new Phaser.Class({
         if (!kind) {
             return null;
         }
-        return { tx: tile.tx, ty: tile.ty, kind: kind };
+        interact = typeof getTileInteract === 'function'
+            ? getTileInteract(this.zoneId, tile.tx, tile.ty)
+            : null;
+        return { tx: tile.tx, ty: tile.ty, kind: kind, interact: interact };
     },
 
     ensureGroundFireTexture: function () {
@@ -1830,13 +1923,25 @@ var WorldScene = new Phaser.Class({
     },
 
     openStation: function (hit) {
+        var shopKey;
+        var npcKey;
+        var npc;
         this.stationTarget = null;
         if (!hit || this.encounterLock || (window.Hud && Hud.mode === 'battle')) {
             return false;
         }
         if (hit.kind === 'booth') {
             if (Hud.showBank) {
-                Hud.showBank({ key: 'booth', name: 'Bank booth' });
+                Hud.showBank({ key: 'booth', name: 'Bank counter' });
+            }
+            return true;
+        }
+        if (hit.kind === 'shop-stall' || (hit.interact && hit.interact.verb === 'trade')) {
+            shopKey = (hit.interact && hit.interact.shopKey) || 'mira';
+            npcKey = hit.interact && hit.interact.npcKey;
+            npc = npcKey ? this.findNpcByKey(npcKey) : null;
+            if (Hud.showShop) {
+                Hud.showShop((npc && npc.npcDef) || { name: 'Shopkeeper Mira', shopKey: shopKey });
             }
             return true;
         }
@@ -1849,6 +1954,19 @@ var WorldScene = new Phaser.Class({
             return true;
         }
         return this.examineScenery(hit);
+    },
+
+    findNpcByKey: function (key) {
+        var found = null;
+        if (!key || !this.npcs) {
+            return null;
+        }
+        this.npcs.children.iterate(function (npc) {
+            if (npc && npc.npcDef && npc.npcDef.key === key) {
+                found = npc;
+            }
+        });
+        return found;
     },
 
     clearFish: function () {
@@ -1982,7 +2100,12 @@ var WorldScene = new Phaser.Class({
         if (booth && booth.kind === 'booth' && this.stationInRange(booth)) {
             return;
         }
-        if (typeof TOWN_PROPS !== 'undefined' && TOWN_PROPS.booth) {
+        if (typeof BANK_COUNTER !== 'undefined' && BANK_COUNTER.front) {
+            booth = { tx: BANK_COUNTER.front.x, ty: BANK_COUNTER.front.y, kind: 'booth' };
+            if (this.zoneId === 'haven' && this.stationInRange(booth)) {
+                return;
+            }
+        } else if (typeof TOWN_PROPS !== 'undefined' && TOWN_PROPS.booth) {
             booth = { tx: TOWN_PROPS.booth.x, ty: TOWN_PROPS.booth.y, kind: 'booth' };
             if (this.zoneId === 'haven' && this.stationInRange(booth)) {
                 return;
@@ -2193,7 +2316,8 @@ var WorldScene = new Phaser.Class({
             Hud.log('The tree is exhausted.');
             return false;
         }
-        if (typeof hasTool === 'function' && typeof WOODCUT_AXE_ID !== 'undefined' && !hasTool(hero, WOODCUT_AXE_ID)) {
+        if (typeof hasAnyToolKind === 'function' ? !hasAnyToolKind(hero, 'axe')
+                : (typeof hasTool === 'function' && typeof WOODCUT_AXE_ID !== 'undefined' && !hasTool(hero, WOODCUT_AXE_ID))) {
             Hud.log('You need a bronze axe.');
             return false;
         }
@@ -2315,7 +2439,8 @@ var WorldScene = new Phaser.Class({
                 : ('You need level ' + gate.need + '.'));
             return false;
         }
-        if (typeof hasTool === 'function' && typeof MINE_PICK_ID !== 'undefined' && !hasTool(hero, MINE_PICK_ID)) {
+        if (typeof hasAnyToolKind === 'function' ? !hasAnyToolKind(hero, 'pickaxe')
+                : (typeof hasTool === 'function' && typeof MINE_PICK_ID !== 'undefined' && !hasTool(hero, MINE_PICK_ID))) {
             Hud.log('You need a bronze pickaxe.');
             return false;
         }
@@ -3324,18 +3449,34 @@ var WorldScene = new Phaser.Class({
         }
         if (forcePlayer || autoRetaliateOn(hero)) {
             hpBefore = fight.hp;
-            dealt = rollOverworldDamage('player', mob, hero, { special: !!fight.specialQueued });
+            dealt = 0;
             fight.specialQueued = false;
+            if (typeof magicWeaponEquipped === 'function' && magicWeaponEquipped(hero)) {
+                if (typeof hasWindStrikeRunes === 'function' && !hasWindStrikeRunes(hero)) {
+                    Hud.log('You need Air and Mind runes to attack with a staff.');
+                } else if (typeof consumeAirStrikeRunes === 'function' && consumeAirStrikeRunes(hero)) {
+                    dealt = rollOverworldDamage('player', mob, hero, { special: !!fight.specialQueued });
+                } else {
+                    Hud.log('You need Air and Mind runes to attack with a staff.');
+                }
+            } else if (typeof rangedWeaponEquipped === 'function' && rangedWeaponEquipped(hero)) {
+                if (typeof canShoot === 'function' && !canShoot(hero)) {
+                    Hud.log('Your bow needs suitable arrows (or leave ammo empty for wooden shafts).');
+                } else {
+                    dealt = rollOverworldDamage('player', mob, hero, { special: !!fight.specialQueued });
+                    if (typeof consumeAmmo === 'function') {
+                        consumeAmmo(hero);
+                    }
+                }
+            } else {
+                dealt = rollOverworldDamage('player', mob, hero, { special: !!fight.specialQueued });
+            }
             if (dealt > 0) {
                 fight.hp = Math.max(0, fight.hp - dealt);
                 showWorldHitSplat(this, mob.x, mob.y, '-' + dealt, 'hit');
                 grantOverworldHitXp(hero, fight, mob, dealt, hpBefore);
                 ensureSpecialEnergy(hero);
                 hero.specialEnergy = Math.min(100, hero.specialEnergy + 10);
-            }
-            if (typeof consumeAmmo === 'function' && typeof rangedWeaponEquipped === 'function' &&
-                rangedWeaponEquipped(hero)) {
-                consumeAmmo(hero);
             }
             this.registry.set('hero', hero);
             if (Hud.renderOverworldBattle) {

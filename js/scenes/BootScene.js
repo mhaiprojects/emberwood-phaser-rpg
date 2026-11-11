@@ -36,6 +36,17 @@ var BootScene = new Phaser.Class({
             'drakescale', 'key'].forEach(function (name) {
             self.load.svg('item-' + name, 'assets/svg/items/' + name + '.svg');
         });
+        /* Tier / combat aliases reuse existing SVG art as Phaser textures. */
+        self.load.svg('item-woodbow', 'assets/svg/items/shortbow.svg');
+        self.load.svg('item-woodarrow', 'assets/svg/items/arrow.svg');
+        self.load.svg('item-staff', 'assets/svg/items/bronzeaxe.svg');
+        self.load.svg('item-bronzestaff', 'assets/svg/items/bronzeaxe.svg');
+        self.load.svg('item-woodaxe', 'assets/svg/items/bronzeaxe.svg');
+        self.load.svg('item-woodpick', 'assets/svg/items/bronzepick.svg');
+        self.load.svg('item-ironaxe', 'assets/svg/items/bronzeaxe.svg');
+        self.load.svg('item-ironpick', 'assets/svg/items/bronzepick.svg');
+        self.load.svg('item-wizardhat', 'assets/svg/items/feather.svg');
+        self.load.svg('item-wizardrobe', 'assets/svg/items/gloves.svg');
     },
 
     create: function () {

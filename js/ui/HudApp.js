@@ -53,7 +53,13 @@ var HudApp = {
             collisionDebugOn: false,
             styleAccurateOn: false,
             styleAggressiveOn: false,
-            styleDefensiveOn: false
+            styleDefensiveOn: false,
+            styleSharedOn: true,
+            styleAccurateLabel: 'Accurate',
+            stylePowerLabel: 'Strength',
+            styleDefensiveLabel: 'Defensive',
+            styleHint: 'Shared splits XP between Attack, Defence, and Strength / Ranger / Mage.',
+            combatWeaponLabel: 'Melee'
         };
     },
 

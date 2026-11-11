@@ -20,13 +20,10 @@
 
 **Open PM items right now:** only the four `[blocked]` test-process lines in §14.
 
-**This plan’s remaining design work** (not finished as product direction even if some PM stretch lines say done):
+**This plan’s remaining design work** (after 2026-11-11 implementation pass):
 
-1. World-layer future-proofing  
-2. Clear Ranger / Mage play via gear + skills (no classes)  
-3. Wood → dragonite tool/gear tiers (+ range/mage equivalents)  
-4. Same-plane layout (finish shop/guild; stairs only when needed)  
-5. Better courtyard bank (real counter, NPCs behind it)
+1. Deeper diamond/dragonite armour smithing recipes (tools + staves data exist)  
+2. Optional smoke-only testing reopen (still blocked)
 
 ---
 
@@ -159,7 +156,7 @@
 - **Suggestion:** A + B.
 
 #### 2.1.4 “Interiors” still swap the whole map for shop / guild / mine shaft
-- **Status:** Bank interior removed; shop, guild, shaft remain in `INTERIOR_LIST`.
+- **Status:** Done — A (haven) + B (shaft only). Shop/guild removed from `INTERIOR_LIST`; courtyard stall + guild post; Darkmine shaft keeps stairs-down interior.
 - **In plain words:** Walking some doors still teleports you into a fake room that replaces the whole land. That fights the “stay on one open map” rule unless the door is clearly stairs.
 - **Options:**
   - A. Remove haven shop/guild interiors; put stalls on the courtyard.
@@ -178,6 +175,7 @@
 - **Suggestion:** A.
 
 #### 2.2.2 Interaction registry
+- **Status:** Done — A. `ZONE_INTERACT` / `setTileInteract` / `getTileInteract` per tile.
 - **In plain words:** Instead of hard-coded “booth is always at 14,12,” store a list: “this tile opens bank / that tile is a furnace / that tile is stairs.”
 - **Options:**
   - A. Per-tile registry `{ kind, verb, npcKey }`.
@@ -186,6 +184,7 @@
 - **Suggestion:** A.
 
 #### 2.2.3 Access tags (doors, stairs, counter front)
+- **Status:** Done — A. `ZONE_TILE_TAGS` with `counter_front`, `stairs_down`, `blocked_npc`, `staff`, `apron`.
 - **In plain words:** Mark special tiles so NPCs never stand on the doorway and the player knows where to click the bank.
 - **Options:**
   - A. Tags on tiles: `counter_front`, `stairs_down`, `blocked_npc`, etc.
@@ -194,6 +193,7 @@
 - **Suggestion:** A.
 
 #### 2.2.4 NPC spawn safety check
+- **Status:** Done — A + B. `assertNpcSpawnSafety` + `nudgeNpcOffTaggedTiles` (banker exempt on staff tiles).
 - **In plain words:** At startup, fail a check if Elise is standing on the door or the only tile in front of the bank.
 - **Options:**
   - A. Boot assert.
@@ -210,6 +210,7 @@
 ### 3.1 Rules
 
 #### 3.1.1 No class flag
+- **Status:** Done — A. `heroCombatClass` from equipped weapon only.
 - **In plain words:** The save file should not say “this character is a mage.” Gear and actions decide.
 - **Options:**
   - A. Always derive style from the worn weapon.
@@ -218,6 +219,7 @@
 - **Suggestion:** A or B; never C.
 
 #### 3.1.2 Melee attack styles
+- **Status:** Done — custom. All styles train Attack/Defence; power skill is Strength / Ranged / Magic by weapon; Shared default splits three ways.
 - **In plain words:** Accurate / Aggressive / Defensive only reshuffle melee training (Attack / Strength / Defence), like classic RuneScape.
 - **Options:**
   - A. Keep that mapping.
@@ -226,6 +228,7 @@
 - **Suggestion:** A.
 
 #### 3.1.3 Ranged needs a bow and arrows
+- **Status:** Done — A (+ empty ammo = infinite wooden arrows).
 - **In plain words:** No arrows in the ammo slot → you cannot shoot; the game should say so clearly.
 - **Options:**
   - A. Require ammo + consume one per hit (already partly there).
@@ -234,6 +237,7 @@
 - **Suggestion:** A.
 
 #### 3.1.4 Magic needs a casting setup
+- **Status:** Done — A (staff + Air/Mind for overworld Air Strike). Autocast later.
 - **In plain words:** A staff (or chosen spell) plus the right runes; no “mage class” unlock.
 - **Options:**
   - A. Staff/wand with `combatClass: magic` + runes.
@@ -242,6 +246,7 @@
 - **Suggestion:** C.
 
 #### 3.1.5 HUD should show what you are fighting with
+- **Status:** Done — B. Labels swap to Strength / Ranger / Mage (+ Longrange / Ward); weapon line shows Bow/Staff/Melee.
 - **In plain words:** The Combat tab should say “Bow” or “Staff,” not leave melee style buttons looking important when they do nothing.
 - **Options:**
   - A. Label + disable melee styles when ranged/magic.
@@ -250,6 +255,7 @@
 - **Suggestion:** A short-term; B later.
 
 #### 3.1.6 One damage/XP brain for overworld fights
+- **Status:** Done — A. `rollOverworldDamage` + `grantStyleHitXp` shared with battle sprites.
 - **In plain words:** Whether you click a goblin in the woods or an old battle screen, the same math should decide hits and skill XP.
 - **Options:**
   - A. Shared helpers only.
@@ -260,6 +266,7 @@
 ### 3.2 Content so players can actually try range/mage
 
 #### 3.2.1 Ranger onboarding
+- **Status:** Done — A + B. Kett + Cole; starter shortbow; infinite wooden arrows if ammo empty.
 - **In plain words:** A new player should learn “buy/wield bow + arrows” from a tutor or shop, not guess.
 - **Options:**
   - A. Kett mentions bows; Armsman sells the kit.
@@ -268,6 +275,7 @@
 - **Suggestion:** A.
 
 #### 3.2.2 Mage onboarding
+- **Status:** Done — A (+ tier staves / robes seeded). Staff + Air/Mind in shop and starter kit; staff auto-attacks via Air Strike.
 - **In plain words:** Same for a basic staff and air/mind runes.
 - **Options:**
   - A. Add `staff` + shop runes.
@@ -284,6 +292,7 @@
 ### 4.1 Melee / tools
 
 #### 4.1.1 Wood
+- **Status:** Done — A. Wood axe/pick/club/shield/bow/staff.
 - **In plain words:** Starter junk gear so bronze feels like an upgrade.
 - **Options:**
   - A. Wood axe + club/shield.
@@ -292,6 +301,7 @@
 - **Suggestion:** A or C.
 
 #### 4.1.2 Copper
+- **Status:** Done — A. Copper axe/pick/dagger + ore smelting path.
 - **In plain words:** What you dig up early; maybe weak tools; mainly feeds bronze smelting with tin.
 - **Options:**
   - A. Copper tools + ore → bronze bars.
@@ -300,6 +310,7 @@
 - **Suggestion:** A.
 
 #### 4.1.3 Bronze (current default)
+- **Status:** Done — A. Bronze remains early-game baseline.
 - **In plain words:** Today’s normal axe, pick, sword, dagger.
 - **Options:**
   - A. Keep as early-game baseline.
@@ -308,6 +319,7 @@
 - **Suggestion:** A.
 
 #### 4.1.4 Iron
+- **Status:** Done — B then A light. Iron tools + iron sword in data/shop.
 - **In plain words:** Next step; mining already talks about iron around level 15.
 - **Options:**
   - A. Iron tools + some armour/weapons.
@@ -316,6 +328,7 @@
 - **Suggestion:** B then A.
 
 #### 4.1.5 Diamond / 4.1.6 Dragonite
+- **Status:** Done — B. Diamond/dragonite tools (+ staves); full armour sets later.
 - **In plain words:** Mid and end shiny gear so the ladder has a destination.
 - **Options:**
   - A. Full tools + weapons/armour each.
@@ -324,6 +337,7 @@
 - **Suggestion:** B, then A.
 
 ### 4.2 Ranged equivalents
+- **Status:** Done — A. Wood→oak→yew→magic bows; wood/bronze/iron arrows; ammo cannot out-tier bow.
 - **In plain words:** Bows get stronger woods; arrows get stronger tips. Rough map: wood bow → oak/willow ≈ bronze/iron power → yew ≈ diamond → magic bow ≈ dragonite.
 - **Options:**
   - A. Full bow + ammo ladder with “ammo cannot out-tier the bow.”
@@ -332,6 +346,7 @@
 - **Suggestion:** A.
 
 ### 4.3 Magic equivalents
+- **Status:** Done — A. Staff tiers + wizard hat/robe pieces.
 - **In plain words:** Staves climb the same materials; robes give a little magic help without being a class.
 - **Options:**
   - A. Staff per tier + robe pieces.
@@ -340,6 +355,7 @@
 - **Suggestion:** A.
 
 ### 4.4 How to build it in data
+- **Status:** Done — A. `tier` / `tool` / `toolTier` + `bestOwnedTool` / `hasAnyToolKind`.
 - **In plain words:** Tag every item with its tier; when chopping/mining, automatically use your best good-enough tool instead of “must be exactly the bronze axe.”
 - **Options:**
   - A. `tier` / `tool` fields + `bestOwnedTool`.
@@ -354,7 +370,7 @@
 ### 5.1 Policy
 
 #### 5.1.1 Stay on the open map by default
-- **Status:** Bank interior already removed (loop-tasks done). Shop/guild interiors still exist.
+- **Status:** Done — A. Shop/guild courtyard props; interiors deleted from haven.
 - **In plain words:** Players should bank, shop, and quest in the courtyard they can see — not vanish into a copy-paste room — unless the story uses stairs.
 - **Options:**
   - A. Move shop/guild to courtyard props; delete those interiors.
@@ -363,6 +379,7 @@
 - **Suggestion:** A.
 
 #### 5.1.2 Darkmine shaft
+- **Status:** Done — A. `stairs_down` tag + enterChat climb line.
 - **In plain words:** Going “down the mine” is the one place stairs-down makes story sense.
 - **Options:**
   - A. Mark shaft entry as stairs-down + chat “You climb down…”
@@ -371,6 +388,7 @@
 - **Suggestion:** A.
 
 #### 5.1.3 NPCs must not block access
+- **Status:** Done — A (+ B nudge). Tags + assert/nudge; Elise on staff tiles.
 - **In plain words:** Nobody stands on the bank click-tile, doors, or stairs.
 - **Options:**
   - A. Spawn rules + assert.
@@ -387,6 +405,7 @@
 ### 6.1 Goal
 
 #### 6.1.1 Build a real bank desk on the map
+- **Status:** Done — A. `BANK_COUNTER` footprint in MapGen.
 - **In plain words:** Instead of one lonely booth square, build a short counter the player walks up to, with bankers standing behind it — still outside in Emberhaven.
 - **Options:**
   - A. Author a fixed counter footprint in MapGen (booth/wall/path).
@@ -395,6 +414,7 @@
 - **Suggestion:** A.
 
 #### 6.1.2 One clear “talk to bank” spot
+- **Status:** Done — A. Single `counter_front` (+ talk to Elise).
 - **In plain words:** The player should always know which tile opens the bank window.
 - **Options:**
   - A. Single `counter_front` interact tile.
@@ -403,6 +423,7 @@
 - **Suggestion:** A (+ talk to Elise still works).
 
 #### 6.1.3 Staff behind the counter
+- **Status:** Done — B. Elise on staff WALL tiles behind the desk.
 - **In plain words:** Elise (and maybe a clerk) stand where the player cannot walk, behind the desk.
 - **Options:**
   - A. Elise + optional clerk on staff tiles.
@@ -411,6 +432,7 @@
 - **Suggestion:** A or B.
 
 #### 6.1.4 Player cannot walk into the teller area
+- **Status:** Done — A. Staff tiles are WALL (solid for hero).
 - **In plain words:** The pathfinder treats “behind the desk” as blocked for you.
 - **Options:**
   - A. Staff tiles solid for the hero.
@@ -419,6 +441,7 @@
 - **Suggestion:** A.
 
 #### 6.1.5 Apron space in front
+- **Status:** Done — A. Marked apron path tiles in front of the counter.
 - **In plain words:** Leave a couple of empty path tiles so click-to-walk and queuing feel fair.
 - **Options:**
   - A. Two-tile apron.
@@ -431,6 +454,7 @@
 ## 7. Suggested order of work
 
 #### 7.1 Respect the testing block
+- **Status:** Done — A. Features shipped; no suite claims while testing disabled.
 - **In plain words:** Do not claim suite-green while testing is disabled.
 - **Options:**
   - A. Design/implement features; defer proof.
@@ -439,6 +463,7 @@
 - **Suggestion:** A for design work; C when you want proof.
 
 #### 7.2 Same-plane shop/guild + bank counter
+- **Status:** Done — A/B. Bank counter + shop/guild courtyard; haven interiors gone.
 - **In plain words:** Finish the “everything visible on the town square” promise, with a proper bank desk.
 - **Options:**
   - A. Bank counter first, then shop/guild.
@@ -447,6 +472,7 @@
 - **Suggestion:** A.
 
 #### 7.3 Ranger / Mage clarity
+- **Status:** Done — A with §4 depth. HUD styles + XP + shops/tutors.
 - **In plain words:** Make bows and staves feel intentional in HUD and XP.
 - **Options:**
   - A. After bank/layout.
@@ -455,6 +481,7 @@
 - **Suggestion:** A, light touch; deeper with §4.
 
 #### 7.4 Tier ladder
+- **Status:** Done — C then A. `bestOwnedTool` + wood→dragonite tools; iron in shops.
 - **In plain words:** Teach the game “best tool you own,” then add iron, then later diamond/dragonite.
 - **Options:**
   - A. Data model + bronze/iron next.
@@ -463,6 +490,7 @@
 - **Suggestion:** C then A.
 
 #### 7.5 Do not expand multiplayer / GE
+- **Status:** Done — A. GE booth frozen (chat only); no multiplayer growth.
 - **In plain words:** Even if loop-tasks checked them off, this plan will not grow online features or a real exchange.
 - **Options:**
   - A. Freeze.

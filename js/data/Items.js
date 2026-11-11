@@ -7,13 +7,39 @@ var ITEM_DB = {
     beef: { name: 'Cooked beef', icon: 'assets/svg/items/beef.svg', heal: 16, stack: true, value: 8, buyPrice: 12, sellPrice: 3, examine: 'A seared cut of beef.' },
     burntbeef: { name: 'Burnt beef', icon: 'assets/svg/items/burntbeef.svg', stack: true, value: 1, sellPrice: 1, examine: 'Blackened beef. Best left alone.' },
     bread: { name: 'Bread', icon: 'assets/svg/items/bread.svg', heal: 20, stack: true, value: 12, buyPrice: 16, sellPrice: 4, examine: 'A dense loaf baked for the road.' },
-    sword: { name: 'Bronze sword', icon: 'assets/svg/items/sword.svg', slot: 'weapon', damage: 16, value: 26, buyPrice: 40, sellPrice: 10, examine: 'A short bronze blade, nicked but serviceable.' },
-    bronzedagger: { name: 'Bronze dagger', icon: 'assets/svg/items/bronzedagger.svg', slot: 'weapon', damage: 10, value: 14, buyPrice: 22, sellPrice: 5, examine: 'A short bronze dagger, freshly forged.' },
-    shortbow: { name: 'Shortbow', icon: 'assets/svg/items/shortbow.svg', slot: 'weapon', damage: 16, combatClass: 'ranged', value: 32, buyPrice: 48, sellPrice: 12, examine: 'A yew shortbow, light enough for bronze arrows.' },
-    arrow: { name: 'Bronze arrows', icon: 'assets/svg/items/arrow.svg', slot: 'ammo', stack: true, value: 1, buyPrice: 2, sellPrice: 1, examine: 'A sheaf of bronze arrows with grey-goose fletching.' },
-    shield: { name: 'Wooden shield', icon: 'assets/svg/items/shield.svg', slot: 'shield', defence: 1, value: 20, buyPrice: 30, sellPrice: 8, examine: 'A round wooden shield bound with iron.' },
-    bronzeaxe: { name: 'Bronze axe', icon: 'assets/svg/items/bronzeaxe.svg', tool: 'axe', value: 18, buyPrice: 28, sellPrice: 7, examine: 'A bronze axe for chopping trees.' },
-    bronzepick: { name: 'Bronze pickaxe', icon: 'assets/svg/items/bronzepick.svg', tool: 'pickaxe', value: 18, buyPrice: 28, sellPrice: 7, examine: 'A bronze pickaxe for mining ore.' },
+    sword: { name: 'Bronze sword', icon: 'assets/svg/items/sword.svg', slot: 'weapon', damage: 16, combatClass: 'melee', tier: 'bronze', value: 26, buyPrice: 40, sellPrice: 10, examine: 'A short bronze blade, nicked but serviceable.' },
+    bronzedagger: { name: 'Bronze dagger', icon: 'assets/svg/items/bronzedagger.svg', slot: 'weapon', damage: 10, combatClass: 'melee', tier: 'bronze', value: 14, buyPrice: 22, sellPrice: 5, examine: 'A short bronze dagger, freshly forged.' },
+    woodclub: { name: 'Wood club', icon: 'assets/svg/items/sword.svg', slot: 'weapon', damage: 8, combatClass: 'melee', tier: 'wood', value: 4, buyPrice: 6, sellPrice: 1, examine: 'A crude wooden club.' },
+    copperdagger: { name: 'Copper dagger', icon: 'assets/svg/items/bronzedagger.svg', slot: 'weapon', damage: 9, combatClass: 'melee', tier: 'copper', value: 10, buyPrice: 14, sellPrice: 3, examine: 'A soft copper dagger.' },
+    ironsword: { name: 'Iron sword', icon: 'assets/svg/items/sword.svg', slot: 'weapon', damage: 20, combatClass: 'melee', tier: 'iron', value: 40, buyPrice: 60, sellPrice: 16, examine: 'A sturdy iron blade.' },
+    shortbow: { name: 'Shortbow', icon: 'assets/svg/items/shortbow.svg', slot: 'weapon', damage: 16, combatClass: 'ranged', tier: 'bronze', bowTier: 2, value: 32, buyPrice: 48, sellPrice: 12, examine: 'A shortbow suited to bronze arrows.' },
+    woodbow: { name: 'Wood bow', icon: 'assets/svg/items/shortbow.svg', slot: 'weapon', damage: 10, combatClass: 'ranged', tier: 'wood', bowTier: 1, value: 12, buyPrice: 18, sellPrice: 4, examine: 'A simple wooden bow.' },
+    oakbow: { name: 'Oak bow', icon: 'assets/svg/items/shortbow.svg', slot: 'weapon', damage: 18, combatClass: 'ranged', tier: 'iron', bowTier: 3, value: 48, buyPrice: 72, sellPrice: 18, examine: 'An oak bow with a firm draw.' },
+    yewbow: { name: 'Yew bow', icon: 'assets/svg/items/shortbow.svg', slot: 'weapon', damage: 24, combatClass: 'ranged', tier: 'diamond', bowTier: 4, value: 90, buyPrice: 140, sellPrice: 36, examine: 'A yew war bow.' },
+    magicbow: { name: 'Magic bow', icon: 'assets/svg/items/shortbow.svg', slot: 'weapon', damage: 30, combatClass: 'ranged', tier: 'dragonite', bowTier: 5, value: 160, buyPrice: 240, sellPrice: 64, examine: 'A rare magic bow.' },
+    arrow: { name: 'Bronze arrows', icon: 'assets/svg/items/arrow.svg', slot: 'ammo', stack: true, ammoTier: 2, value: 1, buyPrice: 2, sellPrice: 1, examine: 'A sheaf of bronze arrows with grey-goose fletching.' },
+    woodarrow: { name: 'Wooden arrows', icon: 'assets/svg/items/arrow.svg', slot: 'ammo', stack: true, ammoTier: 1, value: 1, buyPrice: 1, sellPrice: 1, examine: 'Simple wooden shafts. Infinite while unequipped ammo.' },
+    ironarrow: { name: 'Iron arrows', icon: 'assets/svg/items/arrow.svg', slot: 'ammo', stack: true, ammoTier: 3, value: 2, buyPrice: 4, sellPrice: 1, examine: 'Iron-tipped arrows.' },
+    staff: { name: 'Wood staff', icon: 'assets/svg/items/bronzeaxe.svg', slot: 'weapon', damage: 12, combatClass: 'magic', tier: 'wood', value: 20, buyPrice: 30, sellPrice: 8, examine: 'A carved staff. Channels Air Strike.' },
+    bronzestaff: { name: 'Bronze staff', icon: 'assets/svg/items/bronzeaxe.svg', slot: 'weapon', damage: 16, combatClass: 'magic', tier: 'bronze', value: 36, buyPrice: 54, sellPrice: 14, examine: 'A bronze-shod staff.' },
+    ironstaff: { name: 'Iron staff', icon: 'assets/svg/items/bronzeaxe.svg', slot: 'weapon', damage: 20, combatClass: 'magic', tier: 'iron', value: 55, buyPrice: 80, sellPrice: 22, examine: 'An iron-banded casting staff.' },
+    diamondstaff: { name: 'Diamond staff', icon: 'assets/svg/items/bronzeaxe.svg', slot: 'weapon', damage: 26, combatClass: 'magic', tier: 'diamond', value: 100, buyPrice: 150, sellPrice: 40, examine: 'A crystal casting staff.' },
+    dragonitestaff: { name: 'Dragonite staff', icon: 'assets/svg/items/bronzeaxe.svg', slot: 'weapon', damage: 32, combatClass: 'magic', tier: 'dragonite', value: 180, buyPrice: 270, sellPrice: 72, examine: 'A legendary dragonite staff.' },
+    wizardhat: { name: 'Wizard hat', icon: 'assets/svg/items/feather.svg', slot: 'head', defence: 0, magicBonus: 1, tier: 'wood', value: 12, buyPrice: 18, sellPrice: 4, examine: 'A soft hat that helps focus spells.' },
+    wizardrobe: { name: 'Wizard robe', icon: 'assets/svg/items/gloves.svg', slot: 'body', defence: 1, magicBonus: 2, tier: 'wood', value: 24, buyPrice: 36, sellPrice: 8, examine: 'A light robe for casting.' },
+    shield: { name: 'Wooden shield', icon: 'assets/svg/items/shield.svg', slot: 'shield', defence: 1, tier: 'wood', value: 20, buyPrice: 30, sellPrice: 8, examine: 'A round wooden shield bound with iron.' },
+    woodaxe: { name: 'Wood axe', icon: 'assets/svg/items/bronzeaxe.svg', tool: 'axe', tier: 'wood', toolTier: 1, value: 6, buyPrice: 8, sellPrice: 2, examine: 'A soft wooden chopping axe.' },
+    copperaxe: { name: 'Copper axe', icon: 'assets/svg/items/bronzeaxe.svg', tool: 'axe', tier: 'copper', toolTier: 2, value: 12, buyPrice: 18, sellPrice: 4, examine: 'A copper axe for light chopping.' },
+    bronzeaxe: { name: 'Bronze axe', icon: 'assets/svg/items/bronzeaxe.svg', tool: 'axe', tier: 'bronze', toolTier: 3, value: 18, buyPrice: 28, sellPrice: 7, examine: 'A bronze axe for chopping trees.' },
+    ironaxe: { name: 'Iron axe', icon: 'assets/svg/items/bronzeaxe.svg', tool: 'axe', tier: 'iron', toolTier: 4, value: 32, buyPrice: 48, sellPrice: 12, examine: 'An iron axe that bites deep.' },
+    diamondaxe: { name: 'Diamond axe', icon: 'assets/svg/items/bronzeaxe.svg', tool: 'axe', tier: 'diamond', toolTier: 5, value: 80, buyPrice: 120, sellPrice: 32, examine: 'A glittering diamond axe.' },
+    dragoniteaxe: { name: 'Dragonite axe', icon: 'assets/svg/items/bronzeaxe.svg', tool: 'axe', tier: 'dragonite', toolTier: 6, value: 160, buyPrice: 240, sellPrice: 64, examine: 'A dragonite axe of legend.' },
+    woodpick: { name: 'Wood pickaxe', icon: 'assets/svg/items/bronzepick.svg', tool: 'pickaxe', tier: 'wood', toolTier: 1, value: 6, buyPrice: 8, sellPrice: 2, examine: 'A soft wooden pick.' },
+    copperpick: { name: 'Copper pickaxe', icon: 'assets/svg/items/bronzepick.svg', tool: 'pickaxe', tier: 'copper', toolTier: 2, value: 12, buyPrice: 18, sellPrice: 4, examine: 'A copper pickaxe.' },
+    bronzepick: { name: 'Bronze pickaxe', icon: 'assets/svg/items/bronzepick.svg', tool: 'pickaxe', tier: 'bronze', toolTier: 3, value: 18, buyPrice: 28, sellPrice: 7, examine: 'A bronze pickaxe for mining ore.' },
+    ironpick: { name: 'Iron pickaxe', icon: 'assets/svg/items/bronzepick.svg', tool: 'pickaxe', tier: 'iron', toolTier: 4, value: 32, buyPrice: 48, sellPrice: 12, examine: 'An iron pickaxe.' },
+    diamondpick: { name: 'Diamond pickaxe', icon: 'assets/svg/items/bronzepick.svg', tool: 'pickaxe', tier: 'diamond', toolTier: 5, value: 80, buyPrice: 120, sellPrice: 32, examine: 'A diamond-tipped pick.' },
+    dragonitepick: { name: 'Dragonite pickaxe', icon: 'assets/svg/items/bronzepick.svg', tool: 'pickaxe', tier: 'dragonite', toolTier: 6, value: 160, buyPrice: 240, sellPrice: 64, examine: 'A dragonite pickaxe.' },
     net: { name: 'Small fishing net', icon: 'assets/svg/items/net.svg', tool: 'net', value: 8, buyPrice: 12, sellPrice: 3, examine: 'A small fishing net for shrimp.' },
     logs: { name: 'Logs', icon: 'assets/svg/items/logs.svg', stack: true, firemake: true, firemakeXp: 40, value: 2, sellPrice: 1, examine: 'A pile of chopped logs.' },
     copper: { name: 'Copper ore', icon: 'assets/svg/items/copper.svg', stack: true, value: 3, sellPrice: 1, examine: 'A chunk of copper ore.' },
@@ -61,9 +87,24 @@ var WEAPON_SHOP_STOCK = [
     { id: 'bronzedagger', stock: 4, restockTo: 4, restockMs: 90000 },
     { id: 'sword', stock: 2, restockTo: 2, restockMs: 120000 },
     { id: 'shield', stock: 2, restockTo: 2, restockMs: 120000 },
+    { id: 'woodbow', stock: 2, restockTo: 2, restockMs: 90000 },
     { id: 'shortbow', stock: 1, restockTo: 1, restockMs: 120000 },
-    { id: 'arrow', stock: 40, restockTo: 40, restockMs: 45000 }
+    { id: 'arrow', stock: 40, restockTo: 40, restockMs: 45000 },
+    { id: 'staff', stock: 2, restockTo: 2, restockMs: 120000 },
+    { id: 'bronzestaff', stock: 1, restockTo: 1, restockMs: 150000 },
+    { id: 'wizardhat', stock: 1, restockTo: 1, restockMs: 120000 },
+    { id: 'wizardrobe', stock: 1, restockTo: 1, restockMs: 120000 },
+    { id: 'airrune', stock: 40, restockTo: 40, restockMs: 45000 },
+    { id: 'mindrune', stock: 40, restockTo: 40, restockMs: 45000 },
+    { id: 'woodaxe', stock: 2, restockTo: 2, restockMs: 90000 },
+    { id: 'woodpick', stock: 2, restockTo: 2, restockMs: 90000 },
+    { id: 'ironaxe', stock: 1, restockTo: 1, restockMs: 180000 },
+    { id: 'ironpick', stock: 1, restockTo: 1, restockMs: 180000 }
 ];
+GENERAL_SHOP_STOCK.push(
+    { id: 'airrune', stock: 20, restockTo: 20, restockMs: 45000 },
+    { id: 'mindrune', stock: 20, restockTo: 20, restockMs: 45000 }
+);
 var SHOP_CATALOG = {};
 SHOP_CATALOG[GENERAL_SHOP_KEY] = GENERAL_SHOP_STOCK;
 SHOP_CATALOG[WEAPON_SHOP_KEY] = WEAPON_SHOP_STOCK;
@@ -405,11 +446,59 @@ function rangedWeaponEquipped(hero) {
     return !!(def && def.combatClass === 'ranged');
 }
 
+function magicWeaponEquipped(hero) {
+    if (!hero || !hero.equipment || !hero.equipment.weapon) {
+        return false;
+    }
+    var def = ITEM_DB[hero.equipment.weapon];
+    return !!(def && def.combatClass === 'magic');
+}
+
+function bowTier(hero) {
+    var def = hero && hero.equipment && ITEM_DB[hero.equipment.weapon];
+    return def && typeof def.bowTier === 'number' ? def.bowTier : 1;
+}
+
+function ammoTier(id) {
+    var def = ITEM_DB[id];
+    return def && typeof def.ammoTier === 'number' ? def.ammoTier : 1;
+}
+
+/* No equipped ammo → infinite wooden arrows. Other ammo is consumed. */
+function usingInfiniteWoodArrows(hero) {
+    if (!rangedWeaponEquipped(hero)) {
+        return false;
+    }
+    ensureEquipment(hero);
+    return !hero.equipment.ammo;
+}
+
+function canShoot(hero) {
+    var ammoId;
+    if (!rangedWeaponEquipped(hero)) {
+        return false;
+    }
+    if (usingInfiniteWoodArrows(hero)) {
+        return true;
+    }
+    ammoId = hero.equipment.ammo;
+    if (!ammoId || equippedQty(hero, 'ammo') < 1) {
+        return false;
+    }
+    if (ammoTier(ammoId) > bowTier(hero)) {
+        return false;
+    }
+    return true;
+}
+
 function consumeAmmo(hero) {
     if (!hero) {
         return false;
     }
     ensureEquipment(hero);
+    if (usingInfiniteWoodArrows(hero)) {
+        return true;
+    }
     if (!hero.equipment.ammo) {
         return false;
     }
@@ -436,7 +525,7 @@ function makeHero() {
         gold: 8,
         xp: 0,
         level: 1,
-        style: 'accurate',
+        style: 'shared',
         stance: 'melee',
         autoAttack: true,
         autoRetaliate: true,
@@ -473,6 +562,10 @@ function makeHero() {
             { id: 'coins', qty: 8 },
             { id: 'sword', qty: 1 },
             { id: 'shield', qty: 1 },
+            { id: 'shortbow', qty: 1 },
+            { id: 'staff', qty: 1 },
+            { id: 'airrune', qty: 30 },
+            { id: 'mindrune', qty: 30 },
             { id: 'shrimp', qty: 8 },
             { id: 'bread', qty: 3 }
         ],
@@ -505,7 +598,7 @@ function makeHero() {
         }
     };
     applyCombatLevel(hero, false);
-    return hero;
+    return normalizeHeroCombat(hero);
 }
 
 function makeIronmanHero() {
@@ -803,6 +896,71 @@ function hasTool(hero, tool) {
     return false;
 }
 
+function toolKindOf(id) {
+    var def = ITEM_DB[id];
+    return def && def.tool ? def.tool : null;
+}
+
+function toolTierOf(id) {
+    var def = ITEM_DB[id];
+    if (!def) {
+        return 0;
+    }
+    if (typeof def.toolTier === 'number') {
+        return def.toolTier;
+    }
+    return 0;
+}
+
+function ownedItemIds(hero) {
+    var ids = [];
+    var i;
+    var id;
+    if (!hero) {
+        return ids;
+    }
+    if (hero.inventory) {
+        for (i = 0; i < hero.inventory.length; i++) {
+            if (hero.inventory[i] && hero.inventory[i].id && hero.inventory[i].qty > 0) {
+                ids.push(hero.inventory[i].id);
+            }
+        }
+    }
+    if (hero.equipment) {
+        for (id in hero.equipment) {
+            if (hero.equipment[id]) {
+                ids.push(hero.equipment[id]);
+            }
+        }
+    }
+    return ids;
+}
+
+function bestOwnedTool(hero, kind) {
+    var ids = ownedItemIds(hero);
+    var best = null;
+    var bestTier = -1;
+    var i;
+    var id;
+    var tier;
+    for (i = 0; i < ids.length; i++) {
+        id = ids[i];
+        if (toolKindOf(id) !== kind) {
+            continue;
+        }
+        tier = toolTierOf(id);
+        if (tier > bestTier) {
+            bestTier = tier;
+            best = id;
+        }
+    }
+    return best;
+}
+
+function hasAnyToolKind(hero, kind) {
+    return !!bestOwnedTool(hero, kind);
+}
+
 function fishCatchChance(hero) {
     var level = heroSkillLevel(hero, 'fishing') || 1;
     return Math.min(0.95, 0.35 + level * 0.03);
@@ -839,8 +997,8 @@ function chopAtTree(hero, opts) {
     if (!hero || !hero.skills || !hero.skills.woodcutting) {
         return null;
     }
-    if (!opts.skipTool && !hasTool(hero, WOODCUT_AXE_ID)) {
-        return { ok: false, needTool: WOODCUT_AXE_ID, toolName: 'bronze axe' };
+    if (!opts.skipTool && !hasAnyToolKind(hero, 'axe')) {
+        return { ok: false, needTool: WOODCUT_AXE_ID, toolName: 'an axe' };
     }
     if (!opts.skipItem) {
         if (!addItem(hero, WOODCUT_LOG_ID, 1)) {
@@ -861,8 +1019,8 @@ function mineAtRock(hero, ore, opts) {
     if (!gate.ok) {
         return { ok: false, need: gate.need, ore: ore };
     }
-    if (!opts.skipTool && !hasTool(hero, MINE_PICK_ID)) {
-        return { ok: false, needTool: MINE_PICK_ID, toolName: 'bronze pickaxe', ore: ore };
+    if (!opts.skipTool && !hasAnyToolKind(hero, 'pickaxe')) {
+        return { ok: false, needTool: MINE_PICK_ID, toolName: 'a pickaxe', ore: ore };
     }
     if (!opts.skipItem) {
         if (!addItem(hero, ore, 1)) {
@@ -1187,7 +1345,7 @@ function hasWindStrikeRunes(hero) {
     return itemQty(hero, 'airrune') >= 1 && itemQty(hero, 'mindrune') >= 1;
 }
 
-function windStrike(hero) {
+function consumeAirStrikeRunes(hero) {
     if (!hero || !hasWindStrikeRunes(hero)) {
         return false;
     }
@@ -1196,6 +1354,13 @@ function windStrike(hero) {
     }
     if (!takeItem(hero, 'mindrune', 1)) {
         addItem(hero, 'airrune', 1);
+        return false;
+    }
+    return true;
+}
+
+function windStrike(hero) {
+    if (!consumeAirStrikeRunes(hero)) {
         return false;
     }
     if (WIND_STRIKE_XP > 0) {
@@ -1908,7 +2073,7 @@ function eatBestFood(hero) {
     return null;
 }
 
-function combatSkill(hero) {
+function combatPowerSkill(hero) {
     var cls = heroCombatClass(hero);
     if (cls === 'ranged') {
         return 'ranged';
@@ -1916,13 +2081,70 @@ function combatSkill(hero) {
     if (cls === 'magic') {
         return 'magic';
     }
-    if (hero && hero.style === 'aggressive') {
-        return 'strength';
-    }
-    if (hero && hero.style === 'defensive') {
+    return 'strength';
+}
+
+function combatSkill(hero) {
+    var style = hero && hero.style ? hero.style : 'shared';
+    if (style === 'defensive') {
         return 'defence';
     }
-    return 'attack';
+    if (style === 'accurate') {
+        return 'attack';
+    }
+    if (style === 'aggressive' || style === 'power' || style === 'rapid' || style === 'blast') {
+        return combatPowerSkill(hero);
+    }
+    /* shared — handled in grantStyleHitXp */
+    return 'shared';
+}
+
+function styleLabelsForHero(hero) {
+    var cls = heroCombatClass(hero);
+    if (cls === 'ranged') {
+        return {
+            accurate: 'Accurate',
+            power: 'Ranger',
+            defensive: 'Longrange',
+            shared: 'Shared',
+            powerKey: 'rapid'
+        };
+    }
+    if (cls === 'magic') {
+        return {
+            accurate: 'Accurate',
+            power: 'Mage',
+            defensive: 'Ward',
+            shared: 'Shared',
+            powerKey: 'blast'
+        };
+    }
+    return {
+        accurate: 'Accurate',
+        power: 'Strength',
+        defensive: 'Defensive',
+        shared: 'Shared',
+        powerKey: 'aggressive'
+    };
+}
+
+function normalizeHeroCombat(hero) {
+    var labels;
+    if (!hero) {
+        return hero;
+    }
+    if (!hero.style) {
+        hero.style = 'shared';
+    }
+    labels = styleLabelsForHero(hero);
+    if (hero.style === 'aggressive' || hero.style === 'power') {
+        hero.style = labels.powerKey;
+    } else if (hero.style === 'rapid' || hero.style === 'blast') {
+        if (labels.powerKey !== hero.style) {
+            hero.style = labels.powerKey;
+        }
+    }
+    return hero;
 }
 
 function styleHitXp(mobXp, dealt, maxHp) {
@@ -1970,16 +2192,26 @@ function grantStyleHitXp(hero, target, dealt, hpBefore) {
     var mobXp = enemyMobXp(target);
     var maxHp = target && target.maxHp;
     var amount = styleHitXp(mobXp, scored, maxHp);
+    var skill;
+    var power;
+    var share;
+    var hpAmount;
     if (amount < 1) {
         return 0;
     }
-    var skill = combatSkill(hero);
-    gainSkillXp(hero, skill, amount);
-    if (skill === 'attack' || skill === 'strength' || skill === 'defence' || skill === 'ranged') {
-        var hpAmount = hitpointsHitXp(mobXp, scored, maxHp);
-        if (hpAmount > 0) {
-            gainSkillXp(hero, 'hitpoints', hpAmount);
-        }
+    skill = combatSkill(hero);
+    if (skill === 'shared') {
+        share = Math.max(1, Math.floor(amount / 3));
+        power = combatPowerSkill(hero);
+        gainSkillXp(hero, 'attack', share);
+        gainSkillXp(hero, 'defence', share);
+        gainSkillXp(hero, power, Math.max(1, amount - share * 2));
+    } else {
+        gainSkillXp(hero, skill, amount);
+    }
+    hpAmount = hitpointsHitXp(mobXp, scored, maxHp);
+    if (hpAmount > 0) {
+        gainSkillXp(hero, 'hitpoints', hpAmount);
     }
     if (target && target.scene && target.scene.registry) {
         target.scene.registry.set('hero', hero);
@@ -2001,7 +2233,10 @@ function heroCombatClass(hero) {
     if (rangedWeaponEquipped(hero)) {
         return 'ranged';
     }
-    return normalizeCombatClass(hero && hero.stance);
+    if (magicWeaponEquipped(hero)) {
+        return 'magic';
+    }
+    return 'melee';
 }
 
 function mobCombatClass(spec) {

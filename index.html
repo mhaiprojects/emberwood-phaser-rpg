@@ -74,11 +74,13 @@
                         </div>
                         <div id="panel-combat" class="tab-panel" v-show="tab === 'combat'">
                             <h3>Combat</h3>
-                            <p>Accurate trains Attack, Aggressive trains Strength, Defensive trains Defence. Each successful hit grants a share of the foe's XP, including Hitpoints.</p>
+                            <p id="style-hint">{{ styleHint }}</p>
+                            <p id="combat-weapon-label">Fighting with: {{ combatWeaponLabel }}</p>
                             <div id="style-row">
-                                <button type="button" data-style="accurate" :class="{ 'is-on': styleAccurateOn }"><img class="pix" src="assets/svg/ui/accurate.svg" alt=""> Accurate</button>
-                                <button type="button" data-style="aggressive" :class="{ 'is-on': styleAggressiveOn }"><img class="pix" src="assets/svg/ui/aggressive.svg" alt=""> Aggressive</button>
-                                <button type="button" data-style="defensive" :class="{ 'is-on': styleDefensiveOn }"><img class="pix" src="assets/svg/ui/defensive.svg" alt=""> Defensive</button>
+                                <button type="button" data-style="accurate" :class="{ 'is-on': styleAccurateOn }"><img class="pix" src="assets/svg/ui/accurate.svg" alt=""> {{ styleAccurateLabel }}</button>
+                                <button type="button" data-style="aggressive" :class="{ 'is-on': styleAggressiveOn }"><img class="pix" src="assets/svg/ui/aggressive.svg" alt=""> {{ stylePowerLabel }}</button>
+                                <button type="button" data-style="defensive" :class="{ 'is-on': styleDefensiveOn }"><img class="pix" src="assets/svg/ui/defensive.svg" alt=""> {{ styleDefensiveLabel }}</button>
+                                <button type="button" data-style="shared" :class="{ 'is-on': styleSharedOn }"><img class="pix" src="assets/svg/ui/combat.svg" alt=""> Shared</button>
                             </div>
                             <h3>Auto-attack</h3>
                             <p>When on, walking into a nearby foe starts a fight.</p>
