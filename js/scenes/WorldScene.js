@@ -1,5 +1,7 @@
 var WALK_SPEED = 90;
 var RUN_SPEED = 180;
+/* Wander + chase/combat; must stay strictly below WALK_SPEED. */
+var MOB_MOVE_SPEED = 72;
 var RUN_ENERGY_MAX = 100;
 var RUN_DRAIN_PER_SEC = 25;
 var RUN_RESTORE_PER_SEC = 15;
@@ -4156,7 +4158,7 @@ var WorldScene = new Phaser.Class({
             mob.body.setVelocity(0, 0);
             return;
         }
-        speed = typeof MOB_CHASE_SPEED === 'number' ? MOB_CHASE_SPEED : 78;
+        speed = typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : 72;
         dx = this.player.x - mob.x;
         dy = this.player.y - mob.y;
         len = dist || 1;
@@ -5754,8 +5756,10 @@ var WorldScene = new Phaser.Class({
             if (Phaser.Math.Between(0, 80) !== 0) {
                 return;
             }
-            var vx = Phaser.Math.Between(-20, 20);
-            var vy = Phaser.Math.Between(-20, 20);
+            var speed = typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : 72;
+            var angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+            var vx = Math.cos(angle) * speed;
+            var vy = Math.sin(angle) * speed;
             var type = mob.mobDef && mob.mobDef.type;
             if (isGiantMob(type) && giantBlockedAt(grid, mob.x + vx, mob.y + vy, zoneId)) {
                 return;
@@ -5798,7 +5802,7 @@ var WorldScene = new Phaser.Class({
         hero = this.registry.get('hero');
         fightMob = this.overworldFight && this.overworldFight.mob;
         agroRange = typeof MOB_AGGRO_RANGE_PX === 'number' ? MOB_AGGRO_RANGE_PX : 112;
-        speed = typeof MOB_CHASE_SPEED === 'number' ? MOB_CHASE_SPEED : 78;
+        speed = typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : 72;
         this.mobs.children.iterate(function (mob) {
             var shouldAgro;
             if (started || !mob || !mob.aliveMob || !mob.body || mob === fightMob) {

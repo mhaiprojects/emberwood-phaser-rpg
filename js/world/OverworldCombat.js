@@ -1,7 +1,8 @@
 var OW_COMBAT_TICK_MS = 600;
 var POISON_MOB_TYPES = { Slime: true, Skeleton: true, Drake: true, Dragon: true };
 var COMBAT_POISON_CHANCE = 35;
-var MOB_CHASE_SPEED = 78;
+/* Alias kept for older callers; same as MOB_MOVE_SPEED (wander + chase). */
+var MOB_CHASE_SPEED = typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : 72;
 /* Detection radius for mob-initiated agro (chase / open fight). */
 var MOB_AGGRO_RANGE_PX = 112;
 var MOB_BASE_LEVEL = {
