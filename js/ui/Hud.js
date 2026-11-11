@@ -3653,7 +3653,7 @@ var Hud = {
     },
 
     renderAutoAttack: function (hero) {
-        var on = !!(hero && hero.autoAttack);
+        var on = typeof autoAttackOn === 'function' ? autoAttackOn(hero) : !!(hero && hero.autoAttack);
         var vue = this.vueState();
         if (vue) {
             vue.autoAttackOn = on;

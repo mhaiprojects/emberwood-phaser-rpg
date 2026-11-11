@@ -613,7 +613,7 @@ function makeHero() {
         level: 1,
         style: 'shared',
         stance: 'melee',
-        autoAttack: true,
+        autoAttack: false,
         autoRetaliate: true,
         autoPickup: true,
         shiftClickDrop: true,
@@ -702,9 +702,13 @@ function autoRetaliateOn(hero) {
         return false;
     }
     if (hero.autoRetaliate == null) {
-        return !!hero.autoAttack;
+        return true;
     }
     return !!hero.autoRetaliate;
+}
+
+function autoAttackOn(hero) {
+    return !!(hero && hero.autoAttack);
 }
 
 function shiftClickDropOn(hero) {
@@ -2820,6 +2824,9 @@ function normalizeHeroCombat(hero) {
     }
     if (typeof hero.showCombatVisuals !== 'boolean') {
         hero.showCombatVisuals = true;
+    }
+    if (hero.autoAttack == null) {
+        hero.autoAttack = false;
     }
     if (hero.autoRetaliate == null) {
         hero.autoRetaliate = true;

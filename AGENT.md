@@ -108,8 +108,9 @@ Same origin; Glass is optional and human-requested only:
 ## Combat / loot
 
 - Overworld: click a living mob → `engageTarget` → walk in → `beginFight` within 24px. Camera shake, then `BattleScene`.
-- Auto-attack **on** (default): nearest living mob within 20px after `engageGrace` (~800ms on zone enter, ~700ms after battle).
-- Auto-attack **off**: only the clicked mob engages.
+- Auto-attack **off** (default): only the clicked mob engages. Missing `hero.autoAttack` is treated as off.
+- Auto-attack **on**: nearest living mob within 20px after `engageGrace` (~800ms on zone enter, ~700ms after battle).
+- Auto-retaliate **on** (default, separate): when a foe agros first, walk into weapon range and fight back. Missing `hero.autoRetaliate` is treated as on.
 - Battle is turn-based (Attack / Eat food / Run). Attack variance −2..+2, min 1. Run succeeds if `Between(0,99) < 70`.
 - Win XP: style skill (Accurate→Attack, Aggressive→Strength, Defensive→Defence) plus Hitpoints `ceil(mobXp / 3)` (min 1). Worn sword/shield are **display-only** today (damage/defence not applied).
 - `levelHero` uses combat XP / 40 and overwrites `maxHp` / `damage` — this disagrees with `gainSkillXp` / `maxHp = 10 * hitpoints`. Reconcile before adding more combat-level rules.
