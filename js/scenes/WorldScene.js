@@ -4229,7 +4229,8 @@ var WorldScene = new Phaser.Class({
         return this.tryPickup(drop, true);
     },
 
-    queueAttack: function (mob) {
+    queueAttack: function (mob, opts) {
+        opts = opts || {};
         if (!mob || !mob.aliveMob) {
             return false;
         }
@@ -4242,8 +4243,91 @@ var WorldScene = new Phaser.Class({
             return true;
         }
         this.setWalk(mob.x, mob.y, { allowEnd: true });
-        Hud.log('You target the ' + ((mob.mobDef && mob.mobDef.type) || 'foe') + '.');
+        if (!opts.silent) {
+            Hud.log('You target the ' + ((mob.mobDef && mob.mobDef.type) || 'foe') + '.');
+        }
         return true;
+    },
+
+    /* Auto-retaliate: chase an agroing mob like click-to-attack (no spam log). */
+    queueRetaliate: function (mob) {
+        if (!this.autoRetaliateOn() || !mob || !mob.aliveMob) {
+            return false;
+        }
+        if (this.encounterLock || this.uiPaused() || this.time.now < this.engageGrace) {
+            return false;
+        }
+        if (this.engageTarget && this.engageTarget.aliveMob && this.engageTarget !== mob) {
+            return false;
+        }
+        if (this.engageTarget === mob) {
+            if (this.fightDistancePx(mob) <= this.heroEngageRangePx()) {
+                this.beginFight(mob);
+                return true;
+            }
+            if (!this.walkTarget) {
+                this.setWalk(mob.x, mob.y, { allowEnd: true });
+            }
+            return true;
+        }
+        return this.queueAttack(mob, { silent: true });
+    },
+
+    /* Mob can still hit while agroing even if the player does not auto-engage. */
+    applyMobAgroHit: function (mob) {
+        var hero;
+        var dealt;
+        var now;
+        var tickMs;
+        var shot;
+        if (!mob || !mob.aliveMob || !this.player || this.overworldFight || this.encounterLock) {
+            return;
+        }
+        hero = this.registry.get('hero');
+        if (!hero || hero.hp <= 0) {
+            return;
+        }
+        now = this.time.now;
+        tickMs = typeof OW_COMBAT_TICK_MS === 'number' ? OW_COMBAT_TICK_MS : 600;
+        if (mob._agroHitAt && now < mob._agroHitAt) {
+            return;
+        }
+        mob._agroHitAt = now + tickMs;
+        dealt = typeof rollOverworldDamage === 'function'
+            ? rollOverworldDamage(mob, 'player', hero)
+            : 1;
+        if (dealt > 0) {
+            if (typeof showCombatVisualsOn === 'function' ? showCombatVisualsOn(hero) : true) {
+                shot = typeof combatProjectileKind === 'function'
+                    ? combatProjectileKind(mob, hero)
+                    : null;
+                if (shot && typeof spawnCombatProjectile === 'function') {
+                    spawnCombatProjectile(this, mob.x, mob.y, this.player.x, this.player.y, shot);
+                }
+            }
+            hero.hp = Math.max(0, hero.hp - dealt);
+            if (typeof showWorldHitSplat === 'function') {
+                showWorldHitSplat(this, this.player.x, this.player.y, '-' + dealt, 'hit');
+            }
+            if (typeof applyHeroPoison === 'function') {
+                applyHeroPoison(hero, mob.mobDef && mob.mobDef.type);
+            }
+            if (window.Sfx && Sfx.hit) {
+                Sfx.hit();
+            }
+        }
+        this.registry.set('hero', hero);
+        if (Hud.renderHero) {
+            Hud.renderHero(hero);
+        }
+        if (hero.hp <= 0) {
+            this.encounterLock = false;
+            if (this.spawnDeathGravestone) {
+                this.spawnDeathGravestone();
+            }
+            this.scene.stop('UIScene');
+            this.scene.start('GameOverScene');
+        }
     },
 
     maybeRepath: function () {
@@ -5790,6 +5874,7 @@ var WorldScene = new Phaser.Class({
         var dy;
         var len;
         var started = false;
+        var retaliate;
         if (!this.player || !this.player.body || this.uiPaused()) {
             return;
         }
@@ -5801,6 +5886,7 @@ var WorldScene = new Phaser.Class({
         }
         hero = this.registry.get('hero');
         fightMob = this.overworldFight && this.overworldFight.mob;
+        retaliate = this.autoRetaliateOn();
         agroRange = typeof MOB_AGGRO_RANGE_PX === 'number' ? MOB_AGGRO_RANGE_PX : 112;
         speed = typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : 72;
         this.mobs.children.iterate(function (mob) {
@@ -5823,10 +5909,16 @@ var WorldScene = new Phaser.Class({
                 return;
             }
             mob.agroChasing = true;
+            /* Auto-retaliate: walk into weapon range like click-to-attack; never picks passive mobs. */
+            if (retaliate && self.queueRetaliate(mob)) {
+                if (self.encounterLock) {
+                    started = true;
+                    return;
+                }
+            }
             if (dist <= attackRange) {
                 mob.body.setVelocity(0, 0);
-                self.beginFight(mob, { fromMob: true });
-                started = true;
+                self.applyMobAgroHit(mob);
                 return;
             }
             dx = self.player.x - mob.x;

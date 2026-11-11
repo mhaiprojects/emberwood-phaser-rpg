@@ -46,7 +46,7 @@
                         <button type="button" data-action="flee"><img class="pix" src="assets/svg/ui/flee.svg" alt=""> Run</button>
                     </div>
                     <button type="button" class="auto-attack-btn" data-auto-attack :class="{ 'is-on': autoAttackOn }">{{ autoAttackLabel }}</button>
-                    <button type="button" class="auto-retaliate-btn" data-auto-retaliate title="When on, Attack is chosen for you in combat." :class="{ 'is-on': autoRetaliateOn }">{{ autoRetaliateLabel }}</button>
+                    <button type="button" class="auto-retaliate-btn" data-auto-retaliate title="When on, if a foe agros you first you walk in and fight back." :class="{ 'is-on': autoRetaliateOn }">{{ autoRetaliateLabel }}</button>
                 </div>
             </aside>
             <div id="bottom">
@@ -86,8 +86,8 @@
                             <p>When on, walking into a nearby foe starts a fight.</p>
                             <button type="button" class="auto-attack-btn" data-auto-attack title="When on, walking into a nearby foe starts a fight." :class="{ 'is-on': autoAttackOn }">{{ autoAttackLabel }}</button>
                             <h3>Auto-retaliate</h3>
-                            <p>When on, Attack is chosen for you in combat. Separate from world auto-attack.</p>
-                            <button type="button" class="auto-retaliate-btn" data-auto-retaliate title="When on, Attack is chosen for you in combat." :class="{ 'is-on': autoRetaliateOn }">{{ autoRetaliateLabel }}</button>
+                            <p>When on, if a foe agros you first you walk into range and fight back. Does not engage passive nearby foes. Separate from auto-attack.</p>
+                            <button type="button" class="auto-retaliate-btn" data-auto-retaliate title="When on, if a foe agros you first you walk in and fight back." :class="{ 'is-on': autoRetaliateOn }">{{ autoRetaliateLabel }}</button>
                             <h3>Auto-pickup</h3>
                             <p>When on, walking near a loot pile picks it up. When off, click the pile to take it.</p>
                             <button type="button" class="auto-pickup-btn" data-auto-pickup title="When on, walking near a loot pile picks it up." :class="{ 'is-on': autoPickupOn }">{{ autoPickupLabel }}</button>
@@ -139,8 +139,8 @@
                             <p>Toggle automatic engagement of nearby monsters, like classic RuneScape.</p>
                             <button type="button" class="auto-attack-btn" data-auto-attack title="When on, walking into a nearby foe starts a fight." :class="{ 'is-on': autoAttackOn }">{{ autoAttackLabel }}</button>
                             <h3>Auto-retaliate</h3>
-                            <p>When on, Attack is chosen for you in combat. Does not walk you into nearby foes.</p>
-                            <button type="button" class="auto-retaliate-btn" data-auto-retaliate title="When on, Attack is chosen for you in combat." :class="{ 'is-on': autoRetaliateOn }">{{ autoRetaliateLabel }}</button>
+                            <p>When on, if a foe agros you first you walk into range and fight back. Does not engage passive nearby foes.</p>
+                            <button type="button" class="auto-retaliate-btn" data-auto-retaliate title="When on, if a foe agros you first you walk in and fight back." :class="{ 'is-on': autoRetaliateOn }">{{ autoRetaliateLabel }}</button>
                             <h3>Auto-pickup</h3>
                             <p>When on, walking near a loot pile picks it up. When off, click the pile to take it. New games start with this on.</p>
                             <button type="button" class="auto-pickup-btn" data-auto-pickup title="When on, walking near a loot pile picks it up." :class="{ 'is-on': autoPickupOn }">{{ autoPickupLabel }}</button>
@@ -338,7 +338,7 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
     <script src="js/input/Keys.js?v=run1"></script>
-    <script src="js/data/Items.js?v=grave1"></script>
+    <script src="js/data/Items.js?v=retal1"></script>
     <script src="js/data/Save.js?v=resume1"></script>
     <script src="js/data/Scales.js?v=den1"></script>
     <script src="js/ui/HudApp.js?v=viz1"></script>
@@ -356,7 +356,7 @@
     -->
     <script src="js/scenes/BootScene.js?v=looticon1"></script>
     <script src="js/scenes/TitleScene.js?v=move4"></script>
-    <script src="js/scenes/WorldScene.js?v=mobspd1"></script>
+    <script src="js/scenes/WorldScene.js?v=retal1"></script>
     <script src="js/world/OverworldCombat.js?v=mobspd1"></script>
     <script src="js/world/StretchLite.js?v=noghost1"></script>
     <script src="js/scenes/BattleScene.js?v=grave1"></script>

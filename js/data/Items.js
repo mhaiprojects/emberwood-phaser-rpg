@@ -2770,6 +2770,9 @@ function normalizeHeroCombat(hero) {
     if (typeof hero.showCombatVisuals !== 'boolean') {
         hero.showCombatVisuals = true;
     }
+    if (hero.autoRetaliate == null) {
+        hero.autoRetaliate = true;
+    }
     if (!hero.style) {
         hero.style = 'shared';
     }
