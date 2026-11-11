@@ -768,7 +768,7 @@ function fishingSpotAt(tx, ty, zoneId) {
 }
 
 function woodcutTreeAt(tx, ty, zoneId, grid) {
-    if (zoneId !== 'northwood' || !inBounds(tx, ty)) {
+    if (!inBounds(tx, ty) || zoneId === 'dungeon') {
         return null;
     }
     if (grid) {
@@ -813,20 +813,22 @@ function placeMineOres(grid) {
 }
 
 function mineRockAt(tx, ty, zoneId, grid, opts) {
-    if (zoneId !== 'darkmine' || !inBounds(tx, ty)) {
-        return null;
-    }
+    var houseRects;
+    var ore;
+    var level;
+    var biome;
     opts = opts || {};
-    if (opts.interior) {
+    if (!inBounds(tx, ty) || zoneId === 'dungeon' || opts.interior) {
         return null;
     }
     if (grid) {
         if (!grid[ty] || grid[ty][tx] !== TILE.ROCK) {
             return null;
         }
-        var houseRects = opts.houseRects;
+        houseRects = opts.houseRects;
         if (!houseRects && typeof housesForBiome === 'function') {
-            houseRects = housesForBiome('mine');
+            biome = (typeof ZONES !== 'undefined' && ZONES[zoneId] && ZONES[zoneId].biome) || 'mine';
+            houseRects = housesForBiome(biome);
         }
         if (sceneryKindAt(grid, tx, ty, {
             houseRects: houseRects,
@@ -836,8 +838,8 @@ function mineRockAt(tx, ty, zoneId, grid, opts) {
             return null;
         }
     }
-    var ore = mineOreAt(tx, ty);
-    var level = typeof resourceNeedLevel === 'function' ? resourceNeedLevel(ore) : (ore === 'iron' ? 15 : 1);
+    ore = zoneId === 'darkmine' ? mineOreAt(tx, ty) : ((tx + ty) % 2 === 0 ? 'copper' : 'tin');
+    level = typeof resourceNeedLevel === 'function' ? resourceNeedLevel(ore) : (ore === 'iron' ? 15 : 1);
     return { x: tx, y: ty, ore: ore, level: level };
 }
 

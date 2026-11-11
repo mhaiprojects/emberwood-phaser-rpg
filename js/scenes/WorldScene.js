@@ -2605,7 +2605,7 @@ var WorldScene = new Phaser.Class({
         }
         if (typeof hasAnyToolKind === 'function' ? !hasAnyToolKind(hero, 'axe')
                 : (typeof hasTool === 'function' && typeof WOODCUT_AXE_ID !== 'undefined' && !hasTool(hero, WOODCUT_AXE_ID))) {
-            Hud.log('You need a bronze axe.');
+            Hud.log('You need an axe.');
             return false;
         }
         if (this.chopAction) {
@@ -2651,7 +2651,7 @@ var WorldScene = new Phaser.Class({
             return this.examineScenery(hit);
         }
         if (result.needTool) {
-            Hud.log('You need a bronze axe.');
+            Hud.log('You need an axe.');
             return true;
         }
         if (result.full) {
@@ -2728,7 +2728,7 @@ var WorldScene = new Phaser.Class({
         }
         if (typeof hasAnyToolKind === 'function' ? !hasAnyToolKind(hero, 'pickaxe')
                 : (typeof hasTool === 'function' && typeof MINE_PICK_ID !== 'undefined' && !hasTool(hero, MINE_PICK_ID))) {
-            Hud.log('You need a bronze pickaxe.');
+            Hud.log('You need a pickaxe.');
             return false;
         }
         if (this.mineAction) {
@@ -2783,7 +2783,7 @@ var WorldScene = new Phaser.Class({
             return this.examineScenery(hit);
         }
         if (result.needTool) {
-            Hud.log('You need a bronze pickaxe.');
+            Hud.log('You need a pickaxe.');
             return true;
         }
         if (result.full) {

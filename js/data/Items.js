@@ -564,6 +564,8 @@ function makeHero() {
             { id: 'shield', qty: 1 },
             { id: 'shortbow', qty: 1 },
             { id: 'staff', qty: 1 },
+            { id: 'bronzeaxe', qty: 1 },
+            { id: 'bronzepick', qty: 1 },
             { id: 'airrune', qty: 30 },
             { id: 'mindrune', qty: 30 },
             { id: 'shrimp', qty: 8 },
