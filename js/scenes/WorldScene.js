@@ -109,6 +109,9 @@ var WorldScene = new Phaser.Class({
         this.combatRangeGfx = this.add.graphics();
         this.combatRangeGfx.setDepth(4);
         this.combatRangeGfx.setVisible(true);
+        this.effectRadiusGfx = this.add.graphics();
+        this.effectRadiusGfx.setDepth(4);
+        this.effectRadiusGfx.setVisible(true);
         this.npcs = this.physics.add.group({ immovable: true });
         this.mobs = this.physics.add.group();
         this.floatLabels = [];
@@ -2226,6 +2229,7 @@ var WorldScene = new Phaser.Class({
         var fire;
         if (!this.groundFires) {
             this.groundFires = [];
+            this.clearEffectRadiusRings();
             return;
         }
         for (i = 0; i < this.groundFires.length; i++) {
@@ -2235,6 +2239,7 @@ var WorldScene = new Phaser.Class({
             }
         }
         this.groundFires.length = 0;
+        this.clearEffectRadiusRings();
     },
 
     pruneGroundFires: function () {
@@ -6433,6 +6438,38 @@ var WorldScene = new Phaser.Class({
         }
     },
 
+    clearEffectRadiusRings: function () {
+        if (this.effectRadiusGfx) {
+            this.effectRadiusGfx.clear();
+        }
+    },
+
+    updateEffectRadiusRings: function () {
+        var i;
+        var fire;
+        var pos;
+        var gfx = this.effectRadiusGfx;
+        if (!gfx) {
+            return;
+        }
+        gfx.clear();
+        if (!this.groundFires || !this.groundFires.length) {
+            return;
+        }
+        gfx.lineStyle(1, 0xffb060, 0.28);
+        for (i = 0; i < this.groundFires.length; i++) {
+            fire = this.groundFires[i];
+            if (!fire || (!fire.campfire && !fire.permanent)) {
+                continue;
+            }
+            pos = fire.sprite ? fire.sprite : tileCenter(fire.tx, fire.ty);
+            if (!pos) {
+                continue;
+            }
+            gfx.strokeCircle(pos.x, pos.y, Math.max(8, CAMPFIRE_REGEN_RANGE));
+        }
+    },
+
     updateCombatRangeRings: function () {
         var hero;
         var mob;
@@ -6889,6 +6926,7 @@ var WorldScene = new Phaser.Class({
             this.chaseFightMob();
         }
         this.updateCombatRangeRings();
+        this.updateEffectRadiusRings();
         this.constrainGiantMobs();
         this.constrainMobMapEdge();
         this.tryLockedDoor();
