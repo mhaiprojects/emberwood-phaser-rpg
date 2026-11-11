@@ -2480,13 +2480,80 @@ function itemName(id) {
     return (ITEM_DB[id] && ITEM_DB[id].name) || id;
 }
 
+function itemExamineShopText(id, def) {
+    var bits = [];
+    var buy;
+    var sell;
+    if (!def) {
+        return '';
+    }
+    if (id === 'coins') {
+        return typeof def.value === 'number' ? ('Value ' + def.value) : '';
+    }
+    if (typeof def.value === 'number') {
+        bits.push('Value ' + def.value);
+    }
+    buy = typeof itemBuyPrice === 'function' ? itemBuyPrice(id) : 0;
+    sell = typeof itemSellPrice === 'function' ? itemSellPrice(id) : 0;
+    if (buy > 0) {
+        bits.push('Buy ' + buy);
+    }
+    if (sell > 0) {
+        bits.push('Sell ' + sell);
+    }
+    return bits.join(', ');
+}
+
+function itemExamineEffectText(id, def) {
+    var parts = [];
+    if (!def) {
+        return '';
+    }
+    if (typeof def.heal === 'number' && def.heal > 0) {
+        parts.push('Heals ' + def.heal + ' health');
+    }
+    if (typeof def.damage === 'number' && def.damage > 0) {
+        parts.push('Damage ' + def.damage);
+    }
+    if (typeof def.defence === 'number' && def.defence > 0) {
+        parts.push('Defence ' + def.defence);
+    }
+    if (typeof def.magicBonus === 'number' && def.magicBonus > 0) {
+        parts.push('Magic bonus ' + def.magicBonus);
+    }
+    if (def.drink || id === 'attackpot') {
+        if (id === 'attackpot') {
+            parts.push('Boosts attack by 3');
+        } else {
+            parts.push('Drinkable');
+        }
+    }
+    return parts.join('. ');
+}
+
 function itemExamineText(id) {
     var def = ITEM_DB[id];
+    var line;
+    var shop;
+    var effect;
     if (def && def.examine) {
-        return def.examine;
+        line = def.examine;
+    } else {
+        var name = itemName(id);
+        line = name ? "It's " + name + '.' : '';
     }
-    var name = itemName(id);
-    return name ? "It's " + name + '.' : '';
+    if (!line || !def) {
+        return line;
+    }
+    shop = itemExamineShopText(id, def);
+    effect = itemExamineEffectText(id, def);
+    if (shop) {
+        line += ' ' + shop + '.';
+    }
+    if (effect) {
+        line += ' ' + effect + '.';
+    }
+    return line;
 }
 
 function itemValue(id) {
