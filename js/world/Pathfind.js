@@ -23,6 +23,15 @@ function tileWalkable(grid, tx, ty) {
     return !tileBlockedByTerrain(grid[ty][tx]);
 }
 
+/**
+ * Loot "ground": walkable open tiles (grass / grass2 / path / flower, …).
+ * Excludes rocks, trees, water, walls, doors, stalls, ranges, anvils, booths,
+ * shrines, furnaces, tombs, docks, boats, and other blocked scenery.
+ */
+function isGroundTile(grid, tx, ty) {
+    return tileWalkable(grid, tx, ty);
+}
+
 function nearestWalkableTile(grid, tx, ty) {
     if (tileWalkable(grid, tx, ty)) {
         return { tx: tx, ty: ty };
@@ -52,6 +61,23 @@ function nearestWalkableTile(grid, tx, ty) {
         }
     }
     return null;
+}
+
+function nearestGroundTile(grid, tx, ty) {
+    return nearestWalkableTile(grid, tx, ty);
+}
+
+/** World center of the nearest ground tile to (wx, wy). Null if none found. */
+function nearestGroundLootWorld(grid, wx, wy) {
+    if (!grid || typeof worldToTile !== 'function') {
+        return null;
+    }
+    var tile = worldToTile(wx, wy);
+    var near = nearestGroundTile(grid, tile.tx, tile.ty);
+    if (!near || typeof tileCenter !== 'function') {
+        return null;
+    }
+    return tileCenter(near.tx, near.ty);
 }
 
 function findTilePath(grid, startTx, startTy, endTx, endTy, options) {

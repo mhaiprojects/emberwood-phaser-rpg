@@ -4945,12 +4945,34 @@ var WorldScene = new Phaser.Class({
         }
     },
 
+    /**
+     * Snap a world point onto the nearest walkable ground tile (not scenery).
+     * Falls back to player-adjacent ground, then player feet — never trees/rocks/etc.
+     */
+    lootGroundWorldAt: function (wx, wy) {
+        var pos = typeof nearestGroundLootWorld === 'function'
+            ? nearestGroundLootWorld(this.tileGrid, wx, wy)
+            : null;
+        if (pos) {
+            return pos;
+        }
+        if (this.player && typeof nearestGroundLootWorld === 'function') {
+            pos = nearestGroundLootWorld(this.tileGrid, this.player.x, this.player.y);
+            if (pos) {
+                return pos;
+            }
+            return { x: this.player.x, y: this.player.y };
+        }
+        return { x: wx, y: wy };
+    },
+
     spawnLoot: function (x, y, drops) {
         var self = this;
         var now = this.time.now;
         drops.forEach(function (drop, index) {
             var ox = (index - (drops.length - 1) / 2) * 10;
-            self.placeLoot(x + ox, y + 4, drop, now + 20000);
+            var pos = self.lootGroundWorldAt(x + ox, y + 4);
+            self.placeLoot(pos.x, pos.y, drop, now + 20000);
         });
     },
 
@@ -5052,7 +5074,8 @@ var WorldScene = new Phaser.Class({
             return false;
         }
         this.registry.set('hero', hero);
-        var entry = this.placeLoot(this.player.x, this.player.y, {
+        var dropPos = this.lootGroundWorldAt(this.player.x, this.player.y);
+        var entry = this.placeLoot(dropPos.x, dropPos.y, {
             id: id,
             qty: qty,
             skipAuto: true
