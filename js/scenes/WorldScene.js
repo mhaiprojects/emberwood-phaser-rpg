@@ -6830,14 +6830,17 @@ var WorldScene = new Phaser.Class({
             var len = Math.sqrt(vx * vx + vy * vy) || 1;
             var nx = (vx / len) * speed;
             var ny = (vy / len) * speed;
+            var cornerSafe = typeof clampMoveNoCornerCut === 'function'
+                ? clampMoveNoCornerCut(this.tileGrid, this.player.x, this.player.y, nx, ny)
+                : { vx: nx, vy: ny };
             var slid = slideIntoOneTileGap(
                 this.tileGrid,
                 this.player.x,
                 this.player.y,
                 this.player.body.width,
                 this.player.body.height,
-                nx,
-                ny
+                cornerSafe.vx,
+                cornerSafe.vy
             );
             if (slid.x !== this.player.x || slid.y !== this.player.y) {
                 this.player.setPosition(slid.x, slid.y);

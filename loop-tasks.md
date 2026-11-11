@@ -23,9 +23,9 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 4. Never re-enable Phaser keyboard (`Keys.js` only).
 5. Refresh `loop-next.md` with `python3 tools/loop-next.py` when useful — do not rewrite this whole file.
 
-**Last updated:** 2026-11-11 — Auto-attack defaults off; auto-retaliate stays on.
+**Last updated:** 2026-11-11 — No corner-cut squeeze between blockers (path + move).
 
-**Total tasks: 333** (38 priority + 290 in the 14 playable sections + 5 stretch). Unfinished gathering/bank/craft todos promoted into §0 (not duplicated as active work).
+**Total tasks: 334** (39 priority + 290 in the 14 playable sections + 5 stretch). Unfinished gathering/bank/craft todos promoted into §0 (not duplicated as active work).
 
 ---
 ## 0. Priority: Bank / crafting / resizable UI / gathering & hunting
@@ -54,6 +54,7 @@ Active queue — implement top-down before returning to sections 1–14.
 - [done] Examine shows shop value + effects. — Conclusion: Item examine chat appends gp value and heal/damage/tool effects from `ITEM_DB`.
 - [done] Magic/bow player attack range is 4 tiles. — Conclusion: Staff/bow engage reach capped at 4 tiles (64px).
 - [done] Pathing avoids rocks/trees/mobs/NPCs/non-ground. — Conclusion: A* blocks solids/non-walkable; soft-avoid mobs/NPCs restored with weapon-range engage.
+- [done] No squeeze between side-by-side or diagonal blockers. — Conclusion: Shared `diagonalFlanksOpen` / `clampMoveNoCornerCut` in Pathfind; A* + WASD/click move agree; 1-tile doors still passable.
 - [done] Campfire/range cook select + Cook 1 / 5 / All. — Conclusion: Station cook menu picks raw food; Cook 1/5/All clicks run without falling through.
 - [done] Death gravestone reclaim + Respawn fix. — Conclusion: Gravestone holds non-quest loot for reclaim after respawn; GameOver keeps WorldScene for stones; Respawn skips save sync on a stopped scene.
 - [done] Death/ground loot only on walkable tiles near the drop. — Conclusion: Loot/death drops snap to nearest ground tiles; no piles on solids.

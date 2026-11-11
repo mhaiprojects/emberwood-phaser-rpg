@@ -67,7 +67,7 @@ function tileBlockedByTerrain(index) {
     return index === TILE.WATER || index === TILE.TREE || index === TILE.ROCK || index === TILE.SHRINE
         || index === TILE.STALL || index === TILE.RANGE || index === TILE.ANVIL || index === TILE.BOOTH
         || index === TILE.FURNACE
-        || index === TILE.DOCK || index === TILE.BOAT || index === TILE.TOMB
+        || index === TILE.BOAT || index === TILE.TOMB
         || index === TILE.DOOR || index === TILE.WALL;
 }
 
@@ -84,6 +84,40 @@ function tileWalkable(grid, tx, ty) {
         return false;
     }
     return !tileBlockedByTerrain(grid[ty][tx]);
+}
+
+/**
+ * Diagonal steps need both orthogonal flank tiles walkable so movement cannot
+ * cut the corner between two blockers (adjacent side-by-side or diagonally).
+ */
+function diagonalFlanksOpen(grid, tx, ty, dx, dy) {
+    if (!dx || !dy) {
+        return true;
+    }
+    return tileWalkable(grid, tx + dx, ty) && tileWalkable(grid, tx, ty + dy);
+}
+
+/**
+ * Drop the velocity axis that would squeeze through a blocked corner.
+ * Cardinal moves and open diagonals (both flanks clear) are unchanged;
+ * 1-tile door corridors stay passable via cardinal / clear-flank diagonals.
+ */
+function clampMoveNoCornerCut(grid, x, y, vx, vy) {
+    if (!grid || !vx || !vy) {
+        return { vx: vx, vy: vy };
+    }
+    var size = typeof TILE_SIZE === 'number' ? TILE_SIZE : 16;
+    var sx = vx > 0 ? 1 : -1;
+    var sy = vy > 0 ? 1 : -1;
+    var tx = Math.floor(x / size);
+    var ty = Math.floor(y / size);
+    if (diagonalFlanksOpen(grid, tx, ty, sx, sy)) {
+        return { vx: vx, vy: vy };
+    }
+    return {
+        vx: tileWalkable(grid, tx + sx, ty) ? vx : 0,
+        vy: tileWalkable(grid, tx, ty + sy) ? vy : 0
+    };
 }
 
 /**
@@ -237,13 +271,9 @@ function findTilePath(grid, startTx, startTy, endTx, endTy, options) {
             if (!passable(nx, ny, isEnd)) {
                 continue;
             }
-            if (dirs[d][0] !== 0 && dirs[d][1] !== 0) {
-                if (!tileWalkable(grid, cur.tx + dirs[d][0], cur.ty)) {
-                    continue;
-                }
-                if (!tileWalkable(grid, cur.tx, cur.ty + dirs[d][1])) {
-                    continue;
-                }
+            /* No corner-cut / diagonal squeeze between blockers. */
+            if (!diagonalFlanksOpen(grid, cur.tx, cur.ty, dirs[d][0], dirs[d][1])) {
+                continue;
             }
             var nk = nx + ',' + ny;
             if (closed[nk]) {
