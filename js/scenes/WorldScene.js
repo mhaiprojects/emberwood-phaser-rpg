@@ -33,6 +33,10 @@ var GROUND_FIRE_MS = 45000;
 var STATION_RANGE = 28;
 var MELEE_ENGAGE_PX = 24;
 var LOOT_PICKUP_PX = 12;
+var HP_REGEN_BASE_MS = 4500;
+var HP_REGEN_TOWN_MS = 1800;
+var HP_REGEN_CAMP_MS = 1100;
+var CAMPFIRE_REGEN_RANGE = 52;
 var COLLISION_DEBUG_FILL = 0xf38630;
 var COLLISION_DEBUG_FACE = 0xffff66;
 
@@ -77,6 +81,10 @@ var WorldScene = new Phaser.Class({
         this.lockChatUntil = 0;
         this.shortcutChatUntil = 0;
         this.shortcutLockUntil = 0;
+        this.dungeonFloor = this.registry.get('dungeonFloor') || 0;
+        this.dungeonMeta = null;
+        this._regenAcc = 0;
+        this.lootTarget = null;
         this.ensureGroundFireTexture();
 
         this.marker = this.add.rectangle(0, 0, 6, 6, DEST_X_COLOR).setVisible(false).setDepth(8);
@@ -124,8 +132,18 @@ var WorldScene = new Phaser.Class({
 
         var resumeBoot = this.registry.get('resumeAt');
         var resumeInterior = resumeBoot && resumeBoot.interiorId ? resumeBoot.interiorId : null;
-        this.enterZone(this.zoneId, null);
-        if (resumeInterior && typeof interiorById === 'function' && interiorById(resumeInterior)) {
+        var resumeDungeon = this.registry.get('dungeonFloor') || 0;
+        if (resumeBoot && typeof resumeBoot.dungeonFloor === 'number') {
+            resumeDungeon = resumeBoot.dungeonFloor;
+        }
+        if (this.zoneId === 'dungeon' && !(resumeDungeon > 0)) {
+            this.zoneId = 'darkmine';
+            this.registry.set('zone', 'darkmine');
+        }
+        this.enterZone(this.zoneId === 'dungeon' ? 'darkmine' : this.zoneId, null);
+        if (resumeDungeon > 0) {
+            this.enterDungeonFloor(resumeDungeon, { from: 'save' });
+        } else if (resumeInterior && typeof interiorById === 'function' && interiorById(resumeInterior)) {
             this.enterInterior(resumeInterior);
         }
         this.refreshHud();
@@ -653,7 +671,10 @@ var WorldScene = new Phaser.Class({
         this.clearWorldObjects();
 
         var neighbors = zoneNeighbors(zone);
-        this.applyTilemap(generateMap(zone.seed, zone.biome, neighbors));
+        this.dungeonFloor = 0;
+        this.dungeonMeta = null;
+        this.registry.set('dungeonFloor', 0);
+        this.applyTilemap(generateMap(zone.seed, zone.biome, neighbors, zoneId));
 
         var resume = this.registry.get('resumeAt');
         var spawn;
@@ -668,6 +689,7 @@ var WorldScene = new Phaser.Class({
 
         this.spawnPeople(zoneId);
         this.restoreLoot(zoneId);
+        this.spawnZoneCampfires(zoneId);
         this.buildBiomeFx();
         this.applyDayNightTint();
         this.playZoneMusic();
@@ -692,7 +714,14 @@ var WorldScene = new Phaser.Class({
 
     enterInterior: function (interiorId) {
         var spec = interiorById(interiorId);
-        if (!spec || this.interiorId === interiorId) {
+        if (!spec) {
+            return;
+        }
+        if (spec.dungeon || interiorId === 'shaft') {
+            this.enterDungeonFloor(1, { from: 'surface' });
+            return;
+        }
+        if (this.interiorId === interiorId) {
             return;
         }
         this.cancelLongPress();
@@ -728,6 +757,117 @@ var WorldScene = new Phaser.Class({
         }
     },
 
+    enterDungeonFloor: function (floor, opts) {
+        var built;
+        var spawn;
+        var self = this;
+        opts = opts || {};
+        floor = Math.max(1, floor | 0);
+        this.cancelLongPress();
+        if (Hud.hideContextMenu) {
+            Hud.hideContextMenu();
+        }
+        if (Hud.hideShop) {
+            Hud.hideShop();
+        }
+        if (Hud.hideBank) {
+            Hud.hideBank();
+        }
+        if (this.zoneId !== 'dungeon') {
+            this.snapshotMobs();
+            this.snapshotLoot();
+        }
+        this.interiorId = null;
+        this.dungeonFloor = floor;
+        this.zoneId = 'dungeon';
+        this.registry.set('zone', 'dungeon');
+        this.registry.set('dungeonFloor', floor);
+        this.clearWorldObjects();
+        built = typeof generateDungeonFloor === 'function'
+            ? generateDungeonFloor(floor)
+            : { grid: generateInterior('shaft'), meta: {} };
+        this.dungeonMeta = built.meta || {};
+        this.applyTilemap(built.grid);
+        if (opts.from === 'down' && this.dungeonMeta.stairsDown) {
+            spawn = tileCenter(this.dungeonMeta.stairsDown.x, this.dungeonMeta.stairsDown.y + 1);
+        } else if (this.dungeonMeta.stairsUp) {
+            spawn = tileCenter(this.dungeonMeta.stairsUp.x, this.dungeonMeta.stairsUp.y - 1);
+        } else {
+            spawn = interiorSpawnPoint();
+        }
+        this.placePlayer(spawn.x, spawn.y);
+        this.clearWalk();
+        this.spawnDungeonMobs(floor);
+        if (this.dungeonMeta.campfire) {
+            this.spawnGroundFire(this.dungeonMeta.campfire.x, this.dungeonMeta.campfire.y, null, {
+                permanent: true,
+                campfire: true
+            });
+        }
+        this.buildBiomeFx();
+        this.applyDayNightTint();
+        this.playZoneMusic();
+        this.refreshHud();
+        this.engageGrace = this.time.now + 800;
+        this.lockExits();
+        if (opts.from === 'surface' || floor === 1 && opts.from !== 'down') {
+            Hud.log('Endless Dungeon — floor ' + floor + '. Mobs grow 5% stronger each floor.');
+        } else {
+            Hud.log('Floor ' + floor + ' of the Endless Dungeon.');
+        }
+        if (floor % 5 === 0) {
+            Hud.log('A campfire burns on this floor.');
+        }
+        if (window.Hud && Hud.saveGame) {
+            Hud.saveGame();
+        }
+    },
+
+    exitDungeonToSurface: function () {
+        var surface = typeof DUNGEON_SURFACE_ZONE !== 'undefined' ? DUNGEON_SURFACE_ZONE : 'darkmine';
+        var spec = interiorById('shaft');
+        var out;
+        this.dungeonFloor = 0;
+        this.dungeonMeta = null;
+        this.registry.set('dungeonFloor', 0);
+        this.interiorId = null;
+        if (spec) {
+            out = tileCenter(spec.doorTx, spec.doorTy + 1);
+            this.registry.set('resumeAt', { x: out.x, y: out.y, interiorId: null });
+        }
+        this.enterZone(surface, null);
+        Hud.log('You climb back to the surface.');
+    },
+
+    spawnDungeonMobs: function (floor) {
+        var defs = typeof dungeonMobDefsForFloor === 'function' ? dungeonMobDefsForFloor(floor) : [];
+        var self = this;
+        defs.forEach(function (def, index) {
+            var sprite = self.physics.add.sprite(def.x, def.y, def.texture, def.frame || 0);
+            var scale;
+            self.mobs.add(sprite);
+            scale = mobScaleFor(def.type, 'world');
+            sprite.setScale(scale);
+            applyMobWorldBody(sprite, def.type);
+            sprite.mobDef = Object.assign({ id: 'dungeon-' + floor + '-' + index }, def);
+            if (typeof mobCombatClass === 'function') {
+                sprite.mobDef.combatClass = mobCombatClass(sprite.mobDef);
+            }
+            sprite.aliveMob = true;
+            sprite.respawnAt = 0;
+            var label = self.add.text(def.x, def.y - Math.round(8 * scale) - 6, def.type, {
+                fontSize: '8px',
+                fontFamily: 'Verdana, Geneva, sans-serif',
+                color: '#ffb0a0',
+                stroke: '#000000',
+                strokeThickness: 2
+            }).setOrigin(0.5).setDepth(7);
+            sprite.nameLabel = label;
+            self.floatLabels.push(label);
+            self.physics.add.collider(sprite, self.ground);
+        });
+    },
+
     leaveInterior: function () {
         var spec = interiorById(this.interiorId);
         var zone = ZONES[this.zoneId];
@@ -746,12 +886,13 @@ var WorldScene = new Phaser.Class({
         }
         this.interiorId = null;
         this.clearWorldObjects();
-        this.applyTilemap(generateMap(zone.seed, zone.biome, zoneNeighbors(zone)));
+        this.applyTilemap(generateMap(zone.seed, zone.biome, zoneNeighbors(zone), this.zoneId));
         var out = tileCenter(spec.doorTx, spec.doorTy + 1);
         this.placePlayer(out.x, out.y);
         this.clearWalk();
         this.spawnPeople(this.zoneId);
         this.restoreLoot(this.zoneId);
+        this.spawnZoneCampfires(this.zoneId);
         this.refreshHud();
         this.engageGrace = this.time.now + 800;
         Hud.log('You enter ' + zone.name + '.');
@@ -1318,7 +1459,9 @@ var WorldScene = new Phaser.Class({
             applyCombatLevel(hero, false);
         }
         Hud.setWorld({
-            zone: interior ? interior.name : zone.name,
+            zone: this.zoneId === 'dungeon' && this.dungeonFloor
+                ? ('Endless Dungeon F' + this.dungeonFloor)
+                : (interior ? interior.name : (zone && zone.name) || this.zoneId),
             zoneId: this.zoneId,
             hp: hero.hp,
             maxHp: hero.maxHp,
@@ -1582,6 +1725,11 @@ var WorldScene = new Phaser.Class({
             this.clickStation(scenery);
             return;
         }
+        if (scenery && (scenery.kind === 'stairs-down' || scenery.kind === 'stairs-up'
+                || scenery.kind === 'surface-portal' || scenery.kind === 'dungeon-enter')) {
+            this.clickStairs(scenery);
+            return;
+        }
         if (scenery && scenery.kind === 'guild-post') {
             hit = this.findNpcByKey((scenery.interact && scenery.interact.npcKey) || 'guild');
             if (hit) {
@@ -1736,14 +1884,17 @@ var WorldScene = new Phaser.Class({
         return this.spawnGroundFire(tile.tx, tile.ty, durationMs);
     },
 
-    spawnGroundFire: function (tx, ty, durationMs) {
+    spawnGroundFire: function (tx, ty, durationMs, opts) {
         var pos;
         var sprite;
         var ms = typeof durationMs === 'number' ? durationMs : GROUND_FIRE_MS;
-        if (typeof FIRE_DURATION_MS === 'number') {
+        var permanent;
+        opts = opts || {};
+        permanent = !!opts.permanent;
+        if (!permanent && typeof FIRE_DURATION_MS === 'number') {
             ms = typeof durationMs === 'number' ? durationMs : FIRE_DURATION_MS;
         }
-        if (!tileWalkable(this.tileGrid, tx, ty)) {
+        if (!this.tileGrid || !tileWalkable(this.tileGrid, tx, ty)) {
             return null;
         }
         this.clearGroundFireAt(tx, ty);
@@ -1755,9 +1906,87 @@ var WorldScene = new Phaser.Class({
             tx: tx,
             ty: ty,
             sprite: sprite,
-            until: this.time.now + ms
+            until: permanent ? Number.POSITIVE_INFINITY : (this.time.now + ms),
+            permanent: permanent,
+            campfire: !!opts.campfire || permanent
         });
         return this.groundFires[this.groundFires.length - 1];
+    },
+
+    spawnZoneCampfires: function (zoneId) {
+        var spots = typeof CAMPFIRE_SPOTS !== 'undefined' ? CAMPFIRE_SPOTS[zoneId] : null;
+        var i;
+        if (!spots || !spots.length) {
+            return;
+        }
+        for (i = 0; i < spots.length; i++) {
+            this.spawnGroundFire(spots[i].x, spots[i].y, null, { permanent: true, campfire: true });
+        }
+    },
+
+    nearCampfire: function () {
+        var i;
+        var fire;
+        var pos;
+        var range = CAMPFIRE_REGEN_RANGE;
+        if (!this.player || !this.groundFires) {
+            return false;
+        }
+        for (i = 0; i < this.groundFires.length; i++) {
+            fire = this.groundFires[i];
+            if (!fire || (!fire.campfire && !fire.permanent)) {
+                continue;
+            }
+            pos = fire.sprite ? fire.sprite : tileCenter(fire.tx, fire.ty);
+            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, pos.x, pos.y) <= range) {
+                return true;
+            }
+        }
+        return false;
+    },
+
+    nearTownCenter: function () {
+        var center;
+        var pos;
+        if (this.zoneId !== 'haven' || !this.player) {
+            return false;
+        }
+        center = typeof TOWN_CENTER_TILE !== 'undefined' ? TOWN_CENTER_TILE
+            : (typeof TOWN_PROPS !== 'undefined' && TOWN_PROPS.campfire ? TOWN_PROPS.campfire : { x: 18, y: 15 });
+        pos = tileCenter(center.x, center.y);
+        return Phaser.Math.Distance.Between(this.player.x, this.player.y, pos.x, pos.y) <= 72;
+    },
+
+    tickHpRegen: function (dt) {
+        var hero;
+        var rate;
+        var gained = false;
+        if (!dt || this.overworldFight || this.encounterLock) {
+            return;
+        }
+        hero = this.registry.get('hero');
+        if (!hero || hero.hp <= 0 || hero.hp >= hero.maxHp) {
+            this._regenAcc = 0;
+            return;
+        }
+        rate = HP_REGEN_BASE_MS;
+        if (this.nearCampfire()) {
+            rate = HP_REGEN_CAMP_MS;
+        } else if (this.nearTownCenter()) {
+            rate = HP_REGEN_TOWN_MS;
+        }
+        this._regenAcc = (this._regenAcc || 0) + dt * 1000;
+        while (this._regenAcc >= rate && hero.hp < hero.maxHp) {
+            this._regenAcc -= rate;
+            hero.hp += 1;
+            gained = true;
+        }
+        if (gained) {
+            this.registry.set('hero', hero);
+            if (Hud.renderHero) {
+                Hud.renderHero(hero);
+            }
+        }
     },
 
     clearGroundFireAt: function (tx, ty) {
@@ -1803,7 +2032,7 @@ var WorldScene = new Phaser.Class({
         }
         for (i = this.groundFires.length - 1; i >= 0; i--) {
             fire = this.groundFires[i];
-            if (!fire || fire.until > now) {
+            if (!fire || fire.permanent || fire.until > now) {
                 continue;
             }
             if (fire.sprite) {
@@ -1984,6 +2213,31 @@ var WorldScene = new Phaser.Class({
             }
         });
         return found;
+    },
+
+    clickStairs: function (hit) {
+        var interact;
+        var pos;
+        this.engageTarget = null;
+        this.talkTarget = null;
+        this.lootTarget = null;
+        if (!hit) {
+            return false;
+        }
+        interact = hit.interact || (typeof getTileInteract === 'function'
+            ? getTileInteract(this.zoneId, hit.tx, hit.ty)
+            : null);
+        if (!interact) {
+            interact = { kind: hit.kind };
+        }
+        if (this.stationInRange && this.stationInRange(hit)) {
+            return this.useStairsInteract(interact);
+        }
+        pos = typeof tileCenter === 'function' ? tileCenter(hit.tx, hit.ty) : null;
+        if (pos) {
+            this.setWalk(pos.x, pos.y, { allowEnd: true });
+        }
+        return true;
     },
 
     clearFish: function () {
@@ -4168,10 +4422,17 @@ var WorldScene = new Phaser.Class({
     },
 
     checkDoors: function () {
-        if (this.exitLock || this.encounterLock || this.interiorId) {
+        if (this.exitLock || this.encounterLock || this.interiorId || this.zoneId === 'dungeon') {
             return;
         }
         var tile = worldToTile(this.player.x, this.player.y);
+        var interact = typeof getTileInteract === 'function'
+            ? getTileInteract(this.zoneId, tile.tx, tile.ty)
+            : null;
+        if (interact && (interact.kind === 'dungeon-enter' || interact.kind === 'stairs-down')) {
+            this.useStairsInteract(interact);
+            return;
+        }
         var spec = interiorAtDoor(tile.tx, tile.ty, this.zoneId);
         if (!spec) {
             return;
@@ -4190,6 +4451,54 @@ var WorldScene = new Phaser.Class({
         this.leaveInterior();
     },
 
+    useStairsInteract: function (interact) {
+        var kind = interact && interact.kind;
+        if (!kind || this.exitLock) {
+            return false;
+        }
+        if (kind === 'dungeon-enter') {
+            this.lockExits();
+            this.enterDungeonFloor(1, { from: 'surface' });
+            return true;
+        }
+        if (kind === 'surface-portal') {
+            this.lockExits();
+            this.exitDungeonToSurface();
+            return true;
+        }
+        if (kind === 'stairs-down' && this.zoneId === 'dungeon') {
+            this.lockExits();
+            this.enterDungeonFloor((this.dungeonFloor || 1) + 1, { from: 'up' });
+            return true;
+        }
+        if (kind === 'stairs-up' && this.zoneId === 'dungeon') {
+            this.lockExits();
+            if ((this.dungeonFloor || 1) <= 1) {
+                this.exitDungeonToSurface();
+            } else {
+                this.enterDungeonFloor(this.dungeonFloor - 1, { from: 'down' });
+            }
+            return true;
+        }
+        return false;
+    },
+
+    checkDungeonTiles: function () {
+        var tile;
+        var interact;
+        if (this.exitLock || this.encounterLock || this.zoneId !== 'dungeon') {
+            return;
+        }
+        tile = worldToTile(this.player.x, this.player.y);
+        interact = typeof getTileInteract === 'function'
+            ? getTileInteract(this.zoneId, tile.tx, tile.ty)
+            : null;
+        if (!interact) {
+            return;
+        }
+        this.useStairsInteract(interact);
+    },
+
     checkExits: function () {
         if (this.exitLock || this.encounterLock) {
             return;
@@ -4198,12 +4507,19 @@ var WorldScene = new Phaser.Class({
             this.checkInteriorExit();
             return;
         }
+        if (this.zoneId === 'dungeon') {
+            this.checkDungeonTiles();
+            return;
+        }
         this.checkDoors();
-        if (this.interiorId || this.exitLock) {
+        if (this.interiorId || this.exitLock || this.zoneId === 'dungeon') {
             return;
         }
         var zone = ZONES[this.zoneId];
         var dir = null;
+        if (!zone || zone.hidden) {
+            return;
+        }
         if (this.player.x < 14) {
             dir = 'w';
         } else if (this.player.x > this.map.widthInPixels - 14) {
@@ -4669,6 +4985,7 @@ var WorldScene = new Phaser.Class({
             this.wildSkull.setPosition(this.player.x + 12, this.player.y - 22);
         }
 
+        this.tickHpRegen(dt);
         this.collectNearbyLoot();
         this.pruneLoot();
         this.pruneGroundFires();

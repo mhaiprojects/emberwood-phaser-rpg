@@ -1616,11 +1616,13 @@ var Hud = {
         registry.set('hero', data.hero);
         registry.set('quest', data.quest || { id: 'goblins', stage: 0, progress: 0, goal: 5, points: 0 });
         registry.set('zone', data.zone || 'haven');
+        registry.set('dungeonFloor', typeof data.dungeonFloor === 'number' ? data.dungeonFloor : 0);
         if (typeof data.playerX === 'number' && typeof data.playerY === 'number') {
             registry.set('resumeAt', {
                 x: data.playerX,
                 y: data.playerY,
-                interiorId: data.interiorId || null
+                interiorId: data.interiorId || null,
+                dungeonFloor: typeof data.dungeonFloor === 'number' ? data.dungeonFloor : 0
             });
             registry.set('playerX', data.playerX);
             registry.set('playerY', data.playerY);
@@ -1647,6 +1649,7 @@ var Hud = {
         window.game.registry.set('playerX', world.player.x);
         window.game.registry.set('playerY', world.player.y);
         window.game.registry.set('interiorId', world.interiorId || null);
+        window.game.registry.set('dungeonFloor', world.dungeonFloor || 0);
     },
 
     saveGame: function () {
@@ -2760,6 +2763,13 @@ var Hud = {
             }
             return;
         }
+        if (action === 'stairs') {
+            var stairHit = world.pickScenery ? world.pickScenery(target.worldX, target.worldY) : null;
+            if (stairHit && world.clickStairs) {
+                world.clickStairs(stairHit);
+            }
+            return;
+        }
         if (action !== 'walk-here' || !world.setWalk) {
             return;
         }
@@ -3361,6 +3371,9 @@ var Hud = {
         }
         for (var i = 0; i < ZONE_LIST.length; i++) {
             var zone = ZONE_LIST[i];
+            if (zone.hidden) {
+                continue;
+            }
             var row = document.createElement('div');
             row.className = 'wm-row';
             row.setAttribute('data-zone', zone.id);

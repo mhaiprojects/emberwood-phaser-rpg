@@ -7,7 +7,8 @@ var ZONE_LIST = [
     { id: 'millfields', name: 'Millfields', gx: 1, gy: 0, biome: 'farm', seed: 66 },
     { id: 'darkmine', name: 'Darkmine', gx: -1, gy: 1, biome: 'mine', seed: 77 },
     { id: 'southshore', name: 'Southshore', gx: 0, gy: 1, biome: 'shore', seed: 88 },
-    { id: 'mire', name: 'Mirefen', gx: 1, gy: 1, biome: 'swamp', seed: 99 }
+    { id: 'mire', name: 'Mirefen', gx: 1, gy: 1, biome: 'swamp', seed: 99 },
+    { id: 'dungeon', name: 'Endless Dungeon', gx: -99, gy: -99, biome: 'mine', seed: 9001, hidden: true }
 ];
 
 var ZONES = {};
@@ -15,15 +16,18 @@ ZONE_LIST.forEach(function (zone) {
     ZONES[zone.id] = zone;
 });
 
+var DUNGEON_SURFACE_ZONE = 'darkmine';
+
 var INTERIOR_LIST = [
     {
         id: 'shaft',
-        name: 'Darkmine Lower Shaft',
+        name: 'Endless Dungeon',
         doorTx: MINE_SHAFT_HOUSE.x + Math.floor(MINE_SHAFT_HOUSE.w / 2),
         doorTy: MINE_SHAFT_HOUSE.y + MINE_SHAFT_HOUSE.h - 1,
         zoneId: 'darkmine',
         stairs: 'down',
-        enterChat: 'You climb down the mine shaft…'
+        dungeon: true,
+        enterChat: 'You delve into the Endless Dungeon…'
     }
 ];
 
@@ -208,7 +212,7 @@ var NPC_DEFS = {
         { key: 'ghost', name: 'Wisp', x: 200, y: 170, tint: 0xffffff, options: ['talk'], examine: 'A restless grave-wisp. Cold light pools where a face should be.', lines: ['The dead remember steel.', 'Turn back unless you seek bones.'] }
     ],
     darkmine: [
-        { key: 'miner', name: 'Miner Corb', x: 210, y: 200, tint: 0xffffff, options: ['talk', 'quest'], questGiver: true, sideQuest: 'bats', tutor: 'mining', examine: 'A Darkmine digger. He will not go down the lower shaft.', lines: ['Bats took the lower shaft.', 'Ore waits for someone braver than me.', 'Prospect the rocks if you mean to start mining.', 'Bring a pickaxe. Copper and tin wait in the stone.'] }
+        { key: 'miner', name: 'Miner Corb', x: 210, y: 200, tint: 0xffffff, options: ['talk', 'quest'], questGiver: true, sideQuest: 'bats', tutor: 'mining', examine: 'A Darkmine digger. He will not go down the Endless Dungeon.', lines: ['That shaft leads to the Endless Dungeon. Deeper floors hit harder.', 'Every fifth floor has a campfire. Use the surface rune to climb out fast.', 'Ore still waits up here if you bring a pickaxe.'] }
     ],
     highlands: [
         { key: 'hermit', name: 'Hermit Ola', x: 240, y: 160, tint: 0xffffff, options: ['talk'], examine: 'A windrock hermit. Drake-scale grit is stuck in her cloak.', lines: ['Drakes nest on the windrock.', 'Bring a stout shield.'] }

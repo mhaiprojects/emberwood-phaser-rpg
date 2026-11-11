@@ -12,6 +12,7 @@ function buildSavePayload(registry) {
     var playerX = registry.get('playerX');
     var playerY = registry.get('playerY');
     var interiorId = registry.get('interiorId');
+    var dungeonFloor = registry.get('dungeonFloor');
     if (!hero) {
         return null;
     }
@@ -22,6 +23,7 @@ function buildSavePayload(registry) {
         playerX: typeof playerX === 'number' ? playerX : null,
         playerY: typeof playerY === 'number' ? playerY : null,
         interiorId: interiorId || null,
+        dungeonFloor: typeof dungeonFloor === 'number' && dungeonFloor > 0 ? dungeonFloor : 0,
         hero: JSON.parse(JSON.stringify(hero)),
         quest: JSON.parse(JSON.stringify(quest || defaultQuest()))
     };

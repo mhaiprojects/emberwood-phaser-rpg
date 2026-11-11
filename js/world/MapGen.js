@@ -31,8 +31,25 @@ var TOWN_PROPS = {
     furnace: { x: 22, y: 12 },
     booth: { x: 14, y: 11 },
     shopStall: { x: 16, y: 12 },
-    guildPost: { x: 15, y: 18 }
+    guildPost: { x: 15, y: 18 },
+    campfire: { x: 18, y: 15 }
 };
+var TOWN_CENTER_TILE = { x: 18, y: 15 };
+/* Permanent campfires: Haven courtyard + a few along the wild roads. */
+var CAMPFIRE_SPOTS = {
+    haven: [{ x: 18, y: 15 }],
+    northwood: [{ x: 18, y: 16 }],
+    westmead: [{ x: 20, y: 14 }],
+    southshore: [{ x: 18, y: 18 }],
+    highlands: [{ x: 16, y: 12 }],
+    graves: [{ x: 18, y: 14 }]
+};
+var DUNGEON_ZONE_ID = 'dungeon';
+var DUNGEON_FLOOR_SCALE = 1.05;
+var DUNGEON_STAIRS_UP = { x: 18, y: 20 };
+var DUNGEON_STAIRS_DOWN = { x: 18, y: 8 };
+var DUNGEON_SURFACE = { x: 16, y: 20 };
+var DUNGEON_CAMPFIRE = { x: 18, y: 14 };
 /* Courtyard bank desk: staff behind, booth counter, counter_front + 2-tile apron. */
 var BANK_COUNTER = {
     staff: [
@@ -149,7 +166,10 @@ var SCENERY_EXAMINE = {
     'door-bank': 'The old bank door. Use the courtyard counter to bank.',
     'door-shop': 'An old shop door. Mira sells from the courtyard stall.',
     'door-guild': 'The guild hall door. Bram drills in the courtyard.',
-    'stairs-down': 'Stairs down into the mine shaft.'
+    'stairs-down': 'Stairs down into the depths.',
+    'stairs-up': 'Stairs leading upward.',
+    'surface-portal': 'A rune-cut shaft back to the surface.',
+    campfire: 'A warm campfire. Rest here to mend faster.'
 };
 
 function tagKey(tx, ty) {
@@ -373,7 +393,22 @@ function house(grid, x, y, w, h) {
     setCell(grid, x + Math.floor(w / 2), y + h - 1, TILE.PATH);
 }
 
-function generateMap(seed, biome, neighbors) {
+function paintCampfireSpots(grid, zoneId) {
+    var spots;
+    var i;
+    var cell;
+    if (!zoneId || !CAMPFIRE_SPOTS[zoneId]) {
+        return;
+    }
+    spots = CAMPFIRE_SPOTS[zoneId];
+    for (i = 0; i < spots.length; i++) {
+        cell = spots[i];
+        setCell(grid, cell.x, cell.y, TILE.PATH);
+        setTileInteract(zoneId, cell.x, cell.y, { kind: 'campfire', verb: 'rest' });
+    }
+}
+
+function generateMap(seed, biome, neighbors, zoneId) {
     var grid = makeGrid(TILE.GRASS);
     var x;
     var y;
@@ -411,8 +446,8 @@ function generateMap(seed, biome, neighbors) {
 
     if (biome === 'town') {
         var hi;
-        var zoneId = 'haven';
-        clearZoneTags(zoneId);
+        var townZoneId = zoneId || 'haven';
+        clearZoneTags(townZoneId);
         for (hi = 0; hi < TOWN_HOUSES.length; hi++) {
             house(grid, TOWN_HOUSES[hi].x, TOWN_HOUSES[hi].y, TOWN_HOUSES[hi].w, TOWN_HOUSES[hi].h);
         }
@@ -437,7 +472,7 @@ function generateMap(seed, biome, neighbors) {
         setCell(grid, TOWN_PROPS.furnace.x, TOWN_PROPS.furnace.y, TILE.FURNACE);
         if (TOWN_PROPS.shopStall) {
             setCell(grid, TOWN_PROPS.shopStall.x, TOWN_PROPS.shopStall.y, TILE.STALL);
-            setTileInteract(zoneId, TOWN_PROPS.shopStall.x, TOWN_PROPS.shopStall.y, {
+            setTileInteract(townZoneId, TOWN_PROPS.shopStall.x, TOWN_PROPS.shopStall.y, {
                 kind: 'shop-stall',
                 verb: 'trade',
                 npcKey: 'shopkeep',
@@ -446,17 +481,17 @@ function generateMap(seed, biome, neighbors) {
         }
         if (TOWN_PROPS.guildPost) {
             setCell(grid, TOWN_PROPS.guildPost.x, TOWN_PROPS.guildPost.y, TILE.SHRINE);
-            setTileInteract(zoneId, TOWN_PROPS.guildPost.x, TOWN_PROPS.guildPost.y, {
+            setTileInteract(townZoneId, TOWN_PROPS.guildPost.x, TOWN_PROPS.guildPost.y, {
                 kind: 'guild-post',
                 verb: 'talk',
                 npcKey: 'guild'
             });
         }
-        paintBankCounter(grid, zoneId);
-        setTileInteract(zoneId, TOWN_PROPS.stall.x, TOWN_PROPS.stall.y, { kind: 'stall', verb: 'craft' });
-        setTileInteract(zoneId, TOWN_PROPS.range.x, TOWN_PROPS.range.y, { kind: 'range', verb: 'cook' });
-        setTileInteract(zoneId, TOWN_PROPS.anvil.x, TOWN_PROPS.anvil.y, { kind: 'anvil', verb: 'smith' });
-        setTileInteract(zoneId, TOWN_PROPS.furnace.x, TOWN_PROPS.furnace.y, { kind: 'furnace', verb: 'smelt' });
+        paintBankCounter(grid, townZoneId);
+        setTileInteract(townZoneId, TOWN_PROPS.stall.x, TOWN_PROPS.stall.y, { kind: 'stall', verb: 'craft' });
+        setTileInteract(townZoneId, TOWN_PROPS.range.x, TOWN_PROPS.range.y, { kind: 'range', verb: 'cook' });
+        setTileInteract(townZoneId, TOWN_PROPS.anvil.x, TOWN_PROPS.anvil.y, { kind: 'anvil', verb: 'smith' });
+        setTileInteract(townZoneId, TOWN_PROPS.furnace.x, TOWN_PROPS.furnace.y, { kind: 'furnace', verb: 'smelt' });
     } else if (biome === 'forest') {
         scatter(grid, TILE.TREE, 70, seed, true);
         scatter(grid, TILE.FLOWER, 12, seed + 1, true);
@@ -500,8 +535,8 @@ function generateMap(seed, biome, neighbors) {
         };
         setTileTag('darkmine', shaftDoor.x, shaftDoor.y, 'stairs_down');
         setTileInteract('darkmine', shaftDoor.x, shaftDoor.y, {
-            kind: 'stairs-down',
-            verb: 'climb',
+            kind: 'dungeon-enter',
+            verb: 'delve',
             stairs: 'down'
         });
     } else if (biome === 'plains') {
@@ -516,6 +551,7 @@ function generateMap(seed, biome, neighbors) {
         }
     }
 
+    paintCampfireSpots(grid, zoneId || (biome === 'town' ? 'haven' : null));
     return grid;
 }
 
@@ -538,7 +574,6 @@ function generateInterior(kind) {
         setCell(grid, ix, y0 + 2, TILE.WALL);
     }
     setCell(grid, x0 + Math.floor(w / 2), y0 + 2, TILE.PATH);
-    /* Shaft is the only remaining interior (stairs-down). */
     if (kind === 'shaft') {
         setCell(grid, x0 + 3, y0 + 5, TILE.ROCK);
         setCell(grid, x0 + 8, y0 + 5, TILE.ROCK);
@@ -546,6 +581,126 @@ function generateInterior(kind) {
         setCell(grid, x0 + 8, y0 + 8, TILE.ROCK);
     }
     return grid;
+}
+
+function dungeonFloorScale(floor) {
+    var n = typeof floor === 'number' && floor > 0 ? floor : 1;
+    return Math.pow(DUNGEON_FLOOR_SCALE, n - 1);
+}
+
+function generateDungeonFloor(floor) {
+    var seed = 9000 + (floor | 0) * 97;
+    var grid = makeGrid(TILE.ROCK);
+    var meta;
+    var x;
+    var y;
+    var i;
+    var room;
+    var rooms;
+    clearZoneTags(DUNGEON_ZONE_ID);
+    /* Carve a few linked chambers. */
+    rooms = [
+        { x: 14, y: 16, w: 9, h: 7 },
+        { x: 8, y: 10, w: 7, h: 6 },
+        { x: 21, y: 9, w: 7, h: 6 },
+        { x: 14, y: 6, w: 9, h: 5 }
+    ];
+    for (i = 0; i < rooms.length; i++) {
+        room = rooms[i];
+        for (y = room.y; y < room.y + room.h; y++) {
+            for (x = room.x; x < room.x + room.w; x++) {
+                setCell(grid, x, y, TILE.PATH);
+            }
+        }
+    }
+    for (x = 16; x <= 20; x++) {
+        setCell(grid, x, 13, TILE.PATH);
+        setCell(grid, x, 12, TILE.PATH);
+    }
+    for (y = 8; y <= 20; y++) {
+        setCell(grid, 18, y, TILE.PATH);
+        setCell(grid, 17, y, TILE.PATH);
+        setCell(grid, 19, y, TILE.PATH);
+    }
+    setCell(grid, DUNGEON_STAIRS_UP.x, DUNGEON_STAIRS_UP.y, TILE.PATH);
+    setCell(grid, DUNGEON_STAIRS_DOWN.x, DUNGEON_STAIRS_DOWN.y, TILE.DOOR);
+    setCell(grid, DUNGEON_SURFACE.x, DUNGEON_SURFACE.y, TILE.SHRINE);
+    setTileTag(DUNGEON_ZONE_ID, DUNGEON_STAIRS_UP.x, DUNGEON_STAIRS_UP.y, 'stairs_up');
+    setTileTag(DUNGEON_ZONE_ID, DUNGEON_STAIRS_DOWN.x, DUNGEON_STAIRS_DOWN.y, 'stairs_down');
+    setTileInteract(DUNGEON_ZONE_ID, DUNGEON_STAIRS_UP.x, DUNGEON_STAIRS_UP.y, {
+        kind: 'stairs-up',
+        verb: 'climb',
+        stairs: 'up'
+    });
+    setTileInteract(DUNGEON_ZONE_ID, DUNGEON_STAIRS_DOWN.x, DUNGEON_STAIRS_DOWN.y, {
+        kind: 'stairs-down',
+        verb: 'delve',
+        stairs: 'down'
+    });
+    setTileInteract(DUNGEON_ZONE_ID, DUNGEON_SURFACE.x, DUNGEON_SURFACE.y, {
+        kind: 'surface-portal',
+        verb: 'escape'
+    });
+    meta = {
+        stairsUp: DUNGEON_STAIRS_UP,
+        stairsDown: DUNGEON_STAIRS_DOWN,
+        surface: DUNGEON_SURFACE,
+        campfire: null,
+        seed: seed,
+        floor: floor | 0
+    };
+    if ((floor | 0) > 0 && (floor | 0) % 5 === 0) {
+        setCell(grid, DUNGEON_CAMPFIRE.x, DUNGEON_CAMPFIRE.y, TILE.PATH);
+        setTileInteract(DUNGEON_ZONE_ID, DUNGEON_CAMPFIRE.x, DUNGEON_CAMPFIRE.y, {
+            kind: 'campfire',
+            verb: 'rest'
+        });
+        meta.campfire = { x: DUNGEON_CAMPFIRE.x, y: DUNGEON_CAMPFIRE.y };
+    }
+    return { grid: grid, meta: meta };
+}
+
+function dungeonMobDefsForFloor(floor) {
+    var scale = dungeonFloorScale(floor);
+    var templates = [
+        { type: 'Bat', texture: 'mob-bat', hp: 20, damage: 8, gold: 4, xp: 10 },
+        { type: 'Goblin', texture: 'mob-goblin', hp: 28, damage: 8, gold: 6, xp: 12 },
+        { type: 'Skeleton', texture: 'mob-skeleton', hp: 34, damage: 10, gold: 8, xp: 16 },
+        { type: 'Slime', texture: 'mob-slime', hp: 26, damage: 7, gold: 5, xp: 10 }
+    ];
+    var spots = [
+        { x: 200, y: 180 },
+        { x: 280, y: 200 },
+        { x: 340, y: 160 },
+        { x: 240, y: 240 },
+        { x: 300, y: 260 },
+        { x: 160, y: 220 }
+    ];
+    var count = Math.min(spots.length, 3 + Math.min(3, Math.floor((floor - 1) / 4)));
+    var out = [];
+    var i;
+    var base;
+    var def;
+    if (floor >= 8) {
+        templates.push({ type: 'Drake', texture: 'mob-drake', hp: 48, damage: 13, gold: 18, xp: 28 });
+    }
+    for (i = 0; i < count; i++) {
+        base = templates[(floor + i * 3) % templates.length];
+        def = {
+            type: base.type,
+            texture: base.texture,
+            tint: 0xffffff,
+            hp: Math.max(1, Math.round(base.hp * scale)),
+            damage: Math.max(1, Math.round(base.damage * scale)),
+            gold: Math.max(1, Math.round(base.gold * scale)),
+            xp: Math.max(1, Math.round(base.xp * scale)),
+            x: spots[i].x,
+            y: spots[i].y,
+            attackRange: base.type === 'Bat' ? 96 : (base.type === 'Drake' || base.type === 'Slime' ? 80 : 24)
+        };
+        out.push(def);
+    }
+    return out;
 }
 
 function interiorSpawnPoint() {
@@ -810,8 +965,17 @@ function sceneryPrimaryAction(kind) {
     if (kind === 'ge') {
         return { label: 'Exchange', action: 'ge' };
     }
-    if (kind === 'stairs-down') {
+    if (kind === 'stairs-down' || kind === 'dungeon-enter') {
+        return { label: 'Delve', action: 'stairs' };
+    }
+    if (kind === 'stairs-up') {
         return { label: 'Climb', action: 'stairs' };
+    }
+    if (kind === 'surface-portal') {
+        return { label: 'Surface', action: 'stairs' };
+    }
+    if (kind === 'campfire') {
+        return { label: 'Rest', action: 'examine' };
     }
     return null;
 }
