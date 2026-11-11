@@ -20,10 +20,6 @@ var NPC_BUSY_PX = 32;
 var NPC_FACE_ORDER = ['down', 'left', 'right', 'up'];
 var FLEE_PUSH_PX = 32;
 var FLEE_GRACE_MS = 1100;
-var GHOST_PLAYERS = [
-    { name: 'Ash_walker', x: 360, y: 230 },
-    { name: 'Moss019', x: 300, y: 280 }
-];
 var COLLIDE_TILES = [
     TILE.WATER, TILE.TREE, TILE.ROCK, TILE.SHRINE,
     TILE.STALL, TILE.RANGE, TILE.ANVIL, TILE.BOOTH, TILE.FURNACE,
@@ -727,9 +723,6 @@ var WorldScene = new Phaser.Class({
         this.playZoneMusic();
         this.refreshHud();
         this.engageGrace = this.time.now + 800;
-        if (typeof this.spawnGhostPlayers === 'function') {
-            this.spawnGhostPlayers();
-        }
         if (typeof this.refreshWildernessFlag === 'function') {
             this.refreshWildernessFlag();
         }
@@ -5441,25 +5434,6 @@ var WorldScene = new Phaser.Class({
         Hud.log('You pick a pocket for some coins.');
         this.refreshHud();
         return true;
-    },
-
-    spawnGhostPlayers: function () {
-        var self = this;
-        this.ghostSprites = this.ghostSprites || [];
-        this.ghostSprites.forEach(function (g) { if (g && g.destroy) { g.destroy(); } });
-        this.ghostSprites = [];
-        if (this.zoneId !== 'haven') {
-            return;
-        }
-        GHOST_PLAYERS.forEach(function (spec) {
-            var sprite = self.add.sprite(spec.x, spec.y, 'player', 2);
-            sprite.setTint(0xaaccff);
-            sprite.setAlpha(0.55);
-            sprite.setDepth(5);
-            var label = self.add.text(spec.x, spec.y - 18, spec.name, { fontSize: '7px', color: '#c8e0ff' }).setOrigin(0.5).setDepth(6);
-            sprite.ghostLabel = label;
-            self.ghostSprites.push(sprite);
-        });
     },
 
     refreshWildernessFlag: function () {

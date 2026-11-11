@@ -1,7 +1,3 @@
-var GHOST_PLAYERS = [
-    { name: 'Ash_walker', x: 360, y: 230 },
-    { name: 'Moss019', x: 300, y: 280 }
-];
 var RANDOM_EVENT_CHANCE = 0.0012;
 
 WorldScene.prototype.tickPrayerDrainLite = function (dt) {
@@ -33,32 +29,6 @@ WorldScene.prototype.tickPrayerDrainLite = function (dt) {
     if (typeof Hud !== 'undefined' && Hud.renderPrayers) {
         Hud.renderPrayers(hero);
     }
-};
-
-WorldScene.prototype.spawnGhostPlayers = function () {
-    var self = this;
-    this.ghostSprites = this.ghostSprites || [];
-    this.ghostSprites.forEach(function (g) {
-        if (g && g.destroy) {
-            g.destroy();
-        }
-    });
-    this.ghostSprites = [];
-    if (this.zoneId !== 'haven') {
-        return;
-    }
-    GHOST_PLAYERS.forEach(function (spec) {
-        var sprite = self.add.sprite(spec.x, spec.y, 'player', 2);
-        sprite.setTint(0xaaccff);
-        sprite.setAlpha(0.55);
-        sprite.setDepth(5);
-        var label = self.add.text(spec.x, spec.y - 18, spec.name, {
-            fontSize: '7px',
-            color: '#c8e0ff'
-        }).setOrigin(0.5).setDepth(6);
-        sprite.ghostLabel = label;
-        self.ghostSprites.push(sprite);
-    });
 };
 
 WorldScene.prototype.refreshWildernessFlag = function () {
