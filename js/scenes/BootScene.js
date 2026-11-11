@@ -74,6 +74,7 @@ var BootScene = new Phaser.Class({
             frameRate: 8,
             repeat: -1
         });
+        this.registry.set('autoContinueSave', true);
         this.scene.start('TitleScene');
     }
 });

@@ -19,6 +19,15 @@ var TitleScene = new Phaser.Class({
             self.startGame();
         });
         Hud.showTitle();
+        if (this.registry.get('autoContinueSave') && typeof hasSave === 'function' && hasSave()) {
+            this.registry.set('autoContinueSave', false);
+            Hud.log('Continuing your Emberwood save…');
+            if (Hud.onContinue) {
+                Hud.onContinue();
+            }
+            return;
+        }
+        this.registry.set('autoContinueSave', false);
         Hud.log('Click “Click here to play”, then click the world to walk.');
     },
 

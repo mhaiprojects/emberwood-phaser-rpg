@@ -1685,6 +1685,7 @@ var Hud = {
         this.hideQuestComplete();
         this.hideLevelUp();
         if (window.game) {
+            window.game.registry.set('autoContinueSave', false);
             window.game.scene.getScenes(true).forEach(function (scene) {
                 var key = scene.sys.settings.key;
                 if (key && key !== 'TitleScene') {
