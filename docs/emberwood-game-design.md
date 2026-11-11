@@ -308,7 +308,7 @@ Hitpoints: `maxHp` tied to Hitpoints level (starter HP 100 / level 10). Combat l
 | Equal/higher player | Mob ignores (unless `alwaysAgro`) |
 | Labels | `Type (Lvl N)` salmon float labels |
 
-Mob base levels (examples): Chicken/Rabbit 1, Cow 3, Crab 5, Bat 7, Goblin 9, Slime 10, Skeleton 14, Drake 28, Dragon 50.
+Mob base levels (fallbacks): Chicken/Rabbit 1, Cow 3, Crab/Bat/Goblin 8, Slime 13, Skeleton 18, Drake 28, Dragon 53. Zone spawns use 5-level bands (haven/millfields/westmead 1–5; southshore/northwood/darkmine 6–10; mire 11–15; graves 16–20; highlands 26–30; dragonden 51–55).
 
 ### 6.4 Mob movement
 

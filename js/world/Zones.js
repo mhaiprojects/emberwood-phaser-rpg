@@ -223,98 +223,169 @@ var NPC_DEFS = {
     ]
 };
 
-var MOB_DEFS = {
-    haven: [
-        { type: 'Chicken', texture: 'mob-chicken', tint: 0xffffff, level: 1, hp: 12, damage: 3, gold: 1, xp: 4, x: 400, y: 250 },
-        { type: 'Chicken', texture: 'mob-chicken', tint: 0xffffff, level: 1, hp: 12, damage: 3, gold: 1, xp: 4, x: 420, y: 190 }
-    ],
-    northwood: [
-        { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, level: 9, hp: 28, damage: 8, gold: 6, xp: 12, x: 160, y: 120 },
-        { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, level: 9, hp: 28, damage: 8, gold: 6, xp: 12, x: 300, y: 140 },
-        { type: 'Goblin', texture: 'mob-goblin', tint: 0xbbffbb, level: 10, hp: 30, damage: 9, gold: 7, xp: 12, x: 400, y: 260 },
-        { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, level: 9, hp: 28, damage: 8, gold: 6, xp: 12, x: 220, y: 300 }
-    ],
-    highlands: [
-        { type: 'Drake', texture: 'mob-drake', tint: 0xffffff, level: 28, hp: 48, damage: 13, gold: 18, xp: 28, x: 180, y: 160 },
-        { type: 'Drake', texture: 'mob-drake', tint: 0xffffff, level: 30, hp: 52, damage: 14, gold: 20, xp: 30, x: 380, y: 220 }
-    ],
-    millfields: [
-        { type: 'Cow', texture: 'mob-cow', tint: 0xffffff, level: 3, hp: 22, damage: 5, gold: 3, xp: 8, x: 150, y: 200 },
-        { type: 'Cow', texture: 'mob-cow', tint: 0xffffff, level: 3, hp: 22, damage: 5, gold: 3, xp: 8, x: 300, y: 120 },
-        { type: 'Cow', texture: 'mob-cow', tint: 0xeeddcc, level: 4, hp: 24, damage: 6, gold: 3, xp: 8, x: 400, y: 260 }
-    ],
-    mire: [
-        { type: 'Slime', texture: 'mob-slime', tint: 0xffffff, level: 10, hp: 26, damage: 7, gold: 5, xp: 10, x: 160, y: 140 },
-        { type: 'Slime', texture: 'mob-slime', tint: 0x88ffaa, level: 11, hp: 28, damage: 8, gold: 5, xp: 10, x: 320, y: 200 },
-        { type: 'Slime', texture: 'mob-slime', tint: 0xffffff, level: 10, hp: 26, damage: 7, gold: 5, xp: 10, x: 420, y: 280 }
-    ],
-    southshore: [
-        { type: 'Crab', texture: 'mob-crab', tint: 0xffffff, level: 5, hp: 24, damage: 7, gold: 4, xp: 9, x: 140, y: 180 },
-        { type: 'Crab', texture: 'mob-crab', tint: 0xffccaa, level: 6, hp: 26, damage: 8, gold: 5, xp: 9, x: 280, y: 200 },
-        { type: 'Crab', texture: 'mob-crab', tint: 0xffffff, level: 5, hp: 24, damage: 7, gold: 4, xp: 9, x: 400, y: 160 }
-    ],
-    darkmine: [
-        { type: 'Bat', texture: 'mob-bat', tint: 0xffffff, level: 7, hp: 20, damage: 8, gold: 4, xp: 10, x: 150, y: 120 },
-        { type: 'Bat', texture: 'mob-bat', tint: 0xffffff, level: 7, hp: 20, damage: 8, gold: 4, xp: 10, x: 260, y: 180 },
-        { type: 'Bat', texture: 'mob-bat', tint: 0xddbbff, level: 8, hp: 22, damage: 9, gold: 5, xp: 11, x: 380, y: 240 },
-        { type: 'Bat', texture: 'mob-bat', tint: 0xffffff, level: 7, hp: 20, damage: 8, gold: 4, xp: 10, x: 200, y: 300 }
-    ],
-    westmead: [
-        { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, level: 8, hp: 26, damage: 7, gold: 5, xp: 11, x: 180, y: 140 },
-        { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, level: 9, hp: 26, damage: 8, gold: 5, xp: 11, x: 340, y: 220 },
-        { type: 'Rabbit', texture: 'mob-rabbit', tint: 0xffffff, level: 1, hp: 10, damage: 2, gold: 1, xp: 5, x: 260, y: 180 },
-        { type: 'Rabbit', texture: 'mob-rabbit', tint: 0xffffff, level: 1, hp: 10, damage: 2, gold: 1, xp: 5, x: 380, y: 160 },
-        { type: 'Rabbit', texture: 'mob-rabbit', tint: 0xeeddcc, level: 2, hp: 12, damage: 2, gold: 1, xp: 6, x: 420, y: 280 }
-    ],
-    graves: [
-        { type: 'Skeleton', texture: 'mob-skeleton', tint: 0xffffff, level: 14, hp: 34, damage: 10, gold: 8, xp: 16, x: 160, y: 150 },
-        { type: 'Skeleton', texture: 'mob-skeleton', tint: 0xffffff, level: 15, hp: 36, damage: 11, gold: 9, xp: 16, x: 300, y: 210 },
-        { type: 'Skeleton', texture: 'mob-skeleton', tint: 0xeeeeff, level: 14, hp: 34, damage: 10, gold: 8, xp: 16, x: 400, y: 120 }
-    ],
-    dragonden: [
-        {
-            type: 'Dragon',
-            texture: 'mob-drake',
-            tint: 0xff6644,
-            level: 48,
-            alwaysAgro: true,
-            hp: 140,
-            damage: 26,
-            gold: 90,
-            xp: 110,
-            attackRange: 110,
-            x: 220,
-            y: 160
-        },
-        {
-            type: 'Dragon',
-            texture: 'mob-drake',
-            tint: 0xff4422,
-            level: 52,
-            alwaysAgro: true,
-            hp: 160,
-            damage: 28,
-            gold: 110,
-            xp: 130,
-            attackRange: 110,
-            x: 320,
-            y: 200
-        },
-        {
-            type: 'Dragon',
-            texture: 'mob-drake',
-            tint: 0xdd2200,
-            level: 55,
-            alwaysAgro: true,
-            hp: 180,
-            damage: 30,
-            gold: 140,
-            xp: 150,
-            attackRange: 120,
-            x: 280,
-            y: 280
+/* Per-zone combat bands (5 levels). Starter wilds share 1–5; rings step up. */
+var ZONE_LEVEL_BAND = {
+    haven: [1, 5],
+    millfields: [1, 5],
+    westmead: [1, 5],
+    southshore: [6, 10],
+    northwood: [6, 10],
+    darkmine: [6, 10],
+    mire: [11, 15],
+    graves: [16, 20],
+    highlands: [26, 30],
+    dragonden: [51, 55]
+};
+
+function zoneBandLevel(zoneId, index) {
+    var band = ZONE_LEVEL_BAND[zoneId] || [1, 5];
+    var lo = band[0];
+    var hi = band[1];
+    var span = Math.max(0, hi - lo);
+    return lo + ((index | 0) % (span + 1));
+}
+
+function mobStatsFor(type, level) {
+    var lv = Math.max(1, level | 0);
+    if (type === 'Chicken') {
+        return { hp: 10 + lv * 2, damage: 2 + Math.ceil(lv / 2), gold: 1, xp: 3 + lv };
+    }
+    if (type === 'Rabbit') {
+        return { hp: 8 + lv * 2, damage: 1 + Math.ceil(lv / 2), gold: 1, xp: 4 + lv };
+    }
+    if (type === 'Cow') {
+        return { hp: 16 + lv * 2, damage: 3 + Math.ceil(lv / 2), gold: 2 + Math.floor(lv / 3), xp: 5 + lv };
+    }
+    if (type === 'Crab') {
+        return { hp: 14 + lv * 2, damage: 4 + Math.floor(lv / 2), gold: 3 + Math.floor(lv / 4), xp: 4 + lv };
+    }
+    if (type === 'Bat') {
+        return { hp: 10 + lv * 2, damage: 4 + Math.floor(lv / 2), gold: 3 + Math.floor(lv / 4), xp: 4 + lv };
+    }
+    if (type === 'Goblin') {
+        return { hp: 14 + lv * 2, damage: 4 + Math.floor(lv / 2), gold: 3 + Math.floor(lv / 3), xp: 5 + lv };
+    }
+    if (type === 'Slime') {
+        return { hp: 12 + lv * 2, damage: 4 + Math.floor(lv / 2), gold: 3 + Math.floor(lv / 4), xp: 4 + lv };
+    }
+    if (type === 'Skeleton') {
+        return { hp: 16 + lv * 2, damage: 5 + Math.floor(lv / 2), gold: 5 + Math.floor(lv / 3), xp: 6 + lv };
+    }
+    if (type === 'Drake') {
+        return { hp: 20 + lv, damage: 6 + Math.floor(lv / 3), gold: 10 + Math.floor(lv / 2), xp: 12 + Math.floor(lv / 2) };
+    }
+    if (type === 'Dragon') {
+        return { hp: 40 + lv * 2, damage: 10 + Math.floor(lv / 3), gold: 40 + lv, xp: 50 + lv };
+    }
+    return { hp: 12 + lv, damage: 3 + Math.floor(lv / 2), gold: 2, xp: 4 + lv };
+}
+
+/* Spread spawn tiles inside the 2-tile mob edge inset (tx 2..33, ty 2..25). */
+function buildBandMobs(zoneId, type, texture, spots, extras) {
+    var out = [];
+    var i;
+    var level;
+    var stats;
+    var center;
+    var def;
+    var tintCycle = (extras && extras.tints) || [0xffffff];
+    for (i = 0; i < spots.length; i++) {
+        level = zoneBandLevel(zoneId, i);
+        if (extras && typeof extras.levelFor === 'function') {
+            level = extras.levelFor(i, level);
         }
-    ]
+        stats = mobStatsFor(type, level);
+        center = tileCenter(spots[i][0], spots[i][1]);
+        def = {
+            type: type,
+            texture: texture,
+            tint: tintCycle[i % tintCycle.length],
+            level: level,
+            hp: stats.hp,
+            damage: stats.damage,
+            gold: stats.gold,
+            xp: stats.xp,
+            x: center.x,
+            y: center.y
+        };
+        if (extras) {
+            if (extras.alwaysAgro) {
+                def.alwaysAgro = true;
+            }
+            if (typeof extras.attackRange === 'number') {
+                def.attackRange = extras.attackRange;
+            }
+            if (typeof extras.attackRangeFor === 'function') {
+                def.attackRange = extras.attackRangeFor(i, level);
+            }
+        }
+        out.push(def);
+    }
+    return out;
+}
+
+var MOB_DEFS = {
+    /* Band 1–5 — starter wilds; lean high counts. */
+    haven: buildBandMobs('haven', 'Chicken', 'mob-chicken', [
+        [24, 14], [26, 11], [28, 13], [30, 10], [25, 17], [27, 16], [29, 18], [22, 12],
+        [31, 15], [23, 19], [26, 20], [28, 9], [21, 15], [30, 19], [24, 8], [27, 14],
+        [29, 12], [25, 11], [22, 18], [31, 17]
+    ]),
+    millfields: buildBandMobs('millfields', 'Cow', 'mob-cow', [
+        [8, 12], [12, 8], [18, 7], [24, 9], [28, 12], [30, 16], [26, 18], [20, 20],
+        [14, 19], [9, 16], [11, 11], [16, 14], [22, 11], [27, 8], [31, 14], [19, 16],
+        [13, 17], [25, 15]
+    ], { tints: [0xffffff, 0xffffff, 0xeeddcc] }),
+    westmead: buildBandMobs('westmead', 'Rabbit', 'mob-rabbit', [
+        [10, 10], [14, 8], [18, 11], [22, 9], [26, 12], [30, 10], [28, 16], [24, 18],
+        [20, 20], [16, 17], [12, 15], [8, 18]
+    ], { tints: [0xffffff, 0xffffff, 0xeeddcc] }).concat(
+        buildBandMobs('westmead', 'Goblin', 'mob-goblin', [
+            [9, 13], [15, 12], [21, 14], [27, 13], [25, 20], [17, 8]
+        ], {
+            levelFor: function (i, bandLevel) {
+                /* Soft starter goblins: upper half of the 1–5 band. */
+                return Math.max(3, bandLevel);
+            }
+        })
+    ),
+    /* Band 6–10 — next ring. */
+    southshore: buildBandMobs('southshore', 'Crab', 'mob-crab', [
+        [8, 14], [12, 12], [16, 10], [20, 11], [24, 9], [28, 12], [31, 15], [26, 17],
+        [22, 19], [18, 16], [14, 18], [10, 17], [27, 14], [19, 14]
+    ], { tints: [0xffffff, 0xffccaa, 0xffffff] }),
+    northwood: buildBandMobs('northwood', 'Goblin', 'mob-goblin', [
+        [8, 8], [12, 10], [16, 7], [20, 9], [24, 8], [28, 11], [31, 14], [26, 16],
+        [22, 18], [18, 20], [14, 17], [10, 19], [9, 13], [15, 14], [21, 13], [27, 19]
+    ], { tints: [0xffffff, 0xffffff, 0xbbffbb, 0xffffff] }),
+    darkmine: buildBandMobs('darkmine', 'Bat', 'mob-bat', [
+        [8, 8], [12, 11], [16, 9], [20, 12], [24, 10], [28, 13], [31, 16], [26, 18],
+        [22, 20], [18, 17], [14, 19], [10, 15], [17, 14], [25, 15]
+    ], { tints: [0xffffff, 0xffffff, 0xddbbff, 0xffffff] }),
+    /* Band 11–15 / 16–20 — outer danger. */
+    mire: buildBandMobs('mire', 'Slime', 'mob-slime', [
+        [9, 9], [13, 11], [17, 8], [21, 12], [25, 10], [29, 13], [31, 17], [27, 19],
+        [23, 20], [19, 16], [15, 18], [11, 15]
+    ], { tints: [0xffffff, 0x88ffaa, 0xffffff] }),
+    graves: buildBandMobs('graves', 'Skeleton', 'mob-skeleton', [
+        [9, 9], [13, 12], [17, 8], [21, 11], [25, 9], [29, 13], [31, 16], [26, 19],
+        [22, 20], [18, 17], [14, 15], [10, 18]
+    ], { tints: [0xffffff, 0xffffff, 0xeeeeff] }),
+    /* Band 26–30 — highlands. */
+    highlands: buildBandMobs('highlands', 'Drake', 'mob-drake', [
+        [10, 10], [16, 9], [22, 12], [28, 11], [30, 16], [24, 18], [18, 20], [12, 17],
+        [20, 14], [26, 15]
+    ]),
+    /* Band 51–55 — den stays sparse; alwaysAgro kept. */
+    dragonden: buildBandMobs('dragonden', 'Dragon', 'mob-drake', [
+        [12, 10], [20, 12], [28, 14], [18, 18]
+    ], {
+        alwaysAgro: true,
+        tints: [0xff6644, 0xff4422, 0xdd2200, 0xff5533],
+        attackRangeFor: function (i) {
+            return i === 3 ? 120 : 110;
+        }
+    })
 };
 
 function defaultWorldSpawn() {

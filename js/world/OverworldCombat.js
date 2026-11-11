@@ -39,13 +39,13 @@ var MOB_BASE_LEVEL = {
     Chicken: 1,
     Rabbit: 1,
     Cow: 3,
-    Crab: 5,
-    Bat: 7,
-    Goblin: 9,
-    Slime: 10,
-    Skeleton: 14,
+    Crab: 8,
+    Bat: 8,
+    Goblin: 8,
+    Slime: 13,
+    Skeleton: 18,
     Drake: 28,
-    Dragon: 50
+    Dragon: 53
 };
 var MOB_TYPE_ATTACK_RANGE = {
     Chicken: 22,
