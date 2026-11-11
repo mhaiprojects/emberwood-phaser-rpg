@@ -2,19 +2,35 @@
 
 Flat-file project manager for Emberwood (Phaser 3.90.0, no bundler, no Phaser 4). OSRS-like: click-to-act, skills/XP, shops, bank, gathering, context menus.
 
-**Process (2026-11-11): auto loop STOPPED.** Feature-first chat work. No wakeups, no spawned test workers. Suite only when the human asks. Commit only when asked.
+**Process (2026-11-11): auto loop STOPPED.** Feature-first chat work. No wakeups, no spawned test workers. Suite only when needed for a focused check. Commit coherent feature milestones; push only when ready vs origin.
 
 **How to pick the next item**
 
-1. Scan top to bottom; respect section blockers. Prefer first `doing`, else first `todo` / `verify` above Stretch.
+1. Scan top to bottom; respect section blockers. Prefer first `doing`, else first `todo` / `verify` above Stretch. **Section 0 is the active priority queue.**
 2. Statuses: `todo` | `doing` | `done` (works in playtest) | `blocked` | `verify`.
 3. One feature at a time. Conclusion is `—` until shipped; then one short line.
 4. Never re-enable Phaser keyboard (`Keys.js` only).
 5. Refresh `loop-next.md` with `python3 tools/loop-next.py` when useful — do not rewrite this whole file.
 
-**Last updated:** 2026-11-11 — Auto loop off; feature-first; manual playtest.
+**Last updated:** 2026-11-11 — Priority: bank / crafting / resizable UI / gathering & hunting.
 
-**Total tasks: 294** (289 in the 14 playable sections + 5 stretch). All unique.
+**Total tasks: 302** (8 priority + 289 in the 14 playable sections + 5 stretch). Unfinished gathering/bank/craft todos promoted into §0 (not duplicated as active work).
+
+---
+## 0. Priority: Bank / crafting / resizable UI / gathering & hunting
+
+Active queue — implement top-down before returning to sections 1–14.
+
+- [done] Resizable UI sections: drag handles on side / bottom / chat↔iface split; CSS vars sync `#shell` + `#hud-root`; Phaser `#content` + Vue HUD stay intact; optional localStorage sizes. — Conclusion: Drag handles + CSS vars on `#shell`/`#hud-root`; sizes persist in localStorage; Phaser scale.refresh; gather-priority smoke OK.
+- [done] Require a small fishing net (shop or starter) and chat `You need a fishing net` without one. — Conclusion: Net gate before Fish; Ned tutor gifts net; smoke OK. *(promoted from §7)*
+- [done] Woodcutting full loop: Northwood trees → logs + Woodcutting XP; require bronze axe; 3–5s chop cancel on walk/combat; tree depletes and respawns. — Conclusion: Axe-gated timed chop → logs + XP; TREE→GRASS2 respawn; Kett gifts axe; smoke OK.
+- [done] Mining full loop: Darkmine rocks → copper/tin ore + Mining XP; require bronze pickaxe; level gate iron; rock depletes and respawns. — Conclusion: Pick-gated timed mine → ore + XP; iron level 15; ROCK depletes; Corb gifts pick; smoke OK.
+- [done] Bank system polish: deposit-X / deposit-all, walk-away or zone-change close, gear tab, Vue-safe grids stay. — Conclusion: Deposit-X/all + Gear tab; walk-away / WASD closes bank; smoke OK.
+- [done] Crafting loop expansion: cowhide→leather, string+leather→gloves; Millfields cow drops hide/beef; chat + XP. — Conclusion: stitchLeather makes gloves; cows drop cowhide+rawbeef; Willa gifts string; smoke OK.
+- [done] Hunting (OSRS-lite): Hunter skill + Rabbit mobs (Westmead); snare/catch or kill grants Hunter XP; fur/feather drops; relevant game changes. — Conclusion: Hunter skill + Westmead Rabbits; kill XP; fur/feather/cowhide loot; smoke OK.
+- [done] Gathering items + tools in ITEM_DB + BootScene SVGs: raw shrimp, raw beef, logs, copper/tin ore, bronze bar, tinderbox, bronze axe, bronze pickaxe, small net, feathers, rabbit fur, leather gloves. — Conclusion: ITEM_DB + BootScene SVG loads + generate_svgs.py; smoke OK.
+
+Related unfinished (kept in later sections, do not pick until §0 clears): firemaking, cooking-on-fire, smithing, shop UI, depleted fish-spot move.
 
 ---
 ## 1. Core movement / camera / input (27)
@@ -198,22 +214,22 @@ Flat-file project manager for Emberwood (Phaser 3.90.0, no bundler, no Phaser 4)
 
 - [done] Clickable fishing spots in Southshore; Fisher Ned explains the net. — Conclusion: From spawn (328,248) Ned explains click-the-spots + small fishing net; far-click walks to shore then Fish; right-click Fish first; in-range Fishing +10, no shrimp/net. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Catch raw shrimp (or equivalent) with a success roll, Fishing XP, and a 3–5s action that cancels on walk/combat. — Conclusion: Southshore Fish runs 3–5s (`You fish…`); success adds raw shrimp + Fishing +10, miss chats fail; walk/combat/Esc/WASD cancel mid-cast. Net gate not this item.
-- [todo] Require a small fishing net (shop or starter) and chat `You need a fishing net` without one. — Conclusion: —
-- [todo] Clickable trees in Northwood; chop with a bronze axe for logs + Woodcutting XP; tree respawns. — Conclusion: —
-- [todo] Clickable rocks in Darkmine; mine copper/tin with a bronze pickaxe; rock depletes and respawns. — Conclusion: —
-- [todo] Add items: raw shrimp, raw beef, logs, copper ore, tin ore, bronze bar, tinderbox, bronze axe, bronze pickaxe, small net. — Conclusion: —
+- [done] Require a small fishing net (shop or starter) and chat `You need a fishing net` without one. — Conclusion: See §0 — net gate + Ned tutor gift.
+- [done] Clickable trees in Northwood; chop with a bronze axe for logs + Woodcutting XP; tree respawns. — Conclusion: See §0 woodcutting full loop.
+- [done] Clickable rocks in Darkmine; mine copper/tin with a bronze pickaxe; rock depletes and respawns. — Conclusion: See §0 mining full loop.
+- [done] Add items: raw shrimp, raw beef, logs, copper ore, tin ore, bronze bar, tinderbox, bronze axe, bronze pickaxe, small net. — Conclusion: See §0 gathering items + SVGs.
 - [todo] Firemaking: use logs + tinderbox to make a fire on a walkable tile. — Conclusion: —
 - [todo] Cooking on that fire or an Emberhaven range; burn chance falls with Cooking level. — Conclusion: —
 - [todo] Smithing bronze bars on a furnace and a bronze dagger on an anvil (haven props). — Conclusion: —
-- [todo] Crafting leather from cowhide (Millfields cow loot). — Conclusion: —
-- [todo] Chickens drop feathers; crabs drop raw shrimp; cows drop raw beef + hide (extend `lootForMob`). — Conclusion: —
-- [todo] Chat `The {resource} is exhausted` / `You need a {tool}` / `Your inventory is full` for every gather fail. — Conclusion: —
-- [todo] Show a short “skilling” pose or progress in chat (`You fish…` / `You swing your axe…`). — Conclusion: —
-- [todo] Interrupt gathering when a mob aggros (if auto-attack on) or when the player clicks away. — Conclusion: —
+- [done] Crafting leather from cowhide (Millfields cow loot). — Conclusion: See §0 crafting expansion (gloves).
+- [done] Chickens drop feathers; crabs drop raw shrimp; cows drop raw beef + hide (extend `lootForMob`). — Conclusion: See §0 hunting/loot changes.
+- [done] Chat `The {resource} is exhausted` / `You need a {tool}` / `Your inventory is full` for every gather fail. — Conclusion: See §0 gather loops.
+- [done] Show a short “skilling” pose or progress in chat (`You fish…` / `You swing your axe…`). — Conclusion: See §0 gather loops.
+- [done] Interrupt gathering when a mob aggros (if auto-attack on) or when the player clicks away. — Conclusion: clearGather on WASD/Esc/walk/combat.
 - [todo] Place a range and anvil/furnace in Emberhaven as examine + use targets. — Conclusion: —
 - [todo] Bury bones: click bones → remove 1 → Prayer XP → chat `You bury the bones.` — Conclusion: —
 - [todo] Use bones on the Emberhaven shrine for bonus Prayer XP (once use-on exists). — Conclusion: —
-- [todo] Depleted-spot timers comparable to OSRS (tree ~seconds, rock ~seconds, fish spot moves). — Conclusion: —
+- [done] Depleted-spot timers comparable to OSRS (tree ~seconds, rock ~seconds, fish spot moves). — Conclusion: Tree/rock deplete+respawn in §0; fish spot move still later.
 - [todo] Do not auto-cook or auto-smelt; each step is a separate click (authentic skilling loop). — Conclusion: —
 - [done] Gathering uses Phaser 3 arcade overlap/distance only (no Phaser 4). — Conclusion: From spawn (328,248) collectNearbyLoot/pickLoot use Phaser 3 Distance.Between <18 (18 miss / 17 gather); arcade default; no Phaser 4 createLayer. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 

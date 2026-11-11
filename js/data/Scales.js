@@ -8,6 +8,7 @@ var MOB_SCALES = {
     Chicken: { world: 0.75, battle: 2 },
     Crab: { world: 0.75, battle: 2 },
     Bat: { world: 0.75, battle: 2 },
+    Rabbit: { world: 0.7, battle: 2 },
     Goblin: { world: 1, battle: 2 },
     Skeleton: { world: 1, battle: 2 },
     Slime: { world: 1, battle: 2 },
@@ -59,7 +60,7 @@ function worldBodySizeFor(type) {
     if (type === 'Cow') {
         return { w: 14, h: 14 };
     }
-    if (type === 'Chicken' || type === 'Crab' || type === 'Bat') {
+    if (type === 'Chicken' || type === 'Crab' || type === 'Bat' || type === 'Rabbit') {
         return { w: 10, h: 10 };
     }
     return { w: 12, h: 14 };
@@ -92,11 +93,14 @@ function lootForMob(def) {
     }
     drops.push({ id: 'bones', qty: 1 });
     if (def && def.type === 'Chicken') {
-        drops.push({ id: 'shrimp', qty: 1 });
+        drops.push({ id: 'feather', qty: 3 });
     } else if (def && def.type === 'Cow') {
-        drops.push({ id: 'bread', qty: 1 });
+        drops.push({ id: 'rawbeef', qty: 1 });
+        drops.push({ id: 'cowhide', qty: 1 });
     } else if (def && def.type === 'Crab') {
-        drops.push({ id: 'shrimp', qty: 1 });
+        drops.push({ id: 'rawshrimp', qty: 1 });
+    } else if (def && def.type === 'Rabbit') {
+        drops.push({ id: 'rabbitfur', qty: 1 });
     }
     return drops;
 }

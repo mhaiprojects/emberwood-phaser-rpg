@@ -12,13 +12,20 @@ body {
     line-height: 1.35;
 }
 
+:root {
+    --shell-side: 230px;
+    --shell-bottom: 210px;
+    --shell-iface: 300px;
+}
+
 #shell {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 230px;
-    grid-template-rows: minmax(0, 1fr) 210px;
+    grid-template-columns: minmax(0, 1fr) var(--shell-side);
+    grid-template-rows: minmax(0, 1fr) var(--shell-bottom);
     width: 100%;
     height: 100%;
     background: #2a2116;
+    position: relative;
 }
 
 /* Vue HUD layer: same 2×2 grid as #shell; empty top-left sits over #content with pointer-events none. */
@@ -26,8 +33,8 @@ body {
     grid-column: 1 / 3;
     grid-row: 1 / 3;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 230px;
-    grid-template-rows: minmax(0, 1fr) 210px;
+    grid-template-columns: minmax(0, 1fr) var(--shell-side);
+    grid-template-rows: minmax(0, 1fr) var(--shell-bottom);
     pointer-events: none;
     z-index: 2;
     min-width: 0;
@@ -60,9 +67,68 @@ body {
     border-top: 2px solid #5a4630;
     background: #2f261b;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-columns: minmax(0, 1fr) var(--shell-iface);
     min-height: 0;
     pointer-events: auto;
+    position: relative;
+}
+
+.shell-resize {
+    position: absolute;
+    z-index: 5;
+    pointer-events: auto;
+    background: transparent;
+}
+
+.shell-resize:hover,
+.shell-resize.is-drag {
+    background: rgba(201, 162, 39, 0.35);
+}
+
+.shell-resize-x {
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+}
+
+.shell-resize-y {
+    left: 0;
+    right: 0;
+    height: 6px;
+    cursor: row-resize;
+}
+
+#resize-side {
+    top: 0;
+    bottom: var(--shell-bottom);
+    right: calc(var(--shell-side) - 3px);
+    width: 6px;
+}
+
+#resize-bottom {
+    left: 0;
+    right: 0;
+    bottom: calc(var(--shell-bottom) - 3px);
+    height: 6px;
+}
+
+#resize-iface {
+    top: 0;
+    bottom: 0;
+    right: calc(var(--shell-iface) - 3px);
+    width: 6px;
+    cursor: col-resize;
+}
+
+body.is-shell-resize {
+    cursor: col-resize;
+    user-select: none;
+}
+
+body.is-shell-resize-y {
+    cursor: row-resize;
+    user-select: none;
 }
 
 #title-overlay,

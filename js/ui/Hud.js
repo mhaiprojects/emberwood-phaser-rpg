@@ -99,9 +99,134 @@ var Hud = {
             HudApp.mount();
         }
         this.bindEls();
+        this.bindShellResize();
         if (!this._vueReady) {
             this.onVueMounted();
         }
+    },
+
+    shellResizeDefaults: function () {
+        return { side: 230, bottom: 210, iface: 300 };
+    },
+
+    applyShellSizes: function (sizes) {
+        var root = document.documentElement;
+        var def = this.shellResizeDefaults();
+        var side = sizes && sizes.side != null ? sizes.side : def.side;
+        var bottom = sizes && sizes.bottom != null ? sizes.bottom : def.bottom;
+        var iface = sizes && sizes.iface != null ? sizes.iface : def.iface;
+        side = Math.max(160, Math.min(420, Math.round(side)));
+        bottom = Math.max(140, Math.min(360, Math.round(bottom)));
+        iface = Math.max(200, Math.min(480, Math.round(iface)));
+        root.style.setProperty('--shell-side', side + 'px');
+        root.style.setProperty('--shell-bottom', bottom + 'px');
+        root.style.setProperty('--shell-iface', iface + 'px');
+        this._shellSizes = { side: side, bottom: bottom, iface: iface };
+        if (window.game && game.scale && typeof game.scale.refresh === 'function') {
+            game.scale.refresh();
+        }
+        return this._shellSizes;
+    },
+
+    loadShellSizes: function () {
+        var raw;
+        var parsed;
+        try {
+            raw = window.localStorage && localStorage.getItem('emberwood-shell-sizes');
+            parsed = raw ? JSON.parse(raw) : null;
+        } catch (err) {
+            parsed = null;
+        }
+        return this.applyShellSizes(parsed || this.shellResizeDefaults());
+    },
+
+    saveShellSizes: function () {
+        if (!this._shellSizes) {
+            return;
+        }
+        try {
+            if (window.localStorage) {
+                localStorage.setItem('emberwood-shell-sizes', JSON.stringify(this._shellSizes));
+            }
+        } catch (err) {
+            /* ignore quota / private mode */
+        }
+    },
+
+    bindShellResize: function () {
+        var self = this;
+        var sideEl = document.getElementById('resize-side');
+        var bottomEl = document.getElementById('resize-bottom');
+        var ifaceEl = document.getElementById('resize-iface');
+        var drag = null;
+
+        this.loadShellSizes();
+
+        function endDrag() {
+            if (!drag) {
+                return;
+            }
+            if (drag.el) {
+                drag.el.classList.remove('is-drag');
+            }
+            document.body.classList.remove('is-shell-resize', 'is-shell-resize-y');
+            self.saveShellSizes();
+            drag = null;
+        }
+
+        function onMove(event) {
+            var sizes;
+            var shell;
+            var rect;
+            if (!drag) {
+                return;
+            }
+            sizes = self._shellSizes
+                ? { side: self._shellSizes.side, bottom: self._shellSizes.bottom, iface: self._shellSizes.iface }
+                : self.shellResizeDefaults();
+            shell = document.getElementById('shell');
+            rect = shell ? shell.getBoundingClientRect() : { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
+            if (drag.kind === 'side') {
+                sizes.side = rect.right - event.clientX;
+            } else if (drag.kind === 'bottom') {
+                sizes.bottom = rect.bottom - event.clientY;
+            } else if (drag.kind === 'iface') {
+                sizes.iface = rect.right - event.clientX;
+            }
+            self.applyShellSizes(sizes);
+        }
+
+        function startDrag(kind, el, event) {
+            if (event.button != null && event.button !== 0) {
+                return;
+            }
+            event.preventDefault();
+            drag = { kind: kind, el: el };
+            if (el) {
+                el.classList.add('is-drag');
+            }
+            document.body.classList.add(kind === 'bottom' ? 'is-shell-resize-y' : 'is-shell-resize');
+        }
+
+        if (sideEl) {
+            sideEl.addEventListener('pointerdown', function (event) {
+                startDrag('side', sideEl, event);
+            });
+        }
+        if (bottomEl) {
+            bottomEl.addEventListener('pointerdown', function (event) {
+                startDrag('bottom', bottomEl, event);
+            });
+        }
+        if (ifaceEl) {
+            ifaceEl.addEventListener('pointerdown', function (event) {
+                startDrag('iface', ifaceEl, event);
+            });
+        }
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', endDrag);
+        window.addEventListener('pointercancel', endDrag);
+        window.addEventListener('blur', endDrag);
     },
 
     bindInterface: function () {
@@ -485,7 +610,9 @@ var Hud = {
             crafted = typeof useItemOnItem === 'function' ? useItemOnItem(hero, this.useOnId, id) : null;
             if (crafted && crafted.ok) {
                 this.saveHero(hero);
-                this.log('You stitch the leather.');
+                this.log(crafted.made
+                    ? ('You stitch the leather into ' + itemName(crafted.made) + '.')
+                    : 'You stitch the leather.');
                 this.clearUseOn();
                 return;
             }
@@ -1402,17 +1529,32 @@ var Hud = {
             return;
         }
         var id = this.bankSel;
-        if (action === 'deposit') {
+        if (action === 'deposit' || action === 'deposit-x' || action === 'deposit-all') {
             if (!id) {
                 this.log('Select an inventory item to deposit.');
                 return;
             }
-            if (!depositItem(hero, id, 1)) {
+            var invStack = typeof findStack === 'function' ? findStack(hero.inventory, id) : null;
+            var invHeld = invStack && invStack.qty > 0 ? invStack.qty : 0;
+            var depQty = 1;
+            if (action === 'deposit-all') {
+                depQty = invHeld;
+            } else if (action === 'deposit-x') {
+                depQty = this.readBankQty();
+                if (!(depQty >= 1)) {
+                    this.log('Enter how many to deposit.');
+                    return;
+                }
+                if (depQty > invHeld) {
+                    depQty = invHeld;
+                }
+            }
+            if (!invHeld || !depositItem(hero, id, depQty)) {
                 this.log('You have nothing to deposit.');
                 return;
             }
             this.saveHero(hero);
-            this.log('You deposit 1 x ' + itemName(id) + '.');
+            this.log('You deposit ' + depQty + ' x ' + itemName(id) + '.');
             return;
         }
         if (action === 'withdraw' || action === 'withdraw-x' || action === 'withdraw-all') {

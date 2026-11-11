@@ -48,6 +48,11 @@ var WorldScene = new Phaser.Class({
         this.talkTarget = null;
         this.fishTarget = null;
         this.fishAction = null;
+        this.chopTarget = null;
+        this.chopAction = null;
+        this.mineTarget = null;
+        this.mineAction = null;
+        this.depletedTiles = {};
         this.dialogueNpc = null;
         this.exitLock = false;
         this.encounterLock = false;
@@ -117,7 +122,7 @@ var WorldScene = new Phaser.Class({
         this.lastFought = null;
         this.engageTarget = null;
         this.talkTarget = null;
-        this.clearFish();
+        this.clearGather();
         if (this.interiorId || this.zoneId !== 'haven') {
             this.enterZone('haven', null);
         } else {
@@ -686,7 +691,7 @@ var WorldScene = new Phaser.Class({
         this.clearDoorFx();
         this.engageTarget = null;
         this.talkTarget = null;
-        this.clearFish();
+        this.clearGather();
         this.dialogueNpc = null;
         this.tileGrid = null;
         if (this.groundCollider) {
@@ -1208,10 +1213,7 @@ var WorldScene = new Phaser.Class({
         }
         if (scenery && scenery.kind === 'tree' && typeof woodcutTreeAt === 'function'
                 && woodcutTreeAt(scenery.tx, scenery.ty, this.zoneId, this.tileGrid)) {
-            this.engageTarget = null;
-            this.talkTarget = null;
-            this.clearFish();
-            this.tryChopTree(scenery);
+            this.clickChopTree(scenery);
             return;
         }
         if (scenery && scenery.kind === 'rock' && typeof mineRockAt === 'function'
@@ -1219,10 +1221,7 @@ var WorldScene = new Phaser.Class({
                     houseRects: this.houseRectsNow(),
                     interior: !!this.interiorId
                 })) {
-            this.engageTarget = null;
-            this.talkTarget = null;
-            this.clearFish();
-            this.tryMineRock(scenery);
+            this.clickMineRock(scenery);
             return;
         }
         if (scenery && !(typeof isWalkableExamineKind === 'function' && isWalkableExamineKind(scenery.kind))) {
@@ -1350,6 +1349,75 @@ var WorldScene = new Phaser.Class({
         this.fishTarget = null;
     },
 
+    clearGather: function () {
+        this.clearFish();
+        this.clearChop();
+        this.clearMine();
+    },
+
+    clearChop: function () {
+        if (this.chopAction && this.chopAction.timer) {
+            this.chopAction.timer.remove(false);
+        }
+        this.chopAction = null;
+        this.chopTarget = null;
+    },
+
+    clearMine: function () {
+        if (this.mineAction && this.mineAction.timer) {
+            this.mineAction.timer.remove(false);
+        }
+        this.mineAction = null;
+        this.mineTarget = null;
+    },
+
+    depleteKey: function (tx, ty) {
+        return (this.zoneId || '') + ':' + tx + ',' + ty;
+    },
+
+    isTileDepleted: function (tx, ty) {
+        var key = this.depleteKey(tx, ty);
+        var until = this.depletedTiles && this.depletedTiles[key];
+        if (!until) {
+            return false;
+        }
+        if (this.time.now >= until) {
+            delete this.depletedTiles[key];
+            return false;
+        }
+        return true;
+    },
+
+    setTileIndex: function (tx, ty, index) {
+        if (!this.tileGrid || !this.tileGrid[ty]) {
+            return;
+        }
+        this.tileGrid[ty][tx] = index;
+        if (this.ground) {
+            this.ground.putTileAt(index, tx, ty);
+        }
+    },
+
+    depleteResource: function (tx, ty, emptyIndex, respawnMs, fullIndex) {
+        var self = this;
+        var key = this.depleteKey(tx, ty);
+        var ms = typeof respawnMs === 'number' ? respawnMs : 10000;
+        this.depletedTiles = this.depletedTiles || {};
+        this.depletedTiles[key] = this.time.now + ms;
+        this.setTileIndex(tx, ty, emptyIndex);
+        this.time.delayedCall(ms, function () {
+            if (!self.tileGrid || self.zoneId !== key.split(':')[0]) {
+                return;
+            }
+            if (self.depletedTiles) {
+                delete self.depletedTiles[key];
+            }
+            if (self.tileGrid[ty] && self.tileGrid[ty][tx] === emptyIndex) {
+                self.setTileIndex(tx, ty, fullIndex);
+            }
+        });
+    },
+
     tryCompleteFish: function () {
         if (!this.fishTarget) {
             return false;
@@ -1365,9 +1433,51 @@ var WorldScene = new Phaser.Class({
         return this.tryFishSpot(this.fishTarget);
     },
 
+    tryCompleteChop: function () {
+        if (!this.chopTarget || this.chopAction) {
+            return false;
+        }
+        if (!this.sceneryInRange(this.chopTarget, 28)) {
+            return false;
+        }
+        this.player.body.setVelocity(0);
+        this.clearWalk();
+        return this.tryChopTree(this.chopTarget);
+    },
+
+    tryCompleteMine: function () {
+        if (!this.mineTarget || this.mineAction) {
+            return false;
+        }
+        if (!this.sceneryInRange(this.mineTarget, 28)) {
+            return false;
+        }
+        this.player.body.setVelocity(0);
+        this.clearWalk();
+        return this.tryMineRock(this.mineTarget);
+    },
+
+    closeBankIfAway: function () {
+        var npc;
+        if (!window.Hud || !Hud.bankOpen || !Hud.bankOpen() || !this.player) {
+            return;
+        }
+        npc = this.pickSprite(this.npcs, this.player.x, this.player.y, 64);
+        if (npc && npc.npcDef && npc.npcDef.key === 'banker') {
+            return;
+        }
+        if (this.interiorId === 'bank') {
+            return;
+        }
+        if (Hud.hideBank) {
+            Hud.hideBank();
+        }
+    },
+
     tryFishSpot: function (hit) {
         var ms;
         var self = this;
+        var hero;
         if (this.encounterLock || (window.Hud && Hud.mode === 'battle')) {
             return false;
         }
@@ -1377,8 +1487,15 @@ var WorldScene = new Phaser.Class({
         if (this.fishAction) {
             return true;
         }
+        hero = this.registry.get('hero');
+        if (typeof hasTool === 'function' && typeof FISH_NET_ID !== 'undefined' && !hasTool(hero, FISH_NET_ID)) {
+            Hud.log('You need a fishing net.');
+            return false;
+        }
         this.player.body.setVelocity(0);
         this.clearWalk();
+        this.clearChop();
+        this.clearMine();
         this.fishTarget = hit;
         ms = typeof fishActionMs === 'function' ? fishActionMs() : 4000;
         if (ms < 3000) {
@@ -1419,6 +1536,10 @@ var WorldScene = new Phaser.Class({
         if (!result) {
             return this.examineScenery(hit);
         }
+        if (result.needTool) {
+            Hud.log('You need a fishing net.');
+            return true;
+        }
         if (result.miss) {
             Hud.log('You fail to catch a fish.');
             return true;
@@ -1438,12 +1559,127 @@ var WorldScene = new Phaser.Class({
         return true;
     },
 
-    tryChopTree: function (hit) {
-        var hero = this.registry.get('hero');
-        var result = typeof chopAtTree === 'function' ? chopAtTree(hero) : null;
-        if (!result || !result.ok) {
+    sceneryInRange: function (hit, range) {
+        var pos;
+        var near;
+        var dest;
+        range = typeof range === 'number' ? range : 28;
+        if (!hit || !this.player) {
+            return false;
+        }
+        pos = this.sceneryWorldPos(hit);
+        if (pos && Phaser.Math.Distance.Between(this.player.x, this.player.y, pos.x, pos.y) < range) {
+            return true;
+        }
+        near = typeof nearestWalkableTile === 'function'
+            ? nearestWalkableTile(this.tileGrid, hit.tx, hit.ty)
+            : null;
+        if (!near) {
+            return false;
+        }
+        dest = tileCenter(near.tx, near.ty);
+        return Phaser.Math.Distance.Between(this.player.x, this.player.y, dest.x, dest.y) < 10;
+    },
+
+    clickChopTree: function (hit) {
+        this.engageTarget = null;
+        this.talkTarget = null;
+        this.clearGather();
+        if (!hit || this.encounterLock || (window.Hud && Hud.mode === 'battle')) {
+            return false;
+        }
+        if (this.isTileDepleted(hit.tx, hit.ty)) {
+            Hud.log('The tree is exhausted.');
+            return false;
+        }
+        this.chopTarget = hit;
+        if (this.sceneryInRange(hit, 28)) {
+            return this.tryChopTree(hit);
+        }
+        var near = typeof nearestWalkableTile === 'function'
+            ? nearestWalkableTile(this.tileGrid, hit.tx, hit.ty)
+            : null;
+        if (!near) {
+            this.chopTarget = null;
             return this.examineScenery(hit);
         }
+        var dest = tileCenter(near.tx, near.ty);
+        this.setWalk(dest.x, dest.y, { allowEnd: true, keepChop: true });
+        return true;
+    },
+
+    tryChopTree: function (hit) {
+        var ms;
+        var self = this;
+        var hero = this.registry.get('hero');
+        if (this.encounterLock || (window.Hud && Hud.mode === 'battle')) {
+            return false;
+        }
+        if (!hit) {
+            return false;
+        }
+        if (this.isTileDepleted(hit.tx, hit.ty)) {
+            Hud.log('The tree is exhausted.');
+            return false;
+        }
+        if (typeof hasTool === 'function' && typeof WOODCUT_AXE_ID !== 'undefined' && !hasTool(hero, WOODCUT_AXE_ID)) {
+            Hud.log('You need a bronze axe.');
+            return false;
+        }
+        if (this.chopAction) {
+            return true;
+        }
+        this.player.body.setVelocity(0);
+        this.clearWalk();
+        this.clearMine();
+        if (this.fishAction) {
+            this.clearFish();
+        }
+        this.chopTarget = hit;
+        ms = typeof skillActionMs === 'function'
+            ? skillActionMs(WOODCUT_ACTION_MS_MIN, WOODCUT_ACTION_MS_MAX)
+            : 4000;
+        this.chopAction = {
+            hit: hit,
+            timer: this.time.delayedCall(ms, function () {
+                self.finishChopAction();
+            })
+        };
+        Hud.log('You swing your axe…');
+        return true;
+    },
+
+    finishChopAction: function () {
+        var hit = this.chopTarget;
+        var hero;
+        var result;
+        this.chopAction = null;
+        if (this.encounterLock || (window.Hud && Hud.mode === 'battle')) {
+            this.chopTarget = null;
+            return false;
+        }
+        if (!hit || !this.sceneryInRange(hit, 28) || this.isTileDepleted(hit.tx, hit.ty)) {
+            this.chopTarget = null;
+            return false;
+        }
+        hero = this.registry.get('hero');
+        result = typeof chopAtTree === 'function' ? chopAtTree(hero) : null;
+        this.chopTarget = null;
+        if (!result) {
+            return this.examineScenery(hit);
+        }
+        if (result.needTool) {
+            Hud.log('You need a bronze axe.');
+            return true;
+        }
+        if (result.full) {
+            Hud.log('Your inventory is full.');
+            return true;
+        }
+        if (!result.ok) {
+            return true;
+        }
+        this.depleteResource(hit.tx, hit.ty, TILE.GRASS2, WOODCUT_RESPAWN_MS, TILE.TREE);
         if (Hud.saveHero) {
             Hud.saveHero(hero);
         }
@@ -1452,7 +1688,36 @@ var WorldScene = new Phaser.Class({
         return true;
     },
 
+    clickMineRock: function (hit) {
+        this.engageTarget = null;
+        this.talkTarget = null;
+        this.clearGather();
+        if (!hit || this.encounterLock || (window.Hud && Hud.mode === 'battle')) {
+            return false;
+        }
+        if (this.isTileDepleted(hit.tx, hit.ty)) {
+            Hud.log('The rock is exhausted.');
+            return false;
+        }
+        this.mineTarget = hit;
+        if (this.sceneryInRange(hit, 28)) {
+            return this.tryMineRock(hit);
+        }
+        var near = typeof nearestWalkableTile === 'function'
+            ? nearestWalkableTile(this.tileGrid, hit.tx, hit.ty)
+            : null;
+        if (!near) {
+            this.mineTarget = null;
+            return this.examineScenery(hit);
+        }
+        var dest = tileCenter(near.tx, near.ty);
+        this.setWalk(dest.x, dest.y, { allowEnd: true, keepMine: true });
+        return true;
+    },
+
     tryMineRock: function (hit) {
+        var ms;
+        var self = this;
         var hero = this.registry.get('hero');
         var rock = typeof mineRockAt === 'function'
             ? mineRockAt(hit.tx, hit.ty, this.zoneId, this.tileGrid, {
@@ -1461,16 +1726,91 @@ var WorldScene = new Phaser.Class({
             })
             : null;
         var ore = rock && rock.ore;
-        var result = typeof mineAtRock === 'function' ? mineAtRock(hero, ore) : null;
+        var gate;
+        if (this.encounterLock || (window.Hud && Hud.mode === 'battle')) {
+            return false;
+        }
+        if (!hit || !rock) {
+            return false;
+        }
+        if (this.isTileDepleted(hit.tx, hit.ty)) {
+            Hud.log('The rock is exhausted.');
+            return false;
+        }
+        gate = typeof resourceLevelGate === 'function' ? resourceLevelGate(hero, 'mining', ore) : { ok: true };
+        if (gate && !gate.ok) {
+            Hud.log(typeof needLevelChat === 'function'
+                ? needLevelChat(gate.need)
+                : ('You need level ' + gate.need + '.'));
+            return false;
+        }
+        if (typeof hasTool === 'function' && typeof MINE_PICK_ID !== 'undefined' && !hasTool(hero, MINE_PICK_ID)) {
+            Hud.log('You need a bronze pickaxe.');
+            return false;
+        }
+        if (this.mineAction) {
+            return true;
+        }
+        this.player.body.setVelocity(0);
+        this.clearWalk();
+        this.clearChop();
+        if (this.fishAction) {
+            this.clearFish();
+        }
+        this.mineTarget = hit;
+        this.mineTarget.ore = ore;
+        ms = typeof skillActionMs === 'function'
+            ? skillActionMs(MINE_ACTION_MS_MIN, MINE_ACTION_MS_MAX)
+            : 4000;
+        this.mineAction = {
+            hit: hit,
+            ore: ore,
+            timer: this.time.delayedCall(ms, function () {
+                self.finishMineAction();
+            })
+        };
+        Hud.log('You swing your pickaxe…');
+        return true;
+    },
+
+    finishMineAction: function () {
+        var hit = this.mineTarget;
+        var ore = hit && hit.ore;
+        var hero;
+        var result;
+        this.mineAction = null;
+        if (this.encounterLock || (window.Hud && Hud.mode === 'battle')) {
+            this.mineTarget = null;
+            return false;
+        }
+        if (!hit || !this.sceneryInRange(hit, 28) || this.isTileDepleted(hit.tx, hit.ty)) {
+            this.mineTarget = null;
+            return false;
+        }
+        hero = this.registry.get('hero');
+        result = typeof mineAtRock === 'function' ? mineAtRock(hero, ore) : null;
+        this.mineTarget = null;
         if (result && result.need && !result.ok) {
             Hud.log(typeof needLevelChat === 'function'
                 ? needLevelChat(result.need)
                 : ('You need level ' + result.need + '.'));
             return false;
         }
-        if (!result || !result.ok) {
+        if (!result) {
             return this.examineScenery(hit);
         }
+        if (result.needTool) {
+            Hud.log('You need a bronze pickaxe.');
+            return true;
+        }
+        if (result.full) {
+            Hud.log('Your inventory is full.');
+            return true;
+        }
+        if (!result.ok) {
+            return true;
+        }
+        this.depleteResource(hit.tx, hit.ty, TILE.GRASS, MINE_RESPAWN_MS, TILE.ROCK);
         if (Hud.saveHero) {
             Hud.saveHero(hero);
         }
@@ -1671,8 +2011,14 @@ var WorldScene = new Phaser.Class({
 
     setWalk: function (x, y, opts) {
         opts = opts || {};
-        if (this.fishAction && !opts.keepFish) {
+        if (!opts.keepFish) {
             this.clearFish();
+        }
+        if (!opts.keepChop) {
+            this.clearChop();
+        }
+        if (!opts.keepMine) {
+            this.clearMine();
         }
         this.walkTarget = { x: x, y: y };
         this.placeWalkMarker(x, y);
@@ -2363,6 +2709,10 @@ var WorldScene = new Phaser.Class({
                     this.registry.set('quest', quest);
                 }
             }
+            if (def.type === 'Rabbit' && typeof grantHunterXp === 'function') {
+                grantHunterXp(hero, typeof HUNTER_KILL_XP === 'number' ? HUNTER_KILL_XP : 12);
+                this.registry.set('hero', hero);
+            }
             this.spawnLoot(this.lastFought.x, this.lastFought.y, lootForMob(def));
             this.hideMob(this.lastFought);
             this.scheduleMobRespawn(this.lastFought, MOB_RESPAWN_MS);
@@ -2693,7 +3043,7 @@ var WorldScene = new Phaser.Class({
         if (Keys.justPressed('Escape')) {
             this.clearWalk();
             this.talkTarget = null;
-            this.clearFish();
+            this.clearGather();
             if (window.Hud && Hud.hideContextMenu) {
                 Hud.hideContextMenu();
             }
@@ -2704,9 +3054,12 @@ var WorldScene = new Phaser.Class({
         if (move.left || move.right || move.up || move.down) {
             this.clearWalk();
             this.talkTarget = null;
-            this.clearFish();
+            this.clearGather();
             if (Hud.dialogueOpen && Hud.dialogueOpen() && Hud.hideDialogue) {
                 Hud.hideDialogue();
+            }
+            if (window.Hud && Hud.bankOpen && Hud.bankOpen() && Hud.hideBank) {
+                Hud.hideBank();
             }
             if (move.left && !move.right) { vx = -speed; }
             else if (move.right && !move.left) { vx = speed; }
@@ -2800,6 +3153,9 @@ var WorldScene = new Phaser.Class({
             }
         }
         this.tryCompleteFish();
+        this.tryCompleteChop();
+        this.tryCompleteMine();
+        this.closeBankIfAway();
 
         if (Keys.justPressed('Space') && Hud.mode !== 'battle') {
             var nearNpc = this.pickSprite(this.npcs, this.player.x, this.player.y, 28);

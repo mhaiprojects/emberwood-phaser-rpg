@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="assets/svg/ui/combat.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/style.css?v=vue1">
+    <link rel="stylesheet" href="css/style.css?v=resize1">
 </head>
 <body>
     <div id="shell">
         <!-- Phaser owns #content; Vue must not mount here -->
         <div id="content"></div>
+        <div id="resize-side" class="shell-resize shell-resize-x" title="Drag to resize side panel" aria-hidden="true"></div>
+        <div id="resize-bottom" class="shell-resize shell-resize-y" title="Drag to resize bottom panel" aria-hidden="true"></div>
 
         <div id="hud-root">
             <aside id="side">
@@ -46,6 +48,7 @@
                 </div>
             </aside>
             <div id="bottom">
+                <div id="resize-iface" class="shell-resize shell-resize-x" title="Drag to resize interface panel" aria-hidden="true"></div>
                 <div id="chat-col" class="panel">
                     <h2>Chat</h2>
                     <div id="chat-log" ref="chatLog">
@@ -220,6 +223,7 @@
                                 <div id="bank-tabs" data-bank-tabs>
                                     <button type="button" data-bank-tab="all">All</button>
                                     <button type="button" data-bank-tab="food">Food</button>
+                                    <button type="button" data-bank-tab="gear">Gear</button>
                                 </div>
                             </div>
                             <div id="bank-vault-grid" v-manual></div>
@@ -227,6 +231,8 @@
                     </div>
                     <div id="bank-actions">
                         <button type="button" data-bank-action="deposit">Deposit</button>
+                        <button type="button" data-bank-action="deposit-x">Deposit-X</button>
+                        <button type="button" data-bank-action="deposit-all">Deposit-all</button>
                         <button type="button" data-bank-action="withdraw">Withdraw</button>
                         <label id="bank-qty-label">X
                             <input id="bank-qty" type="number" min="1" step="1" value="1" inputmode="numeric" autocomplete="off">
@@ -244,21 +250,21 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
     <script src="js/input/Keys.js?v=run1"></script>
-    <script src="js/data/Items.js?v=catch1"></script>
-    <script src="js/data/Scales.js?v=giant1"></script>
+    <script src="js/data/Items.js?v=gather2"></script>
+    <script src="js/data/Scales.js?v=hunt1"></script>
     <script src="js/ui/HudApp.js?v=vue1"></script>
-    <script src="js/ui/Hud.js?v=vue1"></script>
+    <script src="js/ui/Hud.js?v=resize2"></script>
     <script src="js/world/MapGen.js?v=fish1"></script>
     <script src="js/world/Pathfind.js?v=giant1"></script>
-    <script src="js/world/Zones.js?v=fish1"></script>
+    <script src="js/world/Zones.js?v=hunt1"></script>
     <script src="js/sprites/Unit.js?v=hitxp1"></script>
     <script src="js/sprites/PlayerCharacter.js"></script>
     <script src="js/sprites/Enemy.js"></script>
     <script src="js/ui/Menu.js"></script>
     <script src="js/ui/Message.js"></script>
-    <script src="js/scenes/BootScene.js?v=craft1"></script>
+    <script src="js/scenes/BootScene.js?v=gather2"></script>
     <script src="js/scenes/TitleScene.js?v=move4"></script>
-    <script src="js/scenes/WorldScene.js?v=catch1"></script>
+    <script src="js/scenes/WorldScene.js?v=gather2"></script>
     <script src="js/scenes/BattleScene.js?v=magic1"></script>
     <script src="js/scenes/UIScene.js"></script>
     <script src="js/scenes/GameOverScene.js?v=cmb1"></script>

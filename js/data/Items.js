@@ -2,30 +2,53 @@ var ITEM_DB = {
     coins: { name: 'Coins', icon: 'assets/svg/items/coins.svg', stack: true, value: 1, examine: 'A small pile of copper and silver coins.' },
     shrimp: { name: 'Cooked shrimp', icon: 'assets/svg/items/shrimp.svg', heal: 12, stack: true, value: 5, examine: 'A cooked shrimp, still warm enough to eat.' },
     rawshrimp: { name: 'Raw shrimp', icon: 'assets/svg/items/rawshrimp.svg', stack: true, cook: 'shrimp', cookXp: 30, value: 5, examine: 'A raw shrimp. It should be cooked.' },
+    rawbeef: { name: 'Raw beef', icon: 'assets/svg/items/rawbeef.svg', stack: true, value: 4, examine: 'A cut of raw beef. Better cooked.' },
     bread: { name: 'Bread', icon: 'assets/svg/items/bread.svg', heal: 20, stack: true, value: 12, examine: 'A dense loaf baked for the road.' },
     sword: { name: 'Bronze sword', icon: 'assets/svg/items/sword.svg', slot: 'weapon', damage: 16, value: 26, examine: 'A short bronze blade, nicked but serviceable.' },
     shortbow: { name: 'Shortbow', icon: 'assets/svg/items/shortbow.svg', slot: 'weapon', damage: 16, combatClass: 'ranged', value: 32, examine: 'A yew shortbow, light enough for bronze arrows.' },
     arrow: { name: 'Bronze arrows', icon: 'assets/svg/items/arrow.svg', slot: 'ammo', stack: true, value: 1, examine: 'A sheaf of bronze arrows with grey-goose fletching.' },
     shield: { name: 'Wooden shield', icon: 'assets/svg/items/shield.svg', slot: 'shield', defence: 1, value: 20, examine: 'A round wooden shield bound with iron.' },
+    bronzeaxe: { name: 'Bronze axe', icon: 'assets/svg/items/bronzeaxe.svg', tool: 'axe', value: 18, examine: 'A bronze axe for chopping trees.' },
+    bronzepick: { name: 'Bronze pickaxe', icon: 'assets/svg/items/bronzepick.svg', tool: 'pickaxe', value: 18, examine: 'A bronze pickaxe for mining ore.' },
+    net: { name: 'Small fishing net', icon: 'assets/svg/items/net.svg', tool: 'net', value: 8, examine: 'A small fishing net for shrimp.' },
+    logs: { name: 'Logs', icon: 'assets/svg/items/logs.svg', stack: true, value: 2, examine: 'A pile of chopped logs.' },
+    copper: { name: 'Copper ore', icon: 'assets/svg/items/copper.svg', stack: true, value: 3, examine: 'A chunk of copper ore.' },
+    tin: { name: 'Tin ore', icon: 'assets/svg/items/tin.svg', stack: true, value: 3, examine: 'A chunk of tin ore.' },
+    bronzebar: { name: 'Bronze bar', icon: 'assets/svg/items/bronzebar.svg', stack: true, value: 12, examine: 'A smelted bronze bar.' },
+    tinderbox: { name: 'Tinderbox', icon: 'assets/svg/items/tinderbox.svg', value: 5, examine: 'A small box of flint and steel.' },
     bones: { name: 'Bones', icon: 'assets/svg/items/bones.svg', stack: true, bury: true, buryXp: 4, value: 1, examine: 'Dry bones. Someone should bury them.' },
+    feather: { name: 'Feathers', icon: 'assets/svg/items/feather.svg', stack: true, value: 1, examine: 'Soft feathers from a bird.' },
+    rabbitfur: { name: 'Rabbit fur', icon: 'assets/svg/items/rabbitfur.svg', stack: true, value: 3, examine: 'Soft fur from a rabbit. Useful for crafting.' },
     airrune: { name: 'Air rune', icon: 'assets/svg/items/airrune.svg', stack: true, rune: true, value: 4, examine: 'A pale blue rune. It hums with air.' },
     mindrune: { name: 'Mind rune', icon: 'assets/svg/items/mindrune.svg', stack: true, rune: true, value: 3, examine: 'A dull purple rune. It focuses the mind.' },
     key: { name: 'Iron key', icon: 'assets/svg/items/key.svg', value: 1, examine: 'A heavy iron key with a worn bit.' },
     cowhide: { name: 'Cowhide', icon: 'assets/svg/items/cowhide.svg', stack: true, tan: 'leather', tanXp: 14, value: 2, examine: 'A raw cowhide. It can be crafted into leather.' },
     leather: { name: 'Leather', icon: 'assets/svg/items/leather.svg', stack: true, value: 4, examine: 'Soft leather, ready to stitch.' },
-    string: { name: 'String', icon: 'assets/svg/items/string.svg', stack: true, value: 1, examine: 'A short length of string for stitching leather.' }
+    string: { name: 'String', icon: 'assets/svg/items/string.svg', stack: true, value: 1, examine: 'A short length of string for stitching leather.' },
+    gloves: { name: 'Leather gloves', icon: 'assets/svg/items/gloves.svg', slot: 'hands', defence: 1, value: 10, examine: 'Stitched leather gloves for the road.' }
 };
 
 var WIND_STRIKE_XP = 5;
 var WIND_STRIKE_DAMAGE = 2;
 var FISH_SPOT_XP = 10;
 var FISH_CATCH_ID = 'rawshrimp';
+var FISH_NET_ID = 'net';
 var FISH_ACTION_MS_MIN = 3000;
 var FISH_ACTION_MS_MAX = 5000;
 var WOODCUT_TREE_XP = 10;
+var WOODCUT_LOG_ID = 'logs';
+var WOODCUT_AXE_ID = 'bronzeaxe';
+var WOODCUT_ACTION_MS_MIN = 3000;
+var WOODCUT_ACTION_MS_MAX = 5000;
+var WOODCUT_RESPAWN_MS = 12000;
 var MINE_ROCK_XP = 10;
+var MINE_PICK_ID = 'bronzepick';
+var MINE_ACTION_MS_MIN = 3000;
+var MINE_ACTION_MS_MAX = 5000;
+var MINE_RESPAWN_MS = 10000;
+var HUNTER_KILL_XP = 12;
 var CRAFT_HIDE_XP = 14;
-var CRAFT_LEATHER_XP = 14;
+var CRAFT_LEATHER_XP = 25;
 var FIREMAKE_XP = 10;
 var RESOURCE_LEVEL = {
     copper: 1,
@@ -67,7 +90,8 @@ var SKILL_NAMES = [
     ['woodcutting', 'Woodcutting'],
     ['mining', 'Mining'],
     ['crafting', 'Crafting'],
-    ['firemaking', 'Firemaking']
+    ['firemaking', 'Firemaking'],
+    ['hunter', 'Hunter']
 ];
 
 // Unused OSRS cousins stay Stretch backlog — never stub empty Skills-tab rows.
@@ -76,7 +100,6 @@ var STRETCH_SKILL_NAMES = [
     ['thieving', 'Thieving'],
     ['slayer', 'Slayer'],
     ['runecraft', 'Runecraft'],
-    ['hunter', 'Hunter'],
     ['farming', 'Farming'],
     ['herblore', 'Herblore'],
     ['fletching', 'Fletching'],
@@ -234,6 +257,7 @@ function makeHero() {
             mining: { level: 1, xp: 0 },
             crafting: { level: 1, xp: 0 },
             firemaking: { level: 1, xp: 0 },
+            hunter: { level: 1, xp: 0 },
             agility: { level: 1, xp: 0 }
         }
     };
@@ -449,6 +473,35 @@ function fishActionMs(rand) {
     return ms;
 }
 
+function skillActionMs(minMs, maxMs, rand) {
+    var lo = typeof minMs === 'number' ? minMs : 3000;
+    var hi = typeof maxMs === 'number' ? maxMs : 5000;
+    var span = hi - lo;
+    var ms = lo + Math.floor(fishRoll(rand) * (span + 1));
+    if (ms < lo) {
+        return lo;
+    }
+    if (ms > hi) {
+        return hi;
+    }
+    return ms;
+}
+
+function hasTool(hero, tool) {
+    if (!hero || !tool) {
+        return false;
+    }
+    if (itemQty(hero, tool) > 0) {
+        return true;
+    }
+    if (hero.equipment) {
+        if (hero.equipment.weapon === tool || hero.equipment.hands === tool) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function fishCatchChance(hero) {
     var level = heroSkillLevel(hero, 'fishing') || 1;
     return Math.min(0.95, 0.35 + level * 0.03);
@@ -461,6 +514,9 @@ function catchFish(hero, opts) {
         return null;
     }
     opts = opts || {};
+    if (!opts.skipTool && !hasTool(hero, FISH_NET_ID)) {
+        return { ok: false, needTool: FISH_NET_ID, toolName: 'fishing net' };
+    }
     rand = opts.rand;
     chance = typeof opts.chance === 'number' ? opts.chance : fishCatchChance(hero);
     if (!(fishRoll(rand) < chance)) {
@@ -477,15 +533,25 @@ function fishAtSpot(hero, opts) {
     return catchFish(hero, opts);
 }
 
-function chopAtTree(hero) {
+function chopAtTree(hero, opts) {
+    opts = opts || {};
     if (!hero || !hero.skills || !hero.skills.woodcutting) {
         return null;
     }
+    if (!opts.skipTool && !hasTool(hero, WOODCUT_AXE_ID)) {
+        return { ok: false, needTool: WOODCUT_AXE_ID, toolName: 'bronze axe' };
+    }
+    if (!opts.skipItem) {
+        if (!addItem(hero, WOODCUT_LOG_ID, 1)) {
+            return { ok: false, full: true };
+        }
+    }
     gainSkillXp(hero, 'woodcutting', WOODCUT_TREE_XP);
-    return { ok: true, xp: WOODCUT_TREE_XP };
+    return { ok: true, id: WOODCUT_LOG_ID, xp: WOODCUT_TREE_XP };
 }
 
-function mineAtRock(hero, ore) {
+function mineAtRock(hero, ore, opts) {
+    opts = opts || {};
     if (!hero || !hero.skills || !hero.skills.mining) {
         return null;
     }
@@ -494,8 +560,30 @@ function mineAtRock(hero, ore) {
     if (!gate.ok) {
         return { ok: false, need: gate.need, ore: ore };
     }
+    if (!opts.skipTool && !hasTool(hero, MINE_PICK_ID)) {
+        return { ok: false, needTool: MINE_PICK_ID, toolName: 'bronze pickaxe', ore: ore };
+    }
+    if (!opts.skipItem) {
+        if (!addItem(hero, ore, 1)) {
+            return { ok: false, full: true, ore: ore };
+        }
+    }
     gainSkillXp(hero, 'mining', MINE_ROCK_XP);
-    return { ok: true, xp: MINE_ROCK_XP, ore: ore };
+    return { ok: true, xp: MINE_ROCK_XP, ore: ore, id: ore };
+}
+
+function grantHunterXp(hero, amount) {
+    amount = typeof amount === 'number' ? amount : HUNTER_KILL_XP;
+    if (!hero || !hero.skills) {
+        return null;
+    }
+    if (!hero.skills.hunter) {
+        hero.skills.hunter = { level: 1, xp: 0 };
+    }
+    if (amount > 0) {
+        gainSkillXp(hero, 'hunter', amount);
+    }
+    return { ok: true, xp: amount };
 }
 
 function tanCowhide(hero, id) {
@@ -530,10 +618,15 @@ function stitchLeather(hero) {
         addItem(hero, 'string', 1);
         return null;
     }
+    if (!addItem(hero, 'gloves', 1)) {
+        addItem(hero, 'string', 1);
+        addItem(hero, 'leather', 1);
+        return { ok: false, full: true };
+    }
     if (CRAFT_LEATHER_XP > 0) {
         gainSkillXp(hero, 'crafting', CRAFT_LEATHER_XP);
     }
-    return { ok: true, from: 'string', on: 'leather', xp: CRAFT_LEATHER_XP };
+    return { ok: true, from: 'string', on: 'leather', made: 'gloves', xp: CRAFT_LEATHER_XP };
 }
 
 function useItemOnItem(hero, fromId, onId) {
@@ -759,13 +852,17 @@ function ensureBank(hero) {
 
 var BANK_TABS = [
     ['all', 'All'],
-    ['food', 'Food']
+    ['food', 'Food'],
+    ['gear', 'Gear']
 ];
 
 function bankItemTab(id) {
     var def = ITEM_DB[id];
     if (def && def.heal) {
         return 'food';
+    }
+    if (def && (def.slot || def.tool || def.damage || def.defence)) {
+        return 'gear';
     }
     return 'all';
 }

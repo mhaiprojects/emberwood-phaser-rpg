@@ -124,6 +124,7 @@ function examineNpcText(def) {
 }
 
 function applyNpcTutor(hero, def) {
+    var gift;
     if (!hero || !def || !def.tutor) {
         return false;
     }
@@ -132,6 +133,19 @@ function applyNpcTutor(hero, def) {
         return false;
     }
     hero.tutors[def.tutor] = true;
+    gift = null;
+    if (def.tutor === 'fishing') {
+        gift = 'net';
+    } else if (def.tutor === 'mining') {
+        gift = 'bronzepick';
+    } else if (def.tutor === 'combat') {
+        gift = 'bronzeaxe';
+    } else if (def.tutor === 'cows') {
+        gift = 'string';
+    }
+    if (gift && typeof addItem === 'function' && typeof itemQty === 'function' && itemQty(hero, gift) < 1) {
+        addItem(hero, gift, gift === 'string' ? 3 : 1);
+    }
     return true;
 }
 
@@ -162,7 +176,7 @@ var NPC_DEFS = {
         { key: 'priest', name: 'Priest Alden', x: 296, y: 168, tint: 0xffffff, options: ['talk'], examine: 'A quiet shrine priest. Ash marks the collar of his robe.', lines: ['The shrine still hears a prayer.', 'Bury the bones of the fallen, traveler.'] }
     ],
     northwood: [
-        { key: 'ranger', name: 'Ranger Kett', x: 240, y: 200, tint: 0xffffff, options: ['talk'], tutor: 'combat', examine: 'A Northwood ranger. Goblin tracks stain her boots.', lines: ['Goblins nest in these trees.', 'Click a goblin to fight it, like the old days.', 'Open Combat and pick Accurate, Aggressive, or Defensive.', 'Accurate trains Attack. Aggressive trains Strength. Defensive trains Defence.'] }
+        { key: 'ranger', name: 'Ranger Kett', x: 240, y: 200, tint: 0xffffff, options: ['talk'], tutor: 'combat', examine: 'A Northwood ranger. Goblin tracks stain her boots.', lines: ['Goblins nest in these trees.', 'Click a goblin to fight it, like the old days.', 'Open Combat and pick Accurate, Aggressive, or Defensive.', 'Chop the trees with a bronze axe for logs.', 'Accurate trains Attack. Aggressive trains Strength. Defensive trains Defence.'] }
     ],
     millfields: [
         { key: 'farmer', name: 'Farmer Willa', x: 200, y: 180, tint: 0xffffff, options: ['talk'], tutor: 'cows', examine: 'A Millfields farmer. Cabbage stains her apron.', lines: ['Cows got into the cabbages again.', 'The mill road runs back to Emberhaven.', 'Click a cow when you need hide and beef.', 'They kick, so keep a combat style ready.'] }
@@ -226,7 +240,9 @@ var MOB_DEFS = {
     westmead: [
         { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, hp: 26, damage: 7, gold: 5, xp: 11, x: 180, y: 140 },
         { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, hp: 26, damage: 8, gold: 5, xp: 11, x: 340, y: 220 },
-        { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, hp: 28, damage: 8, gold: 6, xp: 12, x: 420, y: 280 }
+        { type: 'Rabbit', texture: 'mob-rabbit', tint: 0xffffff, hp: 10, damage: 2, gold: 1, xp: 5, x: 260, y: 180 },
+        { type: 'Rabbit', texture: 'mob-rabbit', tint: 0xffffff, hp: 10, damage: 2, gold: 1, xp: 5, x: 380, y: 160 },
+        { type: 'Rabbit', texture: 'mob-rabbit', tint: 0xeeddcc, hp: 12, damage: 2, gold: 1, xp: 6, x: 420, y: 280 }
     ],
     graves: [
         { type: 'Skeleton', texture: 'mob-skeleton', tint: 0xffffff, hp: 34, damage: 10, gold: 8, xp: 16, x: 160, y: 150 },

@@ -40,7 +40,6 @@
                 ['thieving', 'Thieving'],
                 ['slayer', 'Slayer'],
                 ['runecraft', 'Runecraft'],
-                ['hunter', 'Hunter'],
                 ['farming', 'Farming'],
                 ['herblore', 'Herblore'],
                 ['fletching', 'Fletching'],
@@ -58,17 +57,14 @@
                 throw new Error('Phaser is ' + window.Phaser.VERSION + ' not 3.90');
             }
             if (typeof window.isStretchSkill !== 'function' || !window.STRETCH_SKILL_NAMES
-                    || window.STRETCH_SKILL_NAMES.length !== 9) {
+                    || window.STRETCH_SKILL_NAMES.length !== 8) {
                 throw new Error('STRETCH_SKILL_NAMES missing');
             }
             if (typeof window.smithBar === 'function') {
                 throw new Error('Smithing started this tick');
             }
-            if (window.ITEM_DB.logs || window.ITEM_DB.tinderbox || window.ITEM_DB.ore || window.ITEM_DB.net) {
-                throw new Error('gathering section items started this tick');
-            }
-            if (window.SKILL_NAMES.length !== 13 || window.SKILL_NAMES[12][0] !== 'firemaking') {
-                throw new Error('Firemaking is not the extra skill');
+            if (window.SKILL_NAMES.length !== 14 || window.SKILL_NAMES[13][0] !== 'hunter') {
+                throw new Error('Hunter is not the latest skill');
             }
 
             world.enterZone('haven', null);
@@ -101,17 +97,20 @@
             if (!hero.skills.agility || hero.skills.thieving || hero.skills.slayer) {
                 throw new Error('stretch skills were stubbed on the hero');
             }
-            if (window.skillTotal(hero) !== 22) {
-                throw new Error('starter total is ' + window.skillTotal(hero) + ' not 22');
+            if (window.skillTotal(hero) !== 23) {
+                throw new Error('starter total is ' + window.skillTotal(hero) + ' not 23');
             }
 
             window.Hud.showTab('skills');
             var rows = document.querySelectorAll('#skills-list .skill-row');
-            if (rows.length !== 13) {
-                throw new Error('Skills tab has ' + rows.length + ' rows not 13');
+            if (rows.length !== 14) {
+                throw new Error('Skills tab has ' + rows.length + ' rows not 14');
             }
             if (!document.querySelector('#skills-list [data-skill="firemaking"]')) {
                 throw new Error('Firemaking Skills row missing');
+            }
+            if (!document.querySelector('#skills-list [data-skill="hunter"]')) {
+                throw new Error('Hunter Skills row missing');
             }
             expected.forEach(function (pair) {
                 if (document.querySelector('#skills-list [data-skill="' + pair[0] + '"]')) {

@@ -15,13 +15,15 @@ var BootScene = new Phaser.Class({
         this.load.image('npc', 'assets/npc.png');
 
         var self = this;
-        ['chicken', 'goblin', 'cow', 'slime', 'crab', 'bat', 'skeleton', 'drake'].forEach(function (name) {
+        ['chicken', 'goblin', 'cow', 'slime', 'crab', 'bat', 'skeleton', 'drake', 'rabbit'].forEach(function (name) {
             self.load.svg('mob-' + name, 'assets/svg/mobs/' + name + '.svg');
         });
         ['guild', 'banker', 'guard', 'ranger', 'farmer', 'fisher', 'wanderer', 'ghost', 'miner', 'hermit', 'witch', 'cook', 'priest', 'shopkeeper'].forEach(function (name) {
             self.load.svg('npc-' + name, 'assets/svg/npcs/' + name + '.svg');
         });
-        ['coins', 'bones', 'shrimp', 'rawshrimp', 'bread', 'sword', 'shortbow', 'arrow', 'shield', 'airrune', 'mindrune', 'cowhide', 'leather', 'string'].forEach(function (name) {
+        ['coins', 'bones', 'shrimp', 'rawshrimp', 'rawbeef', 'bread', 'sword', 'shortbow', 'arrow', 'shield',
+            'airrune', 'mindrune', 'cowhide', 'leather', 'string', 'gloves', 'net', 'bronzeaxe', 'bronzepick',
+            'logs', 'copper', 'tin', 'bronzebar', 'tinderbox', 'feather', 'rabbitfur'].forEach(function (name) {
             self.load.svg('item-' + name, 'assets/svg/items/' + name + '.svg');
         });
     },
