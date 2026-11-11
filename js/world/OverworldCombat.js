@@ -1,10 +1,40 @@
 var OW_COMBAT_TICK_MS = 600;
 var POISON_MOB_TYPES = { Slime: true, Skeleton: true, Drake: true, Dragon: true };
 var COMBAT_POISON_CHANCE = 35;
-/* Alias kept for older callers; same as MOB_MOVE_SPEED (wander + chase). */
-var MOB_CHASE_SPEED = typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : 72;
+/* Cap alias (half player walk); prefer mobMoveSpeed(def) for wander + chase. */
+var MOB_CHASE_SPEED = typeof MOB_MOVE_SPEED === 'number'
+    ? MOB_MOVE_SPEED
+    : ((typeof WALK_SPEED === 'number' ? WALK_SPEED : 90) / 2);
 /* Detection radius for mob-initiated agro (chase / open fight). */
 var MOB_AGGRO_RANGE_PX = 112;
+
+/* Fraction of (WALK_SPEED / 2) by type/size — all stay ≤ half player walk. */
+function mobMoveSpeedFactor(type) {
+    if (typeof isGiantMob === 'function' && isGiantMob(type)) {
+        return type === 'Dragon' ? 0.5 : 0.58;
+    }
+    if (type === 'Cow' || type === 'Slime') {
+        return 0.62;
+    }
+    if (type === 'Chicken' || type === 'Rabbit' || type === 'Crab') {
+        return 0.82;
+    }
+    if (type === 'Bat') {
+        return 0.9;
+    }
+    /* Goblin, Skeleton, and unknown typical foes: near half walk. */
+    return 1;
+}
+
+/* Wander, agro chase, and fight chase share this speed (no combat speed-up). */
+function mobMoveSpeed(mobOrDef) {
+    var walk = typeof WALK_SPEED === 'number' ? WALK_SPEED : 90;
+    var cap = walk / 2;
+    var def = mobOrDef && (mobOrDef.mobDef || mobOrDef);
+    var type = def && typeof def === 'object' ? def.type : def;
+    var factor = mobMoveSpeedFactor(type);
+    return Math.max(1, Math.min(cap, Math.round(cap * factor)));
+}
 var MOB_BASE_LEVEL = {
     Chicken: 1,
     Rabbit: 1,

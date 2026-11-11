@@ -1,7 +1,7 @@
 var WALK_SPEED = 90;
 var RUN_SPEED = 180;
-/* Wander + chase/combat; must stay strictly below WALK_SPEED. */
-var MOB_MOVE_SPEED = 72;
+/* Cap for mob move (wander + chase); actual speeds via mobMoveSpeed(def). */
+var MOB_MOVE_SPEED = WALK_SPEED / 2;
 var RUN_ENERGY_MAX = 100;
 var RUN_DRAIN_PER_SEC = 25;
 var RUN_RESTORE_PER_SEC = 15;
@@ -4158,7 +4158,9 @@ var WorldScene = new Phaser.Class({
             mob.body.setVelocity(0, 0);
             return;
         }
-        speed = typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : 72;
+        speed = typeof mobMoveSpeed === 'function'
+            ? mobMoveSpeed(mob)
+            : (typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : WALK_SPEED / 2);
         dx = this.player.x - mob.x;
         dy = this.player.y - mob.y;
         len = dist || 1;
@@ -5840,7 +5842,9 @@ var WorldScene = new Phaser.Class({
             if (Phaser.Math.Between(0, 80) !== 0) {
                 return;
             }
-            var speed = typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : 72;
+            var speed = typeof mobMoveSpeed === 'function'
+                ? mobMoveSpeed(mob)
+                : (typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : WALK_SPEED / 2);
             var angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
             var vx = Math.cos(angle) * speed;
             var vy = Math.sin(angle) * speed;
@@ -5888,7 +5892,6 @@ var WorldScene = new Phaser.Class({
         fightMob = this.overworldFight && this.overworldFight.mob;
         retaliate = this.autoRetaliateOn();
         agroRange = typeof MOB_AGGRO_RANGE_PX === 'number' ? MOB_AGGRO_RANGE_PX : 112;
-        speed = typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : 72;
         this.mobs.children.iterate(function (mob) {
             var shouldAgro;
             if (started || !mob || !mob.aliveMob || !mob.body || mob === fightMob) {
@@ -5921,6 +5924,9 @@ var WorldScene = new Phaser.Class({
                 self.applyMobAgroHit(mob);
                 return;
             }
+            speed = typeof mobMoveSpeed === 'function'
+                ? mobMoveSpeed(mob)
+                : (typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : WALK_SPEED / 2);
             dx = self.player.x - mob.x;
             dy = self.player.y - mob.y;
             len = dist || 1;
