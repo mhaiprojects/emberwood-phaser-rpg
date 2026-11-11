@@ -18,6 +18,7 @@ Completed design work (layers, Ranger/Mage, tiers, same-plane shop/guild, bank c
 | Suite / keep-green / browser proof | `[blocked]` (5 lines) — testing disabled |
 | Full plate bodies/helms for high tiers | `[done]` — iron / diamond / dragonite helm·body·legs·shield + smith + shop |
 | Dragon Den + ore→diamond-pick unlock | `[done]` — highland boulder/markers, den biome, all Darkmine ores + highland diamond nodes |
+| Zone gather mix + Mine / Endless Mine | `[done]` — band-aligned trees/ores; Darkmine 36–40 hardest overworld; Endless Mine level 20+(N−1), Dragon every 21st |
 
 ---
 

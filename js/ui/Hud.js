@@ -3131,7 +3131,7 @@ var Hud = {
         } else {
             world.fishTarget = null;
         }
-        world.setWalk(target.worldX, target.worldY);
+        world.setWalk(target.worldX, target.worldY, { playerClick: true });
     },
 
     clickMinimap: function (zoneId) {

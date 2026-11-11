@@ -8,7 +8,7 @@ var ZONE_LIST = [
     { id: 'darkmine', name: 'Darkmine', gx: -1, gy: 1, biome: 'mine', seed: 77 },
     { id: 'southshore', name: 'Southshore', gx: 0, gy: 1, biome: 'shore', seed: 88 },
     { id: 'mire', name: 'Mirefen', gx: 1, gy: 1, biome: 'swamp', seed: 99 },
-    { id: 'dungeon', name: 'Endless Dungeon', gx: -99, gy: -99, biome: 'mine', seed: 9001, hidden: true },
+    { id: 'dungeon', name: 'Endless Mine', gx: -99, gy: -99, biome: 'mine', seed: 9001, hidden: true },
     { id: 'dragonden', name: 'Dragon Den', gx: 99, gy: 99, biome: 'den', seed: 4242, hidden: true }
 ];
 
@@ -22,13 +22,13 @@ var DUNGEON_SURFACE_ZONE = 'darkmine';
 var INTERIOR_LIST = [
     {
         id: 'shaft',
-        name: 'Endless Dungeon',
+        name: 'Endless Mine',
         doorTx: MINE_SHAFT_HOUSE.x + Math.floor(MINE_SHAFT_HOUSE.w / 2),
         doorTy: MINE_SHAFT_HOUSE.y + MINE_SHAFT_HOUSE.h - 1,
         zoneId: 'darkmine',
         stairs: 'down',
         dungeon: true,
-        enterChat: 'You delve into the Endless Dungeon…'
+        enterChat: 'You delve into the Endless Mine…'
     }
 ];
 
@@ -213,7 +213,7 @@ var NPC_DEFS = {
         { key: 'ghost', name: 'Wisp', x: 200, y: 170, tint: 0xffffff, options: ['talk'], examine: 'A restless grave-wisp. Cold light pools where a face should be.', lines: ['The dead remember steel.', 'Turn back unless you seek bones.'] }
     ],
     darkmine: [
-        { key: 'miner', name: 'Miner Corb', x: 210, y: 200, tint: 0xffffff, options: ['talk', 'quest'], questGiver: true, sideQuest: 'bats', tutor: 'mining', examine: 'A Darkmine digger. He will not go down the Endless Dungeon.', lines: ['That shaft leads to the Endless Dungeon. Deeper floors hit harder.', 'Escape marks the floor — the shaft drops you back there next time.', 'Every fifth floor has a campfire. Ore still waits up here with a pickaxe.'] }
+        { key: 'miner', name: 'Miner Corb', x: 210, y: 200, tint: 0xffffff, options: ['talk', 'quest'], questGiver: true, sideQuest: 'bats', tutor: 'mining', examine: 'A Darkmine digger. He will not go down the Endless Mine.', lines: ['That shaft leads to the Endless Mine. Floor one starts at level 20 — each floor adds one.', 'Every twenty-first floor wakes a dragon. Escape marks the floor for next time.', 'Every fifth floor has a campfire. Ore still waits up here with a pickaxe.'] }
     ],
     highlands: [
         { key: 'hermit', name: 'Hermit Ola', x: 240, y: 160, tint: 0xffffff, options: ['talk'], examine: 'A windrock hermit. Drake-scale grit is stuck in her cloak.', lines: ['Drakes nest on the windrock.', 'Bring a stout shield.', 'East of here a boulder seals a deeper den — only a diamond pickaxe cracks it.'] }
@@ -223,17 +223,17 @@ var NPC_DEFS = {
     ]
 };
 
-/* Per-zone combat bands (5 levels). Starter wilds share 1–5; rings step up. */
+/* Per-zone combat bands (5 levels). Starter wilds share 1–5; Mine is hardest overworld. */
 var ZONE_LEVEL_BAND = {
     haven: [1, 5],
     millfields: [1, 5],
     westmead: [1, 5],
     southshore: [6, 10],
     northwood: [6, 10],
-    darkmine: [6, 10],
     mire: [11, 15],
     graves: [16, 20],
     highlands: [26, 30],
+    darkmine: [36, 40],
     dragonden: [51, 55]
 };
 
@@ -358,10 +358,6 @@ var MOB_DEFS = {
         [8, 8], [12, 10], [16, 7], [20, 9], [24, 8], [28, 11], [31, 14], [26, 16],
         [22, 18], [18, 20], [14, 17], [10, 19], [9, 13], [15, 14], [21, 13], [27, 19]
     ], { tints: [0xffffff, 0xffffff, 0xbbffbb, 0xffffff] }),
-    darkmine: buildBandMobs('darkmine', 'Bat', 'mob-bat', [
-        [8, 8], [12, 11], [16, 9], [20, 12], [24, 10], [28, 13], [31, 16], [26, 18],
-        [22, 20], [18, 17], [14, 19], [10, 15], [17, 14], [25, 15]
-    ], { tints: [0xffffff, 0xffffff, 0xddbbff, 0xffffff] }),
     /* Band 11–15 / 16–20 — outer danger. */
     mire: buildBandMobs('mire', 'Slime', 'mob-slime', [
         [9, 9], [13, 11], [17, 8], [21, 12], [25, 10], [29, 13], [31, 17], [27, 19],
@@ -376,6 +372,11 @@ var MOB_DEFS = {
         [10, 10], [16, 9], [22, 12], [28, 11], [30, 16], [24, 18], [18, 20], [12, 17],
         [20, 14], [26, 15]
     ]),
+    /* Band 36–40 — Mine (hardest overworld); Endless Mine shaft. */
+    darkmine: buildBandMobs('darkmine', 'Bat', 'mob-bat', [
+        [8, 8], [12, 11], [16, 9], [20, 12], [24, 10], [28, 13], [31, 16], [26, 18],
+        [22, 20], [18, 17], [14, 19], [10, 15], [17, 14], [25, 15]
+    ], { tints: [0xffffff, 0xffffff, 0xddbbff, 0xffffff] }),
     /* Band 51–55 — den stays sparse; alwaysAgro kept. */
     dragonden: buildBandMobs('dragonden', 'Dragon', 'mob-drake', [
         [12, 10], [20, 12], [28, 14], [18, 18]

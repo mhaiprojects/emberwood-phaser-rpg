@@ -56,6 +56,8 @@ var WorldScene = new Phaser.Class({
         this.travelZoneId = null;
         this.walkBlocked = false;
         this.pathCheckAt = 0;
+        /* Pause auto-attack / auto-retaliate chase while player click-walk is active. */
+        this.playerClickWalkActive = false;
         this.tileGrid = null;
         this.engageTarget = null;
         this.talkTarget = null;
@@ -923,15 +925,18 @@ var WorldScene = new Phaser.Class({
             if (floor > 1) {
                 Hud.log('You return through the escape shaft to floor ' + floor + '.');
             } else {
-                Hud.log('Endless Dungeon — floor ' + floor + '. Mobs grow 5% stronger each floor.');
+                Hud.log('Endless Mine — floor ' + floor + '. Mobs start at level 20 and rise by 1 each floor.');
             }
         } else if (opts.from === 'save') {
-            Hud.log('You resume the Endless Dungeon on floor ' + floor + '.');
+            Hud.log('You resume the Endless Mine on floor ' + floor + '.');
         } else {
-            Hud.log('Floor ' + floor + ' of the Endless Dungeon.');
+            Hud.log('Floor ' + floor + ' of the Endless Mine.');
         }
         if (floor % 5 === 0) {
             Hud.log('A campfire burns on this floor.');
+        }
+        if ((typeof dungeonIsDragonFloor === 'function' ? dungeonIsDragonFloor(floor) : (floor % 21 === 0))) {
+            Hud.log('A dragon stirs on this floor.');
         }
         if (window.Hud && Hud.saveGame) {
             Hud.saveGame();
@@ -1672,7 +1677,7 @@ var WorldScene = new Phaser.Class({
         }
         Hud.setWorld({
             zone: this.zoneId === 'dungeon' && this.dungeonFloor
-                ? ('Endless Dungeon F' + this.dungeonFloor)
+                ? ('Endless Mine F' + this.dungeonFloor)
                 : (interior ? interior.name : (zone && zone.name) || this.zoneId),
             zoneId: this.zoneId,
             hp: hero.hp,
@@ -1804,7 +1809,7 @@ var WorldScene = new Phaser.Class({
             this._fightPlayerClose = false;
             this.talkTarget = null;
             this.clearGather();
-            this.setWalk(pointer.worldX, pointer.worldY, { allowEnd: true });
+            this.setWalk(pointer.worldX, pointer.worldY, { allowEnd: true, playerClick: true });
             return;
         }
         if (this.encounterLock || Hud.mode === 'battle') {
@@ -2015,7 +2020,7 @@ var WorldScene = new Phaser.Class({
             this.clearWalk();
             return;
         }
-        this.setWalk(x, y);
+        this.setWalk(x, y, { playerClick: true });
     },
 
     pickSprite: function (group, x, y, range) {
@@ -4174,6 +4179,10 @@ var WorldScene = new Phaser.Class({
         if (!opts.keepMine) {
             this.clearMine();
         }
+        /* Only player click-intent walks pause combat auto; engage/retaliate paths omit this. */
+        if (opts.playerClick) {
+            this.playerClickWalkActive = true;
+        }
         this.walkTarget = { x: x, y: y };
         this.placeWalkMarker(x, y);
         this.pathCheckAt = 0;
@@ -4259,6 +4268,7 @@ var WorldScene = new Phaser.Class({
         this.walkPath = null;
         this.walkBlocked = false;
         this.pathCheckAt = 0;
+        this.playerClickWalkActive = false;
         if (this.marker) {
             this.marker.setVisible(false);
         }
@@ -4497,6 +4507,10 @@ var WorldScene = new Phaser.Class({
         if (!mob || !mob.aliveMob || !this.player || !this.overworldFight) {
             return;
         }
+        /* Click-path wins over in-fight retaliate close-in. */
+        if (this.playerClickWalkActive) {
+            return;
+        }
         move = this.moveFlags ? this.moveFlags() : null;
         if (move && (move.left || move.right || move.up || move.down)) {
             if (this._fightPlayerClose) {
@@ -4639,6 +4653,9 @@ var WorldScene = new Phaser.Class({
     /* Auto-retaliate: chase an agroing mob like click-to-attack (no spam log). */
     queueRetaliate: function (mob) {
         if (!this.autoRetaliateOn() || !mob || !mob.aliveMob) {
+            return false;
+        }
+        if (this.playerClickWalkActive) {
             return false;
         }
         if (this.encounterLock || this.uiPaused() || this.time.now < this.engageGrace) {
@@ -6672,6 +6689,10 @@ var WorldScene = new Phaser.Class({
         if (this.encounterLock || this.uiPaused() || this.time.now < this.engageGrace) {
             return false;
         }
+        /* Player click-walk pauses proximity auto-attack and engageTarget chase. */
+        if (this.playerClickWalkActive) {
+            return false;
+        }
         range = this.heroEngageRangePx();
         if (this.engageTarget && this.engageTarget.aliveMob) {
             dist = Phaser.Math.Distance.Between(
@@ -6812,13 +6833,13 @@ var WorldScene = new Phaser.Class({
             if (move.up && !move.down) { vy = -speed; }
             else if (move.down && !move.up) { vy = speed; }
         } else {
-            var chasing = this.chaseWalkTarget();
+            var chasing = this.playerClickWalkActive ? null : this.chaseWalkTarget();
             if (!this.walkTarget && chasing && !this.chaseInRange(chasing)) {
                 this.setWalk(chasing.x, chasing.y, { allowEnd: true });
             }
             if (this.walkTarget) {
                 this.maybeRepath();
-                chasing = this.chaseWalkTarget();
+                chasing = this.playerClickWalkActive ? null : this.chaseWalkTarget();
                 var destDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.walkTarget.x, this.walkTarget.y);
                 if (destDist < 6 && chasing && !this.chaseInRange(chasing)) {
                     this.walkTarget = { x: chasing.x, y: chasing.y };

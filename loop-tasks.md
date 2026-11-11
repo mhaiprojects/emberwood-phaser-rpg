@@ -23,7 +23,7 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 4. Never re-enable Phaser keyboard (`Keys.js` only).
 5. Refresh `loop-next.md` with `python3 tools/loop-next.py` when useful — do not rewrite this whole file.
 
-**Last updated:** 2026-11-11 — Overworld mob bands (5-level) + denser low-level spawns.
+**Last updated:** 2026-11-11 — Zone gather mix + Mine / Endless Mine scaling.
 
 **Total tasks: 336** (41 priority + 290 in the 14 playable sections + 5 stretch). Unfinished gathering/bank/craft todos promoted into §0 (not duplicated as active work).
 
@@ -75,6 +75,8 @@ Active queue — implement top-down before returning to sections 1–14.
 - [done] Full ore mining ladder (copper/tin/iron/diamondore/dragoniteore/runeessence) with colors, level gates, Darkmine fixed nodes + Highlands diamond/iron props; smelt/smith to diamond pick. — Conclusion: `MINE_PROPS` + `HIGHLANDS_MINE_PROPS`; `RESOURCE_LEVEL` + furnace/anvil recipes + Mira stock; any pickaxe mines ores; diamond pick is craftable/buyable.
 - [done] Dragon Den: Highlands sealing boulder (diamond+ pick) → `dragonden` biome with dragons, fire altar, campfire, exit; persist `flags.dragonDenOpen`; entrance/exit markers + approach chat. — Conclusion: Gate/markers/step-in; den map + Dragon spawns; flag saved with hero; Hermit Ola tip.
 - [done] Overworld mob density + 5-level zone bands (≈10–20/map; starter lean high). — Conclusion: `ZONE_LEVEL_BAND` + rebuilt `MOB_DEFS` (haven/millfields/westmead 1–5; southshore/northwood/darkmine 6–10; mire 11–15; graves 16–20; highlands 26–30; dragonden 51–55 alwaysAgro×4); dungeon counts unchanged; edge inset spawns.
+- [done] Zone gather mix by band + Mine hardest + Endless Mine scaling. — Conclusion: Trees/ores align early→late (Mine magic + full ores, band 36–40); Endless Mine UX rename (keys stable); mobs level 20+(N−1); Dragon every 21st floor; early-zone copper rocks.
+- [done] Click-walk pauses auto-attack + auto-retaliate until path ends. — Conclusion: `playerClickWalkActive` on ground/Walk-here/fight click `setWalk({playerClick})`; cleared in `clearWalk`; gates `tryAutoEngage` / `queueRetaliate` / `chaseFightPlayerClose`; mob agro hits still apply.
 
 Related unfinished (kept in later sections): depleted fish-spot move. (Firemaking / cooking / smithing / shop UI already `[done]` in §§7–8.)
 

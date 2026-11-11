@@ -10,19 +10,19 @@ How major Emberwood resources are obtained today — gathering zones, crafting/s
 
 ## Quick map (nine lands)
 
-| Zone id | Name | Gathering / craft relevance |
-|---------|------|-----------------------------|
-| `haven` | Emberhaven | Range, anvil, furnace, craft stall, Mira + Cole shops, bank, air altar, chickens |
-| `northwood` | Northwood | Oak trees (WC 15), goblins |
-| `millfields` | Millfields | Normal logs, cows (beef + hide), earth altar |
-| `southshore` | Southshore | Fishing spots (raw shrimp), water altar, crabs |
-| `darkmine` | Darkmine | Dedicated ore nodes (copper–dragonite + rune essence), bats, dungeon shaft |
-| `westmead` | Westmead | Normal logs, rabbits (fur), goblins |
-| `highlands` | Windrock Highlands | Yew trees (WC 40), mixed rocks (incl. diamond/iron), fire altar, Dragon Den gate |
-| `graves` | Restless Graves | Magic trees (WC 60), mixed rocks, mind altar, skeletons |
-| `mire` | Mirefen | Oak trees (WC 15), nature altar, slimes |
+| Zone id | Name | Band | Gathering / craft relevance |
+|---------|------|------|-----------------------------|
+| `haven` | Emberhaven | 1–5 | Logs (border trees), stations, shops, bank, air altar, chickens |
+| `millfields` | Millfields | 1–5 | Logs, copper/tin rocks, cows (beef + hide), earth altar |
+| `westmead` | Westmead | 1–5 | Logs, copper/tin rocks, rabbits (fur), goblins |
+| `southshore` | Southshore | 6–10 | Fishing (raw shrimp), logs, copper/tin rocks, water altar, crabs |
+| `northwood` | Northwood | 6–10 | Oak (WC 15), copper/tin/some iron rocks, goblins |
+| `mire` | Mirefen | 11–15 | Oak, iron-mix rocks, nature altar, slimes |
+| `graves` | Restless Graves | 16–20 | Oak, iron-mix rocks, mind altar, skeletons |
+| `highlands` | Windrock Highlands | 26–30 | Yew (WC 40), diamond/iron nodes, fire altar, Dragon Den gate |
+| `darkmine` | Darkmine (Mine) | 36–40 | Magic trees (WC 60), full ore ladder (copper–dragonite + rune essence), bats, Endless Mine shaft |
 
-Hidden: `dungeon` (Endless Dungeon from Darkmine — combat, not ore nodes) and `dragonden` (after diamond-pick boulder clear).
+Hidden: `dungeon` (Endless Mine from Darkmine — combat, not ore nodes) and `dragonden` (after diamond-pick boulder clear).
 
 ---
 
@@ -59,13 +59,13 @@ Failure chat: `You need level N.`
 
 | Zone(s) | Log | WC need |
 |---------|-----|---------|
-| haven, millfields, westmead, southshore, darkmine | `logs` | 1 |
-| northwood, mire | `oaklogs` | 15 |
+| haven, millfields, westmead, southshore | `logs` | 1 |
+| northwood, mire, graves | `oaklogs` | 15 |
 | highlands | `yewlogs` | 40 |
-| graves | `magiclogs` | 60 |
+| darkmine | `magiclogs` | 60 |
 
 - Tree depletes → respawns (~12s). XP: base 10 + (need level − 1).
-- Not available in the Endless Dungeon.
+- Not available in the Endless Mine.
 
 ### Mining
 
@@ -88,7 +88,7 @@ Failure chat: `You need level N.`
 | diamondore | (26,12), (24,10) |
 | iron | (22,14) |
 
-- **Other zones** with rocks: hash of tile coords — copper/tin by default; Graves mixes iron; Highlands hash also mixes iron / diamondore.
+- **Other zones** with rocks: hash of tile coords — early wilds/shore/farm/plains copper/tin; Northwood adds some iron; Mire + Graves iron mix; Highlands hash also mixes iron / diamondore.
 - Tool: any owned pickaxe (`tool: 'pickaxe'`). Level gates in `RESOURCE_LEVEL` (iron 15, diamondore 40, dragoniteore 60).
 - Rock depletes → respawns (~10s). Mining XP 10 per success.
 - **Unlock path:** mine `diamondore` (Darkmine or Highlands) → furnace `diamondbar` (Smithing 40) → anvil `diamondpick` → Highlands sealing boulder (pick tier ≥ 5). Mira also stocks diamond ore/pick.

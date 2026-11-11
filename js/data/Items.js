@@ -398,6 +398,7 @@ var RESOURCE_LEVEL = {
     dragoniteore: 60
 };
 
+/* Align woodcutting with zone difficulty bands (early → late → Mine). */
 var TREE_BY_ZONE = {
     haven: { log: 'logs', level: 1 },
     millfields: { log: 'logs', level: 1 },
@@ -405,9 +406,9 @@ var TREE_BY_ZONE = {
     southshore: { log: 'logs', level: 1 },
     northwood: { log: 'oaklogs', level: 15 },
     mire: { log: 'oaklogs', level: 15 },
+    graves: { log: 'oaklogs', level: 15 },
     highlands: { log: 'yewlogs', level: 40 },
-    graves: { log: 'magiclogs', level: 60 },
-    darkmine: { log: 'logs', level: 1 }
+    darkmine: { log: 'magiclogs', level: 60 }
 };
 
 function resourceNeedLevel(id) {

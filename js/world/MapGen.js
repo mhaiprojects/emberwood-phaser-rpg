@@ -169,7 +169,8 @@ var MINE_PROPS = {
         { x: 26, y: 14 }
     ],
     dragoniteore: [
-        { x: 28, y: 18 }
+        { x: 28, y: 18 },
+        { x: 30, y: 16 }
     ],
     runeessence: [
         { x: 12, y: 18 },
@@ -222,10 +223,10 @@ var SCENERY_EXAMINE = {
     'door-bank': 'The old bank door. Use the courtyard counter to bank.',
     'door-shop': 'An old shop door. Mira sells from the courtyard stall.',
     'door-guild': 'The guild hall door. Bram drills in the courtyard.',
-    'stairs-down': 'Marked stairs down — delve deeper into the Endless Dungeon.',
+    'stairs-down': 'Marked stairs down — delve deeper into the Endless Mine.',
     'stairs-up': 'Marked stairs up — climb toward the surface (or the floor above).',
     'surface-portal': 'A rune-cut escape shaft. Escape here to remember this floor for next delve.',
-    'dungeon-enter': 'The Endless Dungeon shaft mouth. Delve here; it drops you at your last escape floor.',
+    'dungeon-enter': 'The Endless Mine shaft mouth. Delve here; it drops you at your last escape floor.',
     campfire: 'A warm campfire. Rest here to mend faster.',
     altar: 'A rune altar. Essence pressed here becomes runes.',
     'den-boulder': 'A massive boulder seals a dark cave mouth. Only a diamond pickaxe could crack it.',
@@ -555,6 +556,7 @@ function generateMap(seed, biome, neighbors, zoneId) {
         setTileInteract(townZoneId, TOWN_PROPS.furnace.x, TOWN_PROPS.furnace.y, { kind: 'furnace', verb: 'smelt' });
     } else if (biome === 'forest') {
         scatter(grid, TILE.TREE, 70, seed, true);
+        scatter(grid, TILE.ROCK, 10, seed + 11, true);
         scatter(grid, TILE.FLOWER, 12, seed + 1, true);
     } else if (biome === 'hills') {
         scatter(grid, TILE.ROCK, 36, seed, true);
@@ -566,11 +568,13 @@ function generateMap(seed, biome, neighbors, zoneId) {
     } else if (biome === 'farm') {
         scatter(grid, TILE.FLOWER, 40, seed, true);
         scatter(grid, TILE.TREE, 10, seed + 3, true);
+        scatter(grid, TILE.ROCK, 6, seed + 12, true);
         house(grid, FARM_HOUSES[0].x, FARM_HOUSES[0].y, FARM_HOUSES[0].w, FARM_HOUSES[0].h);
         setCell(grid, LOCKED_DOOR.tx, LOCKED_DOOR.ty, TILE.DOOR);
     } else if (biome === 'swamp') {
         scatter(grid, TILE.WATER, 28, seed, true);
         scatter(grid, TILE.TREE, 22, seed + 4, true);
+        scatter(grid, TILE.ROCK, 12, seed + 13, true);
     } else if (biome === 'shore') {
         for (x = 1; x < MAP_W - 1; x++) {
             if (x > 14 && x < 22) {
@@ -579,6 +583,7 @@ function generateMap(seed, biome, neighbors, zoneId) {
             setCell(grid, x, MAP_H - 7, TILE.PATH);
         }
         scatter(grid, TILE.ROCK, 8, seed, true);
+        scatter(grid, TILE.TREE, 10, seed + 14, true);
         var di;
         for (di = 0; di < SHORE_PROPS.planks.length; di++) {
             setCell(grid, SHORE_PROPS.planks[di].x, SHORE_PROPS.planks[di].y, TILE.DOCK);
@@ -590,7 +595,7 @@ function generateMap(seed, biome, neighbors, zoneId) {
         }
     } else if (biome === 'mine') {
         scatter(grid, TILE.ROCK, 55, seed, true);
-        scatter(grid, TILE.TREE, 8, seed + 5, true);
+        scatter(grid, TILE.TREE, 10, seed + 5, true);
         house(grid, MINE_SHAFT_HOUSE.x, MINE_SHAFT_HOUSE.y, MINE_SHAFT_HOUSE.w, MINE_SHAFT_HOUSE.h);
         placeMineOres(grid);
         clearZoneTags('darkmine');
@@ -608,6 +613,7 @@ function generateMap(seed, biome, neighbors, zoneId) {
     } else if (biome === 'plains') {
         scatter(grid, TILE.FLOWER, 24, seed, true);
         scatter(grid, TILE.TREE, 14, seed + 6, true);
+        scatter(grid, TILE.ROCK, 8, seed + 15, true);
     } else if (biome === 'grave') {
         scatter(grid, TILE.ROCK, 22, seed, true);
         scatter(grid, TILE.TREE, 18, seed + 7, true);
@@ -733,12 +739,18 @@ function generateDungeonFloor(floor) {
 }
 
 function dungeonMobDefsForFloor(floor) {
-    var scale = dungeonFloorScale(floor);
+    var n = Math.max(1, floor | 0);
+    var level = typeof dungeonMobLevelForFloor === 'function'
+        ? dungeonMobLevelForFloor(n)
+        : (20 + (n - 1));
+    var dragonFloor = typeof dungeonIsDragonFloor === 'function'
+        ? dungeonIsDragonFloor(n)
+        : (n % 21 === 0);
     var templates = [
-        { type: 'Bat', texture: 'mob-bat', level: 7, hp: 20, damage: 8, gold: 4, xp: 10 },
-        { type: 'Goblin', texture: 'mob-goblin', level: 9, hp: 28, damage: 8, gold: 6, xp: 12 },
-        { type: 'Skeleton', texture: 'mob-skeleton', level: 14, hp: 34, damage: 10, gold: 8, xp: 16 },
-        { type: 'Slime', texture: 'mob-slime', level: 10, hp: 26, damage: 7, gold: 5, xp: 10 }
+        { type: 'Bat', texture: 'mob-bat' },
+        { type: 'Goblin', texture: 'mob-goblin' },
+        { type: 'Skeleton', texture: 'mob-skeleton' },
+        { type: 'Slime', texture: 'mob-slime' }
     ];
     var spots = [
         { x: 200, y: 180 },
@@ -748,33 +760,44 @@ function dungeonMobDefsForFloor(floor) {
         { x: 300, y: 260 },
         { x: 160, y: 220 }
     ];
-    var count = Math.min(spots.length, 3 + Math.min(3, Math.floor((floor - 1) / 4)));
+    var count = Math.min(spots.length, 3 + Math.min(3, Math.floor((n - 1) / 4)));
     var out = [];
     var i;
     var base;
     var def;
-    var baseLevel;
-    if (floor >= 8) {
-        templates.push({ type: 'Drake', texture: 'mob-drake', level: 28, hp: 48, damage: 13, gold: 18, xp: 28 });
+    var stats;
+    var type;
+    if (n >= 8) {
+        templates.push({ type: 'Drake', texture: 'mob-drake' });
     }
     for (i = 0; i < count; i++) {
-        base = templates[(floor + i * 3) % templates.length];
-        baseLevel = typeof base.level === 'number'
-            ? base.level
-            : (typeof MOB_BASE_LEVEL !== 'undefined' && MOB_BASE_LEVEL[base.type]) || 5;
+        base = templates[(n + i * 3) % templates.length];
+        type = base.type;
+        if (dragonFloor && i === 0) {
+            type = 'Dragon';
+            base = { type: 'Dragon', texture: 'mob-drake' };
+        }
+        stats = typeof mobStatsFor === 'function'
+            ? mobStatsFor(type, level)
+            : { hp: 12 + level, damage: 3 + Math.floor(level / 2), gold: 2, xp: 4 + level };
         def = {
-            type: base.type,
+            type: type,
             texture: base.texture,
-            tint: 0xffffff,
-            level: Math.max(1, Math.round(baseLevel * scale) + Math.max(0, floor - 1)),
-            hp: Math.max(1, Math.round(base.hp * scale)),
-            damage: Math.max(1, Math.round(base.damage * scale)),
-            gold: Math.max(1, Math.round(base.gold * scale)),
-            xp: Math.max(1, Math.round(base.xp * scale)),
+            tint: type === 'Dragon' ? 0xff4422 : 0xffffff,
+            level: level,
+            hp: stats.hp,
+            damage: stats.damage,
+            gold: stats.gold,
+            xp: stats.xp,
             x: spots[i].x,
             y: spots[i].y,
-            attackRange: base.type === 'Bat' ? 96 : (base.type === 'Drake' || base.type === 'Slime' ? 80 : 24)
+            attackRange: type === 'Bat' ? 96
+                : (type === 'Dragon' ? 120
+                    : (type === 'Drake' || type === 'Slime' ? 80 : 24))
         };
+        if (type === 'Dragon') {
+            def.alwaysAgro = true;
+        }
         out.push(def);
     }
     return out;
@@ -925,10 +948,10 @@ function oreNodeColor(ore) {
 var SHAFT_MARKER_STYLE = {
     'dungeon-enter': {
         color: 0x9b6cff,
-        label: 'Endless Dungeon',
+        label: 'Endless Mine',
         glyph: '▼',
         labelColor: '#dcc8ff',
-        approach: 'A marked shaft mouth — the Endless Dungeon. Click or step in to delve.'
+        approach: 'A marked shaft mouth — the Endless Mine. Click or step in to delve.'
     },
     'stairs-down': {
         color: 0xe07030,
@@ -1179,9 +1202,13 @@ function mineRockAt(tx, ty, zoneId, grid, opts) {
         ore = mineOreAt(tx, ty);
     } else if (zoneId === 'highlands') {
         ore = highlandsOreAt(tx, ty);
-    } else if (zoneId === 'graves') {
+    } else if (zoneId === 'graves' || zoneId === 'mire') {
+        /* Mid bands: iron mix with early ores. */
         ore = (tx + ty) % 4 === 0 ? 'iron' : ((tx + ty) % 2 === 0 ? 'copper' : 'tin');
+    } else if (zoneId === 'northwood') {
+        ore = (tx + ty) % 5 === 0 ? 'iron' : ((tx + ty) % 2 === 0 ? 'copper' : 'tin');
     } else {
+        /* Early wilds / shore / farm / plains: copper & tin. */
         ore = (tx + ty) % 2 === 0 ? 'copper' : 'tin';
     }
     level = typeof resourceNeedLevel === 'function' ? resourceNeedLevel(ore) : (ore === 'iron' ? 15 : 1);
