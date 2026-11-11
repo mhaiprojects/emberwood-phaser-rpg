@@ -171,7 +171,7 @@ WorldScene.prototype.tryStretchSkillAction = function (skillId) {
     }
     if (skillId === 'runecraft' && typeof craftAirRune === 'function') {
         ok = craftAirRune(hero);
-        Hud.log(ok ? 'You craft an air rune.' : 'You need 1 coin for essences.');
+        Hud.log(ok ? 'You craft an air rune.' : 'You need rune essence (and Runecraft level).');
     } else if (skillId === 'farming' && typeof plantGuamSeed === 'function') {
         ok = plantGuamSeed(hero);
         Hud.log(ok ? 'You harvest a guam leaf from your patch.' : 'Your inventory is full.');

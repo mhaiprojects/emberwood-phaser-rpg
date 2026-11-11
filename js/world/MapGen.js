@@ -138,7 +138,28 @@ var MINE_PROPS = {
     iron: [
         { x: 22, y: 16 },
         { x: 24, y: 20 }
+    ],
+    diamondore: [
+        { x: 20, y: 18 },
+        { x: 26, y: 14 }
+    ],
+    dragoniteore: [
+        { x: 28, y: 18 }
+    ],
+    runeessence: [
+        { x: 12, y: 18 },
+        { x: 13, y: 20 },
+        { x: 18, y: 22 }
     ]
+};
+/* Rune altars: shrine tile + interact.kind altar. */
+var RUNE_ALTARS = {
+    haven: { x: 20, y: 8, rune: 'airrune' },
+    graves: { x: 18, y: 10, rune: 'mindrune' },
+    southshore: { x: 18, y: 20, rune: 'waterrune' },
+    millfields: { x: 18, y: 12, rune: 'earthrune' },
+    highlands: { x: 18, y: 10, rune: 'firerune' },
+    mire: { x: 16, y: 12, rune: 'naturerune' }
 };
 var INTERIOR_ROOM = { x: 12, y: 8, w: 12, h: 13 };
 var SCENERY_EXAMINE = {
@@ -170,7 +191,8 @@ var SCENERY_EXAMINE = {
     'stairs-up': 'Stairs leading upward.',
     'surface-portal': 'A rune-cut escape shaft. It remembers the floor you leave from.',
     'dungeon-enter': 'The Endless Dungeon shaft. It drops you at your last escape floor.',
-    campfire: 'A warm campfire. Rest here to mend faster.'
+    campfire: 'A warm campfire. Rest here to mend faster.',
+    altar: 'A rune altar. Essence pressed here becomes runes.'
 };
 
 function tagKey(tx, ty) {
@@ -553,6 +575,11 @@ function generateMap(seed, biome, neighbors, zoneId) {
     }
 
     paintCampfireSpots(grid, zoneId || (biome === 'town' ? 'haven' : null));
+    if (zoneId) {
+        placeRuneAltar(grid, zoneId);
+    } else if (biome === 'town') {
+        placeRuneAltar(grid, 'haven');
+    }
     return grid;
 }
 
@@ -768,6 +795,7 @@ function fishingSpotAt(tx, ty, zoneId) {
 }
 
 function woodcutTreeAt(tx, ty, zoneId, grid) {
+    var spec;
     if (!inBounds(tx, ty) || zoneId === 'dungeon') {
         return null;
     }
@@ -776,11 +804,19 @@ function woodcutTreeAt(tx, ty, zoneId, grid) {
             return null;
         }
     }
-    return { x: tx, y: ty };
+    spec = typeof treeSpecForZone === 'function'
+        ? treeSpecForZone(zoneId)
+        : { log: 'logs', level: 1 };
+    return {
+        x: tx,
+        y: ty,
+        log: spec.log || 'logs',
+        level: typeof spec.level === 'number' ? spec.level : 1
+    };
 }
 
 function mineOreAt(tx, ty) {
-    var kinds = ['iron', 'tin', 'copper'];
+    var kinds = ['dragoniteore', 'diamondore', 'iron', 'runeessence', 'tin', 'copper'];
     var k;
     var i;
     for (k = 0; k < kinds.length; k++) {
@@ -798,7 +834,7 @@ function mineOreAt(tx, ty) {
 }
 
 function placeMineOres(grid) {
-    var kinds = ['copper', 'tin', 'iron'];
+    var kinds = ['copper', 'tin', 'iron', 'diamondore', 'dragoniteore', 'runeessence'];
     var k;
     var i;
     for (k = 0; k < kinds.length; k++) {
@@ -810,6 +846,19 @@ function placeMineOres(grid) {
             setCell(grid, list[i].x, list[i].y, TILE.ROCK);
         }
     }
+}
+
+function placeRuneAltar(grid, zoneId) {
+    var altar = RUNE_ALTARS && RUNE_ALTARS[zoneId];
+    if (!altar || !grid) {
+        return;
+    }
+    setCell(grid, altar.x, altar.y, TILE.SHRINE);
+    setTileInteract(zoneId, altar.x, altar.y, {
+        kind: 'altar',
+        verb: 'craft',
+        rune: altar.rune
+    });
 }
 
 function mineRockAt(tx, ty, zoneId, grid, opts) {
@@ -838,7 +887,15 @@ function mineRockAt(tx, ty, zoneId, grid, opts) {
             return null;
         }
     }
-    ore = zoneId === 'darkmine' ? mineOreAt(tx, ty) : ((tx + ty) % 2 === 0 ? 'copper' : 'tin');
+    if (zoneId === 'darkmine') {
+        ore = mineOreAt(tx, ty);
+    } else if (zoneId === 'highlands') {
+        ore = (tx + ty) % 5 === 0 ? 'diamondore' : ((tx + ty) % 2 === 0 ? 'iron' : 'copper');
+    } else if (zoneId === 'graves') {
+        ore = (tx + ty) % 4 === 0 ? 'iron' : ((tx + ty) % 2 === 0 ? 'copper' : 'tin');
+    } else {
+        ore = (tx + ty) % 2 === 0 ? 'copper' : 'tin';
+    }
     level = typeof resourceNeedLevel === 'function' ? resourceNeedLevel(ore) : (ore === 'iron' ? 15 : 1);
     return { x: tx, y: ty, ore: ore, level: level };
 }
@@ -980,10 +1037,13 @@ function sceneryPrimaryAction(kind) {
     if (kind === 'campfire') {
         return { label: 'Rest', action: 'examine' };
     }
+    if (kind === 'altar') {
+        return { label: 'Craft runes', action: 'station' };
+    }
     return null;
 }
 
 function isStationKind(kind) {
     return kind === 'range' || kind === 'stall' || kind === 'anvil' || kind === 'furnace'
-        || kind === 'fire' || kind === 'booth' || kind === 'shop-stall';
+        || kind === 'fire' || kind === 'booth' || kind === 'shop-stall' || kind === 'altar';
 }

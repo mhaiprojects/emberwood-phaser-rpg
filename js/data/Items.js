@@ -41,13 +41,24 @@ var ITEM_DB = {
     diamondpick: { name: 'Diamond pickaxe', icon: 'assets/svg/items/bronzepick.svg', tool: 'pickaxe', tier: 'diamond', toolTier: 5, value: 80, buyPrice: 120, sellPrice: 32, examine: 'A diamond-tipped pick.' },
     dragonitepick: { name: 'Dragonite pickaxe', icon: 'assets/svg/items/bronzepick.svg', tool: 'pickaxe', tier: 'dragonite', toolTier: 6, value: 160, buyPrice: 240, sellPrice: 64, examine: 'A dragonite pickaxe.' },
     net: { name: 'Small fishing net', icon: 'assets/svg/items/net.svg', tool: 'net', value: 8, buyPrice: 12, sellPrice: 3, examine: 'A small fishing net for shrimp.' },
-    logs: { name: 'Logs', icon: 'assets/svg/items/logs.svg', stack: true, firemake: true, firemakeXp: 40, value: 2, sellPrice: 1, examine: 'A pile of chopped logs.' },
-    copper: { name: 'Copper ore', icon: 'assets/svg/items/copper.svg', stack: true, value: 3, sellPrice: 1, examine: 'A chunk of copper ore.' },
-    tin: { name: 'Tin ore', icon: 'assets/svg/items/tin.svg', stack: true, value: 3, sellPrice: 1, examine: 'A chunk of tin ore.' },
-    bronzebar: { name: 'Bronze bar', icon: 'assets/svg/items/bronzebar.svg', stack: true, value: 12, sellPrice: 4, examine: 'A smelted bronze bar.' },
+    logs: { name: 'Logs', icon: 'assets/svg/items/logs.svg', stack: true, firemake: true, firemakeXp: 40, value: 2, buyPrice: 4, sellPrice: 1, examine: 'A pile of chopped logs.' },
+    oaklogs: { name: 'Oak logs', icon: 'assets/svg/items/logs.svg', stack: true, firemake: true, firemakeXp: 60, value: 6, buyPrice: 10, sellPrice: 2, examine: 'Sturdy oak logs.' },
+    yewlogs: { name: 'Yew logs', icon: 'assets/svg/items/logs.svg', stack: true, firemake: true, firemakeXp: 90, value: 14, buyPrice: 24, sellPrice: 5, examine: 'Dense yew logs.' },
+    magiclogs: { name: 'Magic logs', icon: 'assets/svg/items/logs.svg', stack: true, firemake: true, firemakeXp: 120, value: 28, buyPrice: 48, sellPrice: 10, examine: 'Logs that hum with latent magic.' },
+    copper: { name: 'Copper ore', icon: 'assets/svg/items/copper.svg', stack: true, value: 3, buyPrice: 6, sellPrice: 1, examine: 'A chunk of copper ore.' },
+    tin: { name: 'Tin ore', icon: 'assets/svg/items/tin.svg', stack: true, value: 3, buyPrice: 6, sellPrice: 1, examine: 'A chunk of tin ore.' },
+    iron: { name: 'Iron ore', icon: 'assets/svg/items/tin.svg', stack: true, value: 8, buyPrice: 14, sellPrice: 3, examine: 'A chunk of iron ore.' },
+    diamondore: { name: 'Diamond ore', icon: 'assets/svg/items/copper.svg', stack: true, value: 40, buyPrice: 70, sellPrice: 16, examine: 'Ore glittering with hard crystal.' },
+    dragoniteore: { name: 'Dragonite ore', icon: 'assets/svg/items/copper.svg', stack: true, value: 80, buyPrice: 140, sellPrice: 32, examine: 'Rare ore warm with dragonite veins.' },
+    runeessence: { name: 'Rune essence', icon: 'assets/svg/items/airrune.svg', stack: true, value: 2, buyPrice: 4, sellPrice: 1, examine: 'Blank essence ready for an altar.' },
+    copperbar: { name: 'Copper bar', icon: 'assets/svg/items/bronzebar.svg', stack: true, value: 8, buyPrice: 14, sellPrice: 3, examine: 'A soft copper bar.' },
+    bronzebar: { name: 'Bronze bar', icon: 'assets/svg/items/bronzebar.svg', stack: true, value: 12, buyPrice: 20, sellPrice: 4, examine: 'A smelted bronze bar.' },
+    ironbar: { name: 'Iron bar', icon: 'assets/svg/items/bronzebar.svg', stack: true, value: 22, buyPrice: 36, sellPrice: 8, examine: 'A sturdy iron bar.' },
+    diamondbar: { name: 'Diamond bar', icon: 'assets/svg/items/bronzebar.svg', stack: true, value: 70, buyPrice: 120, sellPrice: 28, examine: 'A crystal-hardened bar.' },
+    dragonitebar: { name: 'Dragonite bar', icon: 'assets/svg/items/bronzebar.svg', stack: true, value: 140, buyPrice: 240, sellPrice: 56, examine: 'A legendary dragonite bar.' },
     tinderbox: { name: 'Tinderbox', icon: 'assets/svg/items/tinderbox.svg', value: 5, buyPrice: 8, sellPrice: 2, examine: 'A small box of flint and steel.' },
     bones: { name: 'Bones', icon: 'assets/svg/items/bones.svg', stack: true, bury: true, buryXp: 4, shrineXp: 8, value: 1, sellPrice: 1, examine: 'Dry bones. Someone should bury them.' },
-    feather: { name: 'Feathers', icon: 'assets/svg/items/feather.svg', stack: true, value: 1, sellPrice: 1, examine: 'Soft feathers from a bird.' },
+    feather: { name: 'Feathers', icon: 'assets/svg/items/feather.svg', stack: true, value: 1, buyPrice: 2, sellPrice: 1, examine: 'Soft feathers from a bird.' },
     rabbitfur: { name: 'Rabbit fur', icon: 'assets/svg/items/rabbitfur.svg', stack: true, value: 3, sellPrice: 1, examine: 'Soft fur from a rabbit. Useful for crafting.' },
     airrune: { name: 'Air rune', icon: 'assets/svg/items/airrune.svg', stack: true, rune: true, value: 4, buyPrice: 6, sellPrice: 1, examine: 'A pale blue rune. It hums with air.' },
     mindrune: { name: 'Mind rune', icon: 'assets/svg/items/mindrune.svg', stack: true, rune: true, value: 3, buyPrice: 5, sellPrice: 1, examine: 'A dull purple rune. It focuses the mind.' },
@@ -62,7 +73,7 @@ var ITEM_DB = {
     earthrune: { name: 'Earth rune', icon: 'assets/svg/items/mindrune.svg', stack: true, rune: true, value: 4, buyPrice: 6, sellPrice: 1, examine: 'A dusty brown rune.' },
     naturerune: { name: 'Nature rune', icon: 'assets/svg/items/naturerune.svg', stack: true, rune: true, value: 12, buyPrice: 18, sellPrice: 4, examine: 'A green rune used in alchemy.' },
     cluescroll: { name: 'Clue scroll', icon: 'assets/svg/ui/quest.svg', stack: false, questItem: true, value: 0, examine: 'A clue written in fading ink.' },
-    guam: { name: 'Guam leaf', icon: 'assets/svg/items/feather.svg', stack: true, value: 2, examine: 'A bitter herb leaf.' },
+    guam: { name: 'Guam leaf', icon: 'assets/svg/items/feather.svg', stack: true, value: 2, buyPrice: 5, sellPrice: 1, examine: 'A bitter herb leaf.' },
     attackpot: { name: 'Attack potion', icon: 'assets/svg/items/shrimp.svg', stack: true, value: 12, examine: 'A vial boosting attack briefly.' },
     oakplank: { name: 'Oak plank', icon: 'assets/svg/items/logs.svg', stack: true, value: 6, examine: 'A sawn oak plank.' },
     shortbowunstrung: { name: 'Shortbow (u)', icon: 'assets/svg/items/shortbow.svg', stack: true, value: 8, examine: 'An unstrung shortbow.' },
@@ -80,31 +91,63 @@ var GENERAL_SHOP_STOCK = [
     { id: 'bronzeaxe', stock: 1, restockTo: 1, restockMs: 120000 },
     { id: 'bronzepick', stock: 1, restockTo: 1, restockMs: 120000 },
     { id: 'string', stock: 8, restockTo: 8, restockMs: 60000 },
+    { id: 'logs', stock: 12, restockTo: 12, restockMs: 45000 },
+    { id: 'oaklogs', stock: 6, restockTo: 6, restockMs: 60000 },
+    { id: 'copper', stock: 8, restockTo: 8, restockMs: 45000 },
+    { id: 'tin', stock: 8, restockTo: 8, restockMs: 45000 },
+    { id: 'iron', stock: 4, restockTo: 4, restockMs: 90000 },
+    { id: 'bronzebar', stock: 3, restockTo: 3, restockMs: 90000 },
+    { id: 'ironbar', stock: 2, restockTo: 2, restockMs: 120000 },
+    { id: 'yewlogs', stock: 3, restockTo: 3, restockMs: 120000 },
+    { id: 'magiclogs', stock: 2, restockTo: 2, restockMs: 180000 },
+    { id: 'diamondore', stock: 2, restockTo: 2, restockMs: 180000 },
+    { id: 'dragoniteore', stock: 1, restockTo: 1, restockMs: 300000 },
+    { id: 'runeessence', stock: 20, restockTo: 20, restockMs: 45000 },
+    { id: 'guam', stock: 6, restockTo: 6, restockMs: 60000 },
+    { id: 'feather', stock: 20, restockTo: 20, restockMs: 45000 },
     { id: 'firerune', stock: 20, restockTo: 20, restockMs: 45000 },
-    { id: 'naturerune', stock: 10, restockTo: 10, restockMs: 60000 }
+    { id: 'waterrune', stock: 20, restockTo: 20, restockMs: 45000 },
+    { id: 'earthrune', stock: 20, restockTo: 20, restockMs: 45000 },
+    { id: 'naturerune', stock: 10, restockTo: 10, restockMs: 60000 },
+    { id: 'airrune', stock: 20, restockTo: 20, restockMs: 45000 },
+    { id: 'mindrune', stock: 20, restockTo: 20, restockMs: 45000 }
 ];
 var WEAPON_SHOP_STOCK = [
     { id: 'bronzedagger', stock: 4, restockTo: 4, restockMs: 90000 },
+    { id: 'copperdagger', stock: 3, restockTo: 3, restockMs: 90000 },
+    { id: 'woodclub', stock: 3, restockTo: 3, restockMs: 90000 },
     { id: 'sword', stock: 2, restockTo: 2, restockMs: 120000 },
+    { id: 'ironsword', stock: 1, restockTo: 1, restockMs: 180000 },
     { id: 'shield', stock: 2, restockTo: 2, restockMs: 120000 },
+    { id: 'gloves', stock: 2, restockTo: 2, restockMs: 120000 },
     { id: 'woodbow', stock: 2, restockTo: 2, restockMs: 90000 },
     { id: 'shortbow', stock: 1, restockTo: 1, restockMs: 120000 },
+    { id: 'oakbow', stock: 1, restockTo: 1, restockMs: 150000 },
+    { id: 'woodarrow', stock: 40, restockTo: 40, restockMs: 45000 },
     { id: 'arrow', stock: 40, restockTo: 40, restockMs: 45000 },
+    { id: 'ironarrow', stock: 20, restockTo: 20, restockMs: 60000 },
     { id: 'staff', stock: 2, restockTo: 2, restockMs: 120000 },
     { id: 'bronzestaff', stock: 1, restockTo: 1, restockMs: 150000 },
+    { id: 'ironstaff', stock: 1, restockTo: 1, restockMs: 180000 },
     { id: 'wizardhat', stock: 1, restockTo: 1, restockMs: 120000 },
     { id: 'wizardrobe', stock: 1, restockTo: 1, restockMs: 120000 },
     { id: 'airrune', stock: 40, restockTo: 40, restockMs: 45000 },
     { id: 'mindrune', stock: 40, restockTo: 40, restockMs: 45000 },
     { id: 'woodaxe', stock: 2, restockTo: 2, restockMs: 90000 },
     { id: 'woodpick', stock: 2, restockTo: 2, restockMs: 90000 },
+    { id: 'copperaxe', stock: 1, restockTo: 1, restockMs: 120000 },
+    { id: 'copperpick', stock: 1, restockTo: 1, restockMs: 120000 },
     { id: 'ironaxe', stock: 1, restockTo: 1, restockMs: 180000 },
-    { id: 'ironpick', stock: 1, restockTo: 1, restockMs: 180000 }
+    { id: 'ironpick', stock: 1, restockTo: 1, restockMs: 180000 },
+    { id: 'diamondaxe', stock: 1, restockTo: 1, restockMs: 300000 },
+    { id: 'diamondpick', stock: 1, restockTo: 1, restockMs: 300000 },
+    { id: 'dragoniteaxe', stock: 1, restockTo: 1, restockMs: 420000 },
+    { id: 'dragonitepick', stock: 1, restockTo: 1, restockMs: 420000 },
+    { id: 'yewbow', stock: 1, restockTo: 1, restockMs: 240000 },
+    { id: 'magicbow', stock: 1, restockTo: 1, restockMs: 360000 },
+    { id: 'diamondstaff', stock: 1, restockTo: 1, restockMs: 240000 },
+    { id: 'dragonitestaff', stock: 1, restockTo: 1, restockMs: 360000 }
 ];
-GENERAL_SHOP_STOCK.push(
-    { id: 'airrune', stock: 20, restockTo: 20, restockMs: 45000 },
-    { id: 'mindrune', stock: 20, restockTo: 20, restockMs: 45000 }
-);
 var SHOP_CATALOG = {};
 SHOP_CATALOG[GENERAL_SHOP_KEY] = GENERAL_SHOP_STOCK;
 SHOP_CATALOG[WEAPON_SHOP_KEY] = WEAPON_SHOP_STOCK;
@@ -319,9 +362,28 @@ var FIRE_DURATION_MS = 45000;
 var COOK_BURN_BASE = 0.52;
 var COOK_BURN_PER_LEVEL = 0.045;
 var RESOURCE_LEVEL = {
+    logs: 1,
+    oaklogs: 15,
+    yewlogs: 40,
+    magiclogs: 60,
     copper: 1,
     tin: 1,
-    iron: 15
+    iron: 15,
+    runeessence: 1,
+    diamondore: 40,
+    dragoniteore: 60
+};
+
+var TREE_BY_ZONE = {
+    haven: { log: 'logs', level: 1 },
+    millfields: { log: 'logs', level: 1 },
+    westmead: { log: 'logs', level: 1 },
+    southshore: { log: 'logs', level: 1 },
+    northwood: { log: 'oaklogs', level: 15 },
+    mire: { log: 'oaklogs', level: 15 },
+    highlands: { log: 'yewlogs', level: 40 },
+    graves: { log: 'magiclogs', level: 60 },
+    darkmine: { log: 'logs', level: 1 }
 };
 
 function resourceNeedLevel(id) {
@@ -994,21 +1056,38 @@ function fishAtSpot(hero, opts) {
     return catchFish(hero, opts);
 }
 
+function treeSpecForZone(zoneId) {
+    var spec = TREE_BY_ZONE && TREE_BY_ZONE[zoneId];
+    if (spec && spec.log) {
+        return { log: spec.log, level: typeof spec.level === 'number' ? spec.level : resourceNeedLevel(spec.log) };
+    }
+    return { log: WOODCUT_LOG_ID, level: 1 };
+}
+
 function chopAtTree(hero, opts) {
+    var logId;
+    var gate;
+    var xp;
     opts = opts || {};
     if (!hero || !hero.skills || !hero.skills.woodcutting) {
         return null;
+    }
+    logId = opts.log || opts.logId || WOODCUT_LOG_ID;
+    gate = resourceLevelGate(hero, 'woodcutting', logId);
+    if (!gate.ok) {
+        return { ok: false, need: gate.need, id: logId };
     }
     if (!opts.skipTool && !hasAnyToolKind(hero, 'axe')) {
         return { ok: false, needTool: WOODCUT_AXE_ID, toolName: 'an axe' };
     }
     if (!opts.skipItem) {
-        if (!addItem(hero, WOODCUT_LOG_ID, 1)) {
-            return { ok: false, full: true };
+        if (!addItem(hero, logId, 1)) {
+            return { ok: false, full: true, id: logId };
         }
     }
-    gainSkillXp(hero, 'woodcutting', WOODCUT_TREE_XP);
-    return { ok: true, id: WOODCUT_LOG_ID, xp: WOODCUT_TREE_XP };
+    xp = WOODCUT_TREE_XP + Math.max(0, (resourceNeedLevel(logId) - 1));
+    gainSkillXp(hero, 'woodcutting', xp);
+    return { ok: true, id: logId, xp: xp };
 }
 
 function mineAtRock(hero, ore, opts) {
@@ -1129,54 +1208,268 @@ function cookAtStation(hero, id, kind) {
     return useItemOnScenery(hero, id, kind || 'range');
 }
 
-function smeltBronze(hero) {
-    if (!hero) {
+var SMELT_RECIPES = [
+    { id: 'copperbar', label: 'Smelt copper bar', inputs: [['copper', 1]], xp: 12, need: 1 },
+    { id: 'bronzebar', label: 'Smelt bronze bar (copper + tin)', inputs: [['copper', 1], ['tin', 1]], xp: SMELT_BRONZE_XP, need: 1 },
+    { id: 'ironbar', label: 'Smelt iron bar', inputs: [['iron', 1]], xp: 25, need: 15 },
+    { id: 'diamondbar', label: 'Smelt diamond bar', inputs: [['diamondore', 1]], xp: 50, need: 40 },
+    { id: 'dragonitebar', label: 'Smelt dragonite bar', inputs: [['dragoniteore', 1]], xp: 70, need: 60 }
+];
+
+var SMITH_RECIPES = [
+    { id: 'copperdagger', label: 'Smith copper dagger', bar: 'copperbar', bars: 1, xp: 14, need: 1 },
+    { id: 'copperaxe', label: 'Smith copper axe', bar: 'copperbar', bars: 1, xp: 16, need: 1 },
+    { id: 'copperpick', label: 'Smith copper pickaxe', bar: 'copperbar', bars: 1, xp: 16, need: 1 },
+    { id: 'bronzedagger', label: 'Smith bronze dagger', bar: 'bronzebar', bars: 1, xp: SMITH_DAGGER_XP, need: 1 },
+    { id: 'sword', label: 'Smith bronze sword', bar: 'bronzebar', bars: 2, xp: 28, need: 5 },
+    { id: 'bronzeaxe', label: 'Smith bronze axe', bar: 'bronzebar', bars: 1, xp: 24, need: 5 },
+    { id: 'bronzepick', label: 'Smith bronze pickaxe', bar: 'bronzebar', bars: 1, xp: 24, need: 5 },
+    { id: 'bronzestaff', label: 'Smith bronze staff', bar: 'bronzebar', bars: 2, extra: [['logs', 1]], xp: 30, need: 8 },
+    { id: 'ironsword', label: 'Smith iron sword', bar: 'ironbar', bars: 2, xp: 40, need: 15 },
+    { id: 'ironaxe', label: 'Smith iron axe', bar: 'ironbar', bars: 1, xp: 36, need: 15 },
+    { id: 'ironpick', label: 'Smith iron pickaxe', bar: 'ironbar', bars: 1, xp: 36, need: 15 },
+    { id: 'ironstaff', label: 'Smith iron staff', bar: 'ironbar', bars: 2, extra: [['oaklogs', 1]], xp: 44, need: 20 },
+    { id: 'diamondaxe', label: 'Smith diamond axe', bar: 'diamondbar', bars: 1, xp: 70, need: 40 },
+    { id: 'diamondpick', label: 'Smith diamond pickaxe', bar: 'diamondbar', bars: 1, xp: 70, need: 40 },
+    { id: 'diamondstaff', label: 'Smith diamond staff', bar: 'diamondbar', bars: 2, extra: [['yewlogs', 1]], xp: 80, need: 45 },
+    { id: 'dragoniteaxe', label: 'Smith dragonite axe', bar: 'dragonitebar', bars: 1, xp: 100, need: 60 },
+    { id: 'dragonitepick', label: 'Smith dragonite pickaxe', bar: 'dragonitebar', bars: 1, xp: 100, need: 60 },
+    { id: 'dragonitestaff', label: 'Smith dragonite staff', bar: 'dragonitebar', bars: 2, extra: [['magiclogs', 1]], xp: 120, need: 65 }
+];
+
+var CRAFT_RECIPES = [
+    { id: 'tan:cowhide', label: 'Tan cowhide', kind: 'tan', xpSkill: 'crafting' },
+    { id: 'string:fur', label: 'Spin string from rabbit fur', inputs: [['rabbitfur', 1]], output: 'string', qty: 1, xp: 8, xpSkill: 'crafting', need: 1 },
+    { id: 'stitch:gloves', label: 'Stitch leather gloves', inputs: [['leather', 1], ['string', 1]], output: 'gloves', qty: 1, xp: CRAFT_LEATHER_XP, xpSkill: 'crafting', need: 1 },
+    { id: 'net', label: 'Weave fishing net', inputs: [['string', 3]], output: 'net', qty: 1, xp: 18, xpSkill: 'crafting', need: 1 },
+    { id: 'woodclub', label: 'Carve wood club', inputs: [['logs', 1]], output: 'woodclub', qty: 1, xp: 12, xpSkill: 'crafting', need: 1 },
+    { id: 'shield', label: 'Carve wooden shield', inputs: [['logs', 2]], output: 'shield', qty: 1, xp: 20, xpSkill: 'crafting', need: 1 },
+    { id: 'woodaxe', label: 'Carve wood axe', inputs: [['logs', 2]], output: 'woodaxe', qty: 1, xp: 14, xpSkill: 'crafting', need: 1 },
+    { id: 'woodpick', label: 'Carve wood pickaxe', inputs: [['logs', 2]], output: 'woodpick', qty: 1, xp: 14, xpSkill: 'crafting', need: 1 },
+    { id: 'staff', label: 'Carve wood staff', inputs: [['logs', 2]], output: 'staff', qty: 1, xp: 18, xpSkill: 'crafting', need: 1 },
+    { id: 'wizardhat', label: 'Sew wizard hat', inputs: [['leather', 1], ['feather', 2]], output: 'wizardhat', qty: 1, xp: 22, xpSkill: 'crafting', need: 5 },
+    { id: 'wizardrobe', label: 'Sew wizard robe', inputs: [['leather', 2], ['string', 1]], output: 'wizardrobe', qty: 1, xp: 28, xpSkill: 'crafting', need: 8 },
+    { id: 'woodbow', label: 'Fletch wood bow', inputs: [['logs', 1], ['string', 1]], output: 'woodbow', qty: 1, xp: 16, xpSkill: 'fletching', need: 1 },
+    { id: 'shortbow', label: 'Fletch shortbow', inputs: [['logs', 1], ['string', 1]], output: 'shortbow', qty: 1, xp: 22, xpSkill: 'fletching', need: 5 },
+    { id: 'oakbow', label: 'Fletch oak bow', inputs: [['oaklogs', 1], ['string', 1]], output: 'oakbow', qty: 1, xp: 36, xpSkill: 'fletching', need: 15 },
+    { id: 'yewbow', label: 'Fletch yew bow', inputs: [['yewlogs', 1], ['string', 1]], output: 'yewbow', qty: 1, xp: 60, xpSkill: 'fletching', need: 40 },
+    { id: 'magicbow', label: 'Fletch magic bow', inputs: [['magiclogs', 1], ['string', 1]], output: 'magicbow', qty: 1, xp: 90, xpSkill: 'fletching', need: 60 },
+    { id: 'woodarrow', label: 'Fletch wooden arrows (x10)', inputs: [['logs', 1], ['feather', 1]], output: 'woodarrow', qty: 10, xp: 10, xpSkill: 'fletching', need: 1 },
+    { id: 'arrow', label: 'Fletch bronze arrows (x10)', inputs: [['bronzebar', 1], ['feather', 1]], output: 'arrow', qty: 10, xp: 18, xpSkill: 'fletching', need: 5 },
+    { id: 'ironarrow', label: 'Fletch iron arrows (x10)', inputs: [['ironbar', 1], ['feather', 1]], output: 'ironarrow', qty: 10, xp: 30, xpSkill: 'fletching', need: 15 },
+    { id: 'shortbowunstrung', label: 'Fletch shortbow (u)', inputs: [['logs', 1]], output: 'shortbowunstrung', qty: 1, xp: 14, xpSkill: 'fletching', need: 1 },
+    { id: 'oakplank', label: 'Saw oak plank', inputs: [['oaklogs', 1]], output: 'oakplank', qty: 1, xp: 20, xpSkill: 'construction', need: 1 }
+];
+
+var RUNE_ALTAR_TYPES = {
+    airrune: { label: 'Craft air runes', need: 1, xp: 10 },
+    mindrune: { label: 'Craft mind runes', need: 1, xp: 10 },
+    waterrune: { label: 'Craft water runes', need: 5, xp: 12 },
+    earthrune: { label: 'Craft earth runes', need: 5, xp: 12 },
+    firerune: { label: 'Craft fire runes', need: 10, xp: 14 },
+    naturerune: { label: 'Craft nature runes', need: 20, xp: 20 }
+};
+
+function recipeHasInputs(hero, inputs) {
+    var i;
+    if (!inputs || !inputs.length) {
+        return true;
+    }
+    for (i = 0; i < inputs.length; i++) {
+        if (itemQty(hero, inputs[i][0]) < inputs[i][1]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function takeRecipeInputs(hero, inputs) {
+    var taken = [];
+    var i;
+    for (i = 0; i < inputs.length; i++) {
+        if (!takeItem(hero, inputs[i][0], inputs[i][1])) {
+            while (taken.length) {
+                var back = taken.pop();
+                addItem(hero, back[0], back[1]);
+            }
+            return false;
+        }
+        taken.push(inputs[i]);
+    }
+    return true;
+}
+
+function findSmeltRecipe(id) {
+    var i;
+    for (i = 0; i < SMELT_RECIPES.length; i++) {
+        if (SMELT_RECIPES[i].id === id) {
+            return SMELT_RECIPES[i];
+        }
+    }
+    return null;
+}
+
+function findSmithRecipe(id) {
+    var i;
+    for (i = 0; i < SMITH_RECIPES.length; i++) {
+        if (SMITH_RECIPES[i].id === id) {
+            return SMITH_RECIPES[i];
+        }
+    }
+    return null;
+}
+
+function findCraftRecipe(id) {
+    var i;
+    for (i = 0; i < CRAFT_RECIPES.length; i++) {
+        if (CRAFT_RECIPES[i].id === id) {
+            return CRAFT_RECIPES[i];
+        }
+    }
+    return null;
+}
+
+function smeltRecipe(hero, recipe) {
+    var level;
+    if (!hero || !recipe) {
         return null;
     }
-    if (itemQty(hero, 'copper') < 1 || itemQty(hero, 'tin') < 1) {
+    level = heroSkillLevel(hero, 'smithing');
+    if (level < (recipe.need || 1)) {
+        return { ok: false, need: recipe.need || 1 };
+    }
+    if (!recipeHasInputs(hero, recipe.inputs)) {
         return { ok: false, need: 'ores' };
     }
-    if (!takeItem(hero, 'copper', 1)) {
+    if (!takeRecipeInputs(hero, recipe.inputs)) {
         return null;
     }
-    if (!takeItem(hero, 'tin', 1)) {
-        addItem(hero, 'copper', 1);
-        return null;
-    }
-    if (!addItem(hero, 'bronzebar', 1)) {
-        addItem(hero, 'copper', 1);
-        addItem(hero, 'tin', 1);
+    if (!addItem(hero, recipe.id, 1)) {
+        var i;
+        for (i = 0; i < recipe.inputs.length; i++) {
+            addItem(hero, recipe.inputs[i][0], recipe.inputs[i][1]);
+        }
         return { ok: false, full: true };
     }
-    if (SMELT_BRONZE_XP > 0) {
-        gainSkillXp(hero, 'smithing', SMELT_BRONZE_XP);
+    if (recipe.xp > 0) {
+        gainSkillXp(hero, 'smithing', recipe.xp);
     }
-    return { ok: true, made: 'bronzebar', xp: SMELT_BRONZE_XP };
+    return { ok: true, made: recipe.id, xp: recipe.xp };
+}
+
+function smeltBronze(hero) {
+    return smeltRecipe(hero, findSmeltRecipe('bronzebar'));
+}
+
+function smithRecipe(hero, recipe) {
+    var inputs;
+    var level;
+    var i;
+    if (!hero || !recipe) {
+        return null;
+    }
+    level = heroSkillLevel(hero, 'smithing');
+    if (level < (recipe.need || 1)) {
+        return { ok: false, need: recipe.need || 1 };
+    }
+    inputs = [[recipe.bar, recipe.bars || 1]];
+    if (recipe.extra) {
+        for (i = 0; i < recipe.extra.length; i++) {
+            inputs.push(recipe.extra[i]);
+        }
+    }
+    if (!recipeHasInputs(hero, inputs)) {
+        return { ok: false, need: 'bar' };
+    }
+    if (!takeRecipeInputs(hero, inputs)) {
+        return null;
+    }
+    if (!addItem(hero, recipe.id, 1)) {
+        for (i = 0; i < inputs.length; i++) {
+            addItem(hero, inputs[i][0], inputs[i][1]);
+        }
+        return { ok: false, full: true };
+    }
+    if (recipe.xp > 0) {
+        gainSkillXp(hero, 'smithing', recipe.xp);
+    }
+    return { ok: true, made: recipe.id, xp: recipe.xp };
 }
 
 function smithBronzeDagger(hero) {
-    if (!hero) {
-        return null;
-    }
-    if (itemQty(hero, 'bronzebar') < 1) {
-        return { ok: false, need: 'bar' };
-    }
-    if (!takeItem(hero, 'bronzebar', 1)) {
-        return null;
-    }
-    if (!addItem(hero, 'bronzedagger', 1)) {
-        addItem(hero, 'bronzebar', 1);
-        return { ok: false, full: true };
-    }
-    if (SMITH_DAGGER_XP > 0) {
-        gainSkillXp(hero, 'smithing', SMITH_DAGGER_XP);
-    }
-    return { ok: true, made: 'bronzedagger', xp: SMITH_DAGGER_XP };
+    return smithRecipe(hero, findSmithRecipe('bronzedagger'));
 }
 
-function stationRecipesFor(kind, hero) {
+function craftStationRecipe(hero, recipe) {
+    var level;
+    var skill;
+    var qty;
+    if (!hero || !recipe) {
+        return null;
+    }
+    if (recipe.kind === 'tan') {
+        return tanCowhide(hero, 'cowhide') || { ok: false, need: 'cowhide' };
+    }
+    if (recipe.id === 'stitch:gloves') {
+        return stitchLeather(hero) || { ok: false, need: 'materials' };
+    }
+    skill = recipe.xpSkill || 'crafting';
+    level = heroSkillLevel(hero, skill);
+    if (level < (recipe.need || 1)) {
+        return { ok: false, need: recipe.need || 1 };
+    }
+    if (!recipeHasInputs(hero, recipe.inputs)) {
+        return { ok: false, need: 'materials' };
+    }
+    if (!takeRecipeInputs(hero, recipe.inputs)) {
+        return null;
+    }
+    qty = recipe.qty || 1;
+    if (!addItem(hero, recipe.output, qty)) {
+        var i;
+        for (i = 0; i < recipe.inputs.length; i++) {
+            addItem(hero, recipe.inputs[i][0], recipe.inputs[i][1]);
+        }
+        return { ok: false, full: true };
+    }
+    if (recipe.xp > 0) {
+        gainSkillXp(hero, skill, recipe.xp);
+    }
+    return { ok: true, made: recipe.output, xp: recipe.xp, qty: qty };
+}
+
+function craftRuneAtAltar(hero, runeId) {
+    var spec = RUNE_ALTAR_TYPES[runeId];
+    var level;
+    if (!hero || !spec) {
+        return null;
+    }
+    level = heroSkillLevel(hero, 'runecraft');
+    if (level < (spec.need || 1)) {
+        return { ok: false, need: spec.need || 1 };
+    }
+    if (itemQty(hero, 'runeessence') < 1) {
+        return { ok: false, need: 'materials' };
+    }
+    if (!takeItem(hero, 'runeessence', 1)) {
+        return null;
+    }
+    if (!addItem(hero, runeId, 1)) {
+        addItem(hero, 'runeessence', 1);
+        return { ok: false, full: true };
+    }
+    gainSkillXp(hero, 'runecraft', spec.xp || 10);
+    return { ok: true, made: runeId, xp: spec.xp || 10 };
+}
+
+function stationRecipesFor(kind, hero, opts) {
     var rows = [];
     var i;
+    var row;
+    var inputs;
+    var level;
+    var skill;
+    opts = opts || {};
     if (kind === 'range' || kind === 'fire') {
         var cookIds = listCookableIds(hero);
         for (i = 0; i < cookIds.length; i++) {
@@ -1194,40 +1487,84 @@ function stationRecipesFor(kind, hero) {
         return rows;
     }
     if (kind === 'stall') {
-        rows.push({
-            id: 'tan:cowhide',
-            label: 'Tan cowhide',
-            enabled: itemQty(hero, 'cowhide') > 0
-        });
-        rows.push({
-            id: 'stitch:gloves',
-            label: 'Stitch leather gloves',
-            enabled: itemQty(hero, 'leather') > 0 && itemQty(hero, 'string') > 0
-        });
+        for (i = 0; i < CRAFT_RECIPES.length; i++) {
+            row = CRAFT_RECIPES[i];
+            skill = row.xpSkill || 'crafting';
+            level = heroSkillLevel(hero, skill);
+            if (row.kind === 'tan') {
+                rows.push({
+                    id: row.id,
+                    label: row.label,
+                    enabled: itemQty(hero, 'cowhide') > 0
+                });
+                continue;
+            }
+            if (row.id === 'stitch:gloves') {
+                rows.push({
+                    id: row.id,
+                    label: row.label,
+                    enabled: itemQty(hero, 'leather') > 0 && itemQty(hero, 'string') > 0 && level >= (row.need || 1)
+                });
+                continue;
+            }
+            rows.push({
+                id: row.id,
+                label: row.label,
+                enabled: level >= (row.need || 1) && recipeHasInputs(hero, row.inputs)
+            });
+        }
         return rows;
     }
     if (kind === 'furnace') {
-        rows.push({
-            id: 'smelt:bronzebar',
-            label: 'Smelt bronze bar (copper + tin)',
-            enabled: itemQty(hero, 'copper') > 0 && itemQty(hero, 'tin') > 0
-        });
+        level = heroSkillLevel(hero, 'smithing');
+        for (i = 0; i < SMELT_RECIPES.length; i++) {
+            row = SMELT_RECIPES[i];
+            rows.push({
+                id: 'smelt:' + row.id,
+                label: row.label,
+                enabled: level >= (row.need || 1) && recipeHasInputs(hero, row.inputs)
+            });
+        }
         return rows;
     }
     if (kind === 'anvil') {
+        level = heroSkillLevel(hero, 'smithing');
+        for (i = 0; i < SMITH_RECIPES.length; i++) {
+            row = SMITH_RECIPES[i];
+            inputs = [[row.bar, row.bars || 1]];
+            if (row.extra) {
+                inputs = inputs.concat(row.extra);
+            }
+            rows.push({
+                id: 'smith:' + row.id,
+                label: row.label,
+                enabled: level >= (row.need || 1) && recipeHasInputs(hero, inputs)
+            });
+        }
+        return rows;
+    }
+    if (kind === 'altar') {
+        var runeId = opts.rune || opts.runeId || 'airrune';
+        var spec = RUNE_ALTAR_TYPES[runeId];
+        if (!spec) {
+            return rows;
+        }
+        level = heroSkillLevel(hero, 'runecraft');
         rows.push({
-            id: 'smith:bronzedagger',
-            label: 'Smith bronze dagger (1 bar)',
-            enabled: itemQty(hero, 'bronzebar') > 0
+            id: 'rune:' + runeId,
+            label: spec.label + ' (1 essence)',
+            enabled: level >= (spec.need || 1) && itemQty(hero, 'runeessence') > 0
         });
         return rows;
     }
     return rows;
 }
 
-function runStationRecipe(hero, kind, recipeId) {
+function runStationRecipe(hero, kind, recipeId, opts) {
     var parts;
     var result;
+    var recipe;
+    opts = opts || {};
     if (!hero || !kind || !recipeId) {
         return null;
     }
@@ -1243,26 +1580,22 @@ function runStationRecipe(hero, kind, recipeId) {
         return result;
     }
     if (kind === 'stall') {
-        if (recipeId === 'tan:cowhide') {
-            result = tanCowhide(hero, 'cowhide');
-            if (!result) {
-                return { ok: false, need: 'cowhide' };
-            }
-            return result;
+        recipe = findCraftRecipe(recipeId);
+        if (!recipe) {
+            return null;
         }
-        if (recipeId === 'stitch:gloves') {
-            result = stitchLeather(hero);
-            if (!result) {
-                return { ok: false, need: 'materials' };
-            }
-            return result;
-        }
+        return craftStationRecipe(hero, recipe);
     }
-    if (kind === 'furnace' && recipeId === 'smelt:bronzebar') {
-        return smeltBronze(hero);
+    if (kind === 'furnace' && recipeId.indexOf('smelt:') === 0) {
+        recipe = findSmeltRecipe(recipeId.split(':')[1]);
+        return smeltRecipe(hero, recipe);
     }
-    if (kind === 'anvil' && recipeId === 'smith:bronzedagger') {
-        return smithBronzeDagger(hero);
+    if (kind === 'anvil' && recipeId.indexOf('smith:') === 0) {
+        recipe = findSmithRecipe(recipeId.split(':')[1]);
+        return smithRecipe(hero, recipe);
+    }
+    if (kind === 'altar' && recipeId.indexOf('rune:') === 0) {
+        return craftRuneAtAltar(hero, recipeId.split(':')[1]);
     }
     return null;
 }
@@ -1508,18 +1841,8 @@ function noteSlayerKill(hero, mobType) {
 }
 
 function craftAirRune(hero) {
-    if (!hero || hero.gold < 1) {
-        return false;
-    }
-    hero.gold -= 1;
-    syncCoins(hero);
-    if (!addItem(hero, 'airrune', 1)) {
-        hero.gold += 1;
-        syncCoins(hero);
-        return false;
-    }
-    gainSkillXp(hero, 'runecraft', 10);
-    return true;
+    var result = craftRuneAtAltar(hero, 'airrune');
+    return !!(result && result.ok);
 }
 
 function plantGuamSeed(hero) {

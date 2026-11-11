@@ -2332,6 +2332,9 @@ var Hud = {
         if (kind === 'furnace') {
             return 'Furnace';
         }
+        if (kind === 'altar') {
+            return 'Rune altar';
+        }
         return 'Station';
     },
 
@@ -2340,18 +2343,21 @@ var Hud = {
             return 'Choose raw food from your pack to cook.';
         }
         if (kind === 'stall') {
-            return 'Tan hides or stitch leather goods.';
+            return 'Tan hides, fletch bows, or craft tools and gear.';
         }
         if (kind === 'anvil') {
-            return 'Hammer bronze bars into weapons.';
+            return 'Hammer bars into tools, weapons, and staves.';
         }
         if (kind === 'furnace') {
-            return 'Smelt copper and tin into a bronze bar.';
+            return 'Smelt ore into bars.';
+        }
+        if (kind === 'altar') {
+            return 'Bind rune essence into elemental runes.';
         }
         return 'Choose a recipe.';
     },
 
-    showStation: function (kind) {
+    showStation: function (kind, opts) {
         if (!this.el || !this.el.station || this.mode !== 'world') {
             return;
         }
@@ -2365,6 +2371,7 @@ var Hud = {
         this.hideBank();
         this.pauseWorldForUi();
         this.stationKind = kind;
+        this.stationOpts = opts || {};
         if (this.el.stationTitle) {
             this.el.stationTitle.textContent = this.stationTitleFor(kind);
         }
@@ -2388,6 +2395,7 @@ var Hud = {
             this.el.stationList.innerHTML = '';
         }
         this.stationKind = null;
+        this.stationOpts = null;
     },
 
     stationOpen: function () {
@@ -2403,7 +2411,7 @@ var Hud = {
             return;
         }
         rows = typeof stationRecipesFor === 'function'
-            ? stationRecipesFor(this.stationKind, hero)
+            ? stationRecipesFor(this.stationKind, hero, this.stationOpts || {})
             : [];
         for (i = 0; i < rows.length; i++) {
             var row = rows[i];
@@ -2421,7 +2429,7 @@ var Hud = {
         }
         hero = this.hero();
         result = typeof runStationRecipe === 'function'
-            ? runStationRecipe(hero, this.stationKind, recipeId)
+            ? runStationRecipe(hero, this.stationKind, recipeId, this.stationOpts || {})
             : null;
         if (!result) {
             this.log('Nothing interesting happens.');
@@ -2435,6 +2443,13 @@ var Hud = {
         }
         if (result.need === 'ores' || result.need === 'cowhide' || result.need === 'materials' || result.need === 'bar') {
             this.log('You lack the materials.');
+            this.renderStation();
+            return;
+        }
+        if (typeof result.need === 'number') {
+            this.log(typeof needLevelChat === 'function'
+                ? needLevelChat(result.need)
+                : ('You need level ' + result.need + '.'));
             this.renderStation();
             return;
         }
@@ -2452,12 +2467,9 @@ var Hud = {
             this.log('You tan the cowhide.');
         } else if (result.made === 'gloves') {
             this.log('You stitch a pair of leather gloves.');
-        } else if (result.made === 'bronzebar') {
-            this.log('You smelt a bronze bar.');
-        } else if (result.made === 'bronzedagger') {
-            this.log('You smith a bronze dagger.');
         } else if (result.made) {
-            this.log('You make ' + itemName(result.made) + '.');
+            this.log('You make ' + itemName(result.made) +
+                (result.qty > 1 ? (' x' + result.qty) : '') + '.');
         } else {
             this.log('You finish the work.');
         }

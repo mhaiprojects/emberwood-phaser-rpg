@@ -22,7 +22,7 @@
 
 **This plan’s remaining design work** (after 2026-11-11 implementation pass):
 
-1. Deeper diamond/dragonite armour smithing recipes (tools + staves data exist)  
+1. Optional full plate armour sets (diamond/dragonite) — tools, weapons, staves, and existing wearables are craftable; dedicated plate bodies/helms still open  
 2. Optional smoke-only testing reopen (still blocked)
 
 ---
@@ -328,7 +328,7 @@
 - **Suggestion:** B then A.
 
 #### 4.1.5 Diamond / 4.1.6 Dragonite
-- **Status:** Done — B. Diamond/dragonite tools (+ staves); full armour sets later.
+- **Status:** Done — A for tools/weapons/staves (mine → smelt → smith + shop); full plate armour sets later.
 - **In plain words:** Mid and end shiny gear so the ladder has a destination.
 - **Options:**
   - A. Full tools + weapons/armour each.

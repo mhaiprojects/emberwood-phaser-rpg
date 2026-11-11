@@ -2212,7 +2212,7 @@ var WorldScene = new Phaser.Class({
             return true;
         }
         if (Hud.showStation) {
-            Hud.showStation(hit.kind);
+            Hud.showStation(hit.kind, hit.interact || {});
             return true;
         }
         return this.examineScenery(hit);
@@ -2593,6 +2593,8 @@ var WorldScene = new Phaser.Class({
         var ms;
         var self = this;
         var hero = this.registry.get('hero');
+        var tree;
+        var gate;
         if (this.encounterLock || (window.Hud && Hud.mode === 'battle')) {
             return false;
         }
@@ -2602,6 +2604,18 @@ var WorldScene = new Phaser.Class({
         if (this.isTileDepleted(hit.tx, hit.ty)) {
             Hud.log('The tree is exhausted.');
             return false;
+        }
+        tree = typeof woodcutTreeAt === 'function'
+            ? woodcutTreeAt(hit.tx, hit.ty, this.zoneId, this.tileGrid)
+            : null;
+        if (tree && typeof resourceLevelGate === 'function') {
+            gate = resourceLevelGate(hero, 'woodcutting', tree.log);
+            if (!gate.ok) {
+                Hud.log(typeof needLevelChat === 'function'
+                    ? needLevelChat(gate.need)
+                    : ('You need level ' + gate.need + '.'));
+                return false;
+            }
         }
         if (typeof hasAnyToolKind === 'function' ? !hasAnyToolKind(hero, 'axe')
                 : (typeof hasTool === 'function' && typeof WOODCUT_AXE_ID !== 'undefined' && !hasTool(hero, WOODCUT_AXE_ID))) {
@@ -2618,6 +2632,9 @@ var WorldScene = new Phaser.Class({
             this.clearFish();
         }
         this.chopTarget = hit;
+        if (tree) {
+            this.chopTarget.log = tree.log;
+        }
         ms = typeof skillActionMs === 'function'
             ? skillActionMs(WOODCUT_ACTION_MS_MIN, WOODCUT_ACTION_MS_MAX)
             : 4000;
@@ -2645,10 +2662,20 @@ var WorldScene = new Phaser.Class({
             return false;
         }
         hero = this.registry.get('hero');
-        result = typeof chopAtTree === 'function' ? chopAtTree(hero) : null;
+        result = typeof chopAtTree === 'function'
+            ? chopAtTree(hero, { log: hit.log || (typeof treeSpecForZone === 'function'
+                ? treeSpecForZone(this.zoneId).log
+                : 'logs') })
+            : null;
         this.chopTarget = null;
         if (!result) {
             return this.examineScenery(hit);
+        }
+        if (result.need) {
+            Hud.log(typeof needLevelChat === 'function'
+                ? needLevelChat(result.need)
+                : ('You need level ' + result.need + '.'));
+            return true;
         }
         if (result.needTool) {
             Hud.log('You need an axe.');
@@ -2666,7 +2693,7 @@ var WorldScene = new Phaser.Class({
             Hud.saveHero(hero);
         }
         this.refreshHud();
-        Hud.log('You chop the tree.');
+        Hud.log('You chop some ' + (typeof itemName === 'function' ? itemName(result.id) : result.id) + '.');
         return true;
     },
 

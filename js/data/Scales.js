@@ -88,6 +88,7 @@ function isUniqueMobTexture(texture) {
 
 function lootForMob(def) {
     var drops = [];
+    var roll = Math.random();
     if (def && def.gold) {
         drops.push({ id: 'coins', qty: def.gold });
     }
@@ -101,9 +102,52 @@ function lootForMob(def) {
         drops.push({ id: 'rawshrimp', qty: 1 });
     } else if (def && def.type === 'Rabbit') {
         drops.push({ id: 'rabbitfur', qty: 1 });
+    } else if (def && def.type === 'Goblin') {
+        if (roll < 0.35) {
+            drops.push({ id: roll < 0.18 ? 'copper' : 'tin', qty: 1 });
+        }
+        if (Math.random() < 0.2) {
+            drops.push({ id: 'airrune', qty: 2 });
+        }
+        if (Math.random() < 0.08) {
+            drops.push({ id: 'logs', qty: 1 });
+        }
+    } else if (def && def.type === 'Skeleton') {
+        if (roll < 0.3) {
+            drops.push({ id: 'iron', qty: 1 });
+        }
+        if (Math.random() < 0.25) {
+            drops.push({ id: 'mindrune', qty: 2 });
+        }
+        if (Math.random() < 0.05) {
+            drops.push({ id: 'key', qty: 1 });
+        }
+    } else if (def && def.type === 'Bat') {
+        if (roll < 0.4) {
+            drops.push({ id: 'runeessence', qty: 2 });
+        }
+        if (Math.random() < 0.2) {
+            drops.push({ id: 'airrune', qty: 1 });
+        }
+    } else if (def && def.type === 'Slime') {
+        if (roll < 0.3) {
+            drops.push({ id: 'earthrune', qty: 2 });
+        }
+        if (Math.random() < 0.15) {
+            drops.push({ id: 'waterrune', qty: 1 });
+        }
     } else if (def && def.type === 'Drake') {
         if (Math.random() < 0.28) {
             drops.push({ id: 'drakescale', qty: 1 });
+        }
+        if (Math.random() < 0.2) {
+            drops.push({ id: 'diamondore', qty: 1 });
+        }
+        if (Math.random() < 0.1) {
+            drops.push({ id: 'dragoniteore', qty: 1 });
+        }
+        if (Math.random() < 0.2) {
+            drops.push({ id: 'firerune', qty: 3 });
         }
     }
     return drops;
