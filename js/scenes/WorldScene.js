@@ -32,6 +32,7 @@ var COLLIDE_TILES = [
 var GROUND_FIRE_MS = 45000;
 var STATION_RANGE = 28;
 var MELEE_ENGAGE_PX = 24;
+var LOOT_PICKUP_PX = 12;
 var COLLISION_DEBUG_FILL = 0xf38630;
 var COLLISION_DEBUG_FACE = 0xffff66;
 
@@ -110,6 +111,7 @@ var WorldScene = new Phaser.Class({
         this.longPressTimer = null;
         this.longPressPtr = null;
         this.pendingLootTake = null;
+        this.lootTarget = null;
         this.input.on('pointerdown', this.onClick, this);
         this.input.on('pointerup', this.onPointerUp, this);
         this.input.on('pointerupoutside', this.onPointerUp, this);
@@ -1560,18 +1562,14 @@ var WorldScene = new Phaser.Class({
             this.clearFish();
             this.engageTarget = null;
             this.talkTarget = null;
-            this.pendingLootTake = { x: x, y: y };
+            this.queueLootTake(this.topLootFromPile(leftLootPile));
             this.armLongPress(pointer);
             return;
         }
         this.armLongPress(pointer);
         var hit = this.pickSprite(this.mobs, x, y, 18);
         if (hit && hit.aliveMob) {
-            this.engageTarget = hit;
-            this.talkTarget = null;
-            this.clearFish();
-            this.setWalk(hit.x, hit.y, { allowEnd: true });
-            Hud.log('You target the ' + hit.mobDef.type + '.');
+            this.queueAttack(hit);
             return;
         }
         /* Stations / gather spots win over nearby NPCs so cook/range clicks open the UI. */
@@ -1611,6 +1609,7 @@ var WorldScene = new Phaser.Class({
         if (hit) {
             this.talkTarget = hit;
             this.engageTarget = null;
+            this.lootTarget = null;
             this.clearFish();
             this.setWalk(hit.x, hit.y, { allowEnd: true });
             return;
@@ -1618,12 +1617,14 @@ var WorldScene = new Phaser.Class({
         if (scenery && !(typeof isWalkableExamineKind === 'function' && isWalkableExamineKind(scenery.kind))) {
             this.engageTarget = null;
             this.talkTarget = null;
+            this.lootTarget = null;
             this.clearFish();
             this.examineScenery(scenery);
             return;
         }
         this.engageTarget = null;
         this.talkTarget = null;
+        this.lootTarget = null;
         this.clearFish();
         this.travelZoneId = null;
         if (Phaser.Math.Distance.Between(x, y, this.player.x, this.player.y) < 10) {
@@ -2704,7 +2705,7 @@ var WorldScene = new Phaser.Class({
             pile = this.pickLootPile(pending.x, pending.y, 18);
             top = this.topLootFromPile(pile);
             if (top) {
-                this.tryPickup(top);
+                this.queueLootTake(top);
             }
         }
     },
@@ -2714,6 +2715,11 @@ var WorldScene = new Phaser.Class({
         this.longPressTimer = null;
         this.longPressPtr = null;
         this.pendingLootTake = null;
+        /* Hold opens the menu instead of finishing a queued take/attack walk. */
+        this.lootTarget = null;
+        if (saved && this.clearWalk) {
+            this.clearWalk();
+        }
         if (!saved) {
             return;
         }
@@ -3046,6 +3052,13 @@ var WorldScene = new Phaser.Class({
                 return this.talkTarget;
             }
         }
+        if (this.lootTarget) {
+            if (this.lootTarget.taken || !this.lootTarget.sprite) {
+                this.lootTarget = null;
+            } else {
+                return this.lootTarget.sprite;
+            }
+        }
         return null;
     },
 
@@ -3098,12 +3111,79 @@ var WorldScene = new Phaser.Class({
         }
         var dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, chase.x, chase.y);
         if (this.engageTarget === chase) {
-            return dist < this.heroEngageRangePx();
+            return dist <= this.heroEngageRangePx();
         }
         if (this.talkTarget === chase) {
             return dist < 22 && !this.talkBlockedByWall(chase);
         }
+        if (this.lootTarget && this.lootTarget.sprite === chase) {
+            return this.playerLootInRange(this.lootTarget);
+        }
         return false;
+    },
+
+    playerLootInRange: function (drop) {
+        if (!drop || !drop.sprite || !this.player) {
+            return false;
+        }
+        return Phaser.Math.Distance.Between(
+            this.player.x, this.player.y,
+            drop.sprite.x, drop.sprite.y
+        ) <= LOOT_PICKUP_PX;
+    },
+
+    queueLootTake: function (drop) {
+        if (!drop || drop.taken || !drop.sprite) {
+            return false;
+        }
+        this.engageTarget = null;
+        this.talkTarget = null;
+        this.clearFish();
+        if (this.playerLootInRange(drop)) {
+            this.lootTarget = null;
+            return this.tryPickup(drop, true);
+        }
+        this.lootTarget = drop;
+        this.setWalk(drop.sprite.x, drop.sprite.y, { allowEnd: true });
+        return true;
+    },
+
+    tryCompleteLootTake: function () {
+        var drop = this.lootTarget;
+        if (!drop) {
+            return false;
+        }
+        if (drop.taken || !drop.sprite) {
+            this.lootTarget = null;
+            return false;
+        }
+        if (!this.playerLootInRange(drop)) {
+            if (!this.walkTarget) {
+                this.setWalk(drop.sprite.x, drop.sprite.y, { allowEnd: true });
+            }
+            return false;
+        }
+        this.player.body.setVelocity(0);
+        this.clearWalk();
+        this.lootTarget = null;
+        return this.tryPickup(drop, true);
+    },
+
+    queueAttack: function (mob) {
+        if (!mob || !mob.aliveMob) {
+            return false;
+        }
+        this.lootTarget = null;
+        this.talkTarget = null;
+        this.clearFish();
+        this.engageTarget = mob;
+        if (this.fightDistancePx(mob) <= this.heroEngageRangePx()) {
+            this.beginFight(mob);
+            return true;
+        }
+        this.setWalk(mob.x, mob.y, { allowEnd: true });
+        Hud.log('You target the ' + ((mob.mobDef && mob.mobDef.type) || 'foe') + '.');
+        return true;
     },
 
     maybeRepath: function () {
@@ -3698,12 +3778,22 @@ var WorldScene = new Phaser.Class({
     },
 
     beginFight: function (mob) {
+        var range;
+        var dist;
         if (this.uiPaused()) {
             return;
         }
-        if (this.encounterLock || !mob.aliveMob) {
+        if (this.encounterLock || !mob || !mob.aliveMob) {
             return;
         }
+        range = this.heroEngageRangePx();
+        dist = this.fightDistancePx(mob);
+        if (dist > range) {
+            this.queueAttack(mob);
+            return;
+        }
+        this.lootTarget = null;
+        this.engageTarget = null;
         this.encounterLock = true;
         this.lastFought = mob;
         if (Hud.hideDialogue) {
@@ -3885,12 +3975,15 @@ var WorldScene = new Phaser.Class({
         this.lootZoneState[zoneId] = keep;
     },
 
-    tryPickup: function (drop) {
+    tryPickup: function (drop, alreadyInRange) {
         if (this.encounterLock || Hud.mode === 'battle') {
             return false;
         }
         if (!drop || drop.taken) {
             return false;
+        }
+        if (!alreadyInRange && !this.playerLootInRange(drop)) {
+            return this.queueLootTake(drop);
         }
         var hero = this.registry.get('hero');
         if (!addItem(hero, drop.id, drop.qty)) {
@@ -3902,6 +3995,9 @@ var WorldScene = new Phaser.Class({
         }
         this.registry.set('hero', hero);
         drop.taken = true;
+        if (this.lootTarget === drop) {
+            this.lootTarget = null;
+        }
         if (drop.sprite) {
             drop.sprite.destroy();
             drop.sprite = null;
@@ -3959,8 +4055,8 @@ var WorldScene = new Phaser.Class({
             if (!drop || drop.taken || !drop.sprite || drop.skipAuto) {
                 continue;
             }
-            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, drop.sprite.x, drop.sprite.y) < 18) {
-                this.tryPickup(drop);
+            if (this.playerLootInRange(drop)) {
+                this.tryPickup(drop, true);
             }
         }
     },
@@ -4344,10 +4440,14 @@ var WorldScene = new Phaser.Class({
                 this.player.x, this.player.y,
                 this.engageTarget.x, this.engageTarget.y
             );
-            if (dist < range) {
+            if (dist <= range) {
                 this.beginFight(this.engageTarget);
                 return true;
             }
+            if (!this.walkTarget) {
+                this.setWalk(this.engageTarget.x, this.engageTarget.y, { allowEnd: true });
+            }
+            return false;
         }
         if (!this.autoAttackOn()) {
             return false;
@@ -4447,6 +4547,7 @@ var WorldScene = new Phaser.Class({
             this.clearWalk();
             this.talkTarget = null;
             this.engageTarget = null;
+            this.lootTarget = null;
             this.clearGather();
             if (window.Hud && Hud.hideContextMenu) {
                 Hud.hideContextMenu();
@@ -4460,6 +4561,7 @@ var WorldScene = new Phaser.Class({
             this.clearWalk();
             this.talkTarget = null;
             this.engageTarget = null;
+            this.lootTarget = null;
             this.clearGather();
             if (window.Hud && Hud.bankOpen && Hud.bankOpen() && Hud.hideBank) {
                 Hud.hideBank();
@@ -4589,6 +4691,9 @@ var WorldScene = new Phaser.Class({
             }
         }
 
+        if (this.tryCompleteLootTake()) {
+            return;
+        }
         if (this.tryAutoEngage()) {
             return;
         }

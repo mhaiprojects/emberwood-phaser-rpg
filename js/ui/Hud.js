@@ -2614,13 +2614,17 @@ var Hud = {
         if (action === 'take-loot') {
             var idx = parseInt(lootIndex, 10);
             var drop = pile && pile[idx] ? pile[idx] : null;
-            if (drop && world.tryPickup) {
+            if (drop && world.queueLootTake) {
+                world.queueLootTake(drop);
+            } else if (drop && world.tryPickup) {
                 world.tryPickup(drop);
             }
             return;
         }
         if (action === 'take') {
-            if (target.loot && world.tryPickup) {
+            if (target.loot && world.queueLootTake) {
+                world.queueLootTake(target.loot);
+            } else if (target.loot && world.tryPickup) {
                 world.tryPickup(target.loot);
             }
             return;
@@ -2629,6 +2633,7 @@ var Hud = {
             var talkNpc = target.npc || (world.pickSprite && world.pickSprite(world.npcs, target.worldX, target.worldY, 18));
             if (talkNpc) {
                 world.engageTarget = null;
+                world.lootTarget = null;
                 world.talkTarget = talkNpc;
                 world.setWalk(talkNpc.x, talkNpc.y, { allowEnd: true });
             }
@@ -2637,9 +2642,13 @@ var Hud = {
         if (action === 'attack') {
             var foe = target.mob || (world.pickSprite && world.pickSprite(world.mobs, target.worldX, target.worldY, 18));
             if (foe && foe.aliveMob) {
-                world.engageTarget = foe;
-                world.setWalk(foe.x, foe.y, { allowEnd: true });
-                this.log('You target the ' + foe.mobDef.type + '.');
+                if (world.queueAttack) {
+                    world.queueAttack(foe);
+                } else {
+                    world.engageTarget = foe;
+                    world.setWalk(foe.x, foe.y, { allowEnd: true });
+                    this.log('You target the ' + foe.mobDef.type + '.');
+                }
             }
             return;
         }
