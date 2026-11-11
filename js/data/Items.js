@@ -2391,9 +2391,13 @@ function stripHeroForGravestone(hero) {
         hero.equipment[slot] = null;
         hero.equipmentQty[slot] = 0;
     }
+    gold = typeof hero.gold === 'number' ? Math.max(0, hero.gold) : 0;
     for (i = 0; i < (hero.inventory || []).length; i++) {
         stack = hero.inventory[i];
         if (!stack || !stack.id || !(stack.qty > 0)) {
+            continue;
+        }
+        if (stack.id === 'coins') {
             continue;
         }
         if (isQuestItem(stack.id)) {
@@ -2402,7 +2406,6 @@ function stripHeroForGravestone(hero) {
             mergeDropStack(dropped, stack.id, stack.qty);
         }
     }
-    gold = typeof hero.gold === 'number' ? hero.gold : 0;
     hero.inventory = kept;
     hero.gold = 0;
     if (gold > 0) {

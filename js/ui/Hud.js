@@ -2891,6 +2891,16 @@ var Hud = {
             }
             return;
         }
+        if (action === 'reclaim-grave') {
+            if (target.grave && world.queueGraveReclaim) {
+                world.queueGraveReclaim(target.grave);
+            }
+            return;
+        }
+        if (action === 'examine-grave') {
+            this.log('A weathered gravestone. Your lost belongings wait inside.');
+            return;
+        }
         if (action === 'take') {
             if (target.loot && world.queueLootTake) {
                 world.queueLootTake(target.loot);
