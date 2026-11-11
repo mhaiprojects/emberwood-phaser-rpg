@@ -47,7 +47,7 @@ Active queue — implement top-down before returning to sections 1–14.
 - [done] Chase pathing: engage / talk targets keep repathing while the NPC or mob moves. — Conclusion: `chaseWalkTarget` + `maybeRepath` refresh walk dest ~280ms; resume if target leaves range; Esc/WASD cancel chase.
 - [done] Remove Emberhaven bank interior linked to bank door; keep surface bank booth (+ Elise). — Conclusion: Bank dropped from `INTERIOR_LIST`; courtyard booth + Elise at booth remain; door examine points to booth.
 - [done] Left-click loot takes the top of the pile; loot context menu only on right-click or 2s hold. — Conclusion: Pending take on pointerup picks newest in pile; right-click / `LONG_PRESS_MS` 2000 opens Take menu; no left-click pile menu.
-- [done] Persist progress across refresh: autosave position + hero; save on hide/unload, zone change, and every 12s. — Conclusion: Save payload includes playerX/Y + interiorId; Continue restores `resumeAt`; pagehide/visibility + enterZone/interior autosave.
+- [done] Persist progress across refresh: autosave position + hero; save on hide/unload, zone change, and every 12s. — Conclusion: Save payload includes playerX/Y + interiorId + facing + world (mobs/loot/depleted/doors); Continue/auto-reload restores `resumeAt` for overworld/interior/dungeon; pagehide/visibility + hero edits + enterZone/interior autosave.
 
 Related unfinished (kept in later sections, do not pick until §0 clears): firemaking, cooking-on-fire, smithing, shop UI, depleted fish-spot move.
 

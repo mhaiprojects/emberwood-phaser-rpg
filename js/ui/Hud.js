@@ -804,6 +804,9 @@ var Hud = {
         } else {
             this.renderHero(hero);
         }
+        if (this.mode === 'world' || this.mode === 'dead') {
+            this.saveGame();
+        }
     },
 
     setStyle: function (style) {
@@ -1620,6 +1623,10 @@ var Hud = {
                 window.game.registry.set('playerX', null);
                 window.game.registry.set('playerY', null);
                 window.game.registry.set('interiorId', null);
+                window.game.registry.set('dungeonFloor', 0);
+                window.game.registry.set('dungeonEscapeFloor', 0);
+                window.game.registry.set('facing', 'down');
+                window.game.registry.set('worldSave', null);
             }
         }
         var iron = document.getElementById('ironman-toggle');
@@ -1679,6 +1686,9 @@ var Hud = {
         registry.set('zone', data.zone || 'haven');
         registry.set('dungeonFloor', typeof data.dungeonFloor === 'number' ? data.dungeonFloor : 0);
         registry.set('dungeonEscapeFloor', typeof data.dungeonEscapeFloor === 'number' ? data.dungeonEscapeFloor : 0);
+        registry.set('facing', data.facing === 'left' || data.facing === 'right'
+            || data.facing === 'up' || data.facing === 'down' ? data.facing : 'down');
+        registry.set('worldSave', data.world || null);
         if (typeof data.playerX === 'number' && typeof data.playerY === 'number') {
             registry.set('resumeAt', {
                 x: data.playerX,
@@ -1716,10 +1726,14 @@ var Hud = {
             'dungeonEscapeFloor',
             window.game.registry.get('dungeonEscapeFloor') || 0
         );
+        window.game.registry.set('facing', world.lastFacing || 'down');
+        if (typeof world.exportWorldSave === 'function') {
+            window.game.registry.set('worldSave', world.exportWorldSave());
+        }
     },
 
     saveGame: function () {
-        if (!window.game || this.mode === 'battle') {
+        if (!window.game || this.mode === 'battle' || this.mode === 'title') {
             return false;
         }
         this.syncSavePosition();

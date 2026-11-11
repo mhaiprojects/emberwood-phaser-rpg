@@ -5,6 +5,17 @@ function defaultQuest() {
     return { id: 'goblins', stage: 0, progress: 0, goal: 5, points: 0 };
 }
 
+function cloneSaveJson(value) {
+    if (value == null) {
+        return value;
+    }
+    try {
+        return JSON.parse(JSON.stringify(value));
+    } catch (err) {
+        return null;
+    }
+}
+
 function buildSavePayload(registry) {
     var hero = registry.get('hero');
     var quest = registry.get('quest');
@@ -14,6 +25,8 @@ function buildSavePayload(registry) {
     var interiorId = registry.get('interiorId');
     var dungeonFloor = registry.get('dungeonFloor');
     var dungeonEscapeFloor = registry.get('dungeonEscapeFloor');
+    var facing = registry.get('facing');
+    var world = registry.get('worldSave');
     if (!hero) {
         return null;
     }
@@ -28,8 +41,12 @@ function buildSavePayload(registry) {
         dungeonEscapeFloor: typeof dungeonEscapeFloor === 'number' && dungeonEscapeFloor > 0
             ? dungeonEscapeFloor
             : 0,
-        hero: JSON.parse(JSON.stringify(hero)),
-        quest: JSON.parse(JSON.stringify(quest || defaultQuest()))
+        facing: facing === 'left' || facing === 'right' || facing === 'up' || facing === 'down'
+            ? facing
+            : 'down',
+        hero: cloneSaveJson(hero),
+        quest: cloneSaveJson(quest || defaultQuest()),
+        world: cloneSaveJson(world) || null
     };
 }
 

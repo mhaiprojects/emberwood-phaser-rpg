@@ -132,19 +132,40 @@ var WorldScene = new Phaser.Class({
         var resumeBoot = this.registry.get('resumeAt');
         var resumeInterior = resumeBoot && resumeBoot.interiorId ? resumeBoot.interiorId : null;
         var resumeDungeon = this.registry.get('dungeonFloor') || 0;
+        var fromSave = !!(resumeBoot || this.registry.get('worldSave'));
+        var facing = this.registry.get('facing');
         if (resumeBoot && typeof resumeBoot.dungeonFloor === 'number') {
             resumeDungeon = resumeBoot.dungeonFloor;
+        }
+        if (this.registry.get('worldSave') && typeof this.importWorldSave === 'function') {
+            this.importWorldSave(this.registry.get('worldSave'));
+            this.registry.set('worldSave', null);
+        }
+        if (facing === 'left' || facing === 'right' || facing === 'up' || facing === 'down') {
+            this.lastFacing = facing;
         }
         if (this.zoneId === 'dungeon' && !(resumeDungeon > 0)) {
             this.zoneId = 'darkmine';
             this.registry.set('zone', 'darkmine');
         }
-        this.enterZone(this.zoneId === 'dungeon' ? 'darkmine' : this.zoneId, null);
         if (resumeDungeon > 0) {
+            this.enterZone(this.zoneId === 'dungeon' ? 'darkmine' : this.zoneId, null, {
+                fromSave: true,
+                preserveResume: true
+            });
             this.enterDungeonFloor(resumeDungeon, { from: 'save' });
         } else if (resumeInterior && typeof interiorById === 'function' && interiorById(resumeInterior)) {
-            this.enterInterior(resumeInterior);
+            this.enterZone(this.zoneId === 'dungeon' ? 'darkmine' : this.zoneId, null, {
+                fromSave: true,
+                preserveResume: true
+            });
+            this.enterInterior(resumeInterior, { from: 'save' });
+        } else {
+            this.enterZone(this.zoneId === 'dungeon' ? 'darkmine' : this.zoneId, null, {
+                fromSave: fromSave
+            });
         }
+        this.applyIdleFacing();
         this.refreshHud();
         this.applyDayNightTint();
         if (this._autosaveTimer) {
@@ -164,10 +185,15 @@ var WorldScene = new Phaser.Class({
         if (this.registry.get('respawnAfterDeath')) {
             this.registry.set('respawnAfterDeath', false);
             Hud.log('You wake in Emberhaven, barely standing.');
+        } else if (fromSave) {
+            Hud.log('Welcome back. Progress restored.');
         } else {
             Hud.log('You arrive in Emberhaven. WASD or arrows to walk, Ctrl to run, or click the ground.');
             Hud.log('Open Inventory (F1) for food. Bury bones, Trade with Mira, Fish/Chop/Mine, or Bank at Elise.');
             Hud.log('The Guildmaster by the courtyard has work.');
+        }
+        if (window.Hud && Hud.saveGame) {
+            Hud.saveGame();
         }
     },
 
@@ -664,9 +690,12 @@ var WorldScene = new Phaser.Class({
         });
     },
 
-    enterZone: function (zoneId, fromDir) {
+    enterZone: function (zoneId, fromDir, opts) {
         var zone = ZONES[zoneId];
         var pendingTravel;
+        var resume;
+        var spawn;
+        opts = opts || {};
         if (!zone) {
             return;
         }
@@ -688,8 +717,10 @@ var WorldScene = new Phaser.Class({
         if (!leavingInterior) {
             if (fromDir && this.zoneId && this.zoneId !== zoneId) {
                 this.snapshotMobs();
-            } else if (!fromDir) {
+            } else if (!fromDir && !opts.fromSave) {
                 this.clearMobZoneState();
+                this.lootZoneState = {};
+                this.depletedTiles = {};
             }
             if (this.zoneId && this.zoneId !== zoneId) {
                 this.snapshotLoot();
@@ -706,10 +737,11 @@ var WorldScene = new Phaser.Class({
         this.dungeonMeta = null;
         this.registry.set('dungeonFloor', 0);
         this.applyTilemap(generateMap(zone.seed, zone.biome, neighbors, zoneId));
+        this.reapplyDepletedTiles();
 
-        var resume = this.registry.get('resumeAt');
-        var spawn;
-        if (!fromDir && resume && typeof resume.x === 'number' && typeof resume.y === 'number') {
+        resume = this.registry.get('resumeAt');
+        if (!fromDir && !opts.preserveResume && resume
+            && typeof resume.x === 'number' && typeof resume.y === 'number') {
             spawn = { x: resume.x, y: resume.y };
             this.registry.set('resumeAt', null);
         } else {
@@ -729,7 +761,9 @@ var WorldScene = new Phaser.Class({
         if (typeof this.refreshWildernessFlag === 'function') {
             this.refreshWildernessFlag();
         }
-        Hud.log('You enter ' + zone.name + '.');
+        if (!opts.fromSave || fromDir) {
+            Hud.log('You enter ' + zone.name + '.');
+        }
         if (pendingTravel && pendingTravel === zoneId) {
             this.travelZoneId = null;
         } else if (pendingTravel) {
@@ -740,8 +774,11 @@ var WorldScene = new Phaser.Class({
         }
     },
 
-    enterInterior: function (interiorId) {
+    enterInterior: function (interiorId, opts) {
         var spec = interiorById(interiorId);
+        var resume;
+        var spawn;
+        opts = opts || {};
         if (!spec) {
             return;
         }
@@ -769,12 +806,22 @@ var WorldScene = new Phaser.Class({
         this.interiorId = interiorId;
         this.clearWorldObjects();
         this.applyTilemap(generateInterior(interiorId));
-        var spawn = interiorSpawnPoint();
+        this.reapplyDepletedTiles();
+        resume = this.registry.get('resumeAt');
+        if (opts.from === 'save' && resume
+            && typeof resume.x === 'number' && typeof resume.y === 'number') {
+            spawn = { x: resume.x, y: resume.y };
+            this.registry.set('resumeAt', null);
+        } else {
+            spawn = interiorSpawnPoint();
+        }
         this.placePlayer(spawn.x, spawn.y);
         this.clearWalk();
         this.refreshHud();
         this.engageGrace = this.time.now + 800;
-        if (spec.enterChat) {
+        if (opts.from === 'save') {
+            Hud.log('You resume inside ' + spec.name + '.');
+        } else if (spec.enterChat) {
             Hud.log(spec.enterChat);
         } else {
             Hud.log('You enter ' + spec.name + '.');
@@ -788,6 +835,7 @@ var WorldScene = new Phaser.Class({
     enterDungeonFloor: function (floor, opts) {
         var built;
         var spawn;
+        var resume;
         var self = this;
         opts = opts || {};
         floor = Math.max(1, floor | 0);
@@ -816,7 +864,13 @@ var WorldScene = new Phaser.Class({
             : { grid: generateInterior('shaft'), meta: {} };
         this.dungeonMeta = built.meta || {};
         this.applyTilemap(built.grid);
-        if (opts.from === 'down' && this.dungeonMeta.stairsDown) {
+        this.reapplyDepletedTiles();
+        resume = this.registry.get('resumeAt');
+        if (opts.from === 'save' && resume
+            && typeof resume.x === 'number' && typeof resume.y === 'number') {
+            spawn = { x: resume.x, y: resume.y };
+            this.registry.set('resumeAt', null);
+        } else if (opts.from === 'down' && this.dungeonMeta.stairsDown) {
             spawn = tileCenter(this.dungeonMeta.stairsDown.x, this.dungeonMeta.stairsDown.y + 1);
         } else if (this.dungeonMeta.stairsUp) {
             spawn = tileCenter(this.dungeonMeta.stairsUp.x, this.dungeonMeta.stairsUp.y - 1);
@@ -935,6 +989,7 @@ var WorldScene = new Phaser.Class({
         this.interiorId = null;
         this.clearWorldObjects();
         this.applyTilemap(generateMap(zone.seed, zone.biome, zoneNeighbors(zone), this.zoneId));
+        this.reapplyDepletedTiles();
         var out = tileCenter(spec.doorTx, spec.doorTy + 1);
         this.placePlayer(out.x, out.y);
         this.clearWalk();
@@ -1193,6 +1248,8 @@ var WorldScene = new Phaser.Class({
     restoreMobState: function (sprite, zoneId, scale) {
         var bag = this.mobZoneState && this.mobZoneState[zoneId];
         var saved = bag && sprite.mobDef && bag[sprite.mobDef.id];
+        var remain;
+        var stillDead;
         if (!saved) {
             return;
         }
@@ -1207,12 +1264,19 @@ var WorldScene = new Phaser.Class({
                 sprite.nameLabel.setPosition(x, y - Math.round(8 * scale) - 6);
             }
         }
-        var remain = this.remainingOfTimer(saved.timer);
-        var stillDead = !saved.alive && remain > 0;
+        remain = typeof saved.remain === 'number'
+            ? Math.max(0, saved.remain)
+            : this.remainingOfTimer(saved.timer);
+        if (!remain && saved.respawnAt && saved.respawnAt > this.time.now) {
+            remain = saved.respawnAt - this.time.now;
+        }
+        stillDead = saved.alive === false && remain > 0;
         if (stillDead) {
             this.hideMob(sprite);
-            sprite.respawnAt = saved.respawnAt || 0;
-            sprite.respawnTimer = saved.timer;
+            this.scheduleMobRespawn(sprite, remain);
+        } else if (saved.alive === false && remain <= 0) {
+            this.reviveMob(sprite);
+            this.rememberMob(sprite, { alive: true, respawnAt: 0, timer: null, remain: 0 });
         }
     },
 
@@ -2335,9 +2399,20 @@ var WorldScene = new Phaser.Class({
         return (this.zoneId || '') + ':' + tx + ',' + ty;
     },
 
+    depleteUntil: function (entry) {
+        if (entry == null) {
+            return 0;
+        }
+        if (typeof entry === 'number') {
+            return entry;
+        }
+        return typeof entry.until === 'number' ? entry.until : 0;
+    },
+
     isTileDepleted: function (tx, ty) {
         var key = this.depleteKey(tx, ty);
-        var until = this.depletedTiles && this.depletedTiles[key];
+        var entry = this.depletedTiles && this.depletedTiles[key];
+        var until = this.depleteUntil(entry);
         if (!until) {
             return false;
         }
@@ -2358,14 +2433,9 @@ var WorldScene = new Phaser.Class({
         }
     },
 
-    depleteResource: function (tx, ty, emptyIndex, respawnMs, fullIndex) {
+    scheduleDepleteRestore: function (key, tx, ty, emptyIndex, fullIndex, ms) {
         var self = this;
-        var key = this.depleteKey(tx, ty);
-        var ms = typeof respawnMs === 'number' ? respawnMs : 10000;
-        this.depletedTiles = this.depletedTiles || {};
-        this.depletedTiles[key] = this.time.now + ms;
-        this.setTileIndex(tx, ty, emptyIndex);
-        this.time.delayedCall(ms, function () {
+        this.time.delayedCall(Math.max(0, ms), function () {
             if (!self.tileGrid || self.zoneId !== key.split(':')[0]) {
                 return;
             }
@@ -2376,6 +2446,210 @@ var WorldScene = new Phaser.Class({
                 self.setTileIndex(tx, ty, fullIndex);
             }
         });
+    },
+
+    depleteResource: function (tx, ty, emptyIndex, respawnMs, fullIndex) {
+        var key = this.depleteKey(tx, ty);
+        var ms = typeof respawnMs === 'number' ? respawnMs : 10000;
+        this.depletedTiles = this.depletedTiles || {};
+        this.depletedTiles[key] = {
+            until: this.time.now + ms,
+            emptyIndex: emptyIndex,
+            fullIndex: fullIndex
+        };
+        this.setTileIndex(tx, ty, emptyIndex);
+        this.scheduleDepleteRestore(key, tx, ty, emptyIndex, fullIndex, ms);
+    },
+
+    reapplyDepletedTiles: function () {
+        var self = this;
+        var prefix;
+        var now;
+        if (!this.depletedTiles || !this.tileGrid || !this.zoneId) {
+            return;
+        }
+        prefix = this.zoneId + ':';
+        now = this.time.now;
+        Object.keys(this.depletedTiles).forEach(function (key) {
+            var entry;
+            var until;
+            var remain;
+            var parts;
+            var tx;
+            var ty;
+            var emptyIndex;
+            var fullIndex;
+            if (key.indexOf(prefix) !== 0) {
+                return;
+            }
+            entry = self.depletedTiles[key];
+            until = self.depleteUntil(entry);
+            remain = until - now;
+            if (!(remain > 0)) {
+                delete self.depletedTiles[key];
+                return;
+            }
+            parts = key.slice(prefix.length).split(',');
+            tx = parseInt(parts[0], 10);
+            ty = parseInt(parts[1], 10);
+            if (!isFinite(tx) || !isFinite(ty) || !self.tileGrid[ty]) {
+                return;
+            }
+            emptyIndex = entry && typeof entry.emptyIndex === 'number'
+                ? entry.emptyIndex
+                : (typeof TILE !== 'undefined' ? TILE.GRASS : 0);
+            fullIndex = entry && typeof entry.fullIndex === 'number'
+                ? entry.fullIndex
+                : (typeof TILE !== 'undefined' ? TILE.TREE : emptyIndex);
+            self.depletedTiles[key] = {
+                until: now + remain,
+                emptyIndex: emptyIndex,
+                fullIndex: fullIndex
+            };
+            self.setTileIndex(tx, ty, emptyIndex);
+            self.scheduleDepleteRestore(key, tx, ty, emptyIndex, fullIndex, remain);
+        });
+    },
+
+    exportWorldSave: function () {
+        var now = this.time.now;
+        var mobs = {};
+        var loot = {};
+        var depleted = {};
+        var self = this;
+        this.snapshotMobs();
+        this.snapshotLoot();
+        Object.keys(this.mobZoneState || {}).forEach(function (zoneId) {
+            var bag = self.mobZoneState[zoneId] || {};
+            var out = {};
+            Object.keys(bag).forEach(function (id) {
+                var row = bag[id] || {};
+                var remain = 0;
+                if (row.alive === false) {
+                    if (typeof row.remain === 'number') {
+                        remain = Math.max(0, row.remain);
+                    } else if (row.timer) {
+                        remain = self.remainingOfTimer(row.timer);
+                    } else if (row.respawnAt) {
+                        remain = Math.max(0, row.respawnAt - now);
+                    }
+                }
+                out[id] = {
+                    alive: row.alive !== false,
+                    x: typeof row.x === 'number' ? row.x : null,
+                    y: typeof row.y === 'number' ? row.y : null,
+                    remain: remain
+                };
+            });
+            mobs[zoneId] = out;
+        });
+        Object.keys(this.lootZoneState || {}).forEach(function (zoneId) {
+            var rows = self.lootZoneState[zoneId] || [];
+            loot[zoneId] = rows.map(function (drop) {
+                return {
+                    id: drop.id,
+                    qty: drop.qty,
+                    x: drop.x,
+                    y: drop.y,
+                    remain: Math.max(0, (drop.until || 0) - now),
+                    skipAuto: !!drop.skipAuto
+                };
+            }).filter(function (drop) {
+                return drop.id && drop.remain > 0;
+            });
+        });
+        Object.keys(this.depletedTiles || {}).forEach(function (key) {
+            var entry = self.depletedTiles[key];
+            var until = self.depleteUntil(entry);
+            var remain = until - now;
+            if (!(remain > 0)) {
+                return;
+            }
+            depleted[key] = {
+                remain: remain,
+                emptyIndex: entry && typeof entry.emptyIndex === 'number' ? entry.emptyIndex : null,
+                fullIndex: entry && typeof entry.fullIndex === 'number' ? entry.fullIndex : null
+            };
+        });
+        return {
+            mobZoneState: mobs,
+            lootZoneState: loot,
+            depletedTiles: depleted,
+            unlockedDoors: JSON.parse(JSON.stringify(this.unlockedDoors || {}))
+        };
+    },
+
+    importWorldSave: function (data) {
+        var now;
+        var self = this;
+        if (!data || typeof data !== 'object') {
+            return;
+        }
+        now = this.time.now;
+        this.mobZoneState = {};
+        Object.keys(data.mobZoneState || {}).forEach(function (zoneId) {
+            var bag = data.mobZoneState[zoneId] || {};
+            self.mobZoneState[zoneId] = {};
+            Object.keys(bag).forEach(function (id) {
+                var row = bag[id] || {};
+                self.mobZoneState[zoneId][id] = {
+                    alive: row.alive !== false,
+                    x: row.x,
+                    y: row.y,
+                    remain: typeof row.remain === 'number' ? Math.max(0, row.remain) : 0,
+                    respawnAt: 0,
+                    timer: null
+                };
+            });
+        });
+        this.lootZoneState = {};
+        Object.keys(data.lootZoneState || {}).forEach(function (zoneId) {
+            var rows = data.lootZoneState[zoneId] || [];
+            self.lootZoneState[zoneId] = rows.map(function (drop) {
+                var remain = typeof drop.remain === 'number'
+                    ? drop.remain
+                    : Math.max(0, (drop.until || 0) - Date.now());
+                return {
+                    id: drop.id,
+                    qty: drop.qty,
+                    x: drop.x,
+                    y: drop.y,
+                    until: now + Math.max(0, remain),
+                    skipAuto: !!drop.skipAuto
+                };
+            }).filter(function (drop) {
+                return drop.id && drop.until > now;
+            });
+        });
+        this.depletedTiles = {};
+        Object.keys(data.depletedTiles || {}).forEach(function (key) {
+            var entry = data.depletedTiles[key];
+            var remain;
+            if (entry == null) {
+                return;
+            }
+            if (typeof entry === 'number') {
+                remain = Math.max(0, entry - Date.now());
+                if (remain > 0) {
+                    self.depletedTiles[key] = { until: now + remain };
+                }
+                return;
+            }
+            remain = typeof entry.remain === 'number'
+                ? entry.remain
+                : Math.max(0, (entry.until || 0) - Date.now());
+            if (!(remain > 0)) {
+                return;
+            }
+            self.depletedTiles[key] = {
+                until: now + remain,
+                emptyIndex: typeof entry.emptyIndex === 'number' ? entry.emptyIndex : null,
+                fullIndex: typeof entry.fullIndex === 'number' ? entry.fullIndex : null
+            };
+        });
+        this.unlockedDoors = data.unlockedDoors && typeof data.unlockedDoors === 'object'
+            ? JSON.parse(JSON.stringify(data.unlockedDoors))
+            : {};
     },
 
     tryCompleteFish: function () {
