@@ -61,7 +61,8 @@ function heroCombatLevelForAgro(hero) {
     return 1;
 }
 
-/* Mob initiates on the player only if alwaysAgro, or mob level is strictly higher. */
+/* Proactive agro only when mobLevel > player combat level.
+ * Equal/higher player combat → ignore. alwaysAgro still forces agro. */
 function mobShouldAgroHero(def, hero) {
     if (mobAlwaysAgro(def)) {
         return true;

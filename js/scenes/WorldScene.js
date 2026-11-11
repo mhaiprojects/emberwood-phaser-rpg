@@ -1785,7 +1785,15 @@ var WorldScene = new Phaser.Class({
             var ev = pointer.event;
             var onMob = this.pickSprite(this.mobs, x, y, 18);
             var onNpc = this.pickSprite(this.npcs, x, y, 18);
+            var onGrave = this.pickGravestone(x, y, 18);
             var lootPile = this.pickLootPile(x, y, 18);
+            if (onGrave) {
+                this.showGraveContextAt(onGrave, {
+                    clientX: ev && ev.clientX != null ? ev.clientX : 16,
+                    clientY: ev && ev.clientY != null ? ev.clientY : 16
+                });
+                return;
+            }
             if (lootPile && lootPile.length) {
                 this.showLootContextAt(lootPile, {
                     clientX: ev && ev.clientX != null ? ev.clientX : 16,
@@ -3773,6 +3781,18 @@ var WorldScene = new Phaser.Class({
             }
             return;
         }
+        var grave = this.pickGravestone(x, y, 18);
+        if (grave) {
+            if (this.clearWalk) {
+                this.clearWalk();
+            }
+            this.talkTarget = null;
+            this.engageTarget = null;
+            this.lootTarget = null;
+            this.clearFish();
+            this.showGraveContextAt(grave, pos);
+            return;
+        }
         var lootPile = this.pickLootPile(x, y, 18);
         if (lootPile && lootPile.length) {
             if (this.clearWalk) {
@@ -4841,6 +4861,7 @@ var WorldScene = new Phaser.Class({
     beginFight: function (mob, opts) {
         var range;
         var dist;
+        var hero;
         opts = opts || {};
         if (this.uiPaused()) {
             return;
@@ -4850,6 +4871,10 @@ var WorldScene = new Phaser.Class({
         }
         dist = this.fightDistancePx(mob);
         if (opts.fromMob) {
+            hero = this.registry.get('hero');
+            if (typeof mobShouldAgroHero === 'function' && !mobShouldAgroHero(mob.mobDef, hero)) {
+                return;
+            }
             range = typeof mobAttackRangePx === 'function' ? mobAttackRangePx(mob) : MELEE_ENGAGE_PX;
             if (dist > range) {
                 return;
@@ -5420,6 +5445,16 @@ var WorldScene = new Phaser.Class({
         });
     },
 
+    clearMobAgroChase: function (mob) {
+        if (!mob) {
+            return;
+        }
+        if (mob.agroChasing && mob.body) {
+            mob.body.setVelocity(0, 0);
+        }
+        mob.agroChasing = false;
+    },
+
     tickMobAgro: function () {
         var hero;
         var fightMob;
@@ -5436,6 +5471,9 @@ var WorldScene = new Phaser.Class({
             return;
         }
         if (this.encounterLock || this.time.now < this.engageGrace) {
+            this.mobs.children.iterate(function (mob) {
+                self.clearMobAgroChase(mob);
+            });
             return;
         }
         hero = this.registry.get('hero');
@@ -5445,22 +5483,20 @@ var WorldScene = new Phaser.Class({
         this.mobs.children.iterate(function (mob) {
             var shouldAgro;
             if (started || !mob || !mob.aliveMob || !mob.body || mob === fightMob) {
-                if (mob) {
-                    mob.agroChasing = false;
-                }
+                self.clearMobAgroChase(mob);
                 return;
             }
             shouldAgro = typeof mobShouldAgroHero === 'function'
                 ? mobShouldAgroHero(mob.mobDef, hero)
                 : false;
             if (!shouldAgro) {
-                mob.agroChasing = false;
+                self.clearMobAgroChase(mob);
                 return;
             }
             dist = self.fightDistancePx(mob);
             attackRange = typeof mobAttackRangePx === 'function' ? mobAttackRangePx(mob) : MELEE_ENGAGE_PX;
             if (dist > agroRange) {
-                mob.agroChasing = false;
+                self.clearMobAgroChase(mob);
                 return;
             }
             mob.agroChasing = true;
