@@ -121,9 +121,9 @@ function clampMoveNoCornerCut(grid, x, y, vx, vy) {
 }
 
 /**
- * Loot "ground": walkable open tiles (grass / grass2 / path / flower, …).
+ * Loot "ground": walkable open tiles (grass / grass2 / path / flower / dock, …).
  * Excludes rocks, trees, water, walls, doors, stalls, ranges, anvils, booths,
- * shrines, furnaces, tombs, docks, boats, and other blocked scenery.
+ * shrines, furnaces, tombs, boats, and other blocked scenery.
  */
 function isGroundTile(grid, tx, ty) {
     return tileWalkable(grid, tx, ty);
@@ -158,6 +158,45 @@ function nearestWalkableTile(grid, tx, ty) {
         }
     }
     return null;
+}
+
+/**
+ * Prefer a walkable stand tile whose center is within rangePx of (tx,ty) center
+ * (for fishing/shore clicks). Falls back to nearestWalkableTile.
+ */
+function nearestStandTileInRange(grid, tx, ty, rangePx) {
+    var size = typeof TILE_SIZE === 'number' ? TILE_SIZE : 16;
+    var range = typeof rangePx === 'number' ? rangePx : 28;
+    var spotX = tx * size + size / 2;
+    var spotY = ty * size + size / 2;
+    var best = null;
+    var bestDist = Infinity;
+    var rad = Math.max(1, Math.ceil(range / size) + 1);
+    var dy;
+    var dx;
+    var nx;
+    var ny;
+    var cx;
+    var cy;
+    var dist;
+    for (dy = -rad; dy <= rad; dy++) {
+        for (dx = -rad; dx <= rad; dx++) {
+            nx = tx + dx;
+            ny = ty + dy;
+            if (!tileWalkable(grid, nx, ny)) {
+                continue;
+            }
+            cx = nx * size + size / 2;
+            cy = ny * size + size / 2;
+            dist = Math.sqrt((cx - spotX) * (cx - spotX) + (cy - spotY) * (cy - spotY));
+            if (dist >= range || dist >= bestDist) {
+                continue;
+            }
+            bestDist = dist;
+            best = { tx: nx, ty: ny };
+        }
+    }
+    return best || nearestWalkableTile(grid, tx, ty);
 }
 
 function nearestGroundTile(grid, tx, ty) {

@@ -25,7 +25,7 @@ var FLEE_GRACE_MS = 1100;
 var COLLIDE_TILES = [
     TILE.WATER, TILE.TREE, TILE.ROCK, TILE.SHRINE,
     TILE.STALL, TILE.RANGE, TILE.ANVIL, TILE.BOOTH, TILE.FURNACE,
-    TILE.DOCK, TILE.BOAT, TILE.TOMB, TILE.DOOR, TILE.WALL
+    TILE.BOAT, TILE.TOMB, TILE.DOOR, TILE.WALL
 ];
 var GROUND_FIRE_MS = 45000;
 var STATION_RANGE = 28;
@@ -1518,6 +1518,20 @@ var WorldScene = new Phaser.Class({
                 this.biomeFx.push(mist);
             }
         }
+        if (this.zoneId === 'southshore' && typeof SHORE_PROPS !== 'undefined' && SHORE_PROPS.spots) {
+            for (i = 0; i < SHORE_PROPS.spots.length; i++) {
+                mist = this.add.circle(
+                    SHORE_PROPS.spots[i].x * 16 + 8,
+                    SHORE_PROPS.spots[i].y * 16 + 8,
+                    5,
+                    0x7ec8ff,
+                    0.45
+                ).setDepth(6).setOrigin(0.5);
+                mist._fishSpotPulse = true;
+                mist._mistPhase = i * 1.1;
+                this.biomeFx.push(mist);
+            }
+        }
         if (biome === 'swamp' || this.zoneId === 'mire') {
             for (i = 0; i < 10; i++) {
                 mist = this.add.rectangle(
@@ -1551,6 +1565,11 @@ var WorldScene = new Phaser.Class({
             }
             if (mist._waterWash) {
                 mist.setAlpha(pulse);
+                continue;
+            }
+            if (mist._fishSpotPulse) {
+                mist.setAlpha(0.28 + 0.28 * (0.5 + 0.5 * Math.sin(t * 2.6 + mist._mistPhase)));
+                mist.setScale(0.85 + 0.2 * (0.5 + 0.5 * Math.sin(t * 2.1 + mist._mistPhase)));
                 continue;
             }
             mist.x += Math.sin(t + mist._mistPhase) * 0.15;
@@ -2271,6 +2290,18 @@ var WorldScene = new Phaser.Class({
         return typeof tileCenter === 'function' ? tileCenter(hit.tx, hit.ty) : null;
     },
 
+    fishStandTile: function (hit) {
+        if (!hit || !this.tileGrid) {
+            return null;
+        }
+        if (typeof nearestStandTileInRange === 'function') {
+            return nearestStandTileInRange(this.tileGrid, hit.tx, hit.ty, FISH_RANGE);
+        }
+        return typeof nearestWalkableTile === 'function'
+            ? nearestWalkableTile(this.tileGrid, hit.tx, hit.ty)
+            : null;
+    },
+
     fishSpotInRange: function (hit) {
         if (!hit || !this.player) {
             return false;
@@ -2279,9 +2310,7 @@ var WorldScene = new Phaser.Class({
         if (spot && Phaser.Math.Distance.Between(this.player.x, this.player.y, spot.x, spot.y) < FISH_RANGE) {
             return true;
         }
-        var near = typeof nearestWalkableTile === 'function'
-            ? nearestWalkableTile(this.tileGrid, hit.tx, hit.ty)
-            : null;
+        var near = this.fishStandTile(hit);
         if (!near) {
             return false;
         }
@@ -2308,9 +2337,7 @@ var WorldScene = new Phaser.Class({
         if (this.fishSpotInRange(hit)) {
             return this.tryFishSpot(hit);
         }
-        var near = typeof nearestWalkableTile === 'function'
-            ? nearestWalkableTile(this.tileGrid, hit.tx, hit.ty)
-            : null;
+        var near = this.fishStandTile(hit);
         if (!near) {
             this.clearFish();
             return this.examineScenery(hit);

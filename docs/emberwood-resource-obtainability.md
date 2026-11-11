@@ -47,7 +47,7 @@ Failure chat: `You need level N.`
 
 ### Fishing (Southshore)
 
-- **Where:** three fish spots at tiles `(16,24)`, `(20,24)`, `(24,23)` (`SHORE_PROPS.spots`).
+- **Where:** three fish spots at tiles `(13,22)` (dockside), `(15,21)`, `(23,21)` (`SHORE_PROPS.spots`) — adjacent to walkable shore/dock.
 - **Tool:** small fishing net (`net`). Timed 3–5s cast; success chance scales with Fishing level.
 - **Catch:** `rawshrimp` + Fishing XP (10).
 - **Also:** crabs drop `rawshrimp`.
