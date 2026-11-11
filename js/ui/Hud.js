@@ -899,6 +899,17 @@ var Hud = {
             }
             return;
         }
+        if (verb === 'drink') {
+            var drunk = typeof drinkItem === 'function' ? drinkItem(hero, id) : null;
+            if (!drunk) {
+                this.log('You do not have that.');
+                return;
+            }
+            this.saveHero(hero);
+            this.log('You drink the ' + drunk.name +
+                (drunk.bonus ? (' (+' + drunk.bonus + ' damage briefly).') : '.'));
+            return;
+        }
         if (verb === 'wield' || verb === 'wear') {
             this.equipFromInventory(id);
             return;
@@ -911,11 +922,19 @@ var Hud = {
             this.tanFromInventory(id);
             return;
         }
+        if (verb === 'examine') {
+            this.examineItem(id);
+            return;
+        }
+        if (verb === 'use') {
+            this.beginUseOn(id);
+            return;
+        }
         if (verb === 'drop') {
             this.dropItem(id);
             return;
         }
-        this.log(itemName(id) + '.');
+        this.beginUseOn(id);
     },
 
     equipFromInventory: function (id) {
@@ -1510,19 +1529,43 @@ var Hud = {
             return;
         }
         var items = [];
-        var verb = typeof itemDefaultVerb === 'function' ? itemDefaultVerb(id) : (typeof itemEquipVerb === 'function' ? itemEquipVerb(id) : null);
-        if (verb === 'wield') {
-            items.push({ label: 'Wield', action: 'wield' });
-        } else if (verb === 'wear') {
-            items.push({ label: 'Wear', action: 'wear' });
-        } else if (verb === 'bury') {
-            items.push({ label: 'Bury', action: 'bury' });
-        } else if (verb === 'tan') {
-            items.push({ label: 'Tan', action: 'tan' });
+        var seen = {};
+        var def = ITEM_DB[id] || {};
+        var verb = typeof itemDefaultVerb === 'function'
+            ? itemDefaultVerb(id)
+            : (typeof itemEquipVerb === 'function' ? itemEquipVerb(id) : 'use');
+        var equipVerb = typeof itemEquipVerb === 'function' ? itemEquipVerb(id) : null;
+        function pushAction(action, text) {
+            if (!action || seen[action]) {
+                return;
+            }
+            seen[action] = true;
+            items.push({
+                label: text || (typeof itemDefaultVerbLabel === 'function'
+                    ? itemDefaultVerbLabel(action)
+                    : action),
+                action: action
+            });
         }
-        items.push({ label: 'Use', action: 'use' });
-        items.push({ label: 'Drop', action: 'drop' });
-        items.push({ label: 'Examine', action: 'examine' });
+        pushAction(verb || 'use');
+        if (def.heal) {
+            pushAction('eat', 'Eat');
+        }
+        if (def.drink || id === 'attackpot') {
+            pushAction('drink', 'Drink');
+        }
+        if (equipVerb) {
+            pushAction(equipVerb);
+        }
+        if (def.bury) {
+            pushAction('bury', 'Bury');
+        }
+        if (def.tan) {
+            pushAction('tan', 'Tan');
+        }
+        pushAction('use', 'Use');
+        pushAction('drop', 'Drop');
+        pushAction('examine', 'Examine');
         this.showContextMenu(items, {
             kind: 'inv',
             itemId: id,
@@ -2696,6 +2739,37 @@ var Hud = {
         }
         if (action === 'tan') {
             this.tanFromInventory(target.itemId);
+            return;
+        }
+        if (action === 'eat') {
+            var eatHero = this.hero();
+            var eatDef = ITEM_DB[target.itemId];
+            if (!eatHero || !eatDef || !eatDef.heal) {
+                return;
+            }
+            if (eatHero.hp >= eatHero.maxHp) {
+                this.log('You are already at full health.');
+                return;
+            }
+            var eatenMenu = typeof eatItem === 'function' ? eatItem(eatHero, target.itemId) : null;
+            if (!eatenMenu) {
+                this.log('You do not have that.');
+                return;
+            }
+            this.saveHero(eatHero);
+            this.log('You eat ' + eatenMenu.name + ' and recover ' + eatenMenu.heal + ' HP.');
+            return;
+        }
+        if (action === 'drink') {
+            var drinkHero = this.hero();
+            var drunkMenu = typeof drinkItem === 'function' ? drinkItem(drinkHero, target.itemId) : null;
+            if (!drunkMenu) {
+                this.log('You do not have that.');
+                return;
+            }
+            this.saveHero(drinkHero);
+            this.log('You drink the ' + drunkMenu.name +
+                (drunkMenu.bonus ? (' (+' + drunkMenu.bonus + ' damage briefly).') : '.'));
             return;
         }
         if (action === 'use') {

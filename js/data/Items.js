@@ -74,7 +74,7 @@ var ITEM_DB = {
     naturerune: { name: 'Nature rune', icon: 'assets/svg/items/naturerune.svg', stack: true, rune: true, value: 12, buyPrice: 18, sellPrice: 4, examine: 'A green rune used in alchemy.' },
     cluescroll: { name: 'Clue scroll', icon: 'assets/svg/ui/quest.svg', stack: false, questItem: true, value: 0, examine: 'A clue written in fading ink.' },
     guam: { name: 'Guam leaf', icon: 'assets/svg/items/feather.svg', stack: true, value: 2, buyPrice: 5, sellPrice: 1, examine: 'A bitter herb leaf.' },
-    attackpot: { name: 'Attack potion', icon: 'assets/svg/items/shrimp.svg', stack: true, value: 12, examine: 'A vial boosting attack briefly.' },
+    attackpot: { name: 'Attack potion', icon: 'assets/svg/items/shrimp.svg', stack: true, drink: true, value: 12, examine: 'A vial boosting attack briefly.' },
     oakplank: { name: 'Oak plank', icon: 'assets/svg/items/logs.svg', stack: true, value: 6, examine: 'A sawn oak plank.' },
     shortbowunstrung: { name: 'Shortbow (u)', icon: 'assets/svg/items/shortbow.svg', stack: true, value: 8, examine: 'An unstrung shortbow.' },
     shipcrate: { name: 'Lost crate mark', icon: 'assets/svg/items/key.svg', questItem: true, value: 0, examine: 'A wax seal from Ned\'s missing shipment.' },
@@ -763,15 +763,41 @@ function itemEquipVerb(id) {
     return 'wear';
 }
 
+function itemIsMaterial(id) {
+    var def = ITEM_DB[id];
+    if (!def || !id) {
+        return false;
+    }
+    if (def.tool || def.cook || def.firemake || def.rune || def.tan) {
+        return true;
+    }
+    if (id === 'tinderbox' || id === 'string' || id === 'leather' || id === 'feather'
+            || id === 'rabbitfur' || id === 'guam' || id === 'drakescale'
+            || id === 'runeessence' || id === 'oakplank' || id === 'shortbowunstrung') {
+        return true;
+    }
+    if (id === 'copper' || id === 'tin' || id === 'iron' || id === 'diamondore' || id === 'dragoniteore') {
+        return true;
+    }
+    if (id.indexOf('bar') === id.length - 3 || id.indexOf('logs') >= 0) {
+        return true;
+    }
+    return false;
+}
+
 function itemDefaultVerb(id) {
     var def = ITEM_DB[id];
+    var equip;
     if (!def) {
         return null;
     }
     if (def.heal) {
         return 'eat';
     }
-    var equip = itemEquipVerb(id);
+    if (def.drink || id === 'attackpot') {
+        return 'drink';
+    }
+    equip = itemEquipVerb(id);
     if (equip) {
         return equip;
     }
@@ -781,7 +807,62 @@ function itemDefaultVerb(id) {
     if (def.tan) {
         return 'tan';
     }
-    return 'drop';
+    if (def.questItem) {
+        return 'examine';
+    }
+    if (id === 'coins' || id === 'burntshrimp' || id === 'burntbeef' || id === 'key') {
+        return 'examine';
+    }
+    if (def.tool || itemIsMaterial(id)) {
+        return 'use';
+    }
+    return 'use';
+}
+
+function itemDefaultVerbLabel(verb) {
+    if (verb === 'eat') {
+        return 'Eat';
+    }
+    if (verb === 'drink') {
+        return 'Drink';
+    }
+    if (verb === 'wield') {
+        return 'Wield';
+    }
+    if (verb === 'wear') {
+        return 'Wear';
+    }
+    if (verb === 'bury') {
+        return 'Bury';
+    }
+    if (verb === 'tan') {
+        return 'Tan';
+    }
+    if (verb === 'examine') {
+        return 'Examine';
+    }
+    if (verb === 'use') {
+        return 'Use';
+    }
+    if (verb === 'drop') {
+        return 'Drop';
+    }
+    return verb ? (verb.charAt(0).toUpperCase() + verb.slice(1)) : 'Use';
+}
+
+function drinkItem(hero, id) {
+    var def = ITEM_DB[id];
+    if (!hero || !def || !(def.drink || id === 'attackpot')) {
+        return null;
+    }
+    if (!takeItem(hero, id, 1)) {
+        return null;
+    }
+    if (id === 'attackpot') {
+        hero.attackPotUntil = Date.now() + 60000;
+        hero.attackPotBonus = 3;
+    }
+    return { name: def.name, id: id, bonus: hero.attackPotBonus || 0 };
 }
 
 function itemUseOnKinds(id) {
@@ -1945,20 +2026,34 @@ function advanceClueDig(hero, world) {
     return 'step';
 }
 
+function attackPotionBonus(hero) {
+    if (!hero || typeof hero.attackPotBonus !== 'number' || hero.attackPotBonus < 1) {
+        return 0;
+    }
+    if (typeof hero.attackPotUntil === 'number' && Date.now() > hero.attackPotUntil) {
+        hero.attackPotBonus = 0;
+        hero.attackPotUntil = 0;
+        return 0;
+    }
+    return hero.attackPotBonus;
+}
+
 function equippedWeaponDamage(hero, fallback) {
     var base = typeof fallback === 'number' ? fallback : 0;
+    var def;
+    var id;
     if (!hero || !hero.equipment) {
-        return base;
+        return base + attackPotionBonus(hero);
     }
-    var id = hero.equipment.weapon;
+    id = hero.equipment.weapon;
     if (!id) {
-        return base;
+        return base + attackPotionBonus(hero);
     }
-    var def = ITEM_DB[id];
+    def = ITEM_DB[id];
     if (def && typeof def.damage === 'number') {
-        return def.damage;
+        return def.damage + attackPotionBonus(hero);
     }
-    return base;
+    return base + attackPotionBonus(hero);
 }
 
 var DEFAULT_MELEE_ATTACK_RANGE = 24;
