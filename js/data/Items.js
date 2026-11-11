@@ -2345,6 +2345,91 @@ function syncCoins(hero) {
     }
 }
 
+function mergeDropStack(list, id, qty) {
+    var stack;
+    qty = qty || 0;
+    if (!id || !(qty > 0)) {
+        return;
+    }
+    stack = findStack(list, id);
+    if (stack) {
+        stack.qty += qty;
+    } else {
+        list.push({ id: id, qty: qty });
+    }
+}
+
+/* Strip inventory + worn gear into a reclaim list. Quest items stay on the hero. */
+function stripHeroForGravestone(hero) {
+    var dropped = [];
+    var kept = [];
+    var i;
+    var stack;
+    var slot;
+    var id;
+    var qty;
+    var gold;
+    if (!hero) {
+        return dropped;
+    }
+    ensureEquipment(hero);
+    for (i = 0; i < EQUIP_SLOTS.length; i++) {
+        slot = EQUIP_SLOTS[i][0];
+        id = hero.equipment[slot];
+        if (!id) {
+            continue;
+        }
+        qty = equippedQty(hero, slot);
+        if (!(qty > 0)) {
+            qty = 1;
+        }
+        if (isQuestItem(id)) {
+            mergeDropStack(kept, id, qty);
+        } else {
+            mergeDropStack(dropped, id, qty);
+        }
+        hero.equipment[slot] = null;
+        hero.equipmentQty[slot] = 0;
+    }
+    for (i = 0; i < (hero.inventory || []).length; i++) {
+        stack = hero.inventory[i];
+        if (!stack || !stack.id || !(stack.qty > 0)) {
+            continue;
+        }
+        if (isQuestItem(stack.id)) {
+            kept.push({ id: stack.id, qty: stack.qty });
+        } else {
+            mergeDropStack(dropped, stack.id, stack.qty);
+        }
+    }
+    gold = typeof hero.gold === 'number' ? hero.gold : 0;
+    hero.inventory = kept;
+    hero.gold = 0;
+    if (gold > 0) {
+        mergeDropStack(dropped, 'coins', gold);
+    }
+    syncCoins(hero);
+    return dropped;
+}
+
+function reclaimGravestoneItems(hero, items) {
+    var remain = [];
+    var i;
+    var row;
+    items = items || [];
+    for (i = 0; i < items.length; i++) {
+        row = items[i];
+        if (!row || !row.id || !(row.qty > 0)) {
+            continue;
+        }
+        if (addItem(hero, row.id, row.qty)) {
+            continue;
+        }
+        remain.push({ id: row.id, qty: row.qty });
+    }
+    return remain;
+}
+
 function heroSkillLevel(hero, skill) {
     if (!hero || !hero.skills || !hero.skills[skill]) {
         return 1;

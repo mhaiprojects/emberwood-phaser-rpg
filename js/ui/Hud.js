@@ -1887,17 +1887,31 @@ var Hud = {
 
     respawnInHaven: function () {
         var hero = this.hero();
+        var reg;
+        var spawn;
         if (hero) {
             hero.hp = this.safeDeathHp(hero);
             this.saveHero(hero);
         }
         this.hideDead();
-        this.mode = 'world';
+        this.setMode('world');
         if (!window.game) {
             return;
         }
-        window.game.registry.set('zone', 'haven');
-        window.game.registry.set('battleOutcome', null);
+        reg = window.game.registry;
+        reg.set('zone', 'haven');
+        reg.set('battleOutcome', null);
+        reg.set('resumeAt', null);
+        reg.set('interiorId', null);
+        reg.set('dungeonFloor', 0);
+        if (typeof defaultWorldSpawn === 'function') {
+            spawn = defaultWorldSpawn();
+            reg.set('playerX', spawn.x);
+            reg.set('playerY', spawn.y);
+        } else {
+            reg.set('playerX', null);
+            reg.set('playerY', null);
+        }
         var world = window.game.scene.getScene('WorldScene');
         if (window.game.scene.isActive('WorldScene') && world && world.player && world.respawnInHaven) {
             world.respawnInHaven();
@@ -1907,7 +1921,7 @@ var Hud = {
             }
             return;
         }
-        window.game.registry.set('respawnAfterDeath', true);
+        reg.set('respawnAfterDeath', true);
         window.game.scene.getScenes(true).forEach(function (scene) {
             var key = scene.sys.settings.key;
             if (key && key !== 'WorldScene') {

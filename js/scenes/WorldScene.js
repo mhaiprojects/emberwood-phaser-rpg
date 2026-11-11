@@ -29,6 +29,7 @@ var GROUND_FIRE_MS = 45000;
 var STATION_RANGE = 28;
 var MELEE_ENGAGE_PX = 24;
 var LOOT_PICKUP_PX = 12;
+var GRAVE_RANGE_PX = 28;
 var HP_REGEN_BASE_MS = 4500;
 var HP_REGEN_TOWN_MS = 1800;
 var HP_REGEN_CAMP_MS = 1100;
@@ -72,7 +73,9 @@ var WorldScene = new Phaser.Class({
         this.lastFacing = 'down';
         this.groundLoot = [];
         this.groundFires = [];
+        this.gravestones = [];
         this.lootZoneState = {};
+        this.graveZoneState = {};
         this.mobZoneState = {};
         this.unlockedDoors = {};
         this.doorFx = {};
@@ -83,7 +86,9 @@ var WorldScene = new Phaser.Class({
         this.dungeonMeta = null;
         this._regenAcc = 0;
         this.lootTarget = null;
+        this.graveTarget = null;
         this.ensureGroundFireTexture();
+        this.ensureGravestoneTexture();
 
         this.marker = this.add.rectangle(0, 0, 6, 6, DEST_X_COLOR).setVisible(false).setDepth(8);
         this.destX = this.makeDestX();
@@ -200,20 +205,23 @@ var WorldScene = new Phaser.Class({
     },
 
     respawnInHaven: function () {
+        var spawn = defaultWorldSpawn();
         this.encounterLock = false;
         this.exitLock = false;
         this.lastFought = null;
         this.engageTarget = null;
         this.talkTarget = null;
+        this.graveTarget = null;
         this.clearGather();
+        this.registry.set('resumeAt', null);
+        this.registry.set('interiorId', null);
+        this.registry.set('dungeonFloor', 0);
         if (this.interiorId || this.zoneId !== 'haven') {
-            this.enterZone('haven', null);
-        } else {
-            var spawn = defaultWorldSpawn();
-            this.placePlayer(spawn.x, spawn.y);
-            this.clearWalk();
-            this.refreshHud();
+            this.enterZone('haven', null, { fromSave: true });
         }
+        this.placePlayer(spawn.x, spawn.y);
+        this.clearWalk();
+        this.refreshHud();
         this.engageGrace = this.time.now + 800;
     },
 
@@ -722,10 +730,12 @@ var WorldScene = new Phaser.Class({
             } else if (!fromDir && !opts.fromSave) {
                 this.clearMobZoneState();
                 this.lootZoneState = {};
+                this.graveZoneState = {};
                 this.depletedTiles = {};
             }
             if (this.zoneId && this.zoneId !== zoneId) {
                 this.snapshotLoot();
+                this.snapshotGraves();
             }
         }
         this.interiorId = null;
@@ -754,6 +764,7 @@ var WorldScene = new Phaser.Class({
 
         this.spawnPeople(zoneId);
         this.restoreLoot(zoneId);
+        this.restoreGraves(zoneId);
         this.spawnZoneCampfires(zoneId);
         this.refreshOreNodeMarkers();
         this.buildBiomeFx();
@@ -805,6 +816,7 @@ var WorldScene = new Phaser.Class({
         if (!this.interiorId) {
             this.snapshotMobs();
             this.snapshotLoot();
+            this.snapshotGraves();
         }
         this.interiorId = interiorId;
         this.clearWorldObjects();
@@ -855,6 +867,7 @@ var WorldScene = new Phaser.Class({
         if (this.zoneId !== 'dungeon') {
             this.snapshotMobs();
             this.snapshotLoot();
+            this.snapshotGraves();
         }
         this.interiorId = null;
         this.dungeonFloor = floor;
@@ -998,6 +1011,7 @@ var WorldScene = new Phaser.Class({
         this.clearWalk();
         this.spawnPeople(this.zoneId);
         this.restoreLoot(this.zoneId);
+        this.restoreGraves(this.zoneId);
         this.spawnZoneCampfires(this.zoneId);
         this.refreshOreNodeMarkers();
         this.refreshHud();
@@ -1029,6 +1043,7 @@ var WorldScene = new Phaser.Class({
         }
         this.floatLabels.length = 0;
         this.clearLoot();
+        this.clearGravestones();
         this.clearGroundFires();
         this.npcs.clear(true, true);
         this.mobs.clear(true, true);
@@ -2718,6 +2733,7 @@ var WorldScene = new Phaser.Class({
         var self = this;
         this.snapshotMobs();
         this.snapshotLoot();
+        this.snapshotGraves();
         Object.keys(this.mobZoneState || {}).forEach(function (zoneId) {
             var bag = self.mobZoneState[zoneId] || {};
             var out = {};
@@ -2757,6 +2773,23 @@ var WorldScene = new Phaser.Class({
                 return drop.id && drop.remain > 0;
             });
         });
+        var graves = {};
+        Object.keys(this.graveZoneState || {}).forEach(function (zoneId) {
+            var rows = self.graveZoneState[zoneId] || [];
+            graves[zoneId] = rows.map(function (grave) {
+                return {
+                    x: grave.x,
+                    y: grave.y,
+                    items: (grave.items || []).map(function (row) {
+                        return { id: row.id, qty: row.qty };
+                    }).filter(function (row) {
+                        return row.id && row.qty > 0;
+                    })
+                };
+            }).filter(function (grave) {
+                return grave.items && grave.items.length;
+            });
+        });
         Object.keys(this.depletedTiles || {}).forEach(function (key) {
             var entry = self.depletedTiles[key];
             var until = self.depleteUntil(entry);
@@ -2773,6 +2806,7 @@ var WorldScene = new Phaser.Class({
         return {
             mobZoneState: mobs,
             lootZoneState: loot,
+            graveZoneState: graves,
             depletedTiles: depleted,
             unlockedDoors: JSON.parse(JSON.stringify(this.unlockedDoors || {}))
         };
@@ -2818,6 +2852,23 @@ var WorldScene = new Phaser.Class({
                 };
             }).filter(function (drop) {
                 return drop.id && drop.until > now;
+            });
+        });
+        this.graveZoneState = {};
+        Object.keys(data.graveZoneState || {}).forEach(function (zoneId) {
+            var rows = data.graveZoneState[zoneId] || [];
+            self.graveZoneState[zoneId] = rows.map(function (grave) {
+                return {
+                    x: grave.x,
+                    y: grave.y,
+                    items: (grave.items || []).map(function (row) {
+                        return { id: row.id, qty: row.qty };
+                    }).filter(function (row) {
+                        return row.id && row.qty > 0;
+                    })
+                };
+            }).filter(function (grave) {
+                return grave.items && grave.items.length;
             });
         });
         this.depletedTiles = {};

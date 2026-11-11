@@ -369,6 +369,10 @@ var BattleScene = new Phaser.Class({
         Hud.hideBattle();
         this.scene.sleep('UIScene');
         if (this.outcome === 'lose') {
+            var world = this.scene.get('WorldScene');
+            if (world && world.spawnDeathGravestone) {
+                world.spawnDeathGravestone();
+            }
             this.scene.stop('UIScene');
             this.scene.stop('WorldScene');
             this.scene.start('GameOverScene');
