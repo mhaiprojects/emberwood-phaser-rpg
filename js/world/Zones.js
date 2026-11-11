@@ -142,6 +142,8 @@ function applyNpcTutor(hero, def) {
         gift = 'bronzeaxe';
     } else if (def.tutor === 'cows') {
         gift = 'string';
+    } else if (def.tutor === 'firemaking') {
+        gift = 'tinderbox';
     }
     if (gift && typeof addItem === 'function' && typeof itemQty === 'function' && itemQty(hero, gift) < 1) {
         addItem(hero, gift, gift === 'string' ? 3 : 1);
@@ -149,8 +151,12 @@ function applyNpcTutor(hero, def) {
     return true;
 }
 
-var QUEST_HEAD_STAR = 0x3aa0ff;
-var QUEST_HEAD_COMPASS = 0xf0c040;
+var QUEST_HEAD_BANG = 0xffdd33;
+var QUEST_HEAD_QUEST_GREY = 0x9a9a9a;
+var QUEST_HEAD_QUEST_GREEN = 0x33cc55;
+/* Legacy aliases kept for older tests / call sites. */
+var QUEST_HEAD_STAR = QUEST_HEAD_BANG;
+var QUEST_HEAD_COMPASS = QUEST_HEAD_QUEST_GREY;
 
 function questHeadIconFor(def, quest) {
     if (!def || !def.questGiver) {
@@ -161,9 +167,12 @@ function questHeadIconFor(def, quest) {
         return null;
     }
     if (stage <= 0) {
-        return { kind: 'star', color: QUEST_HEAD_STAR };
+        return { kind: 'bang', color: QUEST_HEAD_BANG };
     }
-    return { kind: 'compass', color: QUEST_HEAD_COMPASS };
+    if (stage === 2) {
+        return { kind: 'quest', color: QUEST_HEAD_QUEST_GREEN };
+    }
+    return { kind: 'quest', color: QUEST_HEAD_QUEST_GREY };
 }
 
 var NPC_DEFS = {
@@ -172,7 +181,7 @@ var NPC_DEFS = {
         { key: 'banker', name: 'Banker Elise', x: 160, y: 130, tint: 0xffffff, options: ['talk', 'bank'], examine: 'The town banker. Her ledgers never leave her sight.', lines: ['Your coin is safe with me.', 'Deposit what you cannot carry.'] },
         { key: 'guard', name: 'Guard Rowan', x: 252, y: 168, tint: 0xffffff, options: ['talk'], examine: 'A watchful town guard. He knows every path from the gate.', lines: ['Keep to the paths.', 'North is woods. East is farms. South is the sea.'] },
         { key: 'shopkeep', name: 'Shopkeeper Mira', x: 376, y: 216, tint: 0xffffff, texture: 'npc-shopkeeper', options: ['talk', 'trade'], examine: 'The town shopkeeper. She minds the general store.', lines: ['Fine wares if you have the coin.', 'Bones and spare food fetch a price.'] },
-        { key: 'cook', name: 'Cook Pell', x: 280, y: 280, tint: 0xffffff, options: ['talk'], examine: 'The town cook. Flour dusts her sleeves and a ladle never leaves her hand.', lines: ['The range is cold until someone lights it.', 'Bring raw food when you mean to cook.'] },
+        { key: 'cook', name: 'Cook Pell', x: 280, y: 280, tint: 0xffffff, options: ['talk'], tutor: 'firemaking', examine: 'The town cook. Flour dusts her sleeves and a ladle never leaves her hand.', lines: ['Take this tinderbox.', 'Use it on logs to light a fire on open ground.', 'Cook raw food on that fire or the town range.', 'Burnt food teaches nothing — keep cooking.'] },
         { key: 'priest', name: 'Priest Alden', x: 296, y: 168, tint: 0xffffff, options: ['talk'], examine: 'A quiet shrine priest. Ash marks the collar of his robe.', lines: ['The shrine still hears a prayer.', 'Bury the bones of the fallen, traveler.'] }
     ],
     northwood: [

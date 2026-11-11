@@ -60,7 +60,7 @@ def hash_n(x, y, seed):
 
 # --- tiles 16 x 16x16 ---
 TILE = 16
-TILE_COUNT = 16
+TILE_COUNT = 18
 
 K = (22, 16, 14, 255)
 SKIN = (236, 188, 132, 255)
@@ -132,8 +132,18 @@ def make_tiles():
             else:
                 c = (40, 92, 156, 255)
             put(sheet, TILE * TILE_COUNT, TILE * 4 + x, y, c, TILE)
-    # 5 tree (transparent corners)
+    # 5 tree (green grass under canopy so corners blend)
     ox = TILE * 5
+    for y in range(TILE):
+        for x in range(TILE):
+            n = hash_n(x, y, 11) % 8
+            if n == 0:
+                c = (58, 122, 52, 255)
+            elif n == 1:
+                c = (86, 158, 72, 255)
+            else:
+                c = (70, 140, 60, 255)
+            put(sheet, TILE * TILE_COUNT, ox + x, y, c, TILE)
     fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 7, 10, 2, 6, (96, 64, 32, 255))
     fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 6, 11, 4, 2, (74, 48, 24, 255))
     for cx, cy, rad, col in ((8, 6, 6, (28, 92, 36, 255)), (8, 5, 5, (40, 122, 48, 255)), (7, 4, 3, (56, 148, 60, 255))):
@@ -276,6 +286,40 @@ def make_tiles():
     fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 7, 2, 1, 12, (90, 58, 28, 255))
     fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 4, 7, 8, 1, (90, 58, 28, 255))
     fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 10, 8, 2, 2, (212, 168, 48, 255))
+
+    # 16 grey brick wall
+    ox = TILE * 16
+    mortar = (72, 74, 78, 255)
+    brick_a = (132, 134, 140, 255)
+    brick_b = (118, 120, 128, 255)
+    brick_c = (148, 150, 156, 255)
+    for y in range(TILE):
+        for x in range(TILE):
+            put(sheet, TILE * TILE_COUNT, ox + x, y, mortar, TILE)
+    rows = ((0, 3, 0), (3, 3, 4), (6, 3, 0), (9, 3, 4), (12, 4, 0))
+    for y0, rh, xoff in rows:
+        x = xoff
+        while x < TILE:
+            bw = 5 if (x + xoff) % 10 < 5 else 4
+            if x + bw > TILE:
+                bw = TILE - x
+            shade = brick_a if ((x + y0) // 3) % 2 == 0 else brick_b
+            if (x + y0) % 7 == 0:
+                shade = brick_c
+            fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + x, y0, bw, rh - 1, shade)
+            x += bw + 1
+
+    # 17 furnace
+    ox = TILE * 17
+    fill_path_bg(ox)
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 3, 3, 10, 12, (96, 72, 52, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 4, 4, 8, 8, (56, 48, 44, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 5, 6, 6, 5, (220, 96, 40, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 6, 7, 4, 3, (240, 180, 64, 255))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 4, 12, 8, 2, (72, 64, 56, 255))
+    put(sheet, TILE * TILE_COUNT, ox + 7, 5, (240, 220, 90, 255), TILE)
+    put(sheet, TILE * TILE_COUNT, ox + 8, 5, (240, 220, 90, 255), TILE)
+
     write_png(os.path.join(ASSETS, "tiles.png"), TILE * TILE_COUNT, TILE, sheet)
 
 

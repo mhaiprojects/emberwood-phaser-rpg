@@ -22,9 +22,11 @@ var FLEE_PUSH_PX = 32;
 var FLEE_GRACE_MS = 1100;
 var COLLIDE_TILES = [
     TILE.WATER, TILE.TREE, TILE.ROCK, TILE.SHRINE,
-    TILE.STALL, TILE.RANGE, TILE.ANVIL, TILE.BOOTH,
-    TILE.DOCK, TILE.BOAT, TILE.TOMB, TILE.DOOR
+    TILE.STALL, TILE.RANGE, TILE.ANVIL, TILE.BOOTH, TILE.FURNACE,
+    TILE.DOCK, TILE.BOAT, TILE.TOMB, TILE.DOOR, TILE.WALL
 ];
+var GROUND_FIRE_MS = 45000;
+var STATION_RANGE = 28;
 var COLLISION_DEBUG_FILL = 0xf38630;
 var COLLISION_DEBUG_FACE = 0xffff66;
 
@@ -61,6 +63,7 @@ var WorldScene = new Phaser.Class({
         this.lastFought = null;
         this.lastFacing = 'down';
         this.groundLoot = [];
+        this.groundFires = [];
         this.lootZoneState = {};
         this.mobZoneState = {};
         this.unlockedDoors = {};
@@ -68,6 +71,7 @@ var WorldScene = new Phaser.Class({
         this.lockChatUntil = 0;
         this.shortcutChatUntil = 0;
         this.shortcutLockUntil = 0;
+        this.ensureGroundFireTexture();
 
         this.marker = this.add.rectangle(0, 0, 6, 6, DEST_X_COLOR).setVisible(false).setDepth(8);
         this.destX = this.makeDestX();
@@ -711,6 +715,7 @@ var WorldScene = new Phaser.Class({
         }
         this.floatLabels.length = 0;
         this.clearLoot();
+        this.clearGroundFires();
         this.npcs.clear(true, true);
         this.mobs.clear(true, true);
         if (this.ground) {
@@ -995,50 +1000,33 @@ var WorldScene = new Phaser.Class({
         return gfx;
     },
 
-    drawStarHeadIcon: function (gfx, color) {
-        var outer = 5;
-        var inner = 2.2;
-        gfx.fillStyle(color, 1);
-        gfx.lineStyle(1, 0x0a2040, 0.9);
-        gfx.beginPath();
-        var i;
-        for (i = 0; i < 10; i++) {
-            var rad = i % 2 === 0 ? outer : inner;
-            var ang = -Math.PI / 2 + i * Math.PI / 5;
-            var px = Math.cos(ang) * rad;
-            var py = Math.sin(ang) * rad;
-            if (i === 0) {
-                gfx.moveTo(px, py);
-            } else {
-                gfx.lineTo(px, py);
-            }
-        }
-        gfx.closePath();
-        gfx.fillPath();
-        gfx.strokePath();
-    },
-
-    drawCompassHeadIcon: function (gfx, color) {
+    drawBangHeadIcon: function (gfx, color) {
         gfx.fillStyle(color, 1);
         gfx.lineStyle(1, 0x403010, 0.95);
+        gfx.fillRoundedRect(-2.2, -6.5, 4.4, 9.5, 1.2);
+        gfx.strokeRoundedRect(-2.2, -6.5, 4.4, 9.5, 1.2);
+        gfx.fillCircle(0, 5.2, 1.6);
+        gfx.strokeCircle(0, 5.2, 1.6);
+        gfx.fillStyle(0x2a1c08, 1);
+        gfx.fillRoundedRect(-0.7, -5.2, 1.4, 6.2, 0.6);
+    },
+
+    drawQuestMarkHeadIcon: function (gfx, color) {
+        gfx.fillStyle(color, 1);
+        gfx.lineStyle(1, 0x202020, 0.95);
         gfx.beginPath();
-        gfx.moveTo(0, -5.5);
-        gfx.lineTo(1.8, 0);
-        gfx.lineTo(0, 5.5);
-        gfx.lineTo(-1.8, 0);
-        gfx.closePath();
-        gfx.fillPath();
+        gfx.arc(0, -2.2, 3.4, Phaser.Math.DegToRad(200), Phaser.Math.DegToRad(20), false);
+        gfx.lineTo(0.2, 1.2);
         gfx.strokePath();
+        gfx.lineStyle(2.2, color, 1);
         gfx.beginPath();
-        gfx.moveTo(-5.5, 0);
-        gfx.lineTo(0, -1.8);
-        gfx.lineTo(5.5, 0);
-        gfx.lineTo(0, 1.8);
-        gfx.closePath();
-        gfx.fillPath();
+        gfx.arc(0, -2.2, 3.4, Phaser.Math.DegToRad(200), Phaser.Math.DegToRad(20), false);
+        gfx.lineTo(0.2, 1.2);
         gfx.strokePath();
-        gfx.fillStyle(0xfff6c8, 1);
-        gfx.fillCircle(0, 0, 1.2);
+        gfx.fillStyle(color, 1);
+        gfx.fillCircle(0, 4.6, 1.5);
+        gfx.lineStyle(1, 0x202020, 0.95);
+        gfx.strokeCircle(0, 4.6, 1.5);
     },
 
     drawQuestHeadIcon: function (gfx, spec) {
@@ -1051,10 +1039,10 @@ var WorldScene = new Phaser.Class({
         }
         gfx.kind = spec.kind;
         gfx.iconColor = spec.color;
-        if (spec.kind === 'star') {
-            this.drawStarHeadIcon(gfx, spec.color);
+        if (spec.kind === 'bang' || spec.kind === 'star') {
+            this.drawBangHeadIcon(gfx, spec.color);
         } else {
-            this.drawCompassHeadIcon(gfx, spec.color);
+            this.drawQuestMarkHeadIcon(gfx, spec.color);
         }
         gfx.setVisible(true);
     },
@@ -1206,17 +1194,14 @@ var WorldScene = new Phaser.Class({
             Hud.log('You target the ' + hit.mobDef.type + '.');
             return;
         }
-        hit = this.pickSprite(this.npcs, x, y, 18);
-        if (hit) {
-            this.talkTarget = hit;
-            this.engageTarget = null;
-            this.clearFish();
-            this.setWalk(hit.x, hit.y, { allowEnd: true });
-            return;
-        }
+        /* Stations / gather spots win over nearby NPCs so cook/range clicks open the UI. */
         var scenery = this.pickScenery(x, y);
         if (scenery && scenery.kind === 'fishspot') {
             this.clickFishSpot(scenery);
+            return;
+        }
+        if (scenery && typeof isStationKind === 'function' && isStationKind(scenery.kind)) {
+            this.clickStation(scenery);
             return;
         }
         if (scenery && scenery.kind === 'tree' && typeof woodcutTreeAt === 'function'
@@ -1230,6 +1215,14 @@ var WorldScene = new Phaser.Class({
                     interior: !!this.interiorId
                 })) {
             this.clickMineRock(scenery);
+            return;
+        }
+        hit = this.pickSprite(this.npcs, x, y, 18);
+        if (hit) {
+            this.talkTarget = hit;
+            this.engageTarget = null;
+            this.clearFish();
+            this.setWalk(hit.x, hit.y, { allowEnd: true });
             return;
         }
         if (scenery && !(typeof isWalkableExamineKind === 'function' && isWalkableExamineKind(scenery.kind))) {
@@ -1278,6 +1271,10 @@ var WorldScene = new Phaser.Class({
 
     pickScenery: function (x, y) {
         var tile = worldToTile(x, y);
+        var fire = this.groundFireAt(tile.tx, tile.ty);
+        if (fire) {
+            return { tx: tile.tx, ty: tile.ty, kind: 'fire', fire: fire };
+        }
         var kind = typeof sceneryKindAt === 'function'
             ? sceneryKindAt(this.tileGrid, tile.tx, tile.ty, {
                 houseRects: this.houseRectsNow(),
@@ -1289,6 +1286,135 @@ var WorldScene = new Phaser.Class({
             return null;
         }
         return { tx: tile.tx, ty: tile.ty, kind: kind };
+    },
+
+    ensureGroundFireTexture: function () {
+        if (this.textures.exists('ground-fire')) {
+            return;
+        }
+        var g = this.make.graphics({ x: 0, y: 0, add: false });
+        g.fillStyle(0x3a2410, 1);
+        g.fillRect(2, 10, 12, 4);
+        g.fillStyle(0xc84a18, 1);
+        g.fillTriangle(8, 2, 3, 11, 13, 11);
+        g.fillStyle(0xf0c040, 1);
+        g.fillTriangle(8, 5, 5, 11, 11, 11);
+        g.generateTexture('ground-fire', 16, 16);
+        g.destroy();
+    },
+
+    groundFireAt: function (tx, ty) {
+        var i;
+        var fire;
+        if (!this.groundFires) {
+            return null;
+        }
+        for (i = 0; i < this.groundFires.length; i++) {
+            fire = this.groundFires[i];
+            if (fire && fire.tx === tx && fire.ty === ty) {
+                return fire;
+            }
+        }
+        return null;
+    },
+
+    canLightFireAtPlayer: function () {
+        if (!this.player || !this.tileGrid) {
+            return false;
+        }
+        var tile = worldToTile(this.player.x, this.player.y);
+        if (!tileWalkable(this.tileGrid, tile.tx, tile.ty)) {
+            return false;
+        }
+        if (this.groundFireAt(tile.tx, tile.ty)) {
+            return false;
+        }
+        return true;
+    },
+
+    spawnGroundFireAtPlayer: function (durationMs) {
+        if (!this.player) {
+            return null;
+        }
+        var tile = worldToTile(this.player.x, this.player.y);
+        return this.spawnGroundFire(tile.tx, tile.ty, durationMs);
+    },
+
+    spawnGroundFire: function (tx, ty, durationMs) {
+        var pos;
+        var sprite;
+        var ms = typeof durationMs === 'number' ? durationMs : GROUND_FIRE_MS;
+        if (typeof FIRE_DURATION_MS === 'number') {
+            ms = typeof durationMs === 'number' ? durationMs : FIRE_DURATION_MS;
+        }
+        if (!tileWalkable(this.tileGrid, tx, ty)) {
+            return null;
+        }
+        this.clearGroundFireAt(tx, ty);
+        this.ensureGroundFireTexture();
+        pos = tileCenter(tx, ty);
+        sprite = this.add.image(pos.x, pos.y, 'ground-fire');
+        sprite.setDepth(5);
+        this.groundFires.push({
+            tx: tx,
+            ty: ty,
+            sprite: sprite,
+            until: this.time.now + ms
+        });
+        return this.groundFires[this.groundFires.length - 1];
+    },
+
+    clearGroundFireAt: function (tx, ty) {
+        var i;
+        var fire;
+        if (!this.groundFires) {
+            return;
+        }
+        for (i = this.groundFires.length - 1; i >= 0; i--) {
+            fire = this.groundFires[i];
+            if (!fire || fire.tx !== tx || fire.ty !== ty) {
+                continue;
+            }
+            if (fire.sprite) {
+                fire.sprite.destroy();
+            }
+            this.groundFires.splice(i, 1);
+        }
+    },
+
+    clearGroundFires: function () {
+        var i;
+        var fire;
+        if (!this.groundFires) {
+            this.groundFires = [];
+            return;
+        }
+        for (i = 0; i < this.groundFires.length; i++) {
+            fire = this.groundFires[i];
+            if (fire && fire.sprite) {
+                fire.sprite.destroy();
+            }
+        }
+        this.groundFires.length = 0;
+    },
+
+    pruneGroundFires: function () {
+        var i;
+        var fire;
+        var now = this.time.now;
+        if (!this.groundFires) {
+            return;
+        }
+        for (i = this.groundFires.length - 1; i >= 0; i--) {
+            fire = this.groundFires[i];
+            if (!fire || fire.until > now) {
+                continue;
+            }
+            if (fire.sprite) {
+                fire.sprite.destroy();
+            }
+            this.groundFires.splice(i, 1);
+        }
     },
 
     sceneryWorldPos: function (hit) {
@@ -1350,6 +1476,91 @@ var WorldScene = new Phaser.Class({
         return true;
     },
 
+    stationInRange: function (hit) {
+        if (!hit || !this.player) {
+            return false;
+        }
+        var spot = this.sceneryWorldPos(hit);
+        if (spot && Phaser.Math.Distance.Between(this.player.x, this.player.y, spot.x, spot.y) < STATION_RANGE) {
+            return true;
+        }
+        var near = typeof nearestWalkableTile === 'function'
+            ? nearestWalkableTile(this.tileGrid, hit.tx, hit.ty)
+            : null;
+        if (!near) {
+            return false;
+        }
+        var dest = tileCenter(near.tx, near.ty);
+        return Phaser.Math.Distance.Between(this.player.x, this.player.y, dest.x, dest.y) < 10;
+    },
+
+    clearStationWalk: function () {
+        this.stationTarget = null;
+    },
+
+    clickStation: function (hit) {
+        this.engageTarget = null;
+        this.talkTarget = null;
+        if (!hit || !(typeof isStationKind === 'function' && isStationKind(hit.kind))) {
+            return false;
+        }
+        if (this.encounterLock || (window.Hud && Hud.mode === 'battle')) {
+            return false;
+        }
+        var pos = this.sceneryWorldPos(hit);
+        if (pos) {
+            hit.x = pos.x;
+            hit.y = pos.y;
+        }
+        this.clearFish();
+        this.clearChop();
+        this.clearMine();
+        this.stationTarget = hit;
+        if (this.stationInRange(hit)) {
+            return this.openStation(hit);
+        }
+        var near = typeof nearestWalkableTile === 'function'
+            ? nearestWalkableTile(this.tileGrid, hit.tx, hit.ty)
+            : null;
+        if (!near) {
+            this.clearStationWalk();
+            return this.examineScenery(hit);
+        }
+        var dest = tileCenter(near.tx, near.ty);
+        this.setWalk(dest.x, dest.y, { allowEnd: true });
+        return true;
+    },
+
+    tryCompleteStation: function () {
+        if (!this.stationTarget || !this.player) {
+            return false;
+        }
+        if (!this.stationInRange(this.stationTarget)) {
+            return false;
+        }
+        this.player.body.setVelocity(0);
+        this.clearWalk();
+        return this.openStation(this.stationTarget);
+    },
+
+    openStation: function (hit) {
+        this.stationTarget = null;
+        if (!hit || this.encounterLock || (window.Hud && Hud.mode === 'battle')) {
+            return false;
+        }
+        if (hit.kind === 'booth') {
+            if (Hud.showBank) {
+                Hud.showBank({ key: 'booth', name: 'Bank booth' });
+            }
+            return true;
+        }
+        if (Hud.showStation) {
+            Hud.showStation(hit.kind);
+            return true;
+        }
+        return this.examineScenery(hit);
+    },
+
     clearFish: function () {
         if (this.fishAction && this.fishAction.timer) {
             this.fishAction.timer.remove(false);
@@ -1362,6 +1573,7 @@ var WorldScene = new Phaser.Class({
         this.clearFish();
         this.clearChop();
         this.clearMine();
+        this.clearStationWalk();
     },
 
     clearChop: function () {
@@ -1468,6 +1680,7 @@ var WorldScene = new Phaser.Class({
 
     closeBankIfAway: function () {
         var npc;
+        var booth;
         if (!window.Hud || !Hud.bankOpen || !Hud.bankOpen() || !this.player) {
             return;
         }
@@ -1478,8 +1691,41 @@ var WorldScene = new Phaser.Class({
         if (this.interiorId === 'bank') {
             return;
         }
+        booth = this.pickScenery(this.player.x, this.player.y);
+        if (booth && booth.kind === 'booth' && this.stationInRange(booth)) {
+            return;
+        }
+        if (typeof TOWN_PROPS !== 'undefined' && TOWN_PROPS.booth) {
+            booth = { tx: TOWN_PROPS.booth.x, ty: TOWN_PROPS.booth.y, kind: 'booth' };
+            if (this.zoneId === 'haven' && this.stationInRange(booth)) {
+                return;
+            }
+        }
         if (Hud.hideBank) {
             Hud.hideBank();
+        }
+    },
+
+    closeStationIfAway: function () {
+        var kind;
+        var props;
+        var hit;
+        if (!window.Hud || !Hud.stationOpen || !Hud.stationOpen() || !this.player) {
+            return;
+        }
+        kind = Hud.stationKind;
+        if (!kind || kind === 'booth') {
+            return;
+        }
+        props = typeof TOWN_PROPS !== 'undefined' ? TOWN_PROPS : null;
+        if (props && props[kind] && this.zoneId === 'haven') {
+            hit = { tx: props[kind].x, ty: props[kind].y, kind: kind };
+            if (this.stationInRange(hit)) {
+                return;
+            }
+        }
+        if (Hud.hideStation) {
+            Hud.hideStation();
         }
     },
 
@@ -2368,7 +2614,7 @@ var WorldScene = new Phaser.Class({
                 continue;
             }
             var index = row[tile.tx];
-            if (index === TILE.TREE || index === TILE.ROCK) {
+            if (index === TILE.TREE || index === TILE.ROCK || index === TILE.WALL) {
                 return true;
             }
         }
@@ -3080,6 +3326,9 @@ var WorldScene = new Phaser.Class({
             if (window.Hud && Hud.bankOpen && Hud.bankOpen() && Hud.hideBank) {
                 Hud.hideBank();
             }
+            if (window.Hud && Hud.stationOpen && Hud.stationOpen() && Hud.hideStation) {
+                Hud.hideStation();
+            }
             if (move.left && !move.right) { vx = -speed; }
             else if (move.right && !move.left) { vx = speed; }
             if (move.up && !move.down) { vy = -speed; }
@@ -3160,6 +3409,7 @@ var WorldScene = new Phaser.Class({
 
         this.collectNearbyLoot();
         this.pruneLoot();
+        this.pruneGroundFires();
 
         if (this.tryAutoEngage()) {
             return;
@@ -3175,12 +3425,20 @@ var WorldScene = new Phaser.Class({
         this.tryCompleteFish();
         this.tryCompleteChop();
         this.tryCompleteMine();
+        this.tryCompleteStation();
         this.closeBankIfAway();
+        this.closeStationIfAway();
 
         if (Keys.justPressed('Space') && Hud.mode !== 'battle') {
-            var nearNpc = this.pickSprite(this.npcs, this.player.x, this.player.y, 28);
-            if (nearNpc && !this.talkBlockedByWall(nearNpc)) {
-                this.tryTalk(nearNpc);
+            if (Hud.dialogueOpen && Hud.dialogueOpen()) {
+                if (Hud.advanceDialogue) {
+                    Hud.advanceDialogue();
+                }
+            } else {
+                var nearNpc = this.pickSprite(this.npcs, this.player.x, this.player.y, 28);
+                if (nearNpc && !this.talkBlockedByWall(nearNpc)) {
+                    this.tryTalk(nearNpc);
+                }
             }
         }
 

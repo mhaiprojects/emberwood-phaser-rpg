@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="assets/svg/ui/combat.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/style.css?v=invtravel1">
+    <link rel="stylesheet" href="css/style.css?v=questui1">
 </head>
 <body>
     <div id="shell">
@@ -194,10 +194,24 @@
                 <div class="title-card" id="shop-card">
                     <h1 id="shop-title">Trade</h1>
                     <p id="shop-speaker"></p>
-                    <p id="shop-copy">The shelves are still being stocked.</p>
+                    <p id="shop-copy">Take a look at the wares.</p>
+                    <div id="shop-panes">
+                        <div>
+                            <h3>Shop</h3>
+                            <div id="shop-stock" v-manual></div>
+                        </div>
+                        <div>
+                            <h3>Your inventory</h3>
+                            <div id="shop-inv" v-manual></div>
+                        </div>
+                    </div>
                     <div id="shop-actions">
-                        <button type="button" data-shop-action="buy">Buy</button>
-                        <button type="button" data-shop-action="sell">Sell</button>
+                        <button type="button" data-shop-action="buy" data-shop-qty="1">Buy-1</button>
+                        <button type="button" data-shop-action="buy" data-shop-qty="5">Buy-5</button>
+                        <button type="button" data-shop-action="buy" data-shop-qty="10">Buy-10</button>
+                        <button type="button" data-shop-action="sell" data-shop-qty="1">Sell-1</button>
+                        <button type="button" data-shop-action="sell" data-shop-qty="5">Sell-5</button>
+                        <button type="button" data-shop-action="sell" data-shop-qty="all">Sell-all</button>
                     </div>
                     <button type="button" id="btn-shop-close" data-shop-action="close">Close</button>
                 </div>
@@ -244,27 +258,36 @@
                     <button type="button" id="btn-bank-close" data-bank-action="close">Close</button>
                 </div>
             </div>
+
+            <div id="station-overlay" hidden>
+                <div class="title-card" id="station-card">
+                    <h1 id="station-title">Station</h1>
+                    <p id="station-copy">Choose a recipe.</p>
+                    <div id="station-list" v-manual></div>
+                    <button type="button" id="btn-station-close" data-station-action="close">Close</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
     <script src="js/input/Keys.js?v=run1"></script>
-    <script src="js/data/Items.js?v=gather2"></script>
+    <script src="js/data/Items.js?v=questui1"></script>
     <script src="js/data/Scales.js?v=hunt1"></script>
     <script src="js/ui/HudApp.js?v=vue1"></script>
-    <script src="js/ui/Hud.js?v=invtravel1"></script>
-    <script src="js/world/MapGen.js?v=fish1"></script>
-    <script src="js/world/Pathfind.js?v=giant1"></script>
-    <script src="js/world/Zones.js?v=hunt1"></script>
+    <script src="js/ui/Hud.js?v=questui1"></script>
+    <script src="js/world/MapGen.js?v=questui1"></script>
+    <script src="js/world/Pathfind.js?v=questui1"></script>
+    <script src="js/world/Zones.js?v=questui1"></script>
     <script src="js/sprites/Unit.js?v=hitxp1"></script>
     <script src="js/sprites/PlayerCharacter.js"></script>
     <script src="js/sprites/Enemy.js"></script>
     <script src="js/ui/Menu.js"></script>
     <script src="js/ui/Message.js"></script>
-    <script src="js/scenes/BootScene.js?v=gather2"></script>
+    <script src="js/scenes/BootScene.js?v=questui1"></script>
     <script src="js/scenes/TitleScene.js?v=move4"></script>
-    <script src="js/scenes/WorldScene.js?v=invtravel1"></script>
+    <script src="js/scenes/WorldScene.js?v=questui1"></script>
     <script src="js/scenes/BattleScene.js?v=magic1"></script>
     <script src="js/scenes/UIScene.js"></script>
     <script src="js/scenes/GameOverScene.js?v=cmb1"></script>

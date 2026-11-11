@@ -1,32 +1,221 @@
 var ITEM_DB = {
     coins: { name: 'Coins', icon: 'assets/svg/items/coins.svg', stack: true, value: 1, examine: 'A small pile of copper and silver coins.' },
-    shrimp: { name: 'Cooked shrimp', icon: 'assets/svg/items/shrimp.svg', heal: 12, stack: true, value: 5, examine: 'A cooked shrimp, still warm enough to eat.' },
-    rawshrimp: { name: 'Raw shrimp', icon: 'assets/svg/items/rawshrimp.svg', stack: true, cook: 'shrimp', cookXp: 30, value: 5, examine: 'A raw shrimp. It should be cooked.' },
-    rawbeef: { name: 'Raw beef', icon: 'assets/svg/items/rawbeef.svg', stack: true, value: 4, examine: 'A cut of raw beef. Better cooked.' },
-    bread: { name: 'Bread', icon: 'assets/svg/items/bread.svg', heal: 20, stack: true, value: 12, examine: 'A dense loaf baked for the road.' },
-    sword: { name: 'Bronze sword', icon: 'assets/svg/items/sword.svg', slot: 'weapon', damage: 16, value: 26, examine: 'A short bronze blade, nicked but serviceable.' },
-    shortbow: { name: 'Shortbow', icon: 'assets/svg/items/shortbow.svg', slot: 'weapon', damage: 16, combatClass: 'ranged', value: 32, examine: 'A yew shortbow, light enough for bronze arrows.' },
-    arrow: { name: 'Bronze arrows', icon: 'assets/svg/items/arrow.svg', slot: 'ammo', stack: true, value: 1, examine: 'A sheaf of bronze arrows with grey-goose fletching.' },
-    shield: { name: 'Wooden shield', icon: 'assets/svg/items/shield.svg', slot: 'shield', defence: 1, value: 20, examine: 'A round wooden shield bound with iron.' },
-    bronzeaxe: { name: 'Bronze axe', icon: 'assets/svg/items/bronzeaxe.svg', tool: 'axe', value: 18, examine: 'A bronze axe for chopping trees.' },
-    bronzepick: { name: 'Bronze pickaxe', icon: 'assets/svg/items/bronzepick.svg', tool: 'pickaxe', value: 18, examine: 'A bronze pickaxe for mining ore.' },
-    net: { name: 'Small fishing net', icon: 'assets/svg/items/net.svg', tool: 'net', value: 8, examine: 'A small fishing net for shrimp.' },
-    logs: { name: 'Logs', icon: 'assets/svg/items/logs.svg', stack: true, value: 2, examine: 'A pile of chopped logs.' },
-    copper: { name: 'Copper ore', icon: 'assets/svg/items/copper.svg', stack: true, value: 3, examine: 'A chunk of copper ore.' },
-    tin: { name: 'Tin ore', icon: 'assets/svg/items/tin.svg', stack: true, value: 3, examine: 'A chunk of tin ore.' },
-    bronzebar: { name: 'Bronze bar', icon: 'assets/svg/items/bronzebar.svg', stack: true, value: 12, examine: 'A smelted bronze bar.' },
-    tinderbox: { name: 'Tinderbox', icon: 'assets/svg/items/tinderbox.svg', value: 5, examine: 'A small box of flint and steel.' },
-    bones: { name: 'Bones', icon: 'assets/svg/items/bones.svg', stack: true, bury: true, buryXp: 4, value: 1, examine: 'Dry bones. Someone should bury them.' },
-    feather: { name: 'Feathers', icon: 'assets/svg/items/feather.svg', stack: true, value: 1, examine: 'Soft feathers from a bird.' },
-    rabbitfur: { name: 'Rabbit fur', icon: 'assets/svg/items/rabbitfur.svg', stack: true, value: 3, examine: 'Soft fur from a rabbit. Useful for crafting.' },
-    airrune: { name: 'Air rune', icon: 'assets/svg/items/airrune.svg', stack: true, rune: true, value: 4, examine: 'A pale blue rune. It hums with air.' },
-    mindrune: { name: 'Mind rune', icon: 'assets/svg/items/mindrune.svg', stack: true, rune: true, value: 3, examine: 'A dull purple rune. It focuses the mind.' },
-    key: { name: 'Iron key', icon: 'assets/svg/items/key.svg', value: 1, examine: 'A heavy iron key with a worn bit.' },
-    cowhide: { name: 'Cowhide', icon: 'assets/svg/items/cowhide.svg', stack: true, tan: 'leather', tanXp: 14, value: 2, examine: 'A raw cowhide. It can be crafted into leather.' },
-    leather: { name: 'Leather', icon: 'assets/svg/items/leather.svg', stack: true, value: 4, examine: 'Soft leather, ready to stitch.' },
-    string: { name: 'String', icon: 'assets/svg/items/string.svg', stack: true, value: 1, examine: 'A short length of string for stitching leather.' },
-    gloves: { name: 'Leather gloves', icon: 'assets/svg/items/gloves.svg', slot: 'hands', defence: 1, value: 10, examine: 'Stitched leather gloves for the road.' }
+    shrimp: { name: 'Cooked shrimp', icon: 'assets/svg/items/shrimp.svg', heal: 12, stack: true, value: 5, buyPrice: 8, sellPrice: 2, examine: 'A cooked shrimp, still warm enough to eat.' },
+    rawshrimp: { name: 'Raw shrimp', icon: 'assets/svg/items/rawshrimp.svg', stack: true, cook: 'shrimp', burn: 'burntshrimp', cookXp: 30, value: 5, buyPrice: 6, sellPrice: 1, examine: 'A raw shrimp. It should be cooked.' },
+    burntshrimp: { name: 'Burnt shrimp', icon: 'assets/svg/items/burntshrimp.svg', stack: true, value: 1, sellPrice: 1, examine: 'A charred shrimp. Inedible.' },
+    rawbeef: { name: 'Raw beef', icon: 'assets/svg/items/rawbeef.svg', stack: true, cook: 'beef', burn: 'burntbeef', cookXp: 30, value: 4, sellPrice: 1, examine: 'A cut of raw beef. Better cooked.' },
+    beef: { name: 'Cooked beef', icon: 'assets/svg/items/beef.svg', heal: 16, stack: true, value: 8, buyPrice: 12, sellPrice: 3, examine: 'A seared cut of beef.' },
+    burntbeef: { name: 'Burnt beef', icon: 'assets/svg/items/burntbeef.svg', stack: true, value: 1, sellPrice: 1, examine: 'Blackened beef. Best left alone.' },
+    bread: { name: 'Bread', icon: 'assets/svg/items/bread.svg', heal: 20, stack: true, value: 12, buyPrice: 16, sellPrice: 4, examine: 'A dense loaf baked for the road.' },
+    sword: { name: 'Bronze sword', icon: 'assets/svg/items/sword.svg', slot: 'weapon', damage: 16, value: 26, buyPrice: 40, sellPrice: 10, examine: 'A short bronze blade, nicked but serviceable.' },
+    bronzedagger: { name: 'Bronze dagger', icon: 'assets/svg/items/bronzedagger.svg', slot: 'weapon', damage: 10, value: 14, buyPrice: 22, sellPrice: 5, examine: 'A short bronze dagger, freshly forged.' },
+    shortbow: { name: 'Shortbow', icon: 'assets/svg/items/shortbow.svg', slot: 'weapon', damage: 16, combatClass: 'ranged', value: 32, buyPrice: 48, sellPrice: 12, examine: 'A yew shortbow, light enough for bronze arrows.' },
+    arrow: { name: 'Bronze arrows', icon: 'assets/svg/items/arrow.svg', slot: 'ammo', stack: true, value: 1, buyPrice: 2, sellPrice: 1, examine: 'A sheaf of bronze arrows with grey-goose fletching.' },
+    shield: { name: 'Wooden shield', icon: 'assets/svg/items/shield.svg', slot: 'shield', defence: 1, value: 20, buyPrice: 30, sellPrice: 8, examine: 'A round wooden shield bound with iron.' },
+    bronzeaxe: { name: 'Bronze axe', icon: 'assets/svg/items/bronzeaxe.svg', tool: 'axe', value: 18, buyPrice: 28, sellPrice: 7, examine: 'A bronze axe for chopping trees.' },
+    bronzepick: { name: 'Bronze pickaxe', icon: 'assets/svg/items/bronzepick.svg', tool: 'pickaxe', value: 18, buyPrice: 28, sellPrice: 7, examine: 'A bronze pickaxe for mining ore.' },
+    net: { name: 'Small fishing net', icon: 'assets/svg/items/net.svg', tool: 'net', value: 8, buyPrice: 12, sellPrice: 3, examine: 'A small fishing net for shrimp.' },
+    logs: { name: 'Logs', icon: 'assets/svg/items/logs.svg', stack: true, firemake: true, firemakeXp: 40, value: 2, sellPrice: 1, examine: 'A pile of chopped logs.' },
+    copper: { name: 'Copper ore', icon: 'assets/svg/items/copper.svg', stack: true, value: 3, sellPrice: 1, examine: 'A chunk of copper ore.' },
+    tin: { name: 'Tin ore', icon: 'assets/svg/items/tin.svg', stack: true, value: 3, sellPrice: 1, examine: 'A chunk of tin ore.' },
+    bronzebar: { name: 'Bronze bar', icon: 'assets/svg/items/bronzebar.svg', stack: true, value: 12, sellPrice: 4, examine: 'A smelted bronze bar.' },
+    tinderbox: { name: 'Tinderbox', icon: 'assets/svg/items/tinderbox.svg', value: 5, buyPrice: 8, sellPrice: 2, examine: 'A small box of flint and steel.' },
+    bones: { name: 'Bones', icon: 'assets/svg/items/bones.svg', stack: true, bury: true, buryXp: 4, shrineXp: 8, value: 1, sellPrice: 1, examine: 'Dry bones. Someone should bury them.' },
+    feather: { name: 'Feathers', icon: 'assets/svg/items/feather.svg', stack: true, value: 1, sellPrice: 1, examine: 'Soft feathers from a bird.' },
+    rabbitfur: { name: 'Rabbit fur', icon: 'assets/svg/items/rabbitfur.svg', stack: true, value: 3, sellPrice: 1, examine: 'Soft fur from a rabbit. Useful for crafting.' },
+    airrune: { name: 'Air rune', icon: 'assets/svg/items/airrune.svg', stack: true, rune: true, value: 4, buyPrice: 6, sellPrice: 1, examine: 'A pale blue rune. It hums with air.' },
+    mindrune: { name: 'Mind rune', icon: 'assets/svg/items/mindrune.svg', stack: true, rune: true, value: 3, buyPrice: 5, sellPrice: 1, examine: 'A dull purple rune. It focuses the mind.' },
+    key: { name: 'Iron key', icon: 'assets/svg/items/key.svg', value: 1, sellPrice: 1, examine: 'A heavy iron key with a worn bit.' },
+    cowhide: { name: 'Cowhide', icon: 'assets/svg/items/cowhide.svg', stack: true, tan: 'leather', tanXp: 14, value: 2, sellPrice: 1, examine: 'A raw cowhide. It can be crafted into leather.' },
+    leather: { name: 'Leather', icon: 'assets/svg/items/leather.svg', stack: true, value: 4, sellPrice: 1, examine: 'Soft leather, ready to stitch.' },
+    string: { name: 'String', icon: 'assets/svg/items/string.svg', stack: true, value: 1, buyPrice: 2, sellPrice: 1, examine: 'A short length of string for stitching leather.' },
+    gloves: { name: 'Leather gloves', icon: 'assets/svg/items/gloves.svg', slot: 'hands', defence: 1, value: 10, buyPrice: 16, sellPrice: 4, examine: 'Stitched leather gloves for the road.' }
 };
+
+var GENERAL_SHOP_KEY = 'mira';
+var GENERAL_SHOP_STOCK = [
+    { id: 'shrimp', stock: 10, restockTo: 10, restockMs: 45000 },
+    { id: 'bread', stock: 5, restockTo: 5, restockMs: 60000 },
+    { id: 'tinderbox', stock: 3, restockTo: 3, restockMs: 90000 },
+    { id: 'net', stock: 2, restockTo: 2, restockMs: 90000 },
+    { id: 'bronzeaxe', stock: 1, restockTo: 1, restockMs: 120000 },
+    { id: 'bronzepick', stock: 1, restockTo: 1, restockMs: 120000 },
+    { id: 'string', stock: 8, restockTo: 8, restockMs: 60000 }
+];
+var shopStates = {};
+
+function itemBuyPrice(id) {
+    var def = ITEM_DB[id];
+    if (!def || id === 'coins') {
+        return 0;
+    }
+    if (typeof def.buyPrice === 'number') {
+        return def.buyPrice;
+    }
+    if (typeof def.value === 'number') {
+        return Math.max(1, def.value * 2);
+    }
+    return 0;
+}
+
+function itemSellPrice(id) {
+    var def = ITEM_DB[id];
+    if (!def || id === 'coins') {
+        return 0;
+    }
+    if (typeof def.sellPrice === 'number') {
+        return def.sellPrice;
+    }
+    if (typeof def.value === 'number') {
+        return Math.max(1, Math.floor(def.value * 0.4));
+    }
+    return 0;
+}
+
+function ensureShopState(key) {
+    var i;
+    var row;
+    var state;
+    key = key || GENERAL_SHOP_KEY;
+    state = shopStates[key];
+    if (!state) {
+        state = { key: key, rows: [] };
+        for (i = 0; i < GENERAL_SHOP_STOCK.length; i++) {
+            row = GENERAL_SHOP_STOCK[i];
+            state.rows.push({
+                id: row.id,
+                stock: row.stock,
+                restockTo: row.restockTo,
+                restockMs: row.restockMs,
+                nextRestock: 0
+            });
+        }
+        shopStates[key] = state;
+    }
+    return state;
+}
+
+function tickShopRestock(key, now) {
+    var state = ensureShopState(key);
+    var i;
+    var row;
+    now = typeof now === 'number' ? now : Date.now();
+    for (i = 0; i < state.rows.length; i++) {
+        row = state.rows[i];
+        if (row.stock >= row.restockTo) {
+            row.nextRestock = 0;
+            continue;
+        }
+        if (!row.nextRestock) {
+            row.nextRestock = now + row.restockMs;
+            continue;
+        }
+        if (now >= row.nextRestock) {
+            row.stock += 1;
+            row.nextRestock = row.stock >= row.restockTo ? 0 : now + row.restockMs;
+        }
+    }
+    return state;
+}
+
+function shopStockRows(key, now) {
+    var state = tickShopRestock(key, now);
+    var out = [];
+    var i;
+    var row;
+    for (i = 0; i < state.rows.length; i++) {
+        row = state.rows[i];
+        out.push({
+            id: row.id,
+            stock: row.stock,
+            buyPrice: itemBuyPrice(row.id),
+            name: itemName(row.id)
+        });
+    }
+    return out;
+}
+
+function shopFindRow(key, id) {
+    var state = ensureShopState(key);
+    var i;
+    for (i = 0; i < state.rows.length; i++) {
+        if (state.rows[i].id === id) {
+            return state.rows[i];
+        }
+    }
+    return null;
+}
+
+function buyFromShop(hero, key, id, qty, now) {
+    var row;
+    var price;
+    var cost;
+    var i;
+    qty = Math.floor(Number(qty == null ? 1 : qty));
+    if (!hero || !id || !(qty >= 1)) {
+        return { ok: false };
+    }
+    tickShopRestock(key, now);
+    row = shopFindRow(key, id);
+    if (!row) {
+        return { ok: false, missing: true };
+    }
+    if (row.stock < qty) {
+        return { ok: false, stock: true };
+    }
+    price = itemBuyPrice(id);
+    if (!(price > 0)) {
+        return { ok: false };
+    }
+    cost = price * qty;
+    if (hero.gold < cost) {
+        return { ok: false, gold: true, need: cost };
+    }
+    if (!canAddItem(hero, id)) {
+        return { ok: false, full: true };
+    }
+    if (!takeItem(hero, 'coins', cost)) {
+        return { ok: false, gold: true, need: cost };
+    }
+    if (!addItem(hero, id, qty)) {
+        addItem(hero, 'coins', cost);
+        return { ok: false, full: true };
+    }
+    row.stock -= qty;
+    if (row.stock < row.restockTo && !row.nextRestock) {
+        row.nextRestock = (typeof now === 'number' ? now : Date.now()) + row.restockMs;
+    }
+    syncCoins(hero);
+    return { ok: true, id: id, qty: qty, cost: cost, stock: row.stock };
+}
+
+function sellToShop(hero, key, id, qty) {
+    var row;
+    var price;
+    var earned;
+    qty = Math.floor(Number(qty == null ? 1 : qty));
+    if (!hero || !id || id === 'coins' || !(qty >= 1)) {
+        return { ok: false };
+    }
+    price = itemSellPrice(id);
+    if (!(price > 0)) {
+        return { ok: false, unsellable: true };
+    }
+    if (itemQty(hero, id) < qty) {
+        return { ok: false, need: true };
+    }
+    if (!takeItem(hero, id, qty)) {
+        return { ok: false, need: true };
+    }
+    earned = price * qty;
+    addItem(hero, 'coins', earned);
+    row = shopFindRow(key, id);
+    if (row) {
+        row.stock += qty;
+    }
+    syncCoins(hero);
+    return { ok: true, id: id, qty: qty, earned: earned };
+}
 
 var WIND_STRIKE_XP = 5;
 var WIND_STRIKE_DAMAGE = 2;
@@ -49,7 +238,12 @@ var MINE_RESPAWN_MS = 10000;
 var HUNTER_KILL_XP = 12;
 var CRAFT_HIDE_XP = 14;
 var CRAFT_LEATHER_XP = 25;
-var FIREMAKE_XP = 10;
+var SMELT_BRONZE_XP = 18;
+var SMITH_DAGGER_XP = 22;
+var FIREMAKE_XP = 40;
+var FIRE_DURATION_MS = 45000;
+var COOK_BURN_BASE = 0.52;
+var COOK_BURN_PER_LEVEL = 0.045;
 var RESOURCE_LEVEL = {
     copper: 1,
     tin: 1,
@@ -91,6 +285,7 @@ var SKILL_NAMES = [
     ['mining', 'Mining'],
     ['crafting', 'Crafting'],
     ['firemaking', 'Firemaking'],
+    ['smithing', 'Smithing'],
     ['hunter', 'Hunter']
 ];
 
@@ -257,6 +452,7 @@ function makeHero() {
             mining: { level: 1, xp: 0 },
             crafting: { level: 1, xp: 0 },
             firemaking: { level: 1, xp: 0 },
+            smithing: { level: 1, xp: 0 },
             hunter: { level: 1, xp: 0 },
             agility: { level: 1, xp: 0 }
         }
@@ -386,9 +582,6 @@ function itemUseOnKinds(id) {
     if (def.cook) {
         kinds.push('fire', 'range');
     }
-    if (def.firemake) {
-        kinds.push('fire', 'range');
-    }
     if (def.bury) {
         kinds.push('shrine');
     }
@@ -405,50 +598,105 @@ function itemCanUseOn(id, kind) {
 
 function itemUseTargetName(kind) {
     if (kind === 'range' || kind === 'fire') {
-        return 'fire';
+        return kind === 'range' ? 'range' : 'fire';
     }
     return kind || '';
 }
 
-function useItemOnScenery(hero, id, kind) {
+function cookBurnChance(hero, id) {
+    var level = heroSkillLevel(hero, 'cooking');
+    var chance = COOK_BURN_BASE - (level - 1) * COOK_BURN_PER_LEVEL;
+    if (chance < 0) {
+        chance = 0;
+    }
+    if (chance > 0.85) {
+        chance = 0.85;
+    }
+    return chance;
+}
+
+function cookRollBurn(hero, id, rand) {
+    var roll = typeof rand === 'function' ? rand() : (typeof rand === 'number' ? rand : Math.random());
+    return roll < cookBurnChance(hero, id);
+}
+
+function useItemOnScenery(hero, id, kind, opts) {
     var def = ITEM_DB[id];
     var xp;
+    var product;
+    var burned;
     if (!hero || !id || !def || !itemCanUseOn(id, kind)) {
         return null;
     }
     if (!takeItem(hero, id, 1)) {
         return null;
     }
-    if (def.cook && !addItem(hero, def.cook, 1)) {
-        addItem(hero, id, 1);
-        return { ok: false, full: true };
+    if (def.bury && kind === 'shrine') {
+        xp = typeof def.shrineXp === 'number' ? def.shrineXp : (typeof def.buryXp === 'number' ? def.buryXp : 0);
+        if (xp > 0) {
+            gainSkillXp(hero, 'prayer', xp);
+        }
+        return { ok: true, id: id, kind: kind, buried: true, xp: xp };
     }
     if (def.cook && (kind === 'range' || kind === 'fire')) {
-        xp = typeof def.cookXp === 'number' ? def.cookXp : 0;
-        if (xp > 0) {
-            gainSkillXp(hero, 'cooking', xp);
+        burned = cookRollBurn(hero, id, opts && opts.rand);
+        product = burned ? (def.burn || null) : def.cook;
+        if (!product) {
+            addItem(hero, id, 1);
+            return { ok: false };
         }
-    }
-    if (!def.cook && def.firemake && (kind === 'range' || kind === 'fire')) {
-        xp = typeof def.firemakeXp === 'number' ? def.firemakeXp : FIREMAKE_XP;
-        if (xp > 0) {
-            gainSkillXp(hero, 'firemaking', xp);
+        if (!addItem(hero, product, 1)) {
+            addItem(hero, id, 1);
+            return { ok: false, full: true };
         }
-        return { ok: true, id: id, kind: kind, cooked: null, firemade: true, xp: xp };
+        if (!burned) {
+            xp = typeof def.cookXp === 'number' ? def.cookXp : 0;
+            if (xp > 0) {
+                gainSkillXp(hero, 'cooking', xp);
+            }
+        }
+        return {
+            ok: true,
+            id: id,
+            kind: kind,
+            cooked: burned ? null : def.cook,
+            burned: burned ? product : null,
+            xp: burned ? 0 : xp
+        };
     }
-    return { ok: true, id: id, kind: kind, cooked: def.cook || null };
+    return { ok: true, id: id, kind: kind, cooked: null };
+}
+
+function lightGroundFire(hero) {
+    var xp;
+    if (!hero) {
+        return null;
+    }
+    if (!heroHasItem(hero, 'tinderbox')) {
+        return { ok: false, need: 'tinderbox' };
+    }
+    if (itemQty(hero, 'logs') < 1) {
+        return { ok: false, need: 'logs' };
+    }
+    if (!takeItem(hero, 'logs', 1)) {
+        return { ok: false, need: 'logs' };
+    }
+    xp = FIREMAKE_XP;
+    if (ITEM_DB.logs && typeof ITEM_DB.logs.firemakeXp === 'number') {
+        xp = ITEM_DB.logs.firemakeXp;
+    }
+    if (xp > 0) {
+        gainSkillXp(hero, 'firemaking', xp);
+    }
+    return { ok: true, groundFire: true, xp: xp, durationMs: FIRE_DURATION_MS };
 }
 
 function firemakeAt(hero) {
-    if (!hero || !hero.skills || !hero.skills.firemaking) {
-        return null;
-    }
-    gainSkillXp(hero, 'firemaking', FIREMAKE_XP);
-    return { ok: true, xp: FIREMAKE_XP };
+    return lightGroundFire(hero);
 }
 
 function lightFire(hero) {
-    return firemakeAt(hero);
+    return lightGroundFire(hero);
 }
 
 function fishRoll(rand) {
@@ -629,12 +877,179 @@ function stitchLeather(hero) {
     return { ok: true, from: 'string', on: 'leather', made: 'gloves', xp: CRAFT_LEATHER_XP };
 }
 
-function useItemOnItem(hero, fromId, onId) {
+function useItemOnItem(hero, fromId, onId, opts) {
     if (!hero || !fromId || !onId || fromId === onId) {
         return null;
     }
     if ((fromId === 'string' && onId === 'leather') || (fromId === 'leather' && onId === 'string')) {
         return stitchLeather(hero);
+    }
+    if ((fromId === 'tinderbox' && onId === 'logs') || (fromId === 'logs' && onId === 'tinderbox')) {
+        if (opts && opts.canLightFire === false) {
+            return { ok: false, blocked: true };
+        }
+        return lightGroundFire(hero);
+    }
+    return null;
+}
+
+function listCookableIds(hero) {
+    var out = [];
+    var inv = hero && hero.inventory ? hero.inventory : [];
+    var seen = {};
+    var i;
+    for (i = 0; i < inv.length; i++) {
+        var stack = inv[i];
+        if (!stack || !stack.id || seen[stack.id]) {
+            continue;
+        }
+        var def = ITEM_DB[stack.id];
+        if (def && def.cook) {
+            seen[stack.id] = true;
+            out.push(stack.id);
+        }
+    }
+    return out;
+}
+
+function cookAtStation(hero, id, kind) {
+    return useItemOnScenery(hero, id, kind || 'range');
+}
+
+function smeltBronze(hero) {
+    if (!hero) {
+        return null;
+    }
+    if (itemQty(hero, 'copper') < 1 || itemQty(hero, 'tin') < 1) {
+        return { ok: false, need: 'ores' };
+    }
+    if (!takeItem(hero, 'copper', 1)) {
+        return null;
+    }
+    if (!takeItem(hero, 'tin', 1)) {
+        addItem(hero, 'copper', 1);
+        return null;
+    }
+    if (!addItem(hero, 'bronzebar', 1)) {
+        addItem(hero, 'copper', 1);
+        addItem(hero, 'tin', 1);
+        return { ok: false, full: true };
+    }
+    if (SMELT_BRONZE_XP > 0) {
+        gainSkillXp(hero, 'smithing', SMELT_BRONZE_XP);
+    }
+    return { ok: true, made: 'bronzebar', xp: SMELT_BRONZE_XP };
+}
+
+function smithBronzeDagger(hero) {
+    if (!hero) {
+        return null;
+    }
+    if (itemQty(hero, 'bronzebar') < 1) {
+        return { ok: false, need: 'bar' };
+    }
+    if (!takeItem(hero, 'bronzebar', 1)) {
+        return null;
+    }
+    if (!addItem(hero, 'bronzedagger', 1)) {
+        addItem(hero, 'bronzebar', 1);
+        return { ok: false, full: true };
+    }
+    if (SMITH_DAGGER_XP > 0) {
+        gainSkillXp(hero, 'smithing', SMITH_DAGGER_XP);
+    }
+    return { ok: true, made: 'bronzedagger', xp: SMITH_DAGGER_XP };
+}
+
+function stationRecipesFor(kind, hero) {
+    var rows = [];
+    var i;
+    if (kind === 'range' || kind === 'fire') {
+        var cookIds = listCookableIds(hero);
+        for (i = 0; i < cookIds.length; i++) {
+            var cid = cookIds[i];
+            var cdef = ITEM_DB[cid] || {};
+            rows.push({
+                id: 'cook:' + cid,
+                label: 'Cook ' + (cdef.name || cid),
+                enabled: true
+            });
+        }
+        if (!rows.length) {
+            rows.push({ id: 'cook:none', label: 'No raw food to cook', enabled: false });
+        }
+        return rows;
+    }
+    if (kind === 'stall') {
+        rows.push({
+            id: 'tan:cowhide',
+            label: 'Tan cowhide',
+            enabled: itemQty(hero, 'cowhide') > 0
+        });
+        rows.push({
+            id: 'stitch:gloves',
+            label: 'Stitch leather gloves',
+            enabled: itemQty(hero, 'leather') > 0 && itemQty(hero, 'string') > 0
+        });
+        return rows;
+    }
+    if (kind === 'furnace') {
+        rows.push({
+            id: 'smelt:bronzebar',
+            label: 'Smelt bronze bar (copper + tin)',
+            enabled: itemQty(hero, 'copper') > 0 && itemQty(hero, 'tin') > 0
+        });
+        return rows;
+    }
+    if (kind === 'anvil') {
+        rows.push({
+            id: 'smith:bronzedagger',
+            label: 'Smith bronze dagger (1 bar)',
+            enabled: itemQty(hero, 'bronzebar') > 0
+        });
+        return rows;
+    }
+    return rows;
+}
+
+function runStationRecipe(hero, kind, recipeId) {
+    var parts;
+    var result;
+    if (!hero || !kind || !recipeId) {
+        return null;
+    }
+    if ((kind === 'range' || kind === 'fire') && recipeId.indexOf('cook:') === 0) {
+        parts = recipeId.split(':');
+        if (!parts[1] || parts[1] === 'none') {
+            return { ok: false, empty: true };
+        }
+        result = cookAtStation(hero, parts[1], kind === 'fire' ? 'fire' : 'range');
+        if (!result) {
+            return { ok: false };
+        }
+        return result;
+    }
+    if (kind === 'stall') {
+        if (recipeId === 'tan:cowhide') {
+            result = tanCowhide(hero, 'cowhide');
+            if (!result) {
+                return { ok: false, need: 'cowhide' };
+            }
+            return result;
+        }
+        if (recipeId === 'stitch:gloves') {
+            result = stitchLeather(hero);
+            if (!result) {
+                return { ok: false, need: 'materials' };
+            }
+            return result;
+        }
+    }
+    if (kind === 'furnace' && recipeId === 'smelt:bronzebar') {
+        return smeltBronze(hero);
+    }
+    if (kind === 'anvil' && recipeId === 'smith:bronzedagger') {
+        return smithBronzeDagger(hero);
     }
     return null;
 }
@@ -1018,8 +1433,21 @@ function applyCombatLevel(hero, announce) {
     return next;
 }
 
+function ensureSkill(hero, skill) {
+    if (!hero) {
+        return null;
+    }
+    if (!hero.skills) {
+        hero.skills = {};
+    }
+    if (!hero.skills[skill]) {
+        hero.skills[skill] = { level: 1, xp: 0 };
+    }
+    return hero.skills[skill];
+}
+
 function gainSkillXp(hero, skill, amount) {
-    var s = hero.skills[skill];
+    var s = ensureSkill(hero, skill);
     if (!s) {
         return;
     }

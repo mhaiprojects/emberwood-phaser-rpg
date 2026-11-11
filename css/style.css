@@ -759,7 +759,8 @@ button.ghost {
 #dead-overlay,
 #world-map-overlay,
 #shop-overlay,
-#bank-overlay {
+#bank-overlay,
+#station-overlay {
     position: fixed;
     inset: 0;
     background: rgba(8, 6, 10, 0.82);
@@ -769,11 +770,25 @@ button.ghost {
     z-index: 20;
 }
 
+#station-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 10px 0 12px;
+    max-width: 280px;
+}
+
+#station-list button {
+    width: 100%;
+    text-align: left;
+}
+
 #title-overlay[hidden],
 #dead-overlay[hidden],
 #world-map-overlay[hidden],
 #shop-overlay[hidden],
 #bank-overlay[hidden],
+#station-overlay[hidden],
 #level-up-overlay[hidden],
 #dialogue-overlay[hidden],
 #dialogue-options[hidden],

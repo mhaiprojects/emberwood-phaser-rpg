@@ -55,6 +55,8 @@ var Hud = {
             shop: document.getElementById('shop-overlay'),
             shopSpeaker: document.getElementById('shop-speaker'),
             shopCopy: document.getElementById('shop-copy'),
+            shopStock: document.getElementById('shop-stock'),
+            shopInv: document.getElementById('shop-inv'),
             shopClose: document.getElementById('btn-shop-close'),
             bank: document.getElementById('bank-overlay'),
             bankSpeaker: document.getElementById('bank-speaker'),
@@ -66,6 +68,11 @@ var Hud = {
             bankSearch: document.getElementById('bank-search'),
             bankTabs: document.getElementById('bank-tabs'),
             bankClose: document.getElementById('btn-bank-close'),
+            station: document.getElementById('station-overlay'),
+            stationTitle: document.getElementById('station-title'),
+            stationCopy: document.getElementById('station-copy'),
+            stationList: document.getElementById('station-list'),
+            stationClose: document.getElementById('btn-station-close'),
             levelUp: document.getElementById('level-up-overlay'),
             levelUpIcon: document.getElementById('level-up-icon'),
             levelUpTitle: document.getElementById('level-up-title'),
@@ -94,6 +101,10 @@ var Hud = {
         this.dialogue = null;
         this.bankSel = null;
         this.bankTab = 'all';
+        this.stationKind = null;
+        this.shopKey = null;
+        this.shopSelStock = null;
+        this.shopSelInv = null;
         this._vueReady = false;
         if (window.HudApp && typeof HudApp.mount === 'function') {
             HudApp.mount();
@@ -428,6 +439,24 @@ var Hud = {
         }
         if (this.el.shop) {
             this.el.shop.addEventListener('click', function (event) {
+                var stockSlot = event.target && event.target.closest && event.target.closest('[data-shop-stock]');
+                if (stockSlot) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    self.shopSelStock = stockSlot.getAttribute('data-shop-stock');
+                    self.shopSelInv = null;
+                    self.renderShop();
+                    return;
+                }
+                var invSlot = event.target && event.target.closest && event.target.closest('[data-shop-inv]');
+                if (invSlot) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    self.shopSelInv = invSlot.getAttribute('data-shop-inv');
+                    self.shopSelStock = null;
+                    self.renderShop();
+                    return;
+                }
                 var btn = event.target && event.target.closest && event.target.closest('[data-shop-action]');
                 if (!btn) {
                     return;
@@ -436,16 +465,17 @@ var Hud = {
                 event.stopPropagation();
                 btn.blur();
                 var action = btn.getAttribute('data-shop-action');
+                var qtyAttr = btn.getAttribute('data-shop-qty');
                 if (action === 'close') {
                     self.hideShop();
                     return;
                 }
-                if (action === 'buy' || action === 'sell') {
-                    if (action === 'buy' && typeof canAddItem === 'function' && !canAddItem(self.hero())) {
-                        self.log('inventory full');
-                        return;
-                    }
-                    self.log('The shelves are still being stocked.');
+                if (action === 'buy') {
+                    self.shopBuy(qtyAttr);
+                    return;
+                }
+                if (action === 'sell') {
+                    self.shopSell(qtyAttr);
                 }
             });
         }
@@ -477,6 +507,25 @@ var Hud = {
                 event.stopPropagation();
                 btn.blur();
                 self.chooseBankAction(btn.getAttribute('data-bank-action'));
+            });
+        }
+        if (this.el.station) {
+            this.el.station.addEventListener('click', function (event) {
+                var recipe = event.target && event.target.closest && event.target.closest('[data-station-recipe]');
+                if (recipe) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    recipe.blur();
+                    self.chooseStationRecipe(recipe.getAttribute('data-station-recipe'));
+                    return;
+                }
+                var closeBtn = event.target && event.target.closest && event.target.closest('[data-station-action="close"]');
+                if (closeBtn) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    closeBtn.blur();
+                    self.hideStation();
+                }
             });
         }
         if (this.el.bankSearch) {
@@ -519,6 +568,10 @@ var Hud = {
                 self.hideBank();
                 return;
             }
+            if (event.code === 'Escape' && self.el.station && !self.el.station.hidden) {
+                self.hideStation();
+                return;
+            }
             if (event.code === 'Escape' && self.el.worldMap && !self.el.worldMap.hidden) {
                 self.hideWorldMap();
             }
@@ -548,7 +601,7 @@ var Hud = {
 
     bindHudBlur: function () {
         document.addEventListener('mouseup', function (event) {
-            if (event.target && event.target.closest && event.target.closest('#title-overlay, #dead-overlay, #world-map-overlay, #dialogue-overlay, #shop-overlay, #bank-overlay')) {
+            if (event.target && event.target.closest && event.target.closest('#title-overlay, #dead-overlay, #world-map-overlay, #dialogue-overlay, #shop-overlay, #bank-overlay, #station-overlay')) {
                 return;
             }
             var btn = event.target && event.target.closest && event.target.closest('#shell button');
@@ -607,12 +660,28 @@ var Hud = {
                 this.clearUseOn();
                 return;
             }
-            crafted = typeof useItemOnItem === 'function' ? useItemOnItem(hero, this.useOnId, id) : null;
+            crafted = typeof useItemOnItem === 'function'
+                ? useItemOnItem(hero, this.useOnId, id, {
+                    canLightFire: !!(world.canLightFireAtPlayer && world.canLightFireAtPlayer())
+                })
+                : null;
+            if (crafted && crafted.blocked) {
+                this.log('You cannot light a fire here.');
+                this.clearUseOn();
+                return;
+            }
             if (crafted && crafted.ok) {
                 this.saveHero(hero);
-                this.log(crafted.made
-                    ? ('You stitch the leather into ' + itemName(crafted.made) + '.')
-                    : 'You stitch the leather.');
+                if (crafted.groundFire) {
+                    if (world.spawnGroundFireAtPlayer) {
+                        world.spawnGroundFireAtPlayer(crafted.durationMs);
+                    }
+                    this.log('You light a fire.');
+                } else if (crafted.made) {
+                    this.log('You stitch the leather into ' + itemName(crafted.made) + '.');
+                } else {
+                    this.log('You stitch the leather.');
+                }
                 this.clearUseOn();
                 return;
             }
@@ -1006,7 +1075,15 @@ var Hud = {
             return false;
         }
         this.saveHero(hero);
-        this.log('You use the ' + itemName(id) + ' on the ' + itemUseTargetName(kind) + '.');
+        if (result.buried) {
+            this.log('You offer the bones at the shrine.');
+        } else if (result.burned) {
+            this.log('You accidentally burn the ' + itemName(id) + '.');
+        } else if (result.cooked) {
+            this.log('You cook the ' + itemName(id) + ' on the ' + itemUseTargetName(kind) + '.');
+        } else {
+            this.log('You use the ' + itemName(id) + ' on the ' + itemUseTargetName(kind) + '.');
+        }
         this.clearUseOn();
         return true;
     },
@@ -1084,6 +1161,7 @@ var Hud = {
         this.hideDialogue();
         this.hideShop();
         this.hideBank();
+        this.hideStation();
         this.hideLevelUp();
         this.clearUseOn();
         this.setMode('title');
@@ -1115,6 +1193,7 @@ var Hud = {
         this.hideDialogue();
         this.hideShop();
         this.hideBank();
+        this.hideStation();
         this.hideLevelUp();
         this.clearUseOn();
         var msg = text || 'You have been defeated.';
@@ -1265,6 +1344,7 @@ var Hud = {
         this.hideContextMenu();
         this.hideShop();
         this.hideBank();
+        this.hideStation();
         this.dialogue = { speaker: speaker || '', pages: clean, index: 0, options: options };
         this.renderDialogue(true);
     },
@@ -1292,8 +1372,8 @@ var Hud = {
         }
         if (this.el.dialogueContinue) {
             this.el.dialogueContinue.textContent = d.index >= d.pages.length - 1
-                ? 'Click to close'
-                : 'Click to continue';
+                ? 'Click or Space to close'
+                : 'Click or Space to continue';
         }
         this.renderDialogueOptions();
         if (logPage) {
@@ -1381,15 +1461,22 @@ var Hud = {
         this.hideWorldMap();
         this.hideDialogue();
         this.hideBank();
+        this.hideStation();
         var name = def && def.name ? def.name : 'Shopkeeper';
+        this.shopKey = (def && def.shopKey)
+            || (typeof GENERAL_SHOP_KEY !== 'undefined' ? GENERAL_SHOP_KEY : 'mira');
+        this.shopSelStock = null;
+        this.shopSelInv = null;
         if (this.el.shopSpeaker) {
             this.el.shopSpeaker.textContent = name;
         }
         if (this.el.shopCopy) {
-            this.el.shopCopy.textContent = 'The shelves are still being stocked.';
+            this.el.shopCopy.textContent = 'Take a look at the wares.';
         }
         this.el.shop.hidden = false;
-        this.el.shop.setAttribute('data-shop', def && def.key ? def.key : 'shop');
+        this.el.shop.setAttribute('data-shop', this.shopKey);
+        this.log('Take a look at the wares.');
+        this.renderShop();
     },
 
     hideShop: function () {
@@ -1400,10 +1487,138 @@ var Hud = {
                 this.el.shopClose.blur();
             }
         }
+        this.shopKey = null;
+        this.shopSelStock = null;
+        this.shopSelInv = null;
     },
 
     shopOpen: function () {
         return !!(this.el && this.el.shop && !this.el.shop.hidden);
+    },
+
+    renderShop: function () {
+        var hero = this.hero();
+        var rows;
+        var html;
+        var i;
+        var row;
+        var inv;
+        var stack;
+        var sell;
+        var now = (window.game && window.game.scene.getScene('WorldScene') && window.game.scene.getScene('WorldScene').time)
+            ? window.game.scene.getScene('WorldScene').time.now
+            : Date.now();
+        if (!this.el || !this.el.shopStock || !this.el.shopInv || !this.shopOpen()) {
+            return;
+        }
+        rows = typeof shopStockRows === 'function' ? shopStockRows(this.shopKey, now) : [];
+        html = '';
+        for (i = 0; i < rows.length; i++) {
+            row = rows[i];
+            html += '<button type="button" data-shop-stock="' + row.id + '"'
+                + (this.shopSelStock === row.id ? ' class="is-on"' : '')
+                + (row.stock < 1 ? ' disabled' : '') + '>'
+                + '<img class="pix" src="' + itemIcon(row.id) + '" alt="">'
+                + '<span>' + itemName(row.id) + '</span>'
+                + '<span class="shop-meta">' + row.stock + ' · ' + row.buyPrice + 'gp</span>'
+                + '</button>';
+        }
+        this.el.shopStock.innerHTML = html || '<p class="shop-empty">No stock.</p>';
+        html = '';
+        inv = hero && hero.inventory ? hero.inventory : [];
+        for (i = 0; i < inv.length; i++) {
+            stack = inv[i];
+            if (!stack || !stack.id || stack.id === 'coins') {
+                continue;
+            }
+            sell = typeof itemSellPrice === 'function' ? itemSellPrice(stack.id) : 0;
+            if (!(sell > 0)) {
+                continue;
+            }
+            html += '<button type="button" data-shop-inv="' + stack.id + '"'
+                + (this.shopSelInv === stack.id ? ' class="is-on"' : '') + '>'
+                + '<img class="pix" src="' + itemIcon(stack.id) + '" alt="">'
+                + '<span>' + itemName(stack.id) + (stack.qty > 1 ? ' ×' + stack.qty : '') + '</span>'
+                + '<span class="shop-meta">' + sell + 'gp</span>'
+                + '</button>';
+        }
+        this.el.shopInv.innerHTML = html || '<p class="shop-empty">Nothing to sell.</p>';
+        this.renderHero(hero);
+    },
+
+    shopBuy: function (qtyAttr) {
+        var hero = this.hero();
+        var qty;
+        var result;
+        var now;
+        if (!this.shopOpen() || !this.shopSelStock || !hero) {
+            this.log('Select a shop item first.');
+            return;
+        }
+        qty = qtyAttr === 'all' ? 10 : Math.floor(Number(qtyAttr || 1));
+        if (!(qty >= 1)) {
+            qty = 1;
+        }
+        now = (window.game && window.game.scene.getScene('WorldScene') && window.game.scene.getScene('WorldScene').time)
+            ? window.game.scene.getScene('WorldScene').time.now
+            : Date.now();
+        result = typeof buyFromShop === 'function'
+            ? buyFromShop(hero, this.shopKey, this.shopSelStock, qty, now)
+            : null;
+        if (!result || !result.ok) {
+            if (result && result.gold) {
+                this.log('You need more gold.');
+            } else if (result && result.full) {
+                this.log('inventory full');
+            } else if (result && result.stock) {
+                this.log('The shop is out of stock.');
+            } else {
+                this.log('Nothing interesting happens.');
+            }
+            this.renderShop();
+            return;
+        }
+        this.saveHero(hero);
+        this.log('You buy ' + result.qty + ' × ' + itemName(result.id) + ' for ' + result.cost + 'gp.');
+        this.renderShop();
+    },
+
+    shopSell: function (qtyAttr) {
+        var hero = this.hero();
+        var qty;
+        var have;
+        var result;
+        if (!this.shopOpen() || !this.shopSelInv || !hero) {
+            this.log('Select an inventory item first.');
+            return;
+        }
+        have = typeof itemQty === 'function' ? itemQty(hero, this.shopSelInv) : 0;
+        if (qtyAttr === 'all') {
+            qty = have;
+        } else {
+            qty = Math.floor(Number(qtyAttr || 1));
+        }
+        if (!(qty >= 1)) {
+            qty = 1;
+        }
+        result = typeof sellToShop === 'function'
+            ? sellToShop(hero, this.shopKey, this.shopSelInv, qty)
+            : null;
+        if (!result || !result.ok) {
+            if (result && result.unsellable) {
+                this.log('The shop will not buy that.');
+            } else {
+                this.log('Nothing interesting happens.');
+            }
+            this.renderShop();
+            return;
+        }
+        this.saveHero(hero);
+        this.log('You sell ' + result.qty + ' × ' + itemName(result.id) + ' for ' + result.earned + 'gp.');
+        if (itemQty(hero, this.shopSelInv) < 1) {
+            this.shopSelInv = null;
+        }
+        this.renderShop();
     },
 
     showBank: function (def) {
@@ -1414,6 +1629,7 @@ var Hud = {
         this.hideWorldMap();
         this.hideDialogue();
         this.hideShop();
+        this.hideStation();
         var name = def && def.name ? def.name : 'Banker Elise';
         if (this.el.bankSpeaker) {
             this.el.bankSpeaker.textContent = name;
@@ -1454,6 +1670,154 @@ var Hud = {
 
     bankOpen: function () {
         return !!(this.el && this.el.bank && !this.el.bank.hidden);
+    },
+
+    stationTitleFor: function (kind) {
+        if (kind === 'range') {
+            return 'Cooking range';
+        }
+        if (kind === 'fire') {
+            return 'Fire';
+        }
+        if (kind === 'stall') {
+            return 'Crafting stall';
+        }
+        if (kind === 'anvil') {
+            return 'Anvil';
+        }
+        if (kind === 'furnace') {
+            return 'Furnace';
+        }
+        return 'Station';
+    },
+
+    stationCopyFor: function (kind) {
+        if (kind === 'range' || kind === 'fire') {
+            return 'Choose raw food from your pack to cook.';
+        }
+        if (kind === 'stall') {
+            return 'Tan hides or stitch leather goods.';
+        }
+        if (kind === 'anvil') {
+            return 'Hammer bronze bars into weapons.';
+        }
+        if (kind === 'furnace') {
+            return 'Smelt copper and tin into a bronze bar.';
+        }
+        return 'Choose a recipe.';
+    },
+
+    showStation: function (kind) {
+        if (!this.el || !this.el.station || this.mode !== 'world') {
+            return;
+        }
+        if (!kind || kind === 'booth') {
+            return;
+        }
+        this.hideContextMenu();
+        this.hideWorldMap();
+        this.hideDialogue();
+        this.hideShop();
+        this.hideBank();
+        this.stationKind = kind;
+        if (this.el.stationTitle) {
+            this.el.stationTitle.textContent = this.stationTitleFor(kind);
+        }
+        if (this.el.stationCopy) {
+            this.el.stationCopy.textContent = this.stationCopyFor(kind);
+        }
+        this.el.station.hidden = false;
+        this.el.station.setAttribute('data-station', kind);
+        this.renderStation();
+    },
+
+    hideStation: function () {
+        if (this.el && this.el.station) {
+            this.el.station.hidden = true;
+            this.el.station.removeAttribute('data-station');
+            if (this.el.stationClose) {
+                this.el.stationClose.blur();
+            }
+        }
+        if (this.el && this.el.stationList) {
+            this.el.stationList.innerHTML = '';
+        }
+        this.stationKind = null;
+    },
+
+    stationOpen: function () {
+        return !!(this.el && this.el.station && !this.el.station.hidden);
+    },
+
+    renderStation: function () {
+        var hero = this.hero();
+        var rows;
+        var html = '';
+        var i;
+        if (!this.el || !this.el.stationList || !this.stationKind) {
+            return;
+        }
+        rows = typeof stationRecipesFor === 'function'
+            ? stationRecipesFor(this.stationKind, hero)
+            : [];
+        for (i = 0; i < rows.length; i++) {
+            var row = rows[i];
+            html += '<button type="button" data-station-recipe="' + row.id + '"' +
+                (row.enabled ? '' : ' disabled') + '>' + row.label + '</button>';
+        }
+        this.el.stationList.innerHTML = html;
+    },
+
+    chooseStationRecipe: function (recipeId) {
+        var hero;
+        var result;
+        if (!this.stationOpen() || this.mode !== 'world' || !this.stationKind) {
+            return;
+        }
+        hero = this.hero();
+        result = typeof runStationRecipe === 'function'
+            ? runStationRecipe(hero, this.stationKind, recipeId)
+            : null;
+        if (!result) {
+            this.log('Nothing interesting happens.');
+            this.renderStation();
+            return;
+        }
+        if (result.empty) {
+            this.log('You have nothing to cook.');
+            this.renderStation();
+            return;
+        }
+        if (result.need === 'ores' || result.need === 'cowhide' || result.need === 'materials' || result.need === 'bar') {
+            this.log('You lack the materials.');
+            this.renderStation();
+            return;
+        }
+        if (!result.ok) {
+            this.log(result.full ? 'inventory full' : 'Nothing interesting happens.');
+            this.renderStation();
+            return;
+        }
+        this.saveHero(hero);
+        if (result.burned) {
+            this.log('You accidentally burn the ' + itemName(recipeId.split(':')[1]) + '.');
+        } else if (result.cooked) {
+            this.log('You cook the ' + itemName(recipeId.split(':')[1]) + '.');
+        } else if (result.made === 'leather') {
+            this.log('You tan the cowhide.');
+        } else if (result.made === 'gloves') {
+            this.log('You stitch a pair of leather gloves.');
+        } else if (result.made === 'bronzebar') {
+            this.log('You smelt a bronze bar.');
+        } else if (result.made === 'bronzedagger') {
+            this.log('You smith a bronze dagger.');
+        } else if (result.made) {
+            this.log('You make ' + itemName(result.made) + '.');
+        } else {
+            this.log('You finish the work.');
+        }
+        this.renderStation();
+        this.renderHero(hero);
     },
 
     renderBank: function () {
@@ -1652,6 +2016,15 @@ var Hud = {
             }
             return;
         }
+        if (action === 'station') {
+            if (world.clickStation) {
+                var stationHit = world.pickScenery(target.worldX, target.worldY);
+                if (stationHit && typeof isStationKind === 'function' && isStationKind(stationHit.kind)) {
+                    world.clickStation(stationHit);
+                }
+            }
+            return;
+        }
         if (action !== 'walk-here' || !world.setWalk) {
             return;
         }
@@ -1717,27 +2090,42 @@ var Hud = {
             ? state.total
             : (typeof skillTotal === 'function' ? skillTotal(this.hero()) : 0);
         var vue = this.vueState();
+        var hpText = state.hp + ' / ' + state.maxHp;
         if (vue) {
             vue.zone = state.zone;
             vue.zoneId = state.zoneId;
             vue.hp = state.hp;
             vue.maxHp = state.maxHp;
-            vue.hpText = state.hp + ' / ' + state.maxHp;
+            vue.hpText = hpText;
             vue.gold = state.gold;
             vue.xp = state.xp;
             vue.level = state.level;
             vue.total = total;
             vue.quest = state.quest;
-        } else if (this.el) {
-            this.el.zone.textContent = state.zone;
-            this.el.hp.textContent = state.hp + ' / ' + state.maxHp;
-            this.el.gold.textContent = String(state.gold);
-            this.el.xp.textContent = String(state.xp);
-            this.el.level.textContent = String(state.level);
+        }
+        /* Mirror into DOM immediately so suite/live reads do not wait on Vue flush. */
+        if (this.el) {
+            if (this.el.zone) {
+                this.el.zone.textContent = state.zone;
+            }
+            if (this.el.hp) {
+                this.el.hp.textContent = hpText;
+            }
+            if (this.el.gold) {
+                this.el.gold.textContent = String(state.gold);
+            }
+            if (this.el.xp) {
+                this.el.xp.textContent = String(state.xp);
+            }
+            if (this.el.level) {
+                this.el.level.textContent = String(state.level);
+            }
             if (this.el.total) {
                 this.el.total.textContent = String(total);
             }
-            this.el.quest.textContent = state.quest;
+            if (this.el.quest) {
+                this.el.quest.textContent = state.quest;
+            }
             if (this.el.questTab) {
                 this.el.questTab.textContent = state.quest;
             }
@@ -2134,6 +2522,7 @@ var Hud = {
         this.hideDialogue();
         this.hideShop();
         this.hideBank();
+        this.hideStation();
         this.clearUseOn();
         this.battle = battle;
         this.selectingEnemy = false;

@@ -14,7 +14,9 @@ var TILE = {
     DOCK: 13,
     BOAT: 14,
     TOMB: 15,
-    DOOR: 16
+    DOOR: 16,
+    WALL: 17,
+    FURNACE: 18
 };
 
 var MAP_W = 36;
@@ -25,6 +27,7 @@ var TOWN_PROPS = {
     stall: { x: 16, y: 11 },
     range: { x: 16, y: 17 },
     anvil: { x: 21, y: 12 },
+    furnace: { x: 22, y: 12 },
     booth: { x: 14, y: 12 }
 };
 var SHORE_PROPS = {
@@ -92,10 +95,13 @@ var SCENERY_EXAMINE = {
     shrine: 'A weathered stone shrine.',
     water: "It's water.",
     wall: "It's a house wall.",
-    stall: 'A market stall. The grocer is away.',
-    range: 'A cooking range. The fire is out.',
+    stall: 'A crafting stall. Leatherwork tools rest on the counter.',
+    range: 'A cooking range. Ready for raw food.',
     anvil: 'A well-used smithing anvil.',
-    booth: 'A bank booth. The clerk is away.',
+    furnace: 'A brick furnace. Ore melts here into bars.',
+    fire: 'A crackling fire. Good for cooking.',
+    booth: 'A bank booth. Your items are safe here.',
+    craft: 'A crafting stall. Leatherwork tools rest on the counter.',
     dock: 'A weathered wooden dock. The tide slaps the pilings.',
     boat: 'A fishing boat, tied off and empty.',
     fishspot: 'A fishing spot. Fish dart beneath the surface.',
@@ -243,7 +249,7 @@ function house(grid, x, y, w, h) {
     for (iy = y; iy < y + h; iy++) {
         for (ix = x; ix < x + w; ix++) {
             var edge = ix === x || iy === y || ix === x + w - 1 || iy === y + h - 1;
-            setCell(grid, ix, iy, edge ? TILE.ROCK : TILE.PATH);
+            setCell(grid, ix, iy, edge ? TILE.WALL : TILE.PATH);
         }
     }
     setCell(grid, x + Math.floor(w / 2), y + h - 1, TILE.PATH);
@@ -307,6 +313,7 @@ function generateMap(seed, biome, neighbors) {
         setCell(grid, TOWN_PROPS.stall.x, TOWN_PROPS.stall.y, TILE.STALL);
         setCell(grid, TOWN_PROPS.range.x, TOWN_PROPS.range.y, TILE.RANGE);
         setCell(grid, TOWN_PROPS.anvil.x, TOWN_PROPS.anvil.y, TILE.ANVIL);
+        setCell(grid, TOWN_PROPS.furnace.x, TOWN_PROPS.furnace.y, TILE.FURNACE);
         setCell(grid, TOWN_PROPS.booth.x, TOWN_PROPS.booth.y, TILE.BOOTH);
     } else if (biome === 'forest') {
         scatter(grid, TILE.TREE, 70, seed, true);
@@ -370,12 +377,12 @@ function generateInterior(kind) {
     for (iy = y0; iy < y0 + h; iy++) {
         for (ix = x0; ix < x0 + w; ix++) {
             var edge = ix === x0 || iy === y0 || ix === x0 + w - 1 || iy === y0 + h - 1;
-            setCell(grid, ix, iy, edge ? TILE.ROCK : TILE.PATH);
+            setCell(grid, ix, iy, edge ? TILE.WALL : TILE.PATH);
         }
     }
     setCell(grid, INTERIOR_EXIT_TILE.x, INTERIOR_EXIT_TILE.y, TILE.PATH);
     for (ix = x0 + 2; ix < x0 + w - 2; ix++) {
-        setCell(grid, ix, y0 + 2, TILE.ROCK);
+        setCell(grid, ix, y0 + 2, TILE.WALL);
     }
     setCell(grid, x0 + Math.floor(w / 2), y0 + 2, TILE.PATH);
     if (kind === 'bank') {
@@ -420,8 +427,15 @@ function housesForBiome(biome) {
 }
 
 function isHouseWallAt(grid, tx, ty, rects) {
-    if (!inBounds(tx, ty) || !grid || !grid[ty] || grid[ty][tx] !== TILE.ROCK) {
+    if (!inBounds(tx, ty) || !grid || !grid[ty]) {
         return false;
+    }
+    var index = grid[ty][tx];
+    if (index !== TILE.WALL && index !== TILE.ROCK) {
+        return false;
+    }
+    if (index === TILE.WALL) {
+        return true;
     }
     rects = rects || [];
     var i;
@@ -567,6 +581,9 @@ function sceneryKindAt(grid, tx, ty, opts) {
     if (index === TILE.ANVIL) {
         return 'anvil';
     }
+    if (index === TILE.FURNACE) {
+        return 'furnace';
+    }
     if (index === TILE.BOOTH) {
         return 'booth';
     }
@@ -578,6 +595,9 @@ function sceneryKindAt(grid, tx, ty, opts) {
     }
     if (index === TILE.TOMB) {
         return 'tomb';
+    }
+    if (index === TILE.WALL) {
+        return 'wall';
     }
     if (index === TILE.ROCK) {
         if (opts.interior || isHouseWallAt(grid, tx, ty, opts.houseRects)) {
@@ -608,5 +628,28 @@ function sceneryPrimaryAction(kind) {
     if (kind === 'fishspot') {
         return { label: 'Fish', action: 'fish' };
     }
+    if (kind === 'range') {
+        return { label: 'Cook', action: 'station' };
+    }
+    if (kind === 'stall') {
+        return { label: 'Craft', action: 'station' };
+    }
+    if (kind === 'anvil') {
+        return { label: 'Smith', action: 'station' };
+    }
+    if (kind === 'furnace') {
+        return { label: 'Smelt', action: 'station' };
+    }
+    if (kind === 'fire') {
+        return { label: 'Cook', action: 'station' };
+    }
+    if (kind === 'booth') {
+        return { label: 'Bank', action: 'station' };
+    }
     return null;
+}
+
+function isStationKind(kind) {
+    return kind === 'range' || kind === 'stall' || kind === 'anvil' || kind === 'furnace'
+        || kind === 'fire' || kind === 'booth';
 }

@@ -1,7 +1,7 @@
 /**
- * Playwright proof: from spawn (328, 248), Guildmaster Bram shows a blue
- * star then a gold compass until the militia task is done. Stage 0 accept
- * still updates the journal. Phaser keyboard stays off.
+ * Playwright proof: from spawn (328, 248), Guildmaster Bram shows a yellow
+ * bang, then grey/green quest marks until the militia task is done. Stage 0
+ * accept still updates the journal. Phaser keyboard stays off.
  *
  * Headless via tests/playwright-session.js (reuses a live server, or starts
  * python3 -m http.server on this port and kills that PID on exit).
@@ -42,6 +42,10 @@
                 throw new Error('Phaser is ' + window.Phaser.VERSION + ' not 3.90');
             }
 
+            if (window.Hud.hideTitle) {
+                window.Hud.hideTitle();
+            }
+            window.Hud.mode = 'world';
             world.enterZone('haven', null);
             world.encounterLock = false;
             window.game.registry.set('quest', { id: 'goblins', stage: 0, progress: 0, goal: 5 });
@@ -65,11 +69,11 @@
             if (!bram || !rowan) {
                 throw new Error('haven NPCs missing');
             }
-            if (!bram.questIcon || bram.questIcon.kind !== 'star' || !bram.questIcon.visible) {
-                throw new Error('stage 0 Bram missing blue star');
+            if (!bram.questIcon || bram.questIcon.kind !== 'bang' || !bram.questIcon.visible) {
+                throw new Error('stage 0 Bram missing yellow bang');
             }
-            if (bram.questIcon.iconColor !== window.QUEST_HEAD_STAR) {
-                throw new Error('stage 0 star is not blue');
+            if (bram.questIcon.iconColor !== window.QUEST_HEAD_BANG) {
+                throw new Error('stage 0 bang is not yellow');
             }
             if (rowan.questIcon) {
                 throw new Error('Rowan should not have a quest icon');
@@ -87,9 +91,18 @@
             if (document.getElementById('hud-quest').textContent !== 'Kill goblins in Northwood (0/5).') {
                 throw new Error('journal did not update on accept');
             }
-            if (!bram.questIcon.visible || bram.questIcon.kind !== 'compass' ||
-                    bram.questIcon.iconColor !== window.QUEST_HEAD_COMPASS) {
-                throw new Error('stage 1 Bram missing gold compass');
+            if (!bram.questIcon.visible || bram.questIcon.kind !== 'quest' ||
+                    bram.questIcon.iconColor !== window.QUEST_HEAD_QUEST_GREY) {
+                throw new Error('stage 1 Bram missing grey quest mark');
+            }
+
+            quest.stage = 2;
+            quest.progress = 5;
+            window.game.registry.set('quest', quest);
+            world.refreshHud();
+            if (!bram.questIcon.visible || bram.questIcon.kind !== 'quest' ||
+                    bram.questIcon.iconColor !== window.QUEST_HEAD_QUEST_GREEN) {
+                throw new Error('stage 2 Bram missing green quest mark');
             }
 
             quest.stage = 3;
@@ -103,13 +116,14 @@
             }
             return {
                 spawn: spawn,
-                kindAfterAccept: 'compass',
+                kindAfterAccept: 'quest',
+                readyColor: window.QUEST_HEAD_QUEST_GREEN,
                 hiddenAfterDone: true,
                 keyboard: !!window.game.input.keyboard
             };
         });
 
-        var dedicated = await runOnly(page, opened, 'npcs: Bram shows blue star then gold compass until militia is done');
+        var dedicated = await runOnly(page, opened, 'npcs: Bram shows bang then grey/green quest marks until militia is done');
         var stage0 = await runOnly(page, opened, 'npcs: Bram stage 0 accepts militia quest and updates journal');
         return { live: live, dedicated: dedicated, stage0: stage0 };
     });

@@ -29,11 +29,15 @@
   "items": [
     "airrune",
     "arrow",
+    "beef",
     "bones",
     "bread",
     "bronzeaxe",
     "bronzebar",
+    "bronzedagger",
     "bronzepick",
+    "burntbeef",
+    "burntshrimp",
     "coins",
     "copper",
     "cowhide",
@@ -88,6 +92,7 @@
     "mining",
     "prayer",
     "ranged",
+    "smithing",
     "strength",
     "woodcutting"
   ],

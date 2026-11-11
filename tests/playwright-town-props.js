@@ -1,6 +1,6 @@
 /**
  * Playwright proof: from spawn (328, 248), Emberhaven stall / range /
- * anvil / bank booth are examine-only scenery (no shop or bank UI).
+ * anvil open station UIs and the bank booth opens the bank overlay.
  * Phaser keyboard stays off.
  *
  * Headless via tests/playwright-session.js (reuses a live server, or starts
@@ -12,9 +12,17 @@
     var session = require('./playwright-session');
     var result = await session.withGamePage(port, async function (page, opened) {
         var live = await page.evaluate(function () {
-            function lastChat() {
-                var lines = document.querySelectorAll('.chat-line');
-                return lines.length ? lines[lines.length - 1].textContent : '';
+            function standNear(world, tx, ty) {
+                var near = window.nearestWalkableTile(world.tileGrid, tx, ty);
+                if (!near) {
+                    throw new Error('no walkable tile near ' + tx + ',' + ty);
+                }
+                var pt = window.tileCenter(near.tx, near.ty);
+                world.placePlayer(pt.x, pt.y);
+                world.player.body.setVelocity(0, 0);
+                if (world.clearWalk) {
+                    world.clearWalk();
+                }
             }
             function clickTile(world, tx, ty) {
                 var pt = window.tileCenter(tx, ty);
@@ -33,6 +41,10 @@
             if (String(window.Phaser.VERSION).indexOf('3.90') !== 0) {
                 throw new Error('Phaser is ' + window.Phaser.VERSION + ' not 3.90');
             }
+            if (window.Hud.hideTitle) {
+                window.Hud.hideTitle();
+            }
+            window.Hud.mode = 'world';
             world.enterZone('haven', null);
             world.encounterLock = false;
             world.placePlayer(spawn.x, spawn.y);
@@ -43,59 +55,58 @@
             if (world.clearWalk) {
                 world.clearWalk();
             }
+            if (window.Hud.hideStation) {
+                window.Hud.hideStation();
+            }
+            if (window.Hud.hideBank) {
+                window.Hud.hideBank();
+            }
 
             var props = window.TOWN_PROPS;
-            var want = {
-                stall: 'A market stall. The grocer is away.',
-                range: 'A cooking range. The fire is out.',
-                anvil: 'A well-used smithing anvil.',
-                booth: 'A bank booth. The clerk is away.'
-            };
-            var keys = ['stall', 'range', 'anvil', 'booth'];
-            var i;
-            for (i = 0; i < keys.length; i++) {
-                var key = keys[i];
-                var at = props[key];
-                clickTile(world, at.x, at.y);
-                if (lastChat() !== want[key]) {
-                    throw new Error(key + ' examine was ' + lastChat());
-                }
-                if (world.walkTarget) {
-                    throw new Error(key + ' examine started a walk');
-                }
+            standNear(world, props.range.x, props.range.y);
+            clickTile(world, props.range.x, props.range.y);
+            if (!window.Hud.stationOpen() || window.Hud.stationKind !== 'range') {
+                throw new Error('range did not open cook station');
             }
+            window.Hud.hideStation();
 
-            world.enterInterior('bank');
-            var boothTx = window.INTERIOR_ROOM.x + 3;
-            var boothTy = window.INTERIOR_ROOM.y + 4;
-            if (world.tileGrid[boothTy][boothTx] !== window.TILE.BOOTH) {
-                throw new Error('bank interior missing booth');
+            standNear(world, props.anvil.x, props.anvil.y);
+            clickTile(world, props.anvil.x, props.anvil.y);
+            if (!window.Hud.stationOpen() || window.Hud.stationKind !== 'anvil') {
+                throw new Error('anvil did not open smith station');
             }
-            clickTile(world, boothTx, boothTy);
-            if (lastChat() !== want.booth) {
-                throw new Error('interior booth examine was ' + lastChat());
+            window.Hud.hideStation();
+
+            if (!props.furnace) {
+                throw new Error('furnace town prop missing');
             }
-            var shop = document.getElementById('shop-overlay');
-            var bank = document.getElementById('bank-overlay');
-            if (shop && !shop.hidden) {
-                throw new Error('shop overlay opened');
+            standNear(world, props.furnace.x, props.furnace.y);
+            clickTile(world, props.furnace.x, props.furnace.y);
+            if (!window.Hud.stationOpen() || window.Hud.stationKind !== 'furnace') {
+                throw new Error('furnace did not open smelt station');
             }
-            if (bank && !bank.hidden) {
-                throw new Error('bank overlay opened');
+            window.Hud.hideStation();
+
+            standNear(world, props.booth.x, props.booth.y);
+            clickTile(world, props.booth.x, props.booth.y);
+            if (!window.Hud.bankOpen()) {
+                throw new Error('booth did not open bank');
             }
-            world.leaveInterior();
-            world.placePlayer(spawn.x, spawn.y);
+            window.Hud.hideBank();
+
             if (window.game.input.keyboard) {
                 throw new Error('Phaser keyboard turned on');
             }
             return {
                 spawn: spawn,
-                last: lastChat(),
+                rangeOpen: true,
+                anvilOpen: true,
+                boothBank: true,
                 keyboard: !!window.game.input.keyboard
             };
         });
 
-        var only = encodeURIComponent('world: Emberhaven stall, range, anvil, and bank booth are examine-only scenery');
+        var only = encodeURIComponent('world: Emberhaven stall, range, anvil, and bank booth open station UIs');
         await page.goto(opened.base + 'tests/run.html?only=' + only, { waitUntil: 'domcontentloaded' });
         await page.waitForFunction(function () {
             var title = document.title || '';
@@ -110,7 +121,7 @@
         }
         return { live: live, suite: suiteStatus || suiteTitle };
     });
-    console.log('PASS 1/1 town props', result.suite, result.live && result.live.last);
+    console.log('PASS 1/1 town props', result.suite, JSON.stringify(result.live));
 }()).catch(function (err) {
     console.error(err && err.stack ? err.stack : err);
     process.exit(1);

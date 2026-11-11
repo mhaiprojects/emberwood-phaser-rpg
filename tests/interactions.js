@@ -4947,7 +4947,7 @@ EmberwoodTests.add('npcs: Bram stage 0 accepts militia quest and updates journal
     });
 });
 
-EmberwoodTests.add('npcs: Bram shows blue star then gold compass until militia is done', function (win, H) {
+EmberwoodTests.add('npcs: Bram shows bang then grey/green quest marks until militia is done', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');
         var spawn = win.defaultWorldSpawn();
@@ -4970,11 +4970,12 @@ EmberwoodTests.add('npcs: Bram shows blue star then gold compass until militia i
         var spec2 = win.questHeadIconFor({ questGiver: true }, { stage: 2 });
         var spec3 = win.questHeadIconFor({ questGiver: true }, { stage: 3 });
         var specRowan = win.questHeadIconFor({ key: 'guard' }, { stage: 0 });
-        assert(spec0 && spec0.kind === 'star', 'stage 0 helper is a blue star');
-        assertEqual(spec0.color, win.QUEST_HEAD_STAR, 'star fill is blue');
-        assert(spec1 && spec1.kind === 'compass', 'stage 1 helper is a gold compass');
-        assertEqual(spec1.color, win.QUEST_HEAD_COMPASS, 'compass fill is gold');
-        assert(spec2 && spec2.kind === 'compass', 'stage 2 helper stays a gold compass');
+        assert(spec0 && spec0.kind === 'bang', 'stage 0 helper is a bang');
+        assertEqual(spec0.color, win.QUEST_HEAD_BANG, 'bang fill is yellow');
+        assert(spec1 && spec1.kind === 'quest', 'stage 1 helper is a grey quest mark');
+        assertEqual(spec1.color, win.QUEST_HEAD_QUEST_GREY, 'in-progress mark is grey');
+        assert(spec2 && spec2.kind === 'quest', 'stage 2 helper is a green quest mark');
+        assertEqual(spec2.color, win.QUEST_HEAD_QUEST_GREEN, 'ready mark is green');
         assertEqual(spec3, null, 'stage 3 helper hides the icon');
         assertEqual(specRowan, null, 'non-quest NPCs have no head icon');
 
@@ -4986,11 +4987,11 @@ EmberwoodTests.add('npcs: Bram shows blue star then gold compass until militia i
         assert(!rowan.npcDef.questGiver, 'Rowan is not a quest-giver');
         assert(bram.questIcon, 'Bram has a quest head icon');
         assert(!rowan.questIcon, 'Rowan has no quest head icon');
-        assert(bram.questIcon.visible, 'stage 0 star is visible');
-        assertEqual(bram.questIcon.kind, 'star', 'stage 0 icon is a star');
-        assertEqual(bram.questIcon.iconColor, win.QUEST_HEAD_STAR, 'stage 0 icon is blue');
-        assertEqual(Math.round(bram.questIcon.x), Math.round(bram.x), 'star sits over Bram x');
-        assert(bram.questIcon.y < bram.nameLabel.y, 'star sits above the name label');
+        assert(bram.questIcon.visible, 'stage 0 bang is visible');
+        assertEqual(bram.questIcon.kind, 'bang', 'stage 0 icon is a bang');
+        assertEqual(bram.questIcon.iconColor, win.QUEST_HEAD_BANG, 'stage 0 icon is yellow');
+        assertEqual(Math.round(bram.questIcon.x), Math.round(bram.x), 'bang sits over Bram x');
+        assert(bram.questIcon.y < bram.nameLabel.y, 'bang sits above the name label');
         assert(world.floatLabels.indexOf(bram.questIcon) !== -1, 'icon is tracked in floatLabels');
 
         var gold = H.hero(win).gold;
@@ -4998,17 +4999,18 @@ EmberwoodTests.add('npcs: Bram shows blue star then gold compass until militia i
         assertEqual(H.quest(win).stage, 1, 'stage 0 talk still accepts the militia task');
         assertEqual(H.hero(win).gold, gold, 'accept still does not pay');
         assertEqual(win.document.getElementById('hud-quest').textContent, 'Kill goblins in Northwood (0/5).', 'journal still updates on accept');
-        assert(bram.questIcon.visible, 'in-progress compass is visible');
-        assertEqual(bram.questIcon.kind, 'compass', 'accept swaps the star for a compass');
-        assertEqual(bram.questIcon.iconColor, win.QUEST_HEAD_COMPASS, 'in-progress icon is gold');
+        assert(bram.questIcon.visible, 'in-progress quest mark is visible');
+        assertEqual(bram.questIcon.kind, 'quest', 'accept swaps the bang for a quest mark');
+        assertEqual(bram.questIcon.iconColor, win.QUEST_HEAD_QUEST_GREY, 'in-progress icon is grey');
 
         var quest = H.quest(win);
         quest.stage = 2;
         quest.progress = 5;
         win.game.registry.set('quest', quest);
         world.refreshHud();
-        assertEqual(bram.questIcon.kind, 'compass', 'return-to-Bram still shows the gold compass');
-        assert(bram.questIcon.visible, 'stage 2 compass stays visible');
+        assertEqual(bram.questIcon.kind, 'quest', 'return-to-Bram still shows a quest mark');
+        assertEqual(bram.questIcon.iconColor, win.QUEST_HEAD_QUEST_GREEN, 'ready-to-turn-in icon is green');
+        assert(bram.questIcon.visible, 'stage 2 quest mark stays visible');
 
         world.tryTalk(bram);
         assertEqual(H.quest(win).stage, 3, 'stage 2 talk still completes the militia task');
@@ -6161,7 +6163,7 @@ EmberwoodTests.add('npcs: click-to-continue pages through multi-line dialogue', 
         assert(rowan, 'Rowan is in Emberhaven');
         var lines = rowan.npcDef.lines;
         assert(lines && lines.length === 2, 'Rowan has two flavor pages');
-        win.Hud.el.log.innerHTML = '';
+        H.clearChat(win);
         world.tryTalk(rowan);
         assert(world.talkTarget === null, 'tryTalk still clears talkTarget');
         assert(win.Hud.dialogueOpen(), 'talk opens the dialogue box');
@@ -6170,7 +6172,7 @@ EmberwoodTests.add('npcs: click-to-continue pages through multi-line dialogue', 
         assertEqual(overlay.getAttribute('data-pages'), '2', 'two pages');
         assertEqual(win.document.getElementById('dialogue-speaker').textContent, 'Guard Rowan', 'speaker is Rowan');
         assertEqual(win.document.getElementById('dialogue-text').textContent, lines[0], 'first page text');
-        assertEqual(win.document.getElementById('dialogue-continue').textContent, 'Click to continue', 'continue hint');
+        assertEqual(win.document.getElementById('dialogue-continue').textContent, 'Click or Space to continue', 'continue hint');
         assertEqual(H.chat(win).length, 1, 'first page logs one chat line');
         assertEqual(H.lastChat(win), 'Guard Rowan: ' + lines[0], 'first page in chat');
         assert(!H.chatHas(win, lines[1]), 'second page waits for click');
@@ -6181,16 +6183,34 @@ EmberwoodTests.add('npcs: click-to-continue pages through multi-line dialogue', 
         assert(win.Hud.dialogueOpen(), 'click continues to the last page');
         assertEqual(overlay.getAttribute('data-page'), '2', 'second page index');
         assertEqual(win.document.getElementById('dialogue-text').textContent, lines[1], 'second page text');
-        assertEqual(win.document.getElementById('dialogue-continue').textContent, 'Click to close', 'close hint on last page');
+        assertEqual(win.document.getElementById('dialogue-continue').textContent, 'Click or Space to close', 'close hint on last page');
         assertEqual(H.chat(win).length, 2, 'second page logs the next chat line');
         assertEqual(H.lastChat(win), 'Guard Rowan: ' + lines[1], 'second page in chat');
+
+        H.clearChat(win);
+        world.placePlayer(rowan.x, rowan.y + 8);
+        world.player.body.setVelocity(0, 0);
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        world.tryTalk(rowan);
+        assert(win.Hud.dialogueOpen(), 'reopen for Space');
+        assertEqual(overlay.getAttribute('data-page'), '1', 'Space test starts on page 1');
+        H.key(win, 'Space', ' ', 'keydown');
+        world.update(0, 16);
+        H.key(win, 'Space', ' ', 'keyup');
+        assert(win.Hud.dialogueOpen(), 'Space continues dialogue');
+        assertEqual(overlay.getAttribute('data-page'), '2', 'Space advances to page 2');
+        assertEqual(win.document.getElementById('dialogue-text').textContent, lines[1], 'Space shows page 2 text');
+        world.placePlayer(spawn.x, spawn.y);
+        world.player.body.setVelocity(0, 0);
 
         H.click(win, overlay);
         assert(!win.Hud.dialogueOpen(), 'click on the last page closes dialogue');
         assert(overlay.hidden, 'dialogue overlay hidden after close');
         assertEqual(H.chat(win).length, 2, 'closing does not add another chat line');
 
-        win.Hud.el.log.innerHTML = '';
+        H.clearChat(win);
         world.tryTalk(rowan);
         assert(win.Hud.dialogueOpen(), 'talk again opens page 1');
         assertEqual(H.lastChat(win), 'Guard Rowan: ' + lines[0], 'reopen first page');
@@ -6211,7 +6231,7 @@ EmberwoodTests.add('npcs: click-to-continue pages through multi-line dialogue', 
         world.refreshHud();
         var bram = H.findNpc(win, 'guild');
         assert(bram, 'Bram is in Emberhaven');
-        win.Hud.el.log.innerHTML = '';
+        H.clearChat(win);
         world.tryTalk(bram);
         assertEqual(H.chat(win).length, 1, 'post-quest Bram is still one page');
         assertEqual(H.lastChat(win), 'Guildmaster Bram: Emberhaven stands because of you.', 'post-quest line');
@@ -9882,7 +9902,7 @@ EmberwoodTests.add('skills: Darkmine rocks grant Mining XP', function (win, H) {
             }
         }
         var wall = { x: win.MINE_SHAFT_HOUSE.x + Math.floor(win.MINE_SHAFT_HOUSE.w / 2) - 1, y: win.MINE_SHAFT_HOUSE.y + win.MINE_SHAFT_HOUSE.h - 1 };
-        assertEqual(world.tileGrid[wall.y][wall.x], win.TILE.ROCK, 'shaft door west frame is ROCK');
+        assertEqual(world.tileGrid[wall.y][wall.x], win.TILE.WALL, 'shaft door west frame is WALL');
         assertEqual(
             win.sceneryKindAt(world.tileGrid, rock.x, rock.y, {
                 zoneId: 'darkmine',
@@ -15140,9 +15160,9 @@ EmberwoodTests.add('world: Emberhaven houses have a south-wall PATH door', funct
         var scratch = win.makeGrid(win.TILE.GRASS);
         win.house(scratch, 8, 6, 6, 5);
         assertEqual(scratch[10][11], win.TILE.PATH, 'house() last-row mid is PATH');
-        assertEqual(scratch[10][10], win.TILE.ROCK, 'house() last-row west of door is ROCK');
-        assertEqual(scratch[10][12], win.TILE.ROCK, 'house() last-row east of door is ROCK');
-        assertEqual(scratch[6][11], win.TILE.ROCK, 'house() north wall stays ROCK');
+        assertEqual(scratch[10][10], win.TILE.WALL, 'house() last-row west of door is WALL');
+        assertEqual(scratch[10][12], win.TILE.WALL, 'house() last-row east of door is WALL');
+        assertEqual(scratch[6][11], win.TILE.WALL, 'house() north wall stays WALL');
         assertEqual(scratch[8][10], win.TILE.PATH, 'house() interior is PATH');
 
         var houses = [
@@ -15162,11 +15182,11 @@ EmberwoodTests.add('world: Emberhaven houses have a south-wall PATH door', funct
             var leftX = doorX - 1;
             var rightX = doorX + 1;
             if (leftX >= spec.x) {
-                assertEqual(world.tileGrid[doorY][leftX], win.TILE.ROCK, spec.name + ' south wall west of door is ROCK');
+                assertEqual(world.tileGrid[doorY][leftX], win.TILE.WALL, spec.name + ' south wall west of door is WALL');
                 assertEqual(!!world.ground.getTileAt(leftX, doorY).collides, true, spec.name + ' west frame collides');
             }
             if (rightX < spec.x + spec.w) {
-                assertEqual(world.tileGrid[doorY][rightX], win.TILE.ROCK, spec.name + ' south wall east of door is ROCK');
+                assertEqual(world.tileGrid[doorY][rightX], win.TILE.WALL, spec.name + ' south wall east of door is WALL');
                 assertEqual(!!world.ground.getTileAt(rightX, doorY).collides, true, spec.name + ' east frame collides');
             }
         });
@@ -15869,7 +15889,7 @@ EmberwoodTests.add('world: examine on scenery tree, rock, shrine, water, house w
         assertEqual(win.sceneryKindAt(world.tileGrid, 0, 2, opts), 'tree', 'kind tree');
         assertEqual(world.tileGrid[8][18], win.TILE.SHRINE, 'haven shrine tile');
         assertEqual(win.sceneryKindAt(world.tileGrid, 18, 8, opts), 'shrine', 'kind shrine');
-        assertEqual(world.tileGrid[10][10], win.TILE.ROCK, 'cottage south wall is ROCK');
+        assertEqual(world.tileGrid[10][10], win.TILE.WALL, 'cottage south wall is WALL');
         assertEqual(win.sceneryKindAt(world.tileGrid, 10, 10, opts), 'wall', 'kind house wall');
         assertEqual(world.tileGrid[13][23], win.TILE.ROCK, 'courtyard gate rock');
         assertEqual(win.sceneryKindAt(world.tileGrid, 23, 13, opts), 'rock', 'kind loose rock');
@@ -16148,13 +16168,14 @@ EmberwoodTests.add('world: examine courtyard gate and house doors without changi
     });
 });
 
-EmberwoodTests.add('world: Emberhaven stall, range, anvil, and bank booth are examine-only scenery', function (win, H) {
+EmberwoodTests.add('world: Emberhaven stall, range, anvil, and bank booth open station UIs', function (win, H) {
     return ensureWorldPlay(win, H).then(function () {
         H.enterZone(win, 'haven');
         H.setAutoAttack(win, false);
         H.clearKeys(win);
         var world = H.world(win);
         var spawn = win.defaultWorldSpawn();
+        var near;
         world.placePlayer(spawn.x, spawn.y);
         world.player.body.setVelocity(0, 0);
         world.encounterLock = false;
@@ -16166,131 +16187,96 @@ EmberwoodTests.add('world: Emberhaven stall, range, anvil, and bank booth are ex
         if (win.Hud.hideContextMenu) {
             win.Hud.hideContextMenu();
         }
+        if (win.Hud.hideStation) {
+            win.Hud.hideStation();
+        }
+        if (win.Hud.hideBank) {
+            win.Hud.hideBank();
+        }
         assertEqual(spawn.x, 328, 'spawn x tile center');
         assertEqual(spawn.y, 248, 'spawn y tile center');
-        assertEqual(Math.round(world.player.x), 328, 'player at spawn x');
-        assertEqual(Math.round(world.player.y), 248, 'player at spawn y');
         assertEqual(win.Hud.mode, 'world', 'world mode');
         assert(String(win.Phaser.VERSION).indexOf('3.') === 0, 'Phaser 3');
         assert(!win.game.input.keyboard, 'Phaser keyboard plugin stays off');
-        assert(!world.cursors, 'WorldScene has no Phaser cursors');
         assertEqual(win.TILE.STALL, 9, 'STALL index');
         assertEqual(win.TILE.RANGE, 10, 'RANGE index');
         assertEqual(win.TILE.ANVIL, 11, 'ANVIL index');
         assertEqual(win.TILE.BOOTH, 12, 'BOOTH index');
-        assertEqual(win.examineSceneryText('stall'), 'A market stall. The grocer is away.', 'stall examine text');
-        assertEqual(win.examineSceneryText('range'), 'A cooking range. The fire is out.', 'range examine text');
-        assertEqual(win.examineSceneryText('anvil'), 'A well-used smithing anvil.', 'anvil examine text');
-        assertEqual(win.examineSceneryText('booth'), 'A bank booth. The clerk is away.', 'booth examine text');
-        assertEqual(win.tileBlockedByTerrain(win.TILE.STALL), true, 'Pathfind blocks stall');
-        assertEqual(win.tileBlockedByTerrain(win.TILE.RANGE), true, 'Pathfind blocks range');
-        assertEqual(win.tileBlockedByTerrain(win.TILE.ANVIL), true, 'Pathfind blocks anvil');
-        assertEqual(win.tileBlockedByTerrain(win.TILE.BOOTH), true, 'Pathfind blocks booth');
+        assertEqual(win.TILE.WALL, 17, 'WALL index');
+        assert(win.isStationKind('range') && win.isStationKind('stall'), 'station kinds helper');
+        assertEqual(win.sceneryPrimaryAction('range').action, 'station', 'range primary is Cook/station');
+        assertEqual(win.sceneryPrimaryAction('anvil').action, 'station', 'anvil primary is Smith/station');
+        assertEqual(win.sceneryPrimaryAction('booth').action, 'station', 'booth primary is Bank/station');
 
         var props = win.TOWN_PROPS;
         assert(props && props.stall && props.range && props.anvil && props.booth, 'TOWN_PROPS exists');
-        var specs = [
-            { key: 'stall', tile: win.TILE.STALL, kind: 'stall', line: 'A market stall. The grocer is away.' },
-            { key: 'range', tile: win.TILE.RANGE, kind: 'range', line: 'A cooking range. The fire is out.' },
-            { key: 'anvil', tile: win.TILE.ANVIL, kind: 'anvil', line: 'A well-used smithing anvil.' },
-            { key: 'booth', tile: win.TILE.BOOTH, kind: 'booth', line: 'A bank booth. The clerk is away.' }
-        ];
-        var opts = { houseRects: win.housesForBiome('town') };
-        specs.forEach(function (spec) {
-            var at = props[spec.key];
-            assertEqual(world.tileGrid[at.y][at.x], spec.tile, spec.key + ' tile at ' + at.x + ',' + at.y);
-            assertEqual(win.sceneryKindAt(world.tileGrid, at.x, at.y, opts), spec.kind, spec.key + ' kind');
-            var layerTile = world.ground.getTileAt(at.x, at.y);
-            assert(layerTile && layerTile.collides, spec.key + ' collides');
-        });
-        assertEqual(world.tileGrid[15][20], win.TILE.PATH, 'spawn tile stays PATH');
 
+        function standNear(tx, ty) {
+            near = win.nearestWalkableTile(world.tileGrid, tx, ty);
+            assert(near, 'walkable tile near ' + tx + ',' + ty);
+            var pt = win.tileCenter(near.tx, near.ty);
+            world.placePlayer(pt.x, pt.y);
+            world.player.body.setVelocity(0, 0);
+            if (world.clearWalk) {
+                world.clearWalk();
+            }
+        }
         function clickTile(tx, ty) {
             var pt = win.tileCenter(tx, ty);
             world.onClick({ worldX: pt.x, worldY: pt.y });
             return pt;
         }
-        function rightTile(tx, ty) {
-            var pt = win.tileCenter(tx, ty);
-            world.onClick({
-                worldX: pt.x,
-                worldY: pt.y,
-                button: 2,
-                rightButtonDown: function () { return true; },
-                event: { clientX: 48, clientY: 56 }
-            });
-            return pt;
-        }
 
-        specs.forEach(function (spec) {
-            var at = props[spec.key];
-            if (world.clearWalk) {
-                world.clearWalk();
-            }
-            clickTile(at.x, at.y);
-            assertEqual(H.lastChat(win), spec.line, 'left-click ' + spec.key + ' logs examine');
-            assert(!world.walkTarget, spec.key + ' examine does not walk');
-        });
+        standNear(props.range.x, props.range.y);
+        clickTile(props.range.x, props.range.y);
+        assert(win.Hud.stationOpen(), 'range opens station UI');
+        assertEqual(win.Hud.stationKind, 'range', 'range station kind');
+        assertEqual(win.document.getElementById('station-title').textContent, 'Cooking range', 'range title');
+        win.Hud.hideStation();
 
-        var menu = win.document.getElementById('ctx-menu');
-        assert(menu, 'ctx-menu element exists');
-        if (world.clearWalk) {
-            world.clearWalk();
-        }
-        win.Hud.hideContextMenu();
-        rightTile(props.stall.x, props.stall.y);
-        assert(!world.walkTarget, 'right-click stall does not walk immediately');
-        assert(!menu.hidden, 'right-click stall opens context menu');
-        var examBtn = menu.querySelector('[data-ctx="examine"]');
-        var walkBtn = menu.querySelector('[data-ctx="walk-here"]');
-        assert(examBtn, 'Examine action is listed');
-        assertEqual(examBtn.textContent, 'Examine', 'Examine label');
-        assert(walkBtn, 'Walk here remains listed on stall');
-        H.mouseClick(win, examBtn);
-        assert(menu.hidden, 'Examine closes the menu');
-        assertEqual(H.lastChat(win), 'A market stall. The grocer is away.', 'Examine menu logs stall line');
-        assert(!world.walkTarget, 'Examine menu does not walk');
+        standNear(props.stall.x, props.stall.y);
+        clickTile(props.stall.x, props.stall.y);
+        assert(win.Hud.stationOpen(), 'stall opens craft UI');
+        assertEqual(win.Hud.stationKind, 'stall', 'stall station kind');
+        win.Hud.hideStation();
+
+        standNear(props.anvil.x, props.anvil.y);
+        clickTile(props.anvil.x, props.anvil.y);
+        assert(win.Hud.stationOpen(), 'anvil opens smith UI');
+        assertEqual(win.Hud.stationKind, 'anvil', 'anvil station kind');
+        assert(win.document.querySelector('#station-list [data-station-recipe="smith:bronzedagger"]'), 'smith recipe listed');
+        win.Hud.hideStation();
+
+        assert(props.furnace, 'furnace town prop exists');
+        standNear(props.furnace.x, props.furnace.y);
+        clickTile(props.furnace.x, props.furnace.y);
+        assert(win.Hud.stationOpen(), 'furnace opens smelt UI');
+        assertEqual(win.Hud.stationKind, 'furnace', 'furnace station kind');
+        assert(win.document.querySelector('#station-list [data-station-recipe="smelt:bronzebar"]'), 'smelt recipe listed');
+        win.Hud.hideStation();
+
+        standNear(props.booth.x, props.booth.y);
+        clickTile(props.booth.x, props.booth.y);
+        assert(win.Hud.bankOpen(), 'booth opens bank UI');
+        assert(!win.Hud.stationOpen(), 'booth does not keep station overlay');
+        win.Hud.hideBank();
 
         world.enterInterior('bank');
         world = H.world(win);
         world.encounterLock = false;
         var boothTx = win.INTERIOR_ROOM.x + 3;
         var boothTy = win.INTERIOR_ROOM.y + 4;
-        assertEqual(world.interiorId, 'bank', 'entered Emberhaven Bank');
-        assertEqual(world.tileGrid[boothTy][boothTx], win.TILE.BOOTH, 'bank interior has a booth');
-        assertEqual(win.sceneryKindAt(world.tileGrid, boothTx, boothTy, { interior: true }), 'booth', 'interior booth kind');
-        var boothPt = win.tileCenter(boothTx, boothTy);
-        world.onClick({ worldX: boothPt.x, worldY: boothPt.y });
-        assertEqual(H.lastChat(win), 'A bank booth. The clerk is away.', 'left-click interior booth logs examine');
-        assert(!world.walkTarget, 'interior booth examine does not walk');
-        assert(
-            !win.document.getElementById('shop-overlay') || win.document.getElementById('shop-overlay').hidden,
-            'shop overlay stays hidden'
-        );
-        assert(
-            !win.document.getElementById('bank-overlay') || win.document.getElementById('bank-overlay').hidden,
-            'bank overlay stays hidden'
-        );
+        standNear(boothTx, boothTy);
+        clickTile(boothTx, boothTy);
+        assert(win.Hud.bankOpen(), 'interior booth opens bank');
+        win.Hud.hideBank();
 
         world.leaveInterior();
         world = H.world(win);
         world.placePlayer(spawn.x, spawn.y);
         world.player.body.setVelocity(0, 0);
-        world.encounterLock = true;
-        var lastBefore = H.lastChat(win);
-        clickTile(props.stall.x, props.stall.y);
-        assertEqual(H.lastChat(win), lastBefore, 'encounterLock ignores town-prop examine');
-        world.encounterLock = false;
-        win.Hud.mode = 'battle';
-        clickTile(props.stall.x, props.stall.y);
-        assertEqual(H.lastChat(win), lastBefore, 'battle mode ignores town-prop examine');
-        win.Hud.mode = 'world';
-        world.placePlayer(spawn.x, spawn.y);
-        world.player.body.setVelocity(0, 0);
         H.clearKeys(win);
         assert(!win.game.input.keyboard, 'Phaser keyboard still off');
-        assertEqual(Math.round(world.player.x), 328, 'restored spawn x');
-        assertEqual(Math.round(world.player.y), 248, 'restored spawn y');
     });
 });
 

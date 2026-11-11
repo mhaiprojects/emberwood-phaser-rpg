@@ -169,7 +169,23 @@ var EmberwoodHarness = {
         return step();
     },
 
+    clearChat: function (win) {
+        var vue = win.HudApp && win.HudApp.vm;
+        if (vue && Array.isArray(vue.chatLines)) {
+            vue.chatLines.splice(0, vue.chatLines.length);
+        }
+        if (win.Hud && win.Hud.el && win.Hud.el.log) {
+            win.Hud.el.log.innerHTML = '';
+        }
+    },
+
     chat: function (win) {
+        var vue = win.HudApp && win.HudApp.vm;
+        if (vue && Array.isArray(vue.chatLines)) {
+            return vue.chatLines.map(function (line) {
+                return line && line.text != null ? String(line.text) : '';
+            });
+        }
         return Array.prototype.map.call(win.document.querySelectorAll('.chat-line'), function (line) {
             return line.textContent;
         });

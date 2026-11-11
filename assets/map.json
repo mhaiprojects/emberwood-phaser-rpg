@@ -2439,15 +2439,15 @@
   "tilewidth": 16,
   "tilesets": [
     {
-      "columns": 8,
+      "columns": 18,
       "firstgid": 1,
       "image": "tiles.png",
       "imageheight": 16,
-      "imagewidth": 128,
+      "imagewidth": 288,
       "margin": 0,
       "name": "tiles",
       "spacing": 0,
-      "tilecount": 8,
+      "tilecount": 18,
       "tileheight": 16,
       "tilewidth": 16
     }

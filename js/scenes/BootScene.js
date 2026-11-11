@@ -6,7 +6,7 @@ var BootScene = new Phaser.Class({
     },
 
     preload: function () {
-        this.load.image('tiles', 'assets/tiles.png');
+        this.load.image('tiles', 'assets/tiles.png?v=questui1');
         this.load.spritesheet('player', 'assets/player.png', { frameWidth: 16, frameHeight: 16 });
         this.load.image('slime', 'assets/slime.png');
         this.load.image('bat', 'assets/bat.png');
@@ -21,7 +21,8 @@ var BootScene = new Phaser.Class({
         ['guild', 'banker', 'guard', 'ranger', 'farmer', 'fisher', 'wanderer', 'ghost', 'miner', 'hermit', 'witch', 'cook', 'priest', 'shopkeeper'].forEach(function (name) {
             self.load.svg('npc-' + name, 'assets/svg/npcs/' + name + '.svg');
         });
-        ['coins', 'bones', 'shrimp', 'rawshrimp', 'rawbeef', 'bread', 'sword', 'shortbow', 'arrow', 'shield',
+        ['coins', 'bones', 'shrimp', 'rawshrimp', 'burntshrimp', 'rawbeef', 'beef', 'burntbeef', 'bread', 'sword',
+            'bronzedagger', 'shortbow', 'arrow', 'shield',
             'airrune', 'mindrune', 'cowhide', 'leather', 'string', 'gloves', 'net', 'bronzeaxe', 'bronzepick',
             'logs', 'copper', 'tin', 'bronzebar', 'tinderbox', 'feather', 'rabbitfur'].forEach(function (name) {
             self.load.svg('item-' + name, 'assets/svg/items/' + name + '.svg');
