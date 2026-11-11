@@ -168,7 +168,8 @@ var SCENERY_EXAMINE = {
     'door-guild': 'The guild hall door. Bram drills in the courtyard.',
     'stairs-down': 'Stairs down into the depths.',
     'stairs-up': 'Stairs leading upward.',
-    'surface-portal': 'A rune-cut shaft back to the surface.',
+    'surface-portal': 'A rune-cut escape shaft. It remembers the floor you leave from.',
+    'dungeon-enter': 'The Endless Dungeon shaft. It drops you at your last escape floor.',
     campfire: 'A warm campfire. Rest here to mend faster.'
 };
 

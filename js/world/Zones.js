@@ -212,7 +212,7 @@ var NPC_DEFS = {
         { key: 'ghost', name: 'Wisp', x: 200, y: 170, tint: 0xffffff, options: ['talk'], examine: 'A restless grave-wisp. Cold light pools where a face should be.', lines: ['The dead remember steel.', 'Turn back unless you seek bones.'] }
     ],
     darkmine: [
-        { key: 'miner', name: 'Miner Corb', x: 210, y: 200, tint: 0xffffff, options: ['talk', 'quest'], questGiver: true, sideQuest: 'bats', tutor: 'mining', examine: 'A Darkmine digger. He will not go down the Endless Dungeon.', lines: ['That shaft leads to the Endless Dungeon. Deeper floors hit harder.', 'Every fifth floor has a campfire. Use the surface rune to climb out fast.', 'Ore still waits up here if you bring a pickaxe.'] }
+        { key: 'miner', name: 'Miner Corb', x: 210, y: 200, tint: 0xffffff, options: ['talk', 'quest'], questGiver: true, sideQuest: 'bats', tutor: 'mining', examine: 'A Darkmine digger. He will not go down the Endless Dungeon.', lines: ['That shaft leads to the Endless Dungeon. Deeper floors hit harder.', 'Escape marks the floor — the shaft drops you back there next time.', 'Every fifth floor has a campfire. Ore still waits up here with a pickaxe.'] }
     ],
     highlands: [
         { key: 'hermit', name: 'Hermit Ola', x: 240, y: 160, tint: 0xffffff, options: ['talk'], examine: 'A windrock hermit. Drake-scale grit is stuck in her cloak.', lines: ['Drakes nest on the windrock.', 'Bring a stout shield.'] }

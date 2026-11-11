@@ -718,7 +718,7 @@ var WorldScene = new Phaser.Class({
             return;
         }
         if (spec.dungeon || interiorId === 'shaft') {
-            this.enterDungeonFloor(1, { from: 'surface' });
+            this.enterDungeonFloor(this.rememberedDungeonEscapeFloor(), { from: 'surface' });
             return;
         }
         if (this.interiorId === interiorId) {
@@ -810,8 +810,14 @@ var WorldScene = new Phaser.Class({
         this.refreshHud();
         this.engageGrace = this.time.now + 800;
         this.lockExits();
-        if (opts.from === 'surface' || floor === 1 && opts.from !== 'down') {
-            Hud.log('Endless Dungeon — floor ' + floor + '. Mobs grow 5% stronger each floor.');
+        if (opts.from === 'surface') {
+            if (floor > 1) {
+                Hud.log('You return through the escape shaft to floor ' + floor + '.');
+            } else {
+                Hud.log('Endless Dungeon — floor ' + floor + '. Mobs grow 5% stronger each floor.');
+            }
+        } else if (opts.from === 'save') {
+            Hud.log('You resume the Endless Dungeon on floor ' + floor + '.');
         } else {
             Hud.log('Floor ' + floor + ' of the Endless Dungeon.');
         }
@@ -823,10 +829,20 @@ var WorldScene = new Phaser.Class({
         }
     },
 
+    rememberedDungeonEscapeFloor: function () {
+        var n = this.registry.get('dungeonEscapeFloor');
+        if (typeof n !== 'number' || n < 1) {
+            return 1;
+        }
+        return Math.floor(n);
+    },
+
     exitDungeonToSurface: function () {
         var surface = typeof DUNGEON_SURFACE_ZONE !== 'undefined' ? DUNGEON_SURFACE_ZONE : 'darkmine';
         var spec = interiorById('shaft');
         var out;
+        var escapeFloor = Math.max(1, this.dungeonFloor | 0);
+        this.registry.set('dungeonEscapeFloor', escapeFloor);
         this.dungeonFloor = 0;
         this.dungeonMeta = null;
         this.registry.set('dungeonFloor', 0);
@@ -836,7 +852,7 @@ var WorldScene = new Phaser.Class({
             this.registry.set('resumeAt', { x: out.x, y: out.y, interiorId: null });
         }
         this.enterZone(surface, null);
-        Hud.log('You climb back to the surface.');
+        Hud.log('You escape to the surface. The shaft remembers floor ' + escapeFloor + '.');
     },
 
     spawnDungeonMobs: function (floor) {
@@ -4458,7 +4474,7 @@ var WorldScene = new Phaser.Class({
         }
         if (kind === 'dungeon-enter') {
             this.lockExits();
-            this.enterDungeonFloor(1, { from: 'surface' });
+            this.enterDungeonFloor(this.rememberedDungeonEscapeFloor(), { from: 'surface' });
             return true;
         }
         if (kind === 'surface-portal') {

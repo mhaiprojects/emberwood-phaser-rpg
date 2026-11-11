@@ -1617,6 +1617,7 @@ var Hud = {
         registry.set('quest', data.quest || { id: 'goblins', stage: 0, progress: 0, goal: 5, points: 0 });
         registry.set('zone', data.zone || 'haven');
         registry.set('dungeonFloor', typeof data.dungeonFloor === 'number' ? data.dungeonFloor : 0);
+        registry.set('dungeonEscapeFloor', typeof data.dungeonEscapeFloor === 'number' ? data.dungeonEscapeFloor : 0);
         if (typeof data.playerX === 'number' && typeof data.playerY === 'number') {
             registry.set('resumeAt', {
                 x: data.playerX,
@@ -1650,6 +1651,10 @@ var Hud = {
         window.game.registry.set('playerY', world.player.y);
         window.game.registry.set('interiorId', world.interiorId || null);
         window.game.registry.set('dungeonFloor', world.dungeonFloor || 0);
+        window.game.registry.set(
+            'dungeonEscapeFloor',
+            window.game.registry.get('dungeonEscapeFloor') || 0
+        );
     },
 
     saveGame: function () {
