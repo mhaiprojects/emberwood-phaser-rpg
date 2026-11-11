@@ -1733,7 +1733,9 @@ var Hud = {
             return;
         }
         world = window.game.scene.getScene('WorldScene');
-        if (!world || !world.player) {
+        /* getScene still returns a shut-down WorldScene after death; exporting then
+           touches destroyed time/physics and throws (breaking Respawn). */
+        if (!world || !world.player || !world.scene || !world.scene.isActive()) {
             return;
         }
         window.game.registry.set('zone', world.zoneId || window.game.registry.get('zone') || 'haven');
@@ -1889,12 +1891,23 @@ var Hud = {
         var hero = this.hero();
         var reg;
         var spawn;
+        var world;
         if (hero) {
             hero.hp = this.safeDeathHp(hero);
-            this.saveHero(hero);
+            if (typeof normalizeHeroCombat === 'function') {
+                normalizeHeroCombat(hero);
+            }
+            /* Avoid saveHero here: while GameOver is up, WorldScene is stopped and
+               saveGame → syncSavePosition → exportWorldSave used to throw. */
+            if (window.game) {
+                window.game.registry.set('hero', hero);
+            }
         }
         this.hideDead();
         this.setMode('world');
+        if (hero) {
+            this.renderHero(hero);
+        }
         if (!window.game) {
             return;
         }
@@ -1912,13 +1925,14 @@ var Hud = {
             reg.set('playerX', null);
             reg.set('playerY', null);
         }
-        var world = window.game.scene.getScene('WorldScene');
+        world = window.game.scene.getScene('WorldScene');
         if (window.game.scene.isActive('WorldScene') && world && world.player && world.respawnInHaven) {
             world.respawnInHaven();
             this.log('You wake in Emberhaven, barely standing.');
             if (window.game.scene.isActive('GameOverScene')) {
                 window.game.scene.stop('GameOverScene');
             }
+            this.saveGame();
             return;
         }
         reg.set('respawnAfterDeath', true);
@@ -1928,6 +1942,9 @@ var Hud = {
                 window.game.scene.stop(key);
             }
         });
+        if (window.game.scene.getScene('GameOverScene')) {
+            window.game.scene.stop('GameOverScene');
+        }
         window.game.scene.start('WorldScene');
     },
 
