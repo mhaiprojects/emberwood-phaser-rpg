@@ -35,7 +35,8 @@ var GRAVE_RANGE_PX = 28;
 var HP_REGEN_BASE_MS = 4500;
 var HP_REGEN_TOWN_MS = 1800;
 var HP_REGEN_CAMP_MS = 1100;
-var CAMPFIRE_REGEN_RANGE = 52;
+/* 5 tiles at TILE_SIZE 16 (Euclidean px, same style as weapon ranges). */
+var CAMPFIRE_REGEN_RANGE = (typeof TILE_SIZE === 'number' ? TILE_SIZE : 16) * 5;
 var COLLISION_DEBUG_FILL = 0xf38630;
 var COLLISION_DEBUG_FACE = 0xffff66;
 
