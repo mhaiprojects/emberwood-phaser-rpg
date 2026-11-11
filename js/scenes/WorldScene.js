@@ -106,7 +106,7 @@ var WorldScene = new Phaser.Class({
         this.player.setScale(PLAYER_WORLD_SCALE);
         applyPlayerWorldBody(this.player);
         this.player.setDepth(6);
-        this.physics.add.collider(this.player, this.npcs);
+        /* Player phases through NPCs so click-paths are not blocked in town. */
         this.nameplate = this.add.text(spawn0.x, spawn0.y - 14, 'Adventurer', {
             fontFamily: 'Verdana, sans-serif',
             fontSize: '8px',
@@ -3232,9 +3232,7 @@ var WorldScene = new Phaser.Class({
                 }
             }
         };
-        if (this.npcs) {
-            this.npcs.children.iterate(markSprite);
-        }
+        /* NPCs are walk-through; only living mobs block path tiles. */
         if (!this.mobs) {
             return occ;
         }
