@@ -101,8 +101,8 @@
                 reject(new Error('body still moving'));
                 return;
             }
-            if (shakeMs !== 220) {
-                reject(new Error('shake duration ' + shakeMs + ' not 220'));
+            if (shakeMs !== 160) {
+                reject(new Error('shake duration ' + shakeMs + ' not 160'));
                 return;
             }
             if (!(cam.shakeEffect && cam.shakeEffect.isRunning)) {
@@ -115,10 +115,10 @@
             }
 
             var waitBattle = function () {
-                if (window.game.scene.isActive('BattleScene')) {
+                if (world.overworldFight) {
                     var elapsed = Date.now() - t0;
                     if (elapsed < 200) {
-                        reject(new Error('BattleScene too soon (' + elapsed + 'ms)'));
+                        reject(new Error('overworld fight too soon (' + elapsed + 'ms)'));
                         return;
                     }
                     resolve({
@@ -134,7 +134,7 @@
                     return;
                 }
                 if (Date.now() - t0 > 1500) {
-                    reject(new Error('BattleScene did not start after 260ms'));
+                    reject(new Error('overworld fight did not start after 260ms'));
                     return;
                 }
                 setTimeout(waitBattle, 20);

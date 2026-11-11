@@ -6,7 +6,15 @@ var BootScene = new Phaser.Class({
     },
 
     preload: function () {
-        this.load.image('tiles', 'assets/tiles.png?v=questui1');
+        var bar = this.add.text(8, 8, 'Loading Emberwood…', {
+            fontFamily: 'Verdana, sans-serif',
+            fontSize: '12px',
+            color: '#c9a227'
+        });
+        this.load.on('progress', function (value) {
+            bar.setText('Loading Emberwood… ' + Math.floor(value * 100) + '%');
+        });
+        this.load.image('tiles', 'assets/tiles.png?v=furnace1');
         this.load.spritesheet('player', 'assets/player.png', { frameWidth: 16, frameHeight: 16 });
         this.load.image('slime', 'assets/slime.png');
         this.load.image('bat', 'assets/bat.png');
@@ -23,8 +31,9 @@ var BootScene = new Phaser.Class({
         });
         ['coins', 'bones', 'shrimp', 'rawshrimp', 'burntshrimp', 'rawbeef', 'beef', 'burntbeef', 'bread', 'sword',
             'bronzedagger', 'shortbow', 'arrow', 'shield',
-            'airrune', 'mindrune', 'cowhide', 'leather', 'string', 'gloves', 'net', 'bronzeaxe', 'bronzepick',
-            'logs', 'copper', 'tin', 'bronzebar', 'tinderbox', 'feather', 'rabbitfur'].forEach(function (name) {
+            'airrune', 'mindrune', 'firerune', 'naturerune', 'cowhide', 'leather', 'string', 'gloves', 'net',
+            'bronzeaxe', 'bronzepick', 'logs', 'copper', 'tin', 'bronzebar', 'tinderbox', 'feather', 'rabbitfur',
+            'drakescale', 'key'].forEach(function (name) {
             self.load.svg('item-' + name, 'assets/svg/items/' + name + '.svg');
         });
     },

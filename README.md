@@ -21,7 +21,9 @@ Open http://localhost:8765/ (use another port if that one is taken).
 
 ## Tests
 
-Interaction tests for the HUD, NPCs, mobs, and combat live in `tests/`. They run in the browser against the live game (no build step).
+**DISABLED until further notice.** Do not run the suite, Playwright scripts, or browser/agent verification. Feature work only; the human playtests.
+
+When re-enabled, interaction tests live in `tests/` and run in the browser against the live game (no build step):
 
 ```bash
 python3 -m http.server 8765

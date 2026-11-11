@@ -20,6 +20,7 @@ var HudApp = {
             gold: 0,
             xp: 0,
             level: 3,
+            displayName: 'Adventurer',
             total: 22,
             runEnergy: 100,
             runFillPct: 100,
@@ -29,6 +30,7 @@ var HudApp = {
             tab: 'inv',
             chatLines: [],
             startEnabled: false,
+            continueEnabled: false,
             creditsOpen: false,
             titleVisible: true,
             deadVisible: false,
@@ -44,6 +46,8 @@ var HudApp = {
             autoPickupOn: true,
             shiftClickDropLabel: 'Shift-click drop: On',
             shiftClickDropOn: true,
+            hideBonesLabel: 'Hide bones: Off',
+            hideBonesOn: false,
             runLabel: 'Run: Off',
             collisionDebugLabel: 'Collision debug: Off',
             collisionDebugOn: false,
@@ -69,8 +73,17 @@ var HudApp = {
                         Hud.onStart();
                     }
                 },
+                onContinue: function () {
+                    if (window.Hud && Hud.onContinue) {
+                        Hud.onContinue();
+                    }
+                },
                 onCredits: function () {
                     this.creditsOpen = !this.creditsOpen;
+                    var credit = document.getElementById('credit-text');
+                    if (credit) {
+                        credit.hidden = !this.creditsOpen;
+                    }
                 },
                 onRespawn: function () {
                     if (window.Hud && Hud.respawnInHaven) {

@@ -25,6 +25,7 @@ var HAVEN_GATE_TILE = { x: 23, y: 15 };
 var INTERIOR_EXIT_TILE = { x: 18, y: 20 };
 var TOWN_PROPS = {
     stall: { x: 16, y: 11 },
+    ge: { x: 19, y: 11 },
     range: { x: 16, y: 17 },
     anvil: { x: 21, y: 12 },
     furnace: { x: 22, y: 12 },
@@ -101,6 +102,7 @@ var SCENERY_EXAMINE = {
     furnace: 'A brick furnace. Ore melts here into bars.',
     fire: 'A crackling fire. Good for cooking.',
     booth: 'A bank booth. Your items are safe here.',
+    ge: 'A Grand Exchange booth. Post buy and sell offers here.',
     craft: 'A crafting stall. Leatherwork tools rest on the counter.',
     dock: 'A weathered wooden dock. The tide slaps the pilings.',
     boat: 'A fishing boat, tied off and empty.',
@@ -108,7 +110,7 @@ var SCENERY_EXAMINE = {
     tomb: 'A weathered tomb marker. The name is worn away.',
     shortcut: 'A narrow gap beside the locked door. You might squeeze through.',
     gate: 'A wooden courtyard gate. The hinges still work.',
-    'door-bank': 'The bank door. Elise keeps the ledgers inside.',
+    'door-bank': 'The old bank door. Use the courtyard booth to bank.',
     'door-shop': 'The shop door. A faded sign hangs above it.',
     'door-guild': 'The guild hall door. Bram drills the militia inside.'
 };
@@ -311,6 +313,7 @@ function generateMap(seed, biome, neighbors) {
         setCell(grid, HAVEN_GATE_TILE.x, HAVEN_GATE_TILE.y + 1, TILE.ROCK);
         setCell(grid, HAVEN_GATE_TILE.x, HAVEN_GATE_TILE.y + 2, TILE.ROCK);
         setCell(grid, TOWN_PROPS.stall.x, TOWN_PROPS.stall.y, TILE.STALL);
+        setCell(grid, TOWN_PROPS.ge.x, TOWN_PROPS.ge.y, TILE.STALL);
         setCell(grid, TOWN_PROPS.range.x, TOWN_PROPS.range.y, TILE.RANGE);
         setCell(grid, TOWN_PROPS.anvil.x, TOWN_PROPS.anvil.y, TILE.ANVIL);
         setCell(grid, TOWN_PROPS.furnace.x, TOWN_PROPS.furnace.y, TILE.FURNACE);
@@ -385,9 +388,7 @@ function generateInterior(kind) {
         setCell(grid, ix, y0 + 2, TILE.WALL);
     }
     setCell(grid, x0 + Math.floor(w / 2), y0 + 2, TILE.PATH);
-    if (kind === 'bank') {
-        setCell(grid, x0 + 3, y0 + 4, TILE.BOOTH);
-    } else if (kind === 'shop') {
+    if (kind === 'shop') {
         setCell(grid, x0 + 3, y0 + 5, TILE.FLOWER);
         setCell(grid, x0 + 8, y0 + 5, TILE.FLOWER);
     } else if (kind === 'guild') {
@@ -559,6 +560,9 @@ function sceneryKindAt(grid, tx, ty, opts) {
     if (agilityShortcutAt(tx, ty, opts.zoneId)) {
         return 'shortcut';
     }
+    if (opts.zoneId === 'haven' && TOWN_PROPS.ge && tx === TOWN_PROPS.ge.x && ty === TOWN_PROPS.ge.y) {
+        return 'ge';
+    }
     var index = grid[ty][tx];
     if (index === TILE.TREE) {
         return 'tree';
@@ -645,6 +649,9 @@ function sceneryPrimaryAction(kind) {
     }
     if (kind === 'booth') {
         return { label: 'Bank', action: 'station' };
+    }
+    if (kind === 'ge') {
+        return { label: 'Exchange', action: 'ge' };
     }
     return null;
 }

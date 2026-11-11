@@ -57,7 +57,7 @@
             world.player.body.setVelocity(0, 0);
             world.refreshHud();
 
-            if (window.skillTotal(hero) !== 22 || window.combatLevel(hero) !== 3 || hero.level !== 3) {
+            if (window.skillTotal(hero) !== 32 || window.combatLevel(hero) !== 3 || hero.level !== 3) {
                 throw new Error('starter total/combat is ' + window.skillTotal(hero) + '/' + hero.level);
             }
             var hudLevel = document.getElementById('hud-level');
@@ -65,7 +65,7 @@
             if (!hudLevel || !hudTotal || !hudLevel.closest('#side') || !hudTotal.closest('#side')) {
                 throw new Error('combat/total missing from side HUD');
             }
-            if (hudLevel.textContent !== '3' || hudTotal.textContent !== '22') {
+            if (hudLevel.textContent !== '3' || hudTotal.textContent !== '32') {
                 throw new Error('HUD is combat ' + hudLevel.textContent + ' total ' + hudTotal.textContent);
             }
             var combatLabel = hudLevel.closest('.stat').querySelector('span');
@@ -75,10 +75,10 @@
 
             hero.skills.cooking.level = 2;
             world.refreshHud();
-            if (window.skillTotal(hero) !== 23 || window.combatLevel(hero) !== 3 || hero.level !== 3) {
+            if (window.skillTotal(hero) !== 33 || window.combatLevel(hero) !== 3 || hero.level !== 3) {
                 throw new Error('Cooking changed combat to ' + hero.level + ' total ' + window.skillTotal(hero));
             }
-            if (hudLevel.textContent !== '3' || hudTotal.textContent !== '23') {
+            if (hudLevel.textContent !== '3' || hudTotal.textContent !== '33') {
                 throw new Error('HUD Cooking is combat ' + hudLevel.textContent + ' total ' + hudTotal.textContent);
             }
 
@@ -92,8 +92,8 @@
             if (window.combatLevel(hero) !== 9 || hero.level !== 9) {
                 throw new Error('Attack+Strength combat is ' + hero.level + ' not 9');
             }
-            if (window.skillTotal(hero) !== 41 || hudTotal.textContent !== '41') {
-                throw new Error('skill total is ' + window.skillTotal(hero) + ' not 41');
+            if (window.skillTotal(hero) !== 149 || hudTotal.textContent !== '149') {
+                throw new Error('skill total is ' + window.skillTotal(hero) + ' not 149');
             }
             if (hudLevel.textContent !== '9') {
                 throw new Error('HUD combat is ' + hudLevel.textContent + ' not 9');

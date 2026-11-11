@@ -23,10 +23,19 @@ var TitleScene = new Phaser.Class({
     },
 
     startGame: function () {
-        this.registry.set('hero', makeHero());
-        this.registry.set('quest', { id: 'goblins', stage: 0, progress: 0, goal: 5 });
+        var hero = (window.Hud && Hud._ironmanNewGame && typeof makeIronmanHero === 'function')
+            ? makeIronmanHero()
+            : makeHero();
+        if (window.Hud) {
+            Hud._ironmanNewGame = false;
+        }
+        this.registry.set('hero', hero);
+        this.registry.set('quest', { id: 'goblins', stage: 0, progress: 0, goal: 5, points: 0 });
         this.registry.set('zone', 'haven');
         this.registry.set('battleOutcome', null);
+        if (Hud.applyPendingSave) {
+            Hud.applyPendingSave(this.registry);
+        }
         Hud.hideTitle();
         this.scene.start('WorldScene');
     }

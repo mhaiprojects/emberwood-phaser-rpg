@@ -101,6 +101,10 @@ function lootForMob(def) {
         drops.push({ id: 'rawshrimp', qty: 1 });
     } else if (def && def.type === 'Rabbit') {
         drops.push({ id: 'rabbitfur', qty: 1 });
+    } else if (def && def.type === 'Drake') {
+        if (Math.random() < 0.28) {
+            drops.push({ id: 'drakescale', qty: 1 });
+        }
     }
     return drops;
 }

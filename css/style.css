@@ -136,6 +136,7 @@ body.is-shell-resize-y {
 #world-map-overlay,
 #shop-overlay,
 #bank-overlay,
+#quest-complete-overlay,
 #level-up-overlay,
 #dialogue-overlay,
 #ctx-menu {
@@ -464,6 +465,7 @@ canvas {
 }
 
 .mm-cell {
+    position: relative;
     font: 11px Verdana, Geneva, sans-serif;
     background: #2b2418;
     color: #d8c8a4;
@@ -477,6 +479,19 @@ canvas {
     color: #fff4c8;
     border-color: #f0d060;
 }
+
+.mm-dot {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    margin: -2px 0 0 -2px;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.mm-dot.is-player { background: #ffe08a; }
+.mm-dot.is-npc { background: #6ad48f; }
+.mm-dot.is-mob { background: #e07070; }
 
 .chat-panel {
     height: calc(100% - 16px);
@@ -558,6 +573,7 @@ button.ghost {
     background: none;
 }
 
+#quest-complete-overlay,
 #level-up-overlay {
     position: fixed;
     left: 12px;
@@ -570,6 +586,7 @@ button.ghost {
     background: none;
 }
 
+#quest-complete-overlay .level-up-card,
 #level-up-overlay .level-up-card {
     width: min(280px, 86%);
     background: #3a2f22;
@@ -579,20 +596,51 @@ button.ghost {
     box-shadow: 0 4px 0 #1a140c;
 }
 
+#quest-complete-overlay .level-up-card img.pix,
 #level-up-overlay .level-up-card img.pix {
     width: 40px;
     height: 40px;
     image-rendering: auto;
 }
 
+#quest-complete-overlay .level-up-card h2,
 #level-up-overlay .level-up-card h2 {
     margin: 8px 0 4px;
     font-size: 16px;
     color: #ffe08a;
 }
 
-#level-up-overlay .level-up-card p {
-    margin: 0 0 12px;
+#prayer-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+#prayer-list button.is-on,
+#magic-list button.is-on {
+    outline: 1px solid #c9a227;
+}
+
+#quest-checklist {
+    margin: 8px 0 0;
+    padding-left: 18px;
+    text-align: left;
+    font-size: 12px;
+}
+
+#quest-checklist li.is-done {
+    color: #8fd48f;
+    text-decoration: line-through;
+}
+
+#hud-quest-points {
+    margin: 0 0 6px;
+    color: #c9a227;
+    font-size: 12px;
+}
+
+#quest-complete-overlay .level-up-card p,
+#level-up-overlay .level-up-card p {    margin: 0 0 12px;
     color: #f2e6c9;
 }
 
@@ -640,6 +688,98 @@ button.ghost {
     flex-wrap: wrap;
     gap: 6px;
     margin: 8px 0;
+}
+
+#shop-overlay .title-card {
+    width: min(560px, 94vw);
+}
+
+#shop-panes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 8px 0;
+    text-align: left;
+}
+
+#shop-panes h3 {
+    margin: 0 0 6px;
+    font-size: 13px;
+    color: #ffe08a;
+}
+
+#shop-stock,
+#shop-inv {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 220px;
+    overflow: auto;
+}
+
+#shop-stock button,
+#shop-inv button {
+    display: grid;
+    grid-template-columns: 20px 1fr auto;
+    gap: 6px;
+    align-items: center;
+    text-align: left;
+    padding: 4px 6px;
+    font-size: 12px;
+}
+
+#shop-stock button.is-on,
+#shop-inv button.is-on {
+    outline: 1px solid #c9a227;
+}
+
+.shop-meta {
+    color: #c9a227;
+    font-size: 11px;
+}
+
+.shop-empty {
+    margin: 0;
+    color: #a89878;
+    font-size: 12px;
+}
+
+#fps-readout {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    z-index: 40;
+    background: rgba(20, 16, 10, 0.85);
+    color: #c9a227;
+    font: 12px Verdana, sans-serif;
+    padding: 4px 8px;
+    pointer-events: none;
+}
+
+#chat-compose {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+    flex-shrink: 0;
+    pointer-events: auto;
+}
+
+#chat-compose input,
+#chat-compose select {
+    font: 12px Verdana, Geneva, sans-serif;
+    padding: 4px 6px;
+    color: #f2e6c9;
+    background: #1c1812;
+    border: 1px solid #5a4630;
+}
+
+#chat-compose input {
+    flex: 1;
+    min-width: 0;
+}
+
+#chat-compose select {
+    flex-shrink: 0;
 }
 
 #bank-overlay .title-card {
@@ -789,6 +929,7 @@ button.ghost {
 #shop-overlay[hidden],
 #bank-overlay[hidden],
 #station-overlay[hidden],
+#quest-complete-overlay[hidden],
 #level-up-overlay[hidden],
 #dialogue-overlay[hidden],
 #dialogue-options[hidden],

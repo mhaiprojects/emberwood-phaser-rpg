@@ -5,7 +5,7 @@ var RUN_DRAIN_PER_SEC = 25;
 var RUN_RESTORE_PER_SEC = 15;
 var DEST_X_COLOR = 0xf8ff38;
 var DEST_X_ARM = 8;
-var LONG_PRESS_MS = 450;
+var LONG_PRESS_MS = 2000;
 var LONG_PRESS_SLOP = 8;
 var MOB_RESPAWN_MS = 18000;
 var DOOR_ANIM_MS = 220;
@@ -20,6 +20,10 @@ var NPC_BUSY_PX = 32;
 var NPC_FACE_ORDER = ['down', 'left', 'right', 'up'];
 var FLEE_PUSH_PX = 32;
 var FLEE_GRACE_MS = 1100;
+var GHOST_PLAYERS = [
+    { name: 'Ash_walker', x: 360, y: 230 },
+    { name: 'Moss019', x: 300, y: 280 }
+];
 var COLLIDE_TILES = [
     TILE.WATER, TILE.TREE, TILE.ROCK, TILE.SHRINE,
     TILE.STALL, TILE.RANGE, TILE.ANVIL, TILE.BOOTH, TILE.FURNACE,
@@ -93,15 +97,21 @@ var WorldScene = new Phaser.Class({
         applyPlayerWorldBody(this.player);
         this.player.setDepth(6);
         this.physics.add.collider(this.player, this.npcs);
+        this.nameplate = this.add.text(spawn0.x, spawn0.y - 14, 'Adventurer', {
+            fontFamily: 'Verdana, sans-serif',
+            fontSize: '8px',
+            color: '#ffe08a'
+        }).setOrigin(0.5, 1).setDepth(7);
 
         this.cameras.main.startFollow(this.player, true, 0.12, 0.12);
         this.cameras.main.roundPixels = true;
 
         this.longPressTimer = null;
         this.longPressPtr = null;
+        this.pendingLootTake = null;
         this.input.on('pointerdown', this.onClick, this);
-        this.input.on('pointerup', this.cancelLongPress, this);
-        this.input.on('pointerupoutside', this.cancelLongPress, this);
+        this.input.on('pointerup', this.onPointerUp, this);
+        this.input.on('pointerupoutside', this.onPointerUp, this);
         this.input.on('pointermove', this.onLongPressMove, this);
         if (this.input.mouse && this.input.mouse.disableContextMenu) {
             this.input.mouse.disableContextMenu();
@@ -109,15 +119,35 @@ var WorldScene = new Phaser.Class({
         this.sys.events.off('wake', this.wake, this);
         this.sys.events.on('wake', this.wake, this);
 
+        var resumeBoot = this.registry.get('resumeAt');
+        var resumeInterior = resumeBoot && resumeBoot.interiorId ? resumeBoot.interiorId : null;
         this.enterZone(this.zoneId, null);
+        if (resumeInterior && typeof interiorById === 'function' && interiorById(resumeInterior)) {
+            this.enterInterior(resumeInterior);
+        }
         this.refreshHud();
+        this.applyDayNightTint();
+        if (this._autosaveTimer) {
+            this._autosaveTimer.remove(false);
+        }
+        this._autosaveTimer = this.time.addEvent({
+            delay: 12000,
+            loop: true,
+            callback: function () {
+                if (window.Hud && Hud.saveGame && !this.encounterLock) {
+                    Hud.saveGame();
+                }
+            },
+            callbackScope: this
+        });
         this.engageGrace = this.time.now + 800;
         if (this.registry.get('respawnAfterDeath')) {
             this.registry.set('respawnAfterDeath', false);
             Hud.log('You wake in Emberhaven, barely standing.');
         } else {
             Hud.log('You arrive in Emberhaven. WASD or arrows to walk, Ctrl to run, or click the ground.');
-            Hud.log('Open Inventory (F1) for food. The Guildmaster by the courtyard has work.');
+            Hud.log('Open Inventory (F1) for food. Bury bones, Trade with Mira, Fish/Chop/Mine, or Bank at Elise.');
+            Hud.log('The Guildmaster by the courtyard has work.');
         }
     },
 
@@ -616,24 +646,44 @@ var WorldScene = new Phaser.Class({
         this.interiorId = null;
         this.zoneId = zoneId;
         this.registry.set('zone', zoneId);
+        this.noteVisitedZone(zoneId);
         this.clearWorldObjects();
 
         var neighbors = zoneNeighbors(zone);
         this.applyTilemap(generateMap(zone.seed, zone.biome, neighbors));
 
-        var spawn = fromDir ? spawnPointForEntry(fromDir) : defaultWorldSpawn();
+        var resume = this.registry.get('resumeAt');
+        var spawn;
+        if (!fromDir && resume && typeof resume.x === 'number' && typeof resume.y === 'number') {
+            spawn = { x: resume.x, y: resume.y };
+            this.registry.set('resumeAt', null);
+        } else {
+            spawn = fromDir ? spawnPointForEntry(fromDir) : defaultWorldSpawn();
+        }
         this.placePlayer(spawn.x, spawn.y);
         this.clearWalk();
 
         this.spawnPeople(zoneId);
         this.restoreLoot(zoneId);
+        this.buildBiomeFx();
+        this.applyDayNightTint();
+        this.playZoneMusic();
         this.refreshHud();
         this.engageGrace = this.time.now + 800;
+        if (typeof this.spawnGhostPlayers === 'function') {
+            this.spawnGhostPlayers();
+        }
+        if (typeof this.refreshWildernessFlag === 'function') {
+            this.refreshWildernessFlag();
+        }
         Hud.log('You enter ' + zone.name + '.');
         if (pendingTravel && pendingTravel === zoneId) {
             this.travelZoneId = null;
         } else if (pendingTravel) {
             this.walkTowardZone(pendingTravel);
+        }
+        if (window.Hud && Hud.saveGame) {
+            Hud.saveGame();
         }
     },
 
@@ -666,6 +716,9 @@ var WorldScene = new Phaser.Class({
         this.engageGrace = this.time.now + 800;
         Hud.log('You enter ' + spec.name + '.');
         this.lockExits();
+        if (window.Hud && Hud.saveGame) {
+            Hud.saveGame();
+        }
     },
 
     leaveInterior: function () {
@@ -696,11 +749,15 @@ var WorldScene = new Phaser.Class({
         this.engageGrace = this.time.now + 800;
         Hud.log('You enter ' + zone.name + '.');
         this.lockExits();
+        if (window.Hud && Hud.saveGame) {
+            Hud.saveGame();
+        }
     },
 
     clearWorldObjects: function () {
         this.clearWalk();
         this.clearDoorFx();
+        this.clearBiomeFx();
         this.engageTarget = null;
         this.talkTarget = null;
         this.clearGather();
@@ -961,6 +1018,208 @@ var WorldScene = new Phaser.Class({
         });
     },
 
+    applyDayNightTint: function () {
+        var hour = (new Date()).getHours();
+        var tint = 0xffffff;
+        var overlayColor = 0x223355;
+        var overlayAlpha = 0;
+        if (hour >= 20 || hour < 5) {
+            tint = 0x8899cc;
+            overlayColor = 0x102040;
+            overlayAlpha = 0.28;
+        } else if (hour >= 18 || hour < 7) {
+            tint = 0xffddbb;
+            overlayColor = 0x402010;
+            overlayAlpha = 0.14;
+        }
+        this.cameras.main.setBackgroundColor(tint === 0xffffff ? '#1a1a22' : '#0a0a12');
+        if (this.ground) {
+            this.ground.setTint(tint);
+        }
+        if (!this.dayNightOverlay) {
+            this.dayNightOverlay = this.add.rectangle(0, 0, 2048, 2048, overlayColor, overlayAlpha)
+                .setOrigin(0, 0)
+                .setScrollFactor(0)
+                .setDepth(40)
+                .setName('dayNight');
+        } else {
+            this.dayNightOverlay.setFillStyle(overlayColor, overlayAlpha);
+        }
+    },
+
+    playZoneMusic: function () {
+        var zone = ZONES[this.zoneId];
+        if (!window.Sfx || !Sfx.playBiome) {
+            return;
+        }
+        Sfx.playBiome(zone && zone.biome ? zone.biome : this.zoneId);
+    },
+
+    clearBiomeFx: function () {
+        if (this.biomeFx) {
+            this.biomeFx.forEach(function (spr) {
+                if (spr && spr.destroy) {
+                    spr.destroy();
+                }
+            });
+        }
+        this.biomeFx = [];
+        this.waterTiles = [];
+    },
+
+    buildBiomeFx: function () {
+        var zone = ZONES[this.zoneId];
+        var biome = zone && zone.biome ? zone.biome : '';
+        var x;
+        var y;
+        var tile;
+        var mist;
+        var i;
+        this.clearBiomeFx();
+        if (!this.tileGrid) {
+            return;
+        }
+        for (y = 0; y < this.tileGrid.length; y++) {
+            for (x = 0; x < this.tileGrid[y].length; x++) {
+                tile = this.tileGrid[y][x];
+                if (tile === TILE.WATER) {
+                    this.waterTiles.push({ x: x, y: y });
+                }
+            }
+        }
+        if (biome === 'shore' || biome === 'swamp' || this.zoneId === 'southshore' || this.zoneId === 'mire') {
+            for (i = 0; i < this.waterTiles.length && i < 48; i++) {
+                mist = this.add.rectangle(
+                    this.waterTiles[i].x * 16 + 8,
+                    this.waterTiles[i].y * 16 + 8,
+                    16,
+                    16,
+                    0xa8c8ff,
+                    0.12
+                ).setDepth(5).setOrigin(0.5);
+                mist._waterWash = true;
+                mist._baseY = mist.y;
+                mist._mistPhase = i * 0.35;
+                this.biomeFx.push(mist);
+            }
+        }
+        if (biome === 'swamp' || this.zoneId === 'mire') {
+            for (i = 0; i < 10; i++) {
+                mist = this.add.rectangle(
+                    40 + (i * 53) % (MAP_W * 16),
+                    30 + (i * 37) % (MAP_H * 16),
+                    48 + (i % 3) * 16,
+                    20 + (i % 2) * 10,
+                    0xc8d8c8,
+                    0.12 + (i % 4) * 0.03
+                ).setDepth(6).setOrigin(0.5);
+                mist._mistPhase = i * 0.7;
+                mist._mistSpeed = 8 + (i % 5);
+                this.biomeFx.push(mist);
+            }
+        }
+    },
+
+    tickBiomeFx: function (time) {
+        var i;
+        var mist;
+        var wash;
+        var t = (time || 0) / 1000;
+        var pulse = 0.08 + 0.06 * (0.5 + 0.5 * Math.sin(t * 2.2));
+        if (!this.biomeFx) {
+            return;
+        }
+        for (i = 0; i < this.biomeFx.length; i++) {
+            mist = this.biomeFx[i];
+            if (!mist || !mist.active) {
+                continue;
+            }
+            if (mist._waterWash) {
+                mist.setAlpha(pulse);
+                continue;
+            }
+            mist.x += Math.sin(t + mist._mistPhase) * 0.15;
+            mist.y += Math.cos(t * 0.7 + mist._mistPhase) * 0.08;
+            mist.setAlpha(0.1 + 0.08 * (0.5 + 0.5 * Math.sin(t * 0.9 + mist._mistPhase)));
+        }
+        /* keep a few shore washes drifting */
+        for (i = 0; i < this.biomeFx.length; i++) {
+            wash = this.biomeFx[i];
+            if (wash && wash._waterWash) {
+                wash.y = wash._baseY + Math.sin(t * 1.4 + wash._mistPhase) * 1.5;
+            }
+        }
+    },
+
+    noteVisitedZone: function (zoneId) {
+        var hero = this.registry.get('hero');
+        var keys;
+        if (!hero || !zoneId || !ZONES[zoneId]) {
+            return;
+        }
+        if (!hero.visitedZones) {
+            hero.visitedZones = {};
+        }
+        if (hero.visitedZones[zoneId]) {
+            return;
+        }
+        hero.visitedZones[zoneId] = true;
+        keys = Object.keys(hero.visitedZones);
+        if (keys.length >= 9) {
+            hero.achievements = hero.achievements || {};
+            if (!hero.achievements.nineLands) {
+                hero.achievements.nineLands = true;
+                Hud.log('Achievement: Visit all nine lands.');
+            }
+            this.checkDiaryComplete(hero);
+        }
+        this.registry.set('hero', hero);
+    },
+
+    noteTutorial: function (beat) {
+        var hero = this.registry.get('hero');
+        if (!hero) {
+            return;
+        }
+        if (!hero.tutorials) {
+            hero.tutorials = {};
+        }
+        if (hero.tutorials[beat]) {
+            return;
+        }
+        hero.tutorials[beat] = true;
+        this.registry.set('hero', hero);
+        if (beat === 'walk') {
+            Hud.log('Tutorial: You took your first steps.');
+        } else if (beat === 'talk') {
+            Hud.log('Tutorial: You spoke with a townsfolk.');
+        } else if (beat === 'fight') {
+            Hud.log('Tutorial: You won your first fight.');
+        } else if (beat === 'loot') {
+            Hud.log('Tutorial: You picked up loot.');
+        } else if (beat === 'bury') {
+            Hud.log('Tutorial: You buried bones for Prayer.');
+        } else if (beat === 'shop') {
+            Hud.log('Tutorial: You opened a shop.');
+        }
+    },
+
+    checkDiaryComplete: function (hero) {
+        var zones;
+        if (!hero || !hero.diary || hero.diary.complete) {
+            return;
+        }
+        zones = hero.visitedZones ? Object.keys(hero.visitedZones).length : 0;
+        if (hero.diary.bram && hero.diary.eat && hero.diary.bury && zones >= 9) {
+            hero.diary.complete = true;
+            hero.achievements = hero.achievements || {};
+            hero.achievements.easyDiary = true;
+            addItem(hero, 'coins', 20);
+            this.registry.set('hero', hero);
+            Hud.log('Emberhaven diary complete. +20gp.');
+        }
+    },
+
     refreshHud: function () {
         var hero = this.registry.get('hero');
         var quest = this.registry.get('quest');
@@ -986,8 +1245,12 @@ var WorldScene = new Phaser.Class({
             xp: hero.xp,
             level: typeof combatLevel === 'function' ? combatLevel(hero) : hero.level,
             total: typeof skillTotal === 'function' ? skillTotal(hero) : 0,
-            quest: questText
+            quest: questText,
+            displayName: hero.displayName || 'Adventurer'
         });
+        if (Hud.renderQuestJournal) {
+            Hud.renderQuestJournal(quest);
+        }
         this.refreshQuestIcons();
     },
 
@@ -1058,7 +1321,7 @@ var WorldScene = new Phaser.Class({
                 return;
             }
             var spec = typeof questHeadIconFor === 'function'
-                ? questHeadIconFor(npc.npcDef, quest)
+                ? questHeadIconFor(npc.npcDef, quest, self.registry.get('hero'))
                 : null;
             if (!npc.questIcon) {
                 if (!spec) {
@@ -1087,6 +1350,10 @@ var WorldScene = new Phaser.Class({
         return false;
     },
 
+    uiPaused: function () {
+        return !!(window.Hud && Hud.interactionPaused && Hud.interactionPaused());
+    },
+
     onClick: function (pointer) {
         if (this.encounterLock || Hud.mode === 'battle' || Hud.mode === 'title') {
             this.cancelLongPress();
@@ -1105,6 +1372,13 @@ var WorldScene = new Phaser.Class({
             }
             if (!this.isRightClick(pointer)) {
                 Hud.advanceDialogue();
+            }
+            return;
+        }
+        if (Hud.stationOpen && Hud.stationOpen()) {
+            this.cancelLongPress();
+            if (Hud.hideContextMenu) {
+                Hud.hideContextMenu();
             }
             return;
         }
@@ -1130,19 +1404,28 @@ var WorldScene = new Phaser.Class({
         if (this.isRightClick(pointer)) {
             this.cancelLongPress();
             var ev = pointer.event;
-            var onLoot = this.pickLoot(x, y, 18);
             var onMob = this.pickSprite(this.mobs, x, y, 18);
             var onNpc = this.pickSprite(this.npcs, x, y, 18);
-            if (onLoot) {
-                this.showLootExamineMenu(onLoot, {
+            var lootPile = this.pickLootPile(x, y, 18);
+            if (lootPile && lootPile.length) {
+                this.showLootContextAt(lootPile, {
                     clientX: ev && ev.clientX != null ? ev.clientX : 16,
                     clientY: ev && ev.clientY != null ? ev.clientY : 16
                 });
                 return;
             }
             if (onMob && onMob.aliveMob) {
-                if (Hud.hideContextMenu) {
-                    Hud.hideContextMenu();
+                if (Hud.showContextMenu) {
+                    Hud.showContextMenu([
+                        { label: 'Attack', action: 'attack' },
+                        { label: 'Examine', action: 'examine' }
+                    ], {
+                        worldX: onMob.x,
+                        worldY: onMob.y,
+                        mob: onMob,
+                        clientX: ev && ev.clientX != null ? ev.clientX : 16,
+                        clientY: ev && ev.clientY != null ? ev.clientY : 16
+                    });
                 }
                 return;
             }
@@ -1178,13 +1461,16 @@ var WorldScene = new Phaser.Class({
         if (Hud.hideContextMenu) {
             Hud.hideContextMenu();
         }
-        this.armLongPress(pointer);
-        var loot = this.pickLoot(x, y, 18);
-        if (loot) {
+        var leftLootPile = this.pickLootPile(x, y, 18);
+        if (leftLootPile && leftLootPile.length) {
             this.clearFish();
-            this.tryPickup(loot);
+            this.engageTarget = null;
+            this.talkTarget = null;
+            this.pendingLootTake = { x: x, y: y };
+            this.armLongPress(pointer);
             return;
         }
+        this.armLongPress(pointer);
         var hit = this.pickSprite(this.mobs, x, y, 18);
         if (hit && hit.aliveMob) {
             this.engageTarget = hit;
@@ -1554,6 +1840,10 @@ var WorldScene = new Phaser.Class({
             }
             return true;
         }
+        if (hit.kind === 'ge' && Hud.showGrandExchange) {
+            Hud.showGrandExchange();
+            return true;
+        }
         if (Hud.showStation) {
             Hud.showStation(hit.kind);
             return true;
@@ -1688,9 +1978,6 @@ var WorldScene = new Phaser.Class({
         if (npc && npc.npcDef && npc.npcDef.key === 'banker') {
             return;
         }
-        if (this.interiorId === 'bank') {
-            return;
-        }
         booth = this.pickScenery(this.player.x, this.player.y);
         if (booth && booth.kind === 'booth' && this.stationInRange(booth)) {
             return;
@@ -1718,6 +2005,21 @@ var WorldScene = new Phaser.Class({
             return;
         }
         props = typeof TOWN_PROPS !== 'undefined' ? TOWN_PROPS : null;
+        if (kind === 'fire') {
+            if (this.groundFireAt && this.groundFires) {
+                var i;
+                for (i = 0; i < this.groundFires.length; i++) {
+                    hit = this.groundFires[i];
+                    if (hit && this.stationInRange({ tx: hit.tx, ty: hit.ty, kind: 'fire' })) {
+                        return;
+                    }
+                }
+            }
+            if (Hud.hideStation) {
+                Hud.hideStation();
+            }
+            return;
+        }
         if (props && props[kind] && this.zoneId === 'haven') {
             hit = { tx: props[kind].x, ty: props[kind].y, kind: kind };
             if (this.stationInRange(hit)) {
@@ -1726,6 +2028,20 @@ var WorldScene = new Phaser.Class({
         }
         if (Hud.hideStation) {
             Hud.hideStation();
+        }
+    },
+
+    closeShopIfAway: function () {
+        var npc;
+        if (!window.Hud || !Hud.shopOpen || !Hud.shopOpen() || !this.player) {
+            return;
+        }
+        npc = this.pickSprite(this.npcs, this.player.x, this.player.y, 64);
+        if (npc && npc.npcDef && (npc.npcDef.key === 'shopkeep' || npc.npcDef.options && npc.npcDef.options.indexOf('trade') !== -1)) {
+            return;
+        }
+        if (Hud.hideShop) {
+            Hud.hideShop();
         }
     },
 
@@ -2125,9 +2441,13 @@ var WorldScene = new Phaser.Class({
             return;
         }
         if (Hud.showContextMenu) {
-            Hud.showContextMenu([{ label: 'Examine', action: 'examine' }], {
+            Hud.showContextMenu([
+                { label: 'Take', action: 'take' },
+                { label: 'Examine', action: 'examine' }
+            ], {
                 kind: 'loot',
                 itemId: loot.id,
+                loot: loot,
                 worldX: loot.sprite ? loot.sprite.x : 0,
                 worldY: loot.sprite ? loot.sprite.y : 0,
                 clientX: pos && pos.clientX != null ? pos.clientX : 16,
@@ -2136,14 +2456,44 @@ var WorldScene = new Phaser.Class({
         }
     },
 
+    topLootFromPile: function (pile) {
+        if (!pile || !pile.length) {
+            return null;
+        }
+        return pile[pile.length - 1];
+    },
+
+    showLootContextAt: function (pile, pos) {
+        if (!pile || !pile.length) {
+            return;
+        }
+        if (pile.length > 1) {
+            this.showLootPileMenu(pile, pos);
+            return;
+        }
+        this.showLootExamineMenu(pile[0], pos);
+    },
+
     showNpcExamineMenu: function (npc, pos) {
         if (!npc) {
             return;
         }
+        var items = [
+            { label: 'Talk-to', action: 'talk' },
+            { label: 'Examine', action: 'examine' }
+        ];
+        if (npc.npcDef && npc.npcDef.key === 'dummy') {
+            items.push({ label: 'Duel', action: 'duel' });
+        } else if (npc.npcDef && npc.npcDef.options && npc.npcDef.options.indexOf('trade') !== -1) {
+            items.push({ label: 'Trade', action: 'trade-npc' });
+        } else if (npc.npcDef && npc.npcDef.key !== 'banker') {
+            items.push({ label: 'Pickpocket', action: 'pickpocket' });
+        }
         if (Hud.showContextMenu) {
-            Hud.showContextMenu([{ label: 'Examine', action: 'examine' }], {
+            Hud.showContextMenu(items, {
                 worldX: npc.x,
                 worldY: npc.y,
+                npc: npc,
                 clientX: pos && pos.clientX != null ? pos.clientX : 16,
                 clientY: pos && pos.clientY != null ? pos.clientY : 16
             });
@@ -2151,15 +2501,19 @@ var WorldScene = new Phaser.Class({
     },
 
     armLongPress: function (pointer) {
-        this.cancelLongPress();
         if (!pointer || this.isRightClick(pointer) || !pointer.event) {
+            this.cancelLongPress();
             return;
         }
         var x = pointer.worldX;
         var y = pointer.worldY;
-        if (!this.pickSprite(this.npcs, x, y, 18)) {
+        var hasLoot = !!(this.pickLootPile(x, y, 18) || []).length;
+        var hasNpc = !!this.pickSprite(this.npcs, x, y, 18);
+        if (!hasLoot && !hasNpc && !this.pendingLootTake) {
+            this.cancelLongPress();
             return;
         }
+        this.cancelLongPress({ keepPendingLoot: true });
         var ev = pointer.event;
         this.longPressPtr = {
             x: x,
@@ -2177,22 +2531,48 @@ var WorldScene = new Phaser.Class({
         var dx = pointer.worldX - this.longPressPtr.x;
         var dy = pointer.worldY - this.longPressPtr.y;
         if ((dx * dx) + (dy * dy) > LONG_PRESS_SLOP * LONG_PRESS_SLOP) {
-            this.cancelLongPress();
+            /* Drop the hold-menu timer; pointerup can still take top loot. */
+            if (this.longPressTimer) {
+                this.longPressTimer.remove(false);
+                this.longPressTimer = null;
+            }
+            this.longPressPtr = null;
         }
     },
 
-    cancelLongPress: function () {
+    onPointerUp: function () {
+        this.cancelLongPress({ takePendingLoot: true });
+    },
+
+    cancelLongPress: function (opts) {
+        var pending;
+        var pile;
+        var top;
+        opts = opts || {};
         if (this.longPressTimer) {
             this.longPressTimer.remove(false);
             this.longPressTimer = null;
         }
         this.longPressPtr = null;
+        pending = this.pendingLootTake;
+        if (opts.keepPendingLoot) {
+            return;
+        }
+        this.pendingLootTake = null;
+        if (opts.takePendingLoot && pending) {
+            pile = this.pickLootPile(pending.x, pending.y, 18);
+            top = this.topLootFromPile(pile);
+            if (top) {
+                this.tryPickup(top);
+            }
+        }
     },
 
     fireLongPress: function () {
         var saved = this.longPressPtr;
         this.longPressTimer = null;
         this.longPressPtr = null;
+        this.pendingLootTake = null;
         if (!saved) {
             return;
         }
@@ -2204,6 +2584,17 @@ var WorldScene = new Phaser.Class({
             if (Hud.hideContextMenu) {
                 Hud.hideContextMenu();
             }
+            return;
+        }
+        var lootPile = this.pickLootPile(x, y, 18);
+        if (lootPile && lootPile.length) {
+            if (this.clearWalk) {
+                this.clearWalk();
+            }
+            this.talkTarget = null;
+            this.engageTarget = null;
+            this.clearFish();
+            this.showLootContextAt(lootPile, pos);
             return;
         }
         var npc = this.pickSprite(this.npcs, x, y, 18);
@@ -2224,7 +2615,7 @@ var WorldScene = new Phaser.Class({
         var bestD = range;
         for (var i = 0; i < this.groundLoot.length; i++) {
             var drop = this.groundLoot[i];
-            if (!drop || drop.taken || !drop.sprite) {
+            if (!drop || drop.taken || !drop.sprite || !drop.sprite.visible) {
                 continue;
             }
             var d = Phaser.Math.Distance.Between(x, y, drop.sprite.x, drop.sprite.y);
@@ -2265,6 +2656,9 @@ var WorldScene = new Phaser.Class({
     },
 
     setWalk: function (x, y, opts) {
+        if (this.uiPaused()) {
+            return;
+        }
         opts = opts || {};
         if (!opts.keepFish) {
             this.clearFish();
@@ -2496,15 +2890,68 @@ var WorldScene = new Phaser.Class({
         return false;
     },
 
-    maybeRepath: function () {
-        if (!this.walkTarget) {
-            return;
+    chaseWalkTarget: function () {
+        if (this.engageTarget) {
+            if (!this.engageTarget.active || !this.engageTarget.aliveMob) {
+                this.engageTarget = null;
+            } else {
+                return this.engageTarget;
+            }
         }
+        if (this.talkTarget) {
+            if (!this.talkTarget.active) {
+                this.talkTarget = null;
+            } else {
+                return this.talkTarget;
+            }
+        }
+        return null;
+    },
+
+    chaseInRange: function (chase) {
+        if (!chase || !this.player) {
+            return false;
+        }
+        var dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, chase.x, chase.y);
+        if (this.engageTarget === chase) {
+            return dist < 24;
+        }
+        if (this.talkTarget === chase) {
+            return dist < 22 && !this.talkBlockedByWall(chase);
+        }
+        return false;
+    },
+
+    maybeRepath: function () {
+        var chase = this.chaseWalkTarget();
         var now = this.time.now;
+        var tx;
+        var ty;
+        var moved;
         if (this.pathCheckAt && now < this.pathCheckAt) {
             return;
         }
         this.pathCheckAt = now + 280;
+        if (chase) {
+            if (this.chaseInRange(chase)) {
+                return;
+            }
+            tx = chase.x;
+            ty = chase.y;
+            moved = !this.walkTarget ||
+                Phaser.Math.Distance.Between(this.walkTarget.x, this.walkTarget.y, tx, ty) > 8;
+            if (moved || this.walkBlocked || !this.walkPath || !this.walkPath.length ||
+                    this.pathUsesOccupied(this.walkPath, tx, ty)) {
+                this.walkTarget = { x: tx, y: ty };
+                this.placeWalkMarker(tx, ty);
+                this.walkPath = this.computeWalkPath(tx, ty, { allowEnd: true });
+                this.drawPathLine();
+            }
+            return;
+        }
+        if (!this.walkTarget) {
+            return;
+        }
         if (this.walkBlocked || !this.walkPath || !this.walkPath.length || this.pathUsesOccupied(this.walkPath, this.walkTarget.x, this.walkTarget.y)) {
             this.walkPath = this.computeWalkPath(this.walkTarget.x, this.walkTarget.y, { allowEnd: true });
             this.drawPathLine();
@@ -2645,7 +3092,21 @@ var WorldScene = new Phaser.Class({
         var quest = this.registry.get('quest');
         var pages;
         var afterTalk;
+        this.noteTutorial('talk');
+        if (!hero.sideQuests) {
+            hero.sideQuests = {
+                shipment: { stage: 0, progress: 0, goal: 3 },
+                bats: { stage: 0, progress: 0, goal: 4 }
+            };
+        }
+        if (!hero.diary) {
+            hero.diary = { bram: false, eat: false, bury: false, complete: false };
+        }
+        if (!hero.tutorials) {
+            hero.tutorials = {};
+        }
         if (def.key === 'guild') {
+            hero.diary.bram = true;
             if (quest.stage === 0) {
                 quest.stage = 1;
                 quest.progress = 0;
@@ -2655,15 +3116,79 @@ var WorldScene = new Phaser.Class({
                 pages = [quest.progress + ' of ' + quest.goal + ' goblins down. Keep at it.'];
             } else if (quest.stage === 2) {
                 quest.stage = 3;
+                quest.points = (quest.points || 0) + 1;
                 addItem(hero, 'coins', 50);
                 hero.xp += 40;
+                if (typeof gainSkillXp === 'function') {
+                    gainSkillXp(hero, 'attack', 25);
+                    gainSkillXp(hero, 'defence', 15);
+                }
                 this.registry.set('quest', quest);
                 this.registry.set('hero', hero);
                 pages = ['The militia thanks you. 50 gold and combat training.'];
-                afterTalk = this.levelHero.bind(this, hero);
+                afterTalk = function () {
+                    if (Hud.showQuestComplete) {
+                        Hud.showQuestComplete('Quest complete', 'Militia task — 1 QP, 50gp, Attack + Defence XP.');
+                    }
+                    this.levelHero(hero);
+                    this.checkDiaryComplete(hero);
+                }.bind(this);
             } else {
                 pages = ['Emberhaven stands because of you.'];
             }
+            this.registry.set('hero', hero);
+        } else if (def.key === 'fisher') {
+            var ship = hero.sideQuests.shipment;
+            if (ship.stage === 0) {
+                ship.stage = 1;
+                ship.progress = 0;
+                pages = ['Crabs stole my lost shipment marks. Clear 3 crabs along the shore.'];
+            } else if (ship.stage === 1) {
+                pages = [ship.progress + ' of ' + ship.goal + ' crabs cleared. Keep hunting.'];
+            } else if (ship.stage === 2) {
+                ship.stage = 3;
+                quest.points = (quest.points || 0) + 1;
+                addItem(hero, 'coins', 25);
+                if (typeof gainSkillXp === 'function') {
+                    gainSkillXp(hero, 'fishing', 20);
+                }
+                this.registry.set('quest', quest);
+                pages = ['That crate mark is enough. Take 25gp for your trouble.'];
+                afterTalk = function () {
+                    if (Hud.showQuestComplete) {
+                        Hud.showQuestComplete('Quest complete', 'Lost Shipment — 1 QP, 25gp, Fishing XP.');
+                    }
+                };
+            } else {
+                pages = (def.lines || []).slice();
+            }
+            this.registry.set('hero', hero);
+        } else if (def.key === 'miner') {
+            var bats = hero.sideQuests.bats;
+            if (bats.stage === 0) {
+                bats.stage = 1;
+                bats.progress = 0;
+                pages = ['Bats choke the lower shaft. Slay 4 bats and return.'];
+            } else if (bats.stage === 1) {
+                pages = [bats.progress + ' of ' + bats.goal + ' bats down. Keep at it.'];
+            } else if (bats.stage === 2) {
+                bats.stage = 3;
+                quest.points = (quest.points || 0) + 1;
+                addItem(hero, 'coins', 30);
+                if (typeof gainSkillXp === 'function') {
+                    gainSkillXp(hero, 'mining', 20);
+                }
+                this.registry.set('quest', quest);
+                pages = ['The shaft is quieter. 30gp and a miner\'s thanks.'];
+                afterTalk = function () {
+                    if (Hud.showQuestComplete) {
+                        Hud.showQuestComplete('Quest complete', 'Bat Clearance — 1 QP, 30gp, Mining XP.');
+                    }
+                };
+            } else {
+                pages = (def.lines || []).slice();
+            }
+            this.registry.set('hero', hero);
         } else if (def.key === 'witch') {
             var cost = 10;
             if (hero.gold < cost) {
@@ -2746,7 +3271,214 @@ var WorldScene = new Phaser.Class({
         }
     },
 
+    startOverworldFight: function (mob) {
+        var def = mob.mobDef || {};
+        var maxHp = typeof def.hp === 'number' ? def.hp : 20;
+        var self = this;
+        this.overworldFight = {
+            mob: mob,
+            hp: maxHp,
+            maxHp: maxHp,
+            tickMs: typeof OW_COMBAT_TICK_MS === 'number' ? OW_COMBAT_TICK_MS : 600,
+            busy: false
+        };
+        if (this.overworldTick) {
+            this.overworldTick.remove(false);
+            this.overworldTick = null;
+        }
+        if (Hud.showOverworldBattle) {
+            Hud.showOverworldBattle(this, mob, this.overworldFight);
+        } else if (Hud.showBattle && Hud.setMode) {
+            Hud.setMode('battle');
+        }
+        this.overworldTick = this.time.addEvent({
+            delay: this.overworldFight.tickMs,
+            loop: true,
+            callback: function () {
+                self.tickOverworldFight();
+            },
+            callbackScope: this
+        });
+        var hero = this.registry.get('hero');
+        if (hero && autoRetaliateOn(hero)) {
+            this.time.delayedCall(220, function () {
+                self.tickOverworldFight(true);
+            });
+        }
+    },
+
+    tickOverworldFight: function (forcePlayer) {
+        var fight = this.overworldFight;
+        var mob = fight && fight.mob;
+        var hero;
+        var dealt;
+        var hpBefore;
+        if (!fight || !mob || !mob.aliveMob || fight.busy) {
+            return;
+        }
+        fight.busy = true;
+        hero = this.registry.get('hero');
+        if (!hero || hero.hp <= 0) {
+            this.endOverworldFight('lose');
+            return;
+        }
+        if (forcePlayer || autoRetaliateOn(hero)) {
+            hpBefore = fight.hp;
+            dealt = rollOverworldDamage('player', mob, hero, { special: !!fight.specialQueued });
+            fight.specialQueued = false;
+            if (dealt > 0) {
+                fight.hp = Math.max(0, fight.hp - dealt);
+                showWorldHitSplat(this, mob.x, mob.y, '-' + dealt, 'hit');
+                grantOverworldHitXp(hero, fight, mob, dealt, hpBefore);
+                ensureSpecialEnergy(hero);
+                hero.specialEnergy = Math.min(100, hero.specialEnergy + 10);
+            }
+            if (typeof consumeAmmo === 'function' && typeof rangedWeaponEquipped === 'function' &&
+                rangedWeaponEquipped(hero)) {
+                consumeAmmo(hero);
+            }
+            this.registry.set('hero', hero);
+            if (Hud.renderOverworldBattle) {
+                Hud.renderOverworldBattle(fight);
+            }
+            if (Hud.renderHero) {
+                Hud.renderHero(hero);
+            }
+            if (fight.hp <= 0) {
+                this.endOverworldFight('win');
+                fight.busy = false;
+                return;
+            }
+        }
+        dealt = rollOverworldDamage(mob, 'player', hero);
+        if (dealt > 0) {
+            hero.hp = Math.max(0, hero.hp - dealt);
+            showWorldHitSplat(this, this.player.x, this.player.y, '-' + dealt, 'hit');
+            applyHeroPoison(hero, mob.mobDef && mob.mobDef.type);
+            this.registry.set('hero', hero);
+            if (Hud.renderHero) {
+                Hud.renderHero(hero);
+            }
+            if (window.Sfx && Sfx.hit) {
+                Sfx.hit();
+            }
+        }
+        if (hero.hp <= 0) {
+            this.endOverworldFight('lose');
+        }
+        fight.busy = false;
+    },
+
+    endOverworldFight: function (outcome) {
+        var fight = this.overworldFight;
+        var mob = fight && fight.mob;
+        if (this.overworldTick) {
+            this.overworldTick.remove(false);
+            this.overworldTick = null;
+        }
+        this.overworldFight = null;
+        if (Hud.hideOverworldBattle) {
+            Hud.hideOverworldBattle();
+        }
+        this.registry.set('battleOutcome', outcome);
+        if (outcome === 'lose') {
+            this.encounterLock = false;
+            this.registry.set('battleOutcome', null);
+            this.scene.stop('UIScene');
+            this.scene.start('GameOverScene');
+            return;
+        }
+        if (outcome === 'flee') {
+            this.wake();
+            return;
+        }
+        if (outcome === 'win') {
+            this.wake();
+        }
+    },
+
+    tryOverworldFlee: function () {
+        var fight = this.overworldFight;
+        if (!fight) {
+            return false;
+        }
+        if (Phaser.Math.Between(0, 99) < 70) {
+            Hud.log('You run from the fight.');
+            this.endOverworldFight('flee');
+        } else {
+            Hud.log('You fail to get away!');
+        }
+        return true;
+    },
+
+    tryOverworldEat: function (itemId) {
+        var fight = this.overworldFight;
+        var hero;
+        var eaten;
+        if (!fight) {
+            return false;
+        }
+        hero = this.registry.get('hero');
+        if (hero.hp >= hero.maxHp) {
+            Hud.log('You are already at full health.');
+            return false;
+        }
+        eaten = itemId ? eatItem(hero, itemId) : eatBestFood(hero);
+        if (!eaten) {
+            Hud.log(itemId ? 'You do not have that.' : 'You have no food.');
+            return false;
+        }
+        hero.hp = Math.min(hero.maxHp, hero.hp + eaten.amount);
+        this.registry.set('hero', hero);
+        showWorldHitSplat(this, this.player.x, this.player.y, '+' + eaten.amount, 'heal');
+        Hud.log('You eat ' + eaten.name + ' and recover ' + eaten.amount + ' HP.');
+        Hud.renderHero(hero);
+        return true;
+    },
+
+    castOverworldSpell: function (spellId) {
+        var fight = this.overworldFight;
+        var mob;
+        var hero;
+        var fn;
+        var dealt;
+        var hpBefore;
+        if (!fight || !spellId) {
+            return false;
+        }
+        mob = fight.mob;
+        hero = this.registry.get('hero');
+        fn = typeof spellCastFn === 'function' ? spellCastFn(spellId) : null;
+        var cast = fn ? fn(hero) : null;
+        if (!cast) {
+            Hud.log('You do not have the runes for that spell.');
+            return false;
+        }
+        this.registry.set('hero', hero);
+        hpBefore = fight.hp;
+        dealt = typeof cast.damage === 'number' ? cast.damage : 2;
+        fight.hp = Math.max(0, fight.hp - dealt);
+        showWorldHitSplat(this, mob.x, mob.y, '-' + dealt, 'hit');
+        if (cast.xp > 0) {
+            gainSkillXp(hero, 'magic', cast.xp);
+        }
+        grantOverworldHitXp(hero, fight, mob, dealt, hpBefore);
+        this.registry.set('hero', hero);
+        Hud.log('You cast ' + cast.label + ' on ' + mob.mobDef.type + ' for ' + dealt + '.');
+        Hud.renderHero(hero);
+        if (Hud.renderOverworldBattle) {
+            Hud.renderOverworldBattle(fight);
+        }
+        if (fight.hp <= 0) {
+            this.endOverworldFight('win');
+        }
+        return true;
+    },
+
     beginFight: function (mob) {
+        if (this.uiPaused()) {
+            return;
+        }
         if (this.encounterLock || !mob.aliveMob) {
             return;
         }
@@ -2767,35 +3499,116 @@ var WorldScene = new Phaser.Class({
         this.registry.set('pendingEncounter', {
             enemies: [Object.assign({}, mob.mobDef)]
         });
-        this.cameras.main.shake(220);
+        this.cameras.main.shake(160, 0.004);
+        if (window.Sfx && Sfx.hit) {
+            Sfx.hit();
+        }
         var self = this;
         this.time.delayedCall(260, function () {
-            self.scene.switch('BattleScene');
+            self.startOverworldFight(mob);
         });
     },
 
     placeLoot: function (x, y, drop, until) {
-        var self = this;
+        var now = this.time.now;
         var sprite = this.add.image(x, y, 'item-' + drop.id);
-        sprite.setDepth(5);
-        sprite.setScale(1);
-        sprite.setInteractive({ useHandCursor: true });
+        sprite.setDepth(5 + this.groundLoot.length * 0.01);
+        sprite.setDisplaySize(16, 16);
+        sprite.setInteractive({
+            useHandCursor: true,
+            hitArea: new Phaser.Geom.Rectangle(-4, -4, 24, 24),
+            hitAreaCallback: Phaser.Geom.Rectangle.Contains
+        });
         var entry = {
             id: drop.id,
             qty: drop.qty,
             sprite: sprite,
             taken: false,
             until: until,
+            privateUntil: now + 10000,
             skipAuto: !!drop.skipAuto
         };
-        sprite.on('pointerdown', function (pointer) {
-            if (self.isRightClick(pointer)) {
-                return;
-            }
-            self.tryPickup(entry);
-        });
+        /* Left/right loot clicks are handled by scene onClick (top-of-stack / menus). */
         this.groundLoot.push(entry);
+        this.applyLootVisibility(entry);
         return entry;
+    },
+
+    pickLootPile: function (x, y, range) {
+        var out = [];
+        var i;
+        var drop;
+        var d;
+        range = typeof range === 'number' ? range : 14;
+        for (i = 0; i < this.groundLoot.length; i++) {
+            drop = this.groundLoot[i];
+            if (!drop || drop.taken || !drop.sprite || !drop.sprite.visible) {
+                continue;
+            }
+            d = Phaser.Math.Distance.Between(x, y, drop.sprite.x, drop.sprite.y);
+            if (d < range) {
+                out.push(drop);
+            }
+        }
+        return out;
+    },
+
+    showLootPileMenu: function (pile, pos) {
+        var items = [];
+        var i;
+        var drop;
+        if (!pile || !pile.length || !Hud.showContextMenu) {
+            return;
+        }
+        /* Newest / top of stack first. */
+        for (i = pile.length - 1; i >= 0; i--) {
+            drop = pile[i];
+            items.push({
+                label: 'Take ' + itemName(drop.id),
+                action: 'take-loot',
+                loot: drop,
+                lootIndex: i
+            });
+        }
+        items.push({ label: 'Examine', action: 'examine' });
+        Hud.showContextMenu(items, {
+            kind: 'loot-pile',
+            worldX: pile[pile.length - 1].sprite ? pile[pile.length - 1].sprite.x : 0,
+            worldY: pile[pile.length - 1].sprite ? pile[pile.length - 1].sprite.y : 0,
+            clientX: pos && pos.clientX != null ? pos.clientX : 16,
+            clientY: pos && pos.clientY != null ? pos.clientY : 16,
+            lootPile: pile
+        });
+    },
+
+    applyLootVisibility: function (drop) {
+        var hero = this.registry.get('hero');
+        if (!drop || !drop.sprite) {
+            return;
+        }
+        if (hero && hero.hideBones && drop.id === 'bones') {
+            drop.sprite.setVisible(false);
+            drop.sprite.disableInteractive();
+            return;
+        }
+        drop.sprite.setVisible(true);
+        drop.sprite.setInteractive({
+            useHandCursor: true,
+            hitArea: new Phaser.Geom.Rectangle(-4, -4, 24, 24),
+            hitAreaCallback: Phaser.Geom.Rectangle.Contains
+        });
+        if (drop.privateUntil && this.time.now < drop.privateUntil) {
+            drop.sprite.setTint(0xaaccff);
+        } else {
+            drop.sprite.clearTint();
+        }
+    },
+
+    refreshLootVisibility: function () {
+        var i;
+        for (i = 0; i < this.groundLoot.length; i++) {
+            this.applyLootVisibility(this.groundLoot[i]);
+        }
     },
 
     spawnLoot: function (x, y, drops) {
@@ -2873,6 +3686,10 @@ var WorldScene = new Phaser.Class({
         }
         var label = itemName(drop.id);
         Hud.log('You pick up ' + (drop.qty > 1 ? drop.qty + ' ' : '') + label + '.');
+        if (window.Sfx && Sfx.pickup) {
+            Sfx.pickup();
+        }
+        this.noteTutorial('loot');
         this.refreshHud();
         return true;
     },
@@ -2883,6 +3700,10 @@ var WorldScene = new Phaser.Class({
             return false;
         }
         if (!id || qty < 1 || !this.player) {
+            return false;
+        }
+        if (typeof isQuestItem === 'function' && isQuestItem(id)) {
+            Hud.log('You cannot drop a quest item.');
             return false;
         }
         var hero = this.registry.get('hero');
@@ -2937,6 +3758,10 @@ var WorldScene = new Phaser.Class({
                     drop.sprite = null;
                 }
                 this.groundLoot.splice(i, 1);
+                continue;
+            }
+            if (drop.sprite && drop.privateUntil && now >= drop.privateUntil && drop.sprite.isTinted) {
+                drop.sprite.clearTint();
             }
         }
     },
@@ -2951,6 +3776,9 @@ var WorldScene = new Phaser.Class({
     },
 
     wake: function () {
+        if (window.Hud && Hud.saveGame) {
+            Hud.saveGame();
+        }
         this.encounterLock = false;
         this.engageGrace = this.time.now + 700;
         this.player.body.setVelocity(0);
@@ -2974,9 +3802,38 @@ var WorldScene = new Phaser.Class({
                     this.registry.set('quest', quest);
                 }
             }
+            if (hero.sideQuests) {
+                if (def.type === 'Crab' && hero.sideQuests.shipment && hero.sideQuests.shipment.stage === 1) {
+                    hero.sideQuests.shipment.progress += 1;
+                    if (hero.sideQuests.shipment.progress >= hero.sideQuests.shipment.goal) {
+                        hero.sideQuests.shipment.stage = 2;
+                        Hud.log('That should be enough crabs. Return to Ned.');
+                    }
+                    this.registry.set('hero', hero);
+                }
+                if (def.type === 'Bat' && hero.sideQuests.bats && hero.sideQuests.bats.stage === 1) {
+                    hero.sideQuests.bats.progress += 1;
+                    if (hero.sideQuests.bats.progress >= hero.sideQuests.bats.goal) {
+                        hero.sideQuests.bats.stage = 2;
+                        Hud.log('That should be enough bats. Return to Corb.');
+                    }
+                    this.registry.set('hero', hero);
+                }
+            }
+            this.noteTutorial('fight');
             if (def.type === 'Rabbit' && typeof grantHunterXp === 'function') {
                 grantHunterXp(hero, typeof HUNTER_KILL_XP === 'number' ? HUNTER_KILL_XP : 12);
                 this.registry.set('hero', hero);
+            }
+            if (typeof noteSlayerKill === 'function') {
+                var slayerDone = noteSlayerKill(hero, def.type);
+                if (slayerDone) {
+                    Hud.log('Your Slayer task is complete.');
+                }
+                this.registry.set('hero', hero);
+            }
+            if (hero.hiscores) {
+                hero.hiscores.kills = (hero.hiscores.kills || 0) + 1;
             }
             this.spawnLoot(this.lastFought.x, this.lastFought.y, lootForMob(def));
             this.hideMob(this.lastFought);
@@ -3250,7 +4107,7 @@ var WorldScene = new Phaser.Class({
     },
 
     tryAutoEngage: function () {
-        if (this.encounterLock || this.time.now < this.engageGrace) {
+        if (this.encounterLock || this.uiPaused() || this.time.now < this.engageGrace) {
             return false;
         }
         if (this.engageTarget && this.engageTarget.aliveMob) {
@@ -3272,10 +4129,63 @@ var WorldScene = new Phaser.Class({
 
     update: function (time, delta) {
         var dt = (typeof delta === 'number' && isFinite(delta) && delta > 0) ? Math.min(delta, 80) / 1000 : 0;
-        if (!this.player || !this.player.body || this.encounterLock) {
-            if (this.encounterLock) {
-                this.tickRunEnergy(dt, false);
+        if (!this.player || !this.player.body) {
+            return;
+        }
+        if (this.encounterLock && !this.overworldFight) {
+            this.tickRunEnergy(dt, false);
+            return;
+        }
+        if (this.uiPaused()) {
+            if (this.player.body) {
+                this.player.body.setVelocity(0, 0);
             }
+            this.tickRunEnergy(dt, false);
+            if (Keys.justPressed('Escape')) {
+                if (Hud.dialogueOpen && Hud.dialogueOpen() && Hud.hideDialogue) {
+                    Hud.hideDialogue();
+                }
+                if (Hud.stationOpen && Hud.stationOpen() && Hud.hideStation) {
+                    Hud.hideStation();
+                }
+                if (Hud.hideContextMenu) {
+                    Hud.hideContextMenu();
+                }
+            }
+            /* Space → Continue/Close is handled on keydown in Hud while dialogue is open. */
+            this.npcs.children.iterate(function (npc) {
+                if (!npc) {
+                    return;
+                }
+                if (npc.nameLabel) {
+                    npc.nameLabel.setPosition(npc.x, npc.y - 14);
+                }
+                if (npc.questIcon) {
+                    npc.questIcon.setPosition(npc.x, npc.y - 24);
+                }
+            });
+            if (this.nameplate && this.player) {
+                var pausedName = this.registry.get('hero');
+                this.nameplate.setText((pausedName && pausedName.displayName) || 'Adventurer');
+                this.nameplate.setPosition(this.player.x, this.player.y - 12);
+            }
+            return;
+        }
+        if (this.overworldFight) {
+            this.tickRunEnergy(dt, false);
+            var heroPoison = this.registry.get('hero');
+            if (heroPoison && typeof tickHeroPoison === 'function') {
+                tickHeroPoison(heroPoison, this);
+            }
+            if (typeof this.tickPrayerDrainLite === 'function') {
+                this.tickPrayerDrainLite(dt);
+            }
+            this.mobs.children.iterate(function (mob) {
+                if (mob && mob.nameLabel) {
+                    var lift = 8 + Math.round((mob.displayHeight || 16) / 2);
+                    mob.nameLabel.setPosition(mob.x, mob.y - lift);
+                }
+            });
             return;
         }
 
@@ -3308,6 +4218,7 @@ var WorldScene = new Phaser.Class({
         if (Keys.justPressed('Escape')) {
             this.clearWalk();
             this.talkTarget = null;
+            this.engageTarget = null;
             this.clearGather();
             if (window.Hud && Hud.hideContextMenu) {
                 Hud.hideContextMenu();
@@ -3317,46 +4228,60 @@ var WorldScene = new Phaser.Class({
             }
         }
         if (move.left || move.right || move.up || move.down) {
+            this.noteTutorial('walk');
             this.clearWalk();
             this.talkTarget = null;
+            this.engageTarget = null;
             this.clearGather();
-            if (Hud.dialogueOpen && Hud.dialogueOpen() && Hud.hideDialogue) {
-                Hud.hideDialogue();
-            }
             if (window.Hud && Hud.bankOpen && Hud.bankOpen() && Hud.hideBank) {
                 Hud.hideBank();
             }
-            if (window.Hud && Hud.stationOpen && Hud.stationOpen() && Hud.hideStation) {
-                Hud.hideStation();
+            if (window.Hud && Hud.shopOpen && Hud.shopOpen() && Hud.hideShop) {
+                Hud.hideShop();
             }
             if (move.left && !move.right) { vx = -speed; }
             else if (move.right && !move.left) { vx = speed; }
             if (move.up && !move.down) { vy = -speed; }
             else if (move.down && !move.up) { vy = speed; }
-        } else if (this.walkTarget) {
-            this.maybeRepath();
-            var destDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.walkTarget.x, this.walkTarget.y);
-            if (destDist < 6) {
-                var keepTravel = !!(this.travelZoneId && this.travelZoneId !== this.zoneId);
-                this.clearWalk({ keepTravel: keepTravel });
-                this.player.body.setVelocity(0);
-            } else {
-                var aim = this.aimWalkPoint();
-                if (!aim || this.nextStepOccupied(aim)) {
-                    vx = 0;
-                    vy = 0;
-                    this.drawPathLine();
-                } else {
-                    var dx = aim.x - this.player.x;
-                    var dy = aim.y - this.player.y;
-                    var dist = Math.sqrt(dx * dx + dy * dy) || 1;
-                    vx = (dx / dist) * speed;
-                    vy = (dy / dist) * speed;
-                    this.drawPathLine();
-                }
+        } else {
+            var chasing = this.chaseWalkTarget();
+            if (!this.walkTarget && chasing && !this.chaseInRange(chasing)) {
+                this.setWalk(chasing.x, chasing.y, { allowEnd: true });
             }
-        } else if (this.walkPath) {
-            this.clearWalk();
+            if (this.walkTarget) {
+                this.maybeRepath();
+                chasing = this.chaseWalkTarget();
+                var destDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.walkTarget.x, this.walkTarget.y);
+                if (destDist < 6 && chasing && !this.chaseInRange(chasing)) {
+                    this.walkTarget = { x: chasing.x, y: chasing.y };
+                    this.placeWalkMarker(chasing.x, chasing.y);
+                    this.walkPath = this.computeWalkPath(chasing.x, chasing.y, { allowEnd: true });
+                    this.drawPathLine();
+                    this.pathCheckAt = 0;
+                    destDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.walkTarget.x, this.walkTarget.y);
+                }
+                if (destDist < 6 && !(chasing && !this.chaseInRange(chasing))) {
+                    var keepTravel = !!(this.travelZoneId && this.travelZoneId !== this.zoneId);
+                    this.clearWalk({ keepTravel: keepTravel });
+                    this.player.body.setVelocity(0);
+                } else if (destDist >= 6) {
+                    var aim = this.aimWalkPoint();
+                    if (!aim || this.nextStepOccupied(aim)) {
+                        vx = 0;
+                        vy = 0;
+                        this.drawPathLine();
+                    } else {
+                        var dx = aim.x - this.player.x;
+                        var dy = aim.y - this.player.y;
+                        var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                        vx = (dx / dist) * speed;
+                        vy = (dy / dist) * speed;
+                        this.drawPathLine();
+                    }
+                }
+            } else if (this.walkPath) {
+                this.clearWalk();
+            }
         }
 
         this.player.body.setVelocity(vx, vy);
@@ -3407,9 +4332,34 @@ var WorldScene = new Phaser.Class({
             this.applyIdleFacing();
         }
 
+        if (typeof this.maybeRandomEvent === 'function') {
+            this.maybeRandomEvent();
+        }
+        if (this.zoneId === 'graves' && this.wildSkull && this.player) {
+            this.wildSkull.setPosition(this.player.x + 12, this.player.y - 22);
+        }
+
         this.collectNearbyLoot();
         this.pruneLoot();
         this.pruneGroundFires();
+        this.tickBiomeFx(time);
+        if (this.nameplate && this.player) {
+            var heroName = this.registry.get('hero');
+            this.nameplate.setText((heroName && heroName.displayName) || 'Adventurer');
+            this.nameplate.setPosition(this.player.x, this.player.y - 12);
+        }
+        if (window.Hud && Hud._showFps) {
+            var fpsEl = document.getElementById('fps-readout');
+            if (fpsEl) {
+                fpsEl.textContent = 'FPS ' + Math.round(this.game.loop.actualFps || 0);
+            }
+        }
+        if ((vx || vy || this.walkTarget) && window.Sfx && Sfx.foot) {
+            if (!this._footAt || time >= this._footAt) {
+                Sfx.foot();
+                this._footAt = time + ((Hud.hero && Hud.hero() && Hud.hero().running) ? 220 : 340);
+            }
+        }
 
         if (this.tryAutoEngage()) {
             return;
@@ -3427,13 +4377,12 @@ var WorldScene = new Phaser.Class({
         this.tryCompleteMine();
         this.tryCompleteStation();
         this.closeBankIfAway();
+        this.closeShopIfAway();
         this.closeStationIfAway();
 
         if (Keys.justPressed('Space') && Hud.mode !== 'battle') {
             if (Hud.dialogueOpen && Hud.dialogueOpen()) {
-                if (Hud.advanceDialogue) {
-                    Hud.advanceDialogue();
-                }
+                /* Continue/Close already handled by Hud keydown. */
             } else {
                 var nearNpc = this.pickSprite(this.npcs, this.player.x, this.player.y, 28);
                 if (nearNpc && !this.talkBlockedByWall(nearNpc)) {
@@ -3451,5 +4400,106 @@ var WorldScene = new Phaser.Class({
         this.tryAgilityShortcut();
         this.updateDoors();
         this.checkExits();
+    },
+
+    tickPrayerDrainLite: function (dt) {
+        var hero = this.registry.get('hero');
+        var anyOn;
+        if (!hero || !hero.prayers) {
+            return;
+        }
+        anyOn = hero.prayers.thickskin || hero.prayers.burststrength;
+        if (!anyOn) {
+            return;
+        }
+        this._prayerAcc = (this._prayerAcc || 0) + dt;
+        if (this._prayerAcc < 3) {
+            return;
+        }
+        this._prayerAcc = 0;
+        hero.prayerPoints = Math.max(0, (hero.prayerPoints || 0) - 1);
+        if (hero.prayerPoints < 1) {
+            hero.prayers.thickskin = false;
+            hero.prayers.burststrength = false;
+            Hud.log('You run out of prayer points.');
+        }
+        this.registry.set('hero', hero);
+        if (Hud.renderPrayers) {
+            Hud.renderPrayers(hero);
+        }
+    },
+
+    tryStretchSkillAction: function (skillId) {
+        var hero = this.registry.get('hero');
+        var ok = false;
+        if (!hero) {
+            return false;
+        }
+        if (skillId === 'runecraft' && typeof craftAirRune === 'function') {
+            ok = craftAirRune(hero);
+        } else if (skillId === 'farming' && typeof plantGuamSeed === 'function') {
+            ok = plantGuamSeed(hero);
+        } else if (skillId === 'herblore' && typeof mixAttackPotion === 'function') {
+            ok = mixAttackPotion(hero);
+        } else if (skillId === 'fletching' && typeof fletchShortbow === 'function') {
+            ok = fletchShortbow(hero);
+        } else if (skillId === 'construction' && typeof buildOakBench === 'function') {
+            ok = buildOakBench(hero);
+        } else if (skillId === 'slayer' && typeof assignSlayerTask === 'function') {
+            ok = !!assignSlayerTask(hero);
+        }
+        if (ok) {
+            this.registry.set('hero', hero);
+            this.refreshHud();
+        }
+        return ok;
+    },
+
+    tryPickpocket: function (npc) {
+        var hero = this.registry.get('hero');
+        if (!npc || !hero || Phaser.Math.Distance.Between(this.player.x, this.player.y, npc.x, npc.y) > 24) {
+            return false;
+        }
+        if (typeof pickpocketNpc !== 'function' || !pickpocketNpc(hero)) {
+            Hud.log('You fail to pick the pocket.');
+            return false;
+        }
+        this.registry.set('hero', hero);
+        Hud.log('You pick a pocket for some coins.');
+        this.refreshHud();
+        return true;
+    },
+
+    spawnGhostPlayers: function () {
+        var self = this;
+        this.ghostSprites = this.ghostSprites || [];
+        this.ghostSprites.forEach(function (g) { if (g && g.destroy) { g.destroy(); } });
+        this.ghostSprites = [];
+        if (this.zoneId !== 'haven') {
+            return;
+        }
+        GHOST_PLAYERS.forEach(function (spec) {
+            var sprite = self.add.sprite(spec.x, spec.y, 'player', 2);
+            sprite.setTint(0xaaccff);
+            sprite.setAlpha(0.55);
+            sprite.setDepth(5);
+            var label = self.add.text(spec.x, spec.y - 18, spec.name, { fontSize: '7px', color: '#c8e0ff' }).setOrigin(0.5).setDepth(6);
+            sprite.ghostLabel = label;
+            self.ghostSprites.push(sprite);
+        });
+    },
+
+    refreshWildernessFlag: function () {
+        if (this.wildSkull) {
+            this.wildSkull.destroy();
+            this.wildSkull = null;
+        }
+        if (this.zoneId !== 'graves') {
+            return;
+        }
+        this.wildSkull = this.add.text(this.player.x + 12, this.player.y - 22, '☠', {
+            fontSize: '10px',
+            color: '#ff6666'
+        }).setDepth(12);
     }
 });

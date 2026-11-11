@@ -1,0 +1,29 @@
+---
+description: All automated and agent testing is disabled until the human re-enables it
+alwaysApply: true
+---
+
+# Testing disabled (until further human notice)
+
+Do **not** run, write, edit, or “verify in browser” any tests for this project until the human explicitly re-enables testing.
+
+## Forbidden until re-enabled
+
+- Opening or navigating a browser / Playwright MCP (`browser_navigate`, `browser_run_code_*`, snapshots for proof, etc.)
+- Starting `python3 -m http.server` (or similar) **for** suite / smoke / click-proof
+- Opening `tests/run.html`, running `tests/playwright-*.js`, or any suite / harness case
+- Adding or editing files under `tests/` (cases, harness helpers, smoke scripts)
+- Using Glass / inline browser to “confirm” a feature unless the human asks to see it
+
+## Allowed
+
+- Feature code changes only
+- Updating `loop-tasks.md` status/conclusions without suite proof
+- Human playtests the game themselves
+
+## Where this ban is also recorded
+
+- `loop-tasks.md` process banner (top) and **§14 Tests / QA** (`[blocked]` suite-proof rows)
+- `README.md` → Tests section
+- `loop-next.md` header (do not follow Test/URL lines while disabled)
+- Agent todo `no-tests`

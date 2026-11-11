@@ -16,7 +16,6 @@ ZONE_LIST.forEach(function (zone) {
 });
 
 var INTERIOR_LIST = [
-    { id: 'bank', name: 'Emberhaven Bank', doorTx: 11, doorTy: 10, zoneId: 'haven' },
     { id: 'shop', name: 'Emberhaven Shop', doorTx: 25, doorTy: 11, zoneId: 'haven' },
     { id: 'guild', name: 'Emberhaven Guild Hall', doorTx: 15, doorTy: 20, zoneId: 'haven' },
     {
@@ -158,11 +157,18 @@ var QUEST_HEAD_QUEST_GREEN = 0x33cc55;
 var QUEST_HEAD_STAR = QUEST_HEAD_BANG;
 var QUEST_HEAD_COMPASS = QUEST_HEAD_QUEST_GREY;
 
-function questHeadIconFor(def, quest) {
+function questHeadIconFor(def, quest, hero) {
+    var stage;
+    var side;
     if (!def || !def.questGiver) {
         return null;
     }
-    var stage = quest && quest.stage != null ? quest.stage : 0;
+    if (def.sideQuest && hero && hero.sideQuests && hero.sideQuests[def.sideQuest]) {
+        side = hero.sideQuests[def.sideQuest];
+        stage = side.stage != null ? side.stage : 0;
+    } else {
+        stage = quest && quest.stage != null ? quest.stage : 0;
+    }
     if (stage >= 3) {
         return null;
     }
@@ -178,9 +184,11 @@ function questHeadIconFor(def, quest) {
 var NPC_DEFS = {
     haven: [
         { key: 'guild', name: 'Guildmaster Bram', x: 210, y: 150, tint: 0xffffff, questGiver: true, options: ['talk', 'quest'], examine: 'A scarred militia captain. He still drills the courtyard.', lines: ['Welcome to Emberhaven, adventurer.', 'Goblins from Northwood raid our stores.', 'Slay 5 goblins and return. The militia will pay.'] },
-        { key: 'banker', name: 'Banker Elise', x: 160, y: 130, tint: 0xffffff, options: ['talk', 'bank'], examine: 'The town banker. Her ledgers never leave her sight.', lines: ['Your coin is safe with me.', 'Deposit what you cannot carry.'] },
+        { key: 'banker', name: 'Banker Elise', x: 232, y: 184, tint: 0xffffff, options: ['talk', 'bank'], examine: 'The town banker. She minds the courtyard booth.', lines: ['Your coin is safe with me.', 'Deposit what you cannot carry.'] },
         { key: 'guard', name: 'Guard Rowan', x: 252, y: 168, tint: 0xffffff, options: ['talk'], examine: 'A watchful town guard. He knows every path from the gate.', lines: ['Keep to the paths.', 'North is woods. East is farms. South is the sea.'] },
-        { key: 'shopkeep', name: 'Shopkeeper Mira', x: 376, y: 216, tint: 0xffffff, texture: 'npc-shopkeeper', options: ['talk', 'trade'], examine: 'The town shopkeeper. She minds the general store.', lines: ['Fine wares if you have the coin.', 'Bones and spare food fetch a price.'] },
+        { key: 'shopkeep', name: 'Shopkeeper Mira', x: 376, y: 216, tint: 0xffffff, texture: 'npc-shopkeeper', options: ['talk', 'trade'], shopKey: 'mira', examine: 'The town shopkeeper. She minds the general store.', lines: ['Take a look at the wares.', 'Bones and spare food fetch a price.'] },
+        { key: 'dummy', name: 'Training dummy', x: 280, y: 264, tint: 0xcccccc, texture: 'npc-guard', options: ['talk', 'duel'], examine: 'A straw-filled training dummy for duels.', lines: ['Up for a practice duel?', 'No loot, just honour.'] },
+        { key: 'arms', name: 'Armsman Cole', x: 360, y: 200, tint: 0xffffff, texture: 'npc-guard', options: ['talk', 'trade'], shopKey: 'arms', examine: 'A weapons stall keeper. Oil stains his gloves.', lines: ['Blades and bows, if you have the coin.', 'Take a look at the wares.'] },
         { key: 'cook', name: 'Cook Pell', x: 280, y: 280, tint: 0xffffff, options: ['talk'], tutor: 'firemaking', examine: 'The town cook. Flour dusts her sleeves and a ladle never leaves her hand.', lines: ['Take this tinderbox.', 'Use it on logs to light a fire on open ground.', 'Cook raw food on that fire or the town range.', 'Burnt food teaches nothing — keep cooking.'] },
         { key: 'priest', name: 'Priest Alden', x: 296, y: 168, tint: 0xffffff, options: ['talk'], examine: 'A quiet shrine priest. Ash marks the collar of his robe.', lines: ['The shrine still hears a prayer.', 'Bury the bones of the fallen, traveler.'] }
     ],
@@ -191,7 +199,7 @@ var NPC_DEFS = {
         { key: 'farmer', name: 'Farmer Willa', x: 200, y: 180, tint: 0xffffff, options: ['talk'], tutor: 'cows', examine: 'A Millfields farmer. Cabbage stains her apron.', lines: ['Cows got into the cabbages again.', 'The mill road runs back to Emberhaven.', 'Click a cow when you need hide and beef.', 'They kick, so keep a combat style ready.'] }
     ],
     southshore: [
-        { key: 'fisher', name: 'Fisher Ned', x: 220, y: 160, tint: 0xffffff, options: ['talk'], tutor: 'fishing', examine: 'An old shore fisher. Salt and rope have worn his hands.', lines: ['Crabs pinch harder than they look.', 'Ships used to stop here. Not anymore.', 'Click the fishing spots along the shore and cast a net.', 'You will need a small fishing net first.'] }
+        { key: 'fisher', name: 'Fisher Ned', x: 220, y: 160, tint: 0xffffff, options: ['talk', 'quest'], questGiver: true, sideQuest: 'shipment', tutor: 'fishing', examine: 'An old shore fisher. Salt and rope have worn his hands.', lines: ['Crabs pinch harder than they look.', 'Ships used to stop here. Not anymore.', 'Click the fishing spots along the shore and cast a net.', 'You will need a small fishing net first.'] }
     ],
     westmead: [
         { key: 'wanderer', name: 'Wanderer Sila', x: 180, y: 190, tint: 0xffffff, options: ['talk'], examine: 'A plains wanderer. Her cloak is dusted with Westmead grass.', lines: ['Plains look empty until they are not.', 'Graves lie north-west. Do not linger.'] }
@@ -200,7 +208,7 @@ var NPC_DEFS = {
         { key: 'ghost', name: 'Wisp', x: 200, y: 170, tint: 0xffffff, options: ['talk'], examine: 'A restless grave-wisp. Cold light pools where a face should be.', lines: ['The dead remember steel.', 'Turn back unless you seek bones.'] }
     ],
     darkmine: [
-        { key: 'miner', name: 'Miner Corb', x: 210, y: 200, tint: 0xffffff, options: ['talk'], tutor: 'mining', examine: 'A Darkmine digger. He will not go down the lower shaft.', lines: ['Bats took the lower shaft.', 'Ore waits for someone braver than me.', 'Prospect the rocks if you mean to start mining.', 'Bring a pickaxe. Copper and tin wait in the stone.'] }
+        { key: 'miner', name: 'Miner Corb', x: 210, y: 200, tint: 0xffffff, options: ['talk', 'quest'], questGiver: true, sideQuest: 'bats', tutor: 'mining', examine: 'A Darkmine digger. He will not go down the lower shaft.', lines: ['Bats took the lower shaft.', 'Ore waits for someone braver than me.', 'Prospect the rocks if you mean to start mining.', 'Bring a pickaxe. Copper and tin wait in the stone.'] }
     ],
     highlands: [
         { key: 'hermit', name: 'Hermit Ola', x: 240, y: 160, tint: 0xffffff, options: ['talk'], examine: 'A windrock hermit. Drake-scale grit is stuck in her cloak.', lines: ['Drakes nest on the windrock.', 'Bring a stout shield.'] }

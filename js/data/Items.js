@@ -29,10 +29,23 @@ var ITEM_DB = {
     cowhide: { name: 'Cowhide', icon: 'assets/svg/items/cowhide.svg', stack: true, tan: 'leather', tanXp: 14, value: 2, sellPrice: 1, examine: 'A raw cowhide. It can be crafted into leather.' },
     leather: { name: 'Leather', icon: 'assets/svg/items/leather.svg', stack: true, value: 4, sellPrice: 1, examine: 'Soft leather, ready to stitch.' },
     string: { name: 'String', icon: 'assets/svg/items/string.svg', stack: true, value: 1, buyPrice: 2, sellPrice: 1, examine: 'A short length of string for stitching leather.' },
-    gloves: { name: 'Leather gloves', icon: 'assets/svg/items/gloves.svg', slot: 'hands', defence: 1, value: 10, buyPrice: 16, sellPrice: 4, examine: 'Stitched leather gloves for the road.' }
+    gloves: { name: 'Leather gloves', icon: 'assets/svg/items/gloves.svg', slot: 'hands', defence: 1, value: 10, buyPrice: 16, sellPrice: 4, examine: 'Stitched leather gloves for the road.' },
+    drakescale: { name: 'Drake scale', icon: 'assets/svg/items/drakescale.svg', stack: true, value: 40, sellPrice: 16, examine: 'A warm scale shed by a drake.' },
+    firerune: { name: 'Fire rune', icon: 'assets/svg/items/firerune.svg', stack: true, rune: true, value: 4, buyPrice: 6, sellPrice: 1, examine: 'A rune warm to the touch.' },
+    waterrune: { name: 'Water rune', icon: 'assets/svg/items/airrune.svg', stack: true, rune: true, value: 4, buyPrice: 6, sellPrice: 1, examine: 'A rune beaded with cold water.' },
+    earthrune: { name: 'Earth rune', icon: 'assets/svg/items/mindrune.svg', stack: true, rune: true, value: 4, buyPrice: 6, sellPrice: 1, examine: 'A dusty brown rune.' },
+    naturerune: { name: 'Nature rune', icon: 'assets/svg/items/naturerune.svg', stack: true, rune: true, value: 12, buyPrice: 18, sellPrice: 4, examine: 'A green rune used in alchemy.' },
+    cluescroll: { name: 'Clue scroll', icon: 'assets/svg/ui/quest.svg', stack: false, questItem: true, value: 0, examine: 'A clue written in fading ink.' },
+    guam: { name: 'Guam leaf', icon: 'assets/svg/items/feather.svg', stack: true, value: 2, examine: 'A bitter herb leaf.' },
+    attackpot: { name: 'Attack potion', icon: 'assets/svg/items/shrimp.svg', stack: true, value: 12, examine: 'A vial boosting attack briefly.' },
+    oakplank: { name: 'Oak plank', icon: 'assets/svg/items/logs.svg', stack: true, value: 6, examine: 'A sawn oak plank.' },
+    shortbowunstrung: { name: 'Shortbow (u)', icon: 'assets/svg/items/shortbow.svg', stack: true, value: 8, examine: 'An unstrung shortbow.' },
+    shipcrate: { name: 'Lost crate mark', icon: 'assets/svg/items/key.svg', questItem: true, value: 0, examine: 'A wax seal from Ned\'s missing shipment.' },
+    batfang: { name: 'Bat fang', icon: 'assets/svg/items/bones.svg', questItem: true, value: 0, examine: 'Proof a Darkmine bat was cleared.' }
 };
 
 var GENERAL_SHOP_KEY = 'mira';
+var WEAPON_SHOP_KEY = 'arms';
 var GENERAL_SHOP_STOCK = [
     { id: 'shrimp', stock: 10, restockTo: 10, restockMs: 45000 },
     { id: 'bread', stock: 5, restockTo: 5, restockMs: 60000 },
@@ -40,9 +53,22 @@ var GENERAL_SHOP_STOCK = [
     { id: 'net', stock: 2, restockTo: 2, restockMs: 90000 },
     { id: 'bronzeaxe', stock: 1, restockTo: 1, restockMs: 120000 },
     { id: 'bronzepick', stock: 1, restockTo: 1, restockMs: 120000 },
-    { id: 'string', stock: 8, restockTo: 8, restockMs: 60000 }
+    { id: 'string', stock: 8, restockTo: 8, restockMs: 60000 },
+    { id: 'firerune', stock: 20, restockTo: 20, restockMs: 45000 },
+    { id: 'naturerune', stock: 10, restockTo: 10, restockMs: 60000 }
 ];
+var WEAPON_SHOP_STOCK = [
+    { id: 'bronzedagger', stock: 4, restockTo: 4, restockMs: 90000 },
+    { id: 'sword', stock: 2, restockTo: 2, restockMs: 120000 },
+    { id: 'shield', stock: 2, restockTo: 2, restockMs: 120000 },
+    { id: 'shortbow', stock: 1, restockTo: 1, restockMs: 120000 },
+    { id: 'arrow', stock: 40, restockTo: 40, restockMs: 45000 }
+];
+var SHOP_CATALOG = {};
+SHOP_CATALOG[GENERAL_SHOP_KEY] = GENERAL_SHOP_STOCK;
+SHOP_CATALOG[WEAPON_SHOP_KEY] = WEAPON_SHOP_STOCK;
 var shopStates = {};
+var HIGH_ALCH_XP = 12;
 
 function itemBuyPrice(id) {
     var def = ITEM_DB[id];
@@ -58,9 +84,14 @@ function itemBuyPrice(id) {
     return 0;
 }
 
+function isQuestItem(id) {
+    var def = ITEM_DB[id];
+    return !!(def && def.questItem);
+}
+
 function itemSellPrice(id) {
     var def = ITEM_DB[id];
-    if (!def || id === 'coins') {
+    if (!def || id === 'coins' || def.questItem) {
         return 0;
     }
     if (typeof def.sellPrice === 'number') {
@@ -76,12 +107,14 @@ function ensureShopState(key) {
     var i;
     var row;
     var state;
+    var catalog;
     key = key || GENERAL_SHOP_KEY;
     state = shopStates[key];
     if (!state) {
+        catalog = SHOP_CATALOG[key] || GENERAL_SHOP_STOCK;
         state = { key: key, rows: [] };
-        for (i = 0; i < GENERAL_SHOP_STOCK.length; i++) {
-            row = GENERAL_SHOP_STOCK[i];
+        for (i = 0; i < catalog.length; i++) {
+            row = catalog[i];
             state.rows.push({
                 id: row.id,
                 stock: row.stock,
@@ -286,11 +319,7 @@ var SKILL_NAMES = [
     ['crafting', 'Crafting'],
     ['firemaking', 'Firemaking'],
     ['smithing', 'Smithing'],
-    ['hunter', 'Hunter']
-];
-
-// Unused OSRS cousins stay Stretch backlog — never stub empty Skills-tab rows.
-var STRETCH_SKILL_NAMES = [
+    ['hunter', 'Hunter'],
     ['agility', 'Agility'],
     ['thieving', 'Thieving'],
     ['slayer', 'Slayer'],
@@ -301,16 +330,9 @@ var STRETCH_SKILL_NAMES = [
     ['construction', 'Construction']
 ];
 
+var STRETCH_SKILL_NAMES = [];
+
 function isStretchSkill(id) {
-    var i;
-    if (!id) {
-        return false;
-    }
-    for (i = 0; i < STRETCH_SKILL_NAMES.length; i++) {
-        if (STRETCH_SKILL_NAMES[i][0] === id) {
-            return true;
-        }
-    }
     return false;
 }
 
@@ -420,6 +442,24 @@ function makeHero() {
         autoRetaliate: true,
         autoPickup: true,
         shiftClickDrop: true,
+        hideBones: false,
+        displayName: 'Adventurer',
+        ironman: false,
+        prayerPoints: 1,
+        maxPrayerPoints: 1,
+        specialEnergy: 100,
+        poison: null,
+        slayerTask: null,
+        clueStep: 0,
+        clanTag: 'ember',
+        prayers: { thickskin: false, burststrength: false },
+        hiscores: { kills: 0, quests: 0 },
+        sideQuests: {
+            shipment: { stage: 0, progress: 0, goal: 3 },
+            bats: { stage: 0, progress: 0, goal: 4 }
+        },
+        diary: { bram: false, eat: false, bury: false, complete: false },
+        tutorials: {},
         running: false,
         runEnergy: 100,
         equipment: (function () {
@@ -454,10 +494,23 @@ function makeHero() {
             firemaking: { level: 1, xp: 0 },
             smithing: { level: 1, xp: 0 },
             hunter: { level: 1, xp: 0 },
-            agility: { level: 1, xp: 0 }
+            agility: { level: 1, xp: 0 },
+            thieving: { level: 1, xp: 0 },
+            slayer: { level: 1, xp: 0 },
+            runecraft: { level: 1, xp: 0 },
+            farming: { level: 1, xp: 0 },
+            herblore: { level: 1, xp: 0 },
+            fletching: { level: 1, xp: 0 },
+            construction: { level: 1, xp: 0 }
         }
     };
     applyCombatLevel(hero, false);
+    return hero;
+}
+
+function makeIronmanHero() {
+    var hero = makeHero();
+    hero.ironman = true;
     return hero;
 }
 
@@ -1057,6 +1110,7 @@ function runStationRecipe(hero, kind, recipeId) {
 function buryItem(hero, id) {
     var def = ITEM_DB[id];
     var xp;
+    var level;
     if (!hero || !id || !def || !def.bury) {
         return false;
     }
@@ -1067,6 +1121,11 @@ function buryItem(hero, id) {
     if (xp > 0) {
         gainSkillXp(hero, 'prayer', xp);
     }
+    level = heroSkillLevel(hero, 'prayer');
+    hero.maxPrayerPoints = level;
+    if (typeof hero.prayerPoints !== 'number' || hero.prayerPoints < level) {
+        hero.prayerPoints = level;
+    }
     return true;
 }
 
@@ -1076,6 +1135,52 @@ function itemQty(hero, id) {
     }
     var stack = findStack(hero.inventory, id);
     return stack && stack.qty > 0 ? stack.qty : 0;
+}
+
+function hasHighAlchRunes(hero) {
+    return itemQty(hero, 'firerune') >= 5 && itemQty(hero, 'naturerune') >= 1;
+}
+
+function highAlchValue(id) {
+    var def = ITEM_DB[id];
+    var value;
+    if (!def || id === 'coins' || id === 'naturerune' || id === 'firerune') {
+        return 0;
+    }
+    value = typeof def.value === 'number' ? def.value : 0;
+    return Math.max(1, Math.floor(value * 0.6));
+}
+
+function highAlchItem(hero, id) {
+    var coins;
+    if (!hero || !id) {
+        return null;
+    }
+    if (!hasHighAlchRunes(hero)) {
+        return { ok: false, need: 'runes' };
+    }
+    coins = highAlchValue(id);
+    if (!(coins > 0) || !heroHasItem(hero, id)) {
+        return { ok: false };
+    }
+    if (!takeItem(hero, 'naturerune', 1)) {
+        return { ok: false, need: 'runes' };
+    }
+    if (!takeItem(hero, 'firerune', 5)) {
+        addItem(hero, 'naturerune', 1);
+        return { ok: false, need: 'runes' };
+    }
+    if (!takeItem(hero, id, 1)) {
+        addItem(hero, 'naturerune', 1);
+        addItem(hero, 'firerune', 5);
+        return { ok: false };
+    }
+    addItem(hero, 'coins', coins);
+    if (HIGH_ALCH_XP > 0) {
+        gainSkillXp(hero, 'magic', HIGH_ALCH_XP);
+    }
+    syncCoins(hero);
+    return { ok: true, id: id, coins: coins, xp: HIGH_ALCH_XP };
 }
 
 function hasWindStrikeRunes(hero) {
@@ -1097,6 +1202,242 @@ function windStrike(hero) {
         gainSkillXp(hero, 'magic', WIND_STRIKE_XP);
     }
     return true;
+}
+
+var WATER_STRIKE_XP = 6;
+var EARTH_STRIKE_XP = 7;
+var FIRE_STRIKE_XP = 8;
+var WATER_STRIKE_DAMAGE = 4;
+var EARTH_STRIKE_DAMAGE = 5;
+var FIRE_STRIKE_DAMAGE = 6;
+
+function hasWaterStrikeRunes(hero) {
+    return itemQty(hero, 'airrune') >= 1 && itemQty(hero, 'waterrune') >= 1;
+}
+
+function waterStrike(hero) {
+    if (!hero || !hasWaterStrikeRunes(hero)) {
+        return false;
+    }
+    if (!takeItem(hero, 'airrune', 1) || !takeItem(hero, 'waterrune', 1)) {
+        return false;
+    }
+    gainSkillXp(hero, 'magic', WATER_STRIKE_XP);
+    return true;
+}
+
+function hasEarthStrikeRunes(hero) {
+    return itemQty(hero, 'airrune') >= 1 && itemQty(hero, 'earthrune') >= 1;
+}
+
+function earthStrike(hero) {
+    if (!hero || !hasEarthStrikeRunes(hero)) {
+        return false;
+    }
+    if (!takeItem(hero, 'airrune', 1) || !takeItem(hero, 'earthrune', 1)) {
+        return false;
+    }
+    gainSkillXp(hero, 'magic', EARTH_STRIKE_XP);
+    return true;
+}
+
+function hasFireStrikeRunes(hero) {
+    return itemQty(hero, 'airrune') >= 1 && itemQty(hero, 'firerune') >= 1;
+}
+
+function fireStrike(hero) {
+    if (!hero || !hasFireStrikeRunes(hero)) {
+        return false;
+    }
+    if (!takeItem(hero, 'airrune', 1) || !takeItem(hero, 'firerune', 1)) {
+        return false;
+    }
+    gainSkillXp(hero, 'magic', FIRE_STRIKE_XP);
+    return true;
+}
+
+function spellCastFn(spellId) {
+    var map = {
+        windstrike: {
+            label: 'Wind Strike',
+            damage: typeof WIND_STRIKE_DAMAGE === 'number' ? WIND_STRIKE_DAMAGE : 2,
+            xp: typeof WIND_STRIKE_XP === 'number' ? WIND_STRIKE_XP : 0,
+            needMsg: 'You do not have the runes for Wind Strike.',
+            fn: windStrike
+        },
+        waterstrike: {
+            label: 'Water Strike',
+            damage: WATER_STRIKE_DAMAGE,
+            xp: WATER_STRIKE_XP,
+            needMsg: 'You need Air and Water runes.',
+            fn: waterStrike
+        },
+        earthstrike: {
+            label: 'Earth Strike',
+            damage: EARTH_STRIKE_DAMAGE,
+            xp: EARTH_STRIKE_XP,
+            needMsg: 'You need Air and Earth runes.',
+            fn: earthStrike
+        },
+        firestrike: {
+            label: 'Fire Strike',
+            damage: FIRE_STRIKE_DAMAGE,
+            xp: FIRE_STRIKE_XP,
+            needMsg: 'You need Air and Fire runes.',
+            fn: fireStrike
+        }
+    };
+    var spec = map[spellId];
+    if (!spec) {
+        return null;
+    }
+    return function (hero) {
+        if (!spec.fn(hero)) {
+            return null;
+        }
+        return spec;
+    };
+}
+
+function pickpocketNpc(hero) {
+    if (!hero) {
+        return false;
+    }
+    if (hero.ironman) {
+        return false;
+    }
+    var gold = Phaser.Math.Between(2, 12);
+    if (!addItem(hero, 'coins', gold)) {
+        return false;
+    }
+    syncCoins(hero);
+    gainSkillXp(hero, 'thieving', 12);
+    return gold;
+}
+
+function assignSlayerTask(hero) {
+    if (!hero) {
+        return null;
+    }
+    var types = ['Goblin', 'Chicken', 'Skeleton', 'Bat'];
+    var pick = types[Phaser.Math.Between(0, types.length - 1)];
+    hero.slayerTask = { type: pick, left: 3, total: 3 };
+    return hero.slayerTask;
+}
+
+function noteSlayerKill(hero, mobType) {
+    if (!hero || !hero.slayerTask || hero.slayerTask.type !== mobType) {
+        return false;
+    }
+    hero.slayerTask.left = Math.max(0, hero.slayerTask.left - 1);
+    gainSkillXp(hero, 'slayer', 15);
+    if (hero.slayerTask.left === 0) {
+        addItem(hero, 'coins', 25);
+        syncCoins(hero);
+        hero.slayerTask = null;
+        return true;
+    }
+    return false;
+}
+
+function craftAirRune(hero) {
+    if (!hero || hero.gold < 1) {
+        return false;
+    }
+    hero.gold -= 1;
+    syncCoins(hero);
+    if (!addItem(hero, 'airrune', 1)) {
+        hero.gold += 1;
+        syncCoins(hero);
+        return false;
+    }
+    gainSkillXp(hero, 'runecraft', 10);
+    return true;
+}
+
+function plantGuamSeed(hero) {
+    if (!hero) {
+        return false;
+    }
+    gainSkillXp(hero, 'farming', 14);
+    if (!addItem(hero, 'guam', 1)) {
+        return false;
+    }
+    return true;
+}
+
+function mixAttackPotion(hero) {
+    if (!hero || itemQty(hero, 'guam') < 1) {
+        return false;
+    }
+    takeItem(hero, 'guam', 1);
+    if (!addItem(hero, 'attackpot', 1)) {
+        addItem(hero, 'guam', 1);
+        return false;
+    }
+    gainSkillXp(hero, 'herblore', 18);
+    return true;
+}
+
+function fletchShortbow(hero) {
+    if (!hero || itemQty(hero, 'logs') < 1 || itemQty(hero, 'string') < 1) {
+        return false;
+    }
+    takeItem(hero, 'logs', 1);
+    takeItem(hero, 'string', 1);
+    if (!addItem(hero, 'shortbowunstrung', 1)) {
+        addItem(hero, 'logs', 1);
+        addItem(hero, 'string', 1);
+        return false;
+    }
+    gainSkillXp(hero, 'fletching', 16);
+    return true;
+}
+
+function buildOakBench(hero) {
+    if (!hero || itemQty(hero, 'logs') < 3) {
+        return false;
+    }
+    takeItem(hero, 'logs', 3);
+    if (!addItem(hero, 'oakplank', 1)) {
+        addItem(hero, 'logs', 3);
+        return false;
+    }
+    gainSkillXp(hero, 'construction', 20);
+    return true;
+}
+
+var CLUE_DIG_SPOTS = [
+    { zone: 'haven', x: 400, y: 250 },
+    { zone: 'northwood', x: 160, y: 120 },
+    { zone: 'graves', x: 300, y: 210 }
+];
+
+function clueDigSpot(hero) {
+    var step = hero && typeof hero.clueStep === 'number' ? hero.clueStep : 0;
+    return CLUE_DIG_SPOTS[step % CLUE_DIG_SPOTS.length];
+}
+
+function advanceClueDig(hero, world) {
+    if (!hero || !world || itemQty(hero, 'cluescroll') < 1) {
+        return false;
+    }
+    var spot = clueDigSpot(hero);
+    if (world.zoneId !== spot.zone) {
+        return false;
+    }
+    if (Phaser.Math.Distance.Between(world.player.x, world.player.y, spot.x, spot.y) > 28) {
+        return false;
+    }
+    hero.clueStep += 1;
+    if (hero.clueStep >= CLUE_DIG_SPOTS.length) {
+        takeItem(hero, 'cluescroll', 1);
+        addItem(hero, 'coins', 50);
+        syncCoins(hero);
+        hero.clueStep = 0;
+        return 'casket';
+    }
+    return 'step';
 }
 
 function equippedWeaponDamage(hero, fallback) {

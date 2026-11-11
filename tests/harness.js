@@ -287,9 +287,10 @@ var EmberwoodHarness = {
         var self = this;
         this.world(win).beginFight(mob);
         return this.waitUntil(function () {
-            return win.game.scene.isActive('BattleScene');
-        }, 4000, 'battle scene').then(function () {
-            return self.waitPlayerTurn(win);
+            var w = self.world(win);
+            return !!(w.overworldFight && win.Hud.mode === 'battle');
+        }, 4000, 'overworld combat').then(function () {
+            return self.sleep(320);
         });
     },
 
@@ -310,6 +311,20 @@ var EmberwoodHarness = {
     },
 
     forceFlee: function (win) {
+        var world = this.world(win);
+        if (world && world.overworldFight) {
+            world.encounterLock = false;
+            world.overworldFight = null;
+            if (world.overworldTick) {
+                world.overworldTick.remove(false);
+                world.overworldTick = null;
+            }
+            if (win.Hud && win.Hud.hideOverworldBattle) {
+                win.Hud.hideOverworldBattle();
+            }
+            world.registry.set('battleOutcome', null);
+            return this.waitWorld(win);
+        }
         var battle = this.battle(win);
         if (battle && battle.scene.isActive()) {
             battle.outcome = 'flee';
@@ -466,32 +481,114 @@ var EmberwoodHarness = {
 
     attackUntilWorld: function (win) {
         var self = this;
-        var n = 0;
-        var step = function () {
-            var world = self.world(win);
-            if (world && world.scene.isActive() && win.Hud.mode === 'world' && !world.encounterLock) {
-                return Promise.resolve();
+        return this.waitUntil(function () {
+            var w = self.world(win);
+            return w && w.scene.isActive() && win.Hud.mode === 'world' && !w.encounterLock && !w.overworldFight;
+        }, 20000, 'overworld fight end').then(function () {
+            return self.sleep(80);
+        });
+    },
+
+    openShop: function (win, npcKey) {
+        var world = this.world(win);
+        var npc = this.findNpc(win, npcKey || 'shopkeep');
+        var self = this;
+        if (!npc) {
+            throw new Error('openShop missing NPC ' + (npcKey || 'shopkeep'));
+        }
+        world.placePlayer(npc.x, npc.y + 12);
+        world.player.body.setVelocity(0, 0);
+        world.encounterLock = false;
+        if (win.Hud.hideDialogue) {
+            win.Hud.hideDialogue();
+        }
+        world.tryTalk(npc);
+        var trade = win.document.querySelector('[data-dialogue-option="trade"]');
+        if (trade) {
+            trade.click();
+        } else if (win.Hud.showShop) {
+            win.Hud.showShop(npc.npcDef);
+        }
+        return this.waitUntil(function () {
+            return win.Hud.shopOpen && win.Hud.shopOpen();
+        }, 3000, 'shop open').then(function () {
+            return self;
+        });
+    },
+
+    buryBones: function (win) {
+        var hero = this.hero(win);
+        var before = hero.skills && hero.skills.prayer ? hero.skills.prayer.xp : 0;
+        if (typeof win.itemQty === 'function' && win.itemQty(hero, 'bones') < 1) {
+            if (!win.addItem(hero, 'bones', 1)) {
+                throw new Error('buryBones could not add bones');
             }
-            if (n++ > 8) {
-                return Promise.reject(new Error('fight did not end'));
+            win.game.registry.set('hero', hero);
+        }
+        if (win.Hud && win.Hud.buryFromInventory) {
+            win.Hud.buryFromInventory('bones');
+        } else if (typeof win.buryBones === 'function') {
+            win.buryBones(hero);
+            win.game.registry.set('hero', hero);
+            if (win.Hud && win.Hud.render) {
+                win.Hud.render();
             }
-            return self.waitUntil(function () {
-                var w = self.world(win);
-                if (w && w.scene.isActive() && win.Hud.mode === 'world' && !w.encounterLock) {
-                    return true;
-                }
-                var battle = self.battle(win);
-                return battle && battle.scene.isActive() && battle.isPlayerTurn() && battle.waitingForPlayer && battle.pickReady;
-            }, 5000, 'player turn or world').then(function () {
-                var w = self.world(win);
-                if (w && w.scene.isActive() && win.Hud.mode === 'world' && !w.encounterLock) {
-                    return;
-                }
-                win.Hud.tryAttack();
-                return self.sleep(120).then(step);
-            });
+        } else {
+            throw new Error('buryBones helper unavailable');
+        }
+        return {
+            beforeXp: before,
+            afterXp: this.hero(win).skills.prayer.xp,
+            hero: this.hero(win)
         };
-        return step();
+    },
+
+    gatherAt: function (win, kind) {
+        var world = this.world(win);
+        var spot = null;
+        var scenery = world.scenery || [];
+        var i;
+        for (i = 0; i < scenery.length; i++) {
+            if (scenery[i] && scenery[i].kind === kind) {
+                spot = scenery[i];
+                break;
+            }
+        }
+        if (!spot && world.pickScenery) {
+            /* fall back: scan tile centers for known kinds */
+            var x;
+            var y;
+            var hit;
+            for (y = 0; y < (win.MAP_H || 28); y++) {
+                for (x = 0; x < (win.MAP_W || 36); x++) {
+                    hit = world.pickScenery(x * 16 + 8, y * 16 + 8);
+                    if (hit && hit.kind === kind) {
+                        spot = hit;
+                        break;
+                    }
+                }
+                if (spot) {
+                    break;
+                }
+            }
+        }
+        if (!spot) {
+            throw new Error('gatherAt missing scenery ' + kind);
+        }
+        world.placePlayer(spot.x, spot.y + 12);
+        world.player.body.setVelocity(0, 0);
+        if (kind === 'fishspot' && world.clickFishSpot) {
+            world.clickFishSpot(spot);
+        } else if ((kind === 'tree' || kind === 'TREE') && world.clickTree) {
+            world.clickTree(spot);
+        } else if ((kind === 'rock' || kind === 'ROCK') && world.clickRock) {
+            world.clickRock(spot);
+        } else if (world.clickScenery) {
+            world.clickScenery(spot);
+        } else {
+            throw new Error('gatherAt no click handler for ' + kind);
+        }
+        return spot;
     }
 };
 

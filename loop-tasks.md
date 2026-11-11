@@ -2,7 +2,18 @@
 
 Flat-file project manager for Emberwood (Phaser 3.90.0, no bundler, no Phaser 4). OSRS-like: click-to-act, skills/XP, shops, bank, gathering, context menus.
 
-**Process (2026-11-11): auto loop STOPPED.** Feature-first chat work. No wakeups, no spawned test workers. Suite only when needed for a focused check. Commit coherent feature milestones; push only when ready vs origin.
+**Process (2026-11-11): auto loop STOPPED.** Feature-first chat work. No wakeups, no spawned test workers.
+
+### TESTING FULLY DISABLED until further human notice
+
+Do **not**:
+
+- Run `tests/run.html`, any Playwright script under `tests/`, or the interaction suite / harness
+- Add or edit test cases / harness helpers for proof
+- Open a browser, Playwright MCP, Glass, or local `http.server` **to verify** a feature
+- Treat “smoke OK” / suite counts in old conclusions as a reason to re-run tests
+
+Feature code only. Human playtests. Re-enable only when the human says so. Also mirrored in `.cursor/rules/no-testing.mdc`, `README.md` (Tests), `loop-next.md`, and §14 below.
 
 **How to pick the next item**
 
@@ -12,9 +23,9 @@ Flat-file project manager for Emberwood (Phaser 3.90.0, no bundler, no Phaser 4)
 4. Never re-enable Phaser keyboard (`Keys.js` only).
 5. Refresh `loop-next.md` with `python3 tools/loop-next.py` when useful — do not rewrite this whole file.
 
-**Last updated:** 2026-11-11 — Priority: bank / crafting / resizable UI / gathering & hunting.
+**Last updated:** 2026-11-11 — Autosave on refresh + local auto-commit after changes.
 
-**Total tasks: 302** (8 priority + 289 in the 14 playable sections + 5 stretch). Unfinished gathering/bank/craft todos promoted into §0 (not duplicated as active work).
+**Total tasks: 311** (16 priority + 290 in the 14 playable sections + 5 stretch). Unfinished gathering/bank/craft todos promoted into §0 (not duplicated as active work).
 
 ---
 ## 0. Priority: Bank / crafting / resizable UI / gathering & hunting
@@ -29,6 +40,14 @@ Active queue — implement top-down before returning to sections 1–14.
 - [done] Crafting loop expansion: cowhide→leather, string+leather→gloves; Millfields cow drops hide/beef; chat + XP. — Conclusion: stitchLeather makes gloves; cows drop cowhide+rawbeef; Willa gifts string; smoke OK.
 - [done] Hunting (OSRS-lite): Hunter skill + Rabbit mobs (Westmead); snare/catch or kill grants Hunter XP; fur/feather drops; relevant game changes. — Conclusion: Hunter skill + Westmead Rabbits; kill XP; fur/feather/cowhide loot; smoke OK.
 - [done] Gathering items + tools in ITEM_DB + BootScene SVGs: raw shrimp, raw beef, logs, copper/tin ore, bronze bar, tinderbox, bronze axe, bronze pickaxe, small net, feathers, rabbit fur, leather gloves. — Conclusion: ITEM_DB + BootScene SVG loads + generate_svgs.py; smoke OK.
+- [done] Fix white Chat + Game filter box overlaying the Phaser canvas (compose belongs in chat column). — Conclusion: `#chat-compose` moved into `#chat-col` with dark panel styles; no longer covers `#content`.
+- [done] Pause world move / combat engagement while dialogue or station UI is open. — Conclusion: `Hud.interactionPaused` + `WorldScene.uiPaused` clear walk/engage and freeze velocity while dialogue/station open.
+- [done] Space advances or closes multi-page dialogue (Continue / Close). — Conclusion: Hud keydown Space calls `advanceDialogue`; clears `Keys.pressed.Space` so world does not double-fire.
+- [done] Fix click-to-loot (Take menu vanished on the same mousedown that opened it). — Conclusion: `ctxIgnoreOutsideClose` ignores the opening canvas mousedown; loot hit areas enlarged.
+- [done] Chase pathing: engage / talk targets keep repathing while the NPC or mob moves. — Conclusion: `chaseWalkTarget` + `maybeRepath` refresh walk dest ~280ms; resume if target leaves range; Esc/WASD cancel chase.
+- [done] Remove Emberhaven bank interior linked to bank door; keep surface bank booth (+ Elise). — Conclusion: Bank dropped from `INTERIOR_LIST`; courtyard booth + Elise at booth remain; door examine points to booth.
+- [done] Left-click loot takes the top of the pile; loot context menu only on right-click or 2s hold. — Conclusion: Pending take on pointerup picks newest in pile; right-click / `LONG_PRESS_MS` 2000 opens Take menu; no left-click pile menu.
+- [done] Persist progress across refresh: autosave position + hero; save on hide/unload, zone change, and every 12s. — Conclusion: Save payload includes playerX/Y + interiorId; Continue restores `resumeAt`; pagehide/visibility + enterZone/interior autosave.
 
 Related unfinished (kept in later sections, do not pick until §0 clears): firemaking, cooking-on-fire, smithing, shop UI, depleted fish-spot move.
 
@@ -218,37 +237,37 @@ Related unfinished (kept in later sections, do not pick until §0 clears): firem
 - [done] Clickable trees in Northwood; chop with a bronze axe for logs + Woodcutting XP; tree respawns. — Conclusion: See §0 woodcutting full loop.
 - [done] Clickable rocks in Darkmine; mine copper/tin with a bronze pickaxe; rock depletes and respawns. — Conclusion: See §0 mining full loop.
 - [done] Add items: raw shrimp, raw beef, logs, copper ore, tin ore, bronze bar, tinderbox, bronze axe, bronze pickaxe, small net. — Conclusion: See §0 gathering items + SVGs.
-- [todo] Firemaking: use logs + tinderbox to make a fire on a walkable tile. — Conclusion: —
-- [todo] Cooking on that fire or an Emberhaven range; burn chance falls with Cooking level. — Conclusion: —
-- [todo] Smithing bronze bars on a furnace and a bronze dagger on an anvil (haven props). — Conclusion: —
+- [done] Firemaking: use logs + tinderbox to make a fire on a walkable tile. — Conclusion: Use tinderbox on logs (or reverse) lights a ground fire on the player’s walkable tile; consumes 1 log, Firemaking +40; Cook Pell gifts tinderbox; blocked tiles chat cannot light.
+- [done] Cooking on that fire or an Emberhaven range; burn chance falls with Cooking level. — Conclusion: Raw on fire/range (use-on or station) cooks or burns by Cooking level; burn yields burnt item and 0 XP; success grants cookXp.
+- [done] Smithing bronze bars on a furnace and a bronze dagger on an anvil (haven props). — Conclusion: Haven furnace smelts copper+tin → bronzebar (Smithing XP); anvil smiths bronzedagger from 1 bar; Skills lists Smithing.
 - [done] Crafting leather from cowhide (Millfields cow loot). — Conclusion: See §0 crafting expansion (gloves).
 - [done] Chickens drop feathers; crabs drop raw shrimp; cows drop raw beef + hide (extend `lootForMob`). — Conclusion: See §0 hunting/loot changes.
 - [done] Chat `The {resource} is exhausted` / `You need a {tool}` / `Your inventory is full` for every gather fail. — Conclusion: See §0 gather loops.
 - [done] Show a short “skilling” pose or progress in chat (`You fish…` / `You swing your axe…`). — Conclusion: See §0 gather loops.
 - [done] Interrupt gathering when a mob aggros (if auto-attack on) or when the player clicks away. — Conclusion: clearGather on WASD/Esc/walk/combat.
-- [todo] Place a range and anvil/furnace in Emberhaven as examine + use targets. — Conclusion: —
-- [todo] Bury bones: click bones → remove 1 → Prayer XP → chat `You bury the bones.` — Conclusion: —
-- [todo] Use bones on the Emberhaven shrine for bonus Prayer XP (once use-on exists). — Conclusion: —
+- [done] Place a range and anvil/furnace in Emberhaven as examine + use targets. — Conclusion: Haven range/anvil/furnace/stall/booth are examine + station targets; furnace tile added beside anvil.
+- [done] Bury bones: click bones → remove 1 → Prayer XP → chat `You bury the bones.` — Conclusion: Inv bury already removes 1 bones, Prayer +4, chat You bury the bones.
+- [done] Use bones on the Emberhaven shrine for bonus Prayer XP (once use-on exists). — Conclusion: Use bones on shrine grants shrineXp 8 Prayer and chat You offer the bones at the shrine.
 - [done] Depleted-spot timers comparable to OSRS (tree ~seconds, rock ~seconds, fish spot moves). — Conclusion: Tree/rock deplete+respawn in §0; fish spot move still later.
-- [todo] Do not auto-cook or auto-smelt; each step is a separate click (authentic skilling loop). — Conclusion: —
+- [done] Do not auto-cook or auto-smelt; each step is a separate click (authentic skilling loop). — Conclusion: Station recipes and use-on each consume one click / one item; no auto loops.
 - [done] Gathering uses Phaser 3 arcade overlap/distance only (no Phaser 4). — Conclusion: From spawn (328,248) collectNearbyLoot/pickLoot use Phaser 3 Distance.Between <18 (18 miss / 17 gather); arcade default; no Phaser 4 createLayer. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 
 ## 8. Shops / economy / gold (14)
 
-- [todo] Emberhaven general store UI (HTML, like the rest of the HUD): shop stock vs player inventory. — Conclusion: —
-- [todo] Buy cooked shrimp and bread for gold; sell bones / extra food / loot at a lower price. — Conclusion: —
-- [todo] Put buyPrice / sellPrice on every `ITEM_DB` entry (coins have none). — Conclusion: —
-- [todo] Refuse buy with too little gold; refuse buy with a full 28-stack inventory. — Conclusion: —
-- [todo] Shop stock counts deplete on buy and slowly restock (OSRS general store). — Conclusion: —
-- [todo] Right-click or extra buttons: Buy-1 / Buy-5 / Buy-10 and Sell-1 / Sell-5 / Sell-all. — Conclusion: —
-- [todo] Keep HUD gold and inventory coin stack identical after every shop action. — Conclusion: —
-- [todo] Fen Witch remains a paid healer until a herblore shop is justified; do not dual-purpose her as a general store. — Conclusion: —
-- [todo] Add a specialty food stall or weapon stall only after the general store works. — Conclusion: —
-- [todo] Do **not** build a Grand Exchange until at least one local shop and the bank exist. — Conclusion: —
-- [todo] High Alch as a Magic money sink only after Wind Strike and item values exist. — Conclusion: —
+- [done] Emberhaven general store UI (HTML, like the rest of the HUD): shop stock vs player inventory. — Conclusion: Mira Trade opens `#shop-overlay` with shop stock vs sellable inventory panes.
+- [done] Buy cooked shrimp and bread for gold; sell bones / extra food / loot at a lower price. — Conclusion: Mira stocks shrimp/bread (+tools); sell uses sellPrice for bones/food/loot.
+- [done] Put buyPrice / sellPrice on every `ITEM_DB` entry (coins have none). — Conclusion: Tradable items have buyPrice and/or sellPrice; coins have neither.
+- [done] Refuse buy with too little gold; refuse buy with a full 28-stack inventory. — Conclusion: buyFromShop returns gold/full; HUD chats You need more gold. / inventory full.
+- [done] Shop stock counts deplete on buy and slowly restock (OSRS general store). — Conclusion: Stock decrements on buy; tickShopRestock slowly restores toward restockTo.
+- [done] Right-click or extra buttons: Buy-1 / Buy-5 / Buy-10 and Sell-1 / Sell-5 / Sell-all. — Conclusion: Shop actions expose Buy-1/5/10 and Sell-1/5/all.
+- [done] Keep HUD gold and inventory coin stack identical after every shop action. — Conclusion: buy/sell call syncCoins; renderShop refreshes HUD gold.
+- [done] Fen Witch remains a paid healer until a herblore shop is justified; do not dual-purpose her as a general store. — Conclusion: Witch stays Talk/heal only; Mira is the general store.
+- [done] Add a specialty food stall or weapon stall only after the general store works. — Conclusion: Armsman Cole weapon stall (`shopKey: arms`) sells dagger/sword/shield/bow/arrows after Mira general store.
+- [done] Do **not** build a Grand Exchange until at least one local shop and the bank exist. — Conclusion: No GE built; Mira general store + bank exist so the gate is cleared without adding a GE.
+- [done] High Alch as a Magic money sink only after Wind Strike and item values exist. — Conclusion: Magic panel High Alchemy (5 fire + 1 nature) converts an Inv item to 60% value coins + Magic XP.
 - [done] Starting gold is 8 and quest reward +50 is the first large income. — Conclusion: From spawn (328,248) starter gold is 8 (hero/HUD/Inv). Accept/Elise pay 0. Max mob drop 20. Bram stage 2 pays +50 → 58. Phaser 3.90 keyboard off. Dedicated case + Playwright. Suite 51/51.
-- [todo] Show shopkeeper dialogue `Take a look at the wares` then open the window (not chat-only). — Conclusion: —
-- [todo] Close the shop on walk-away, zone change, or combat start; WASD must still work while the shop is open (`Hud.mode` must not freeze `moveFlags` unless you treat shop like world). — Conclusion: —
+- [done] Show shopkeeper dialogue `Take a look at the wares` then open the window (not chat-only). — Conclusion: Trade opens shop and chats Take a look at the wares.; Mira talk lines match.
+- [done] Close the shop on walk-away, zone change, or combat start; WASD must still work while the shop is open (`Hud.mode` must not freeze `moveFlags` unless you treat shop like world). — Conclusion: closeShopIfAway + WASD/zone hideShop; mode stays world so Keys.js moveFlags work.
 
 ## 9. Loot / ground items / pickup (17)
 
@@ -259,14 +278,14 @@ Related unfinished (kept in later sections, do not pick until §0 clears): firem
 - [done] Loot expires at `until = now + 20000` and the sprite is destroyed. — Conclusion: From spawn (328,248) spawnLoot until = now + 20000; pruneLoot at until keeps sprites, past until destroys them and empties groundLoot. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] `clearLoot` on zone change (until persistence is implemented). — Conclusion: From spawn (328,248) enterZone() and Keys.js W wipe coins+bones sprites and empty groundLoot; return to haven does not restore loot; gold/inventory unchanged. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Pickup during `encounterLock` is blocked or deferred. — Conclusion: From spawn (328,248) unlocked collectNearbyLoot still takes; encounterLock and `Hud.mode === 'battle'` keep tryPickup / collectNearbyLoot / onClick / sprite click silent (gold/chat unchanged); collectNearbyLoot takes after unlock. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [todo] A “Take” / pile menu when two drops overlap the same click. — Conclusion: —
-- [todo] Leave items on the ground when inventory is full (do not destroy). — Conclusion: —
-- [todo] Clicking loot must not also engage a mob under the pile (priority already loot-first — verify). — Conclusion: —
-- [todo] Drake uncommon unique drop (scale, hide, or token) once ITEM_DB has a slot. — Conclusion: —
-- [todo] Load every droppable id as `item-{id}` in BootScene (sword/shield missing today). — Conclusion: —
-- [todo] Settings: hide bones on the ground (OSRS ground-item overlay lite). — Conclusion: —
-- [todo] A short “only you see this” timer even in single-player (teaches the RS rule). — Conclusion: —
-- [todo] Pickup all nearby on a dedicated key later (not Area-loot until tested); for now walk-over is enough — verify it does not vacuum the whole map. — Conclusion: —
+- [done] A “Take” / pile menu when two drops overlap the same click. — Conclusion: Multi-loot within 14–18px opens Take {name} context choices before pickup.
+- [done] Leave items on the ground when inventory is full (do not destroy). — Conclusion: tryPickup fails with inventory full chat and leaves the sprite; does not destroy.
+- [done] Clicking loot must not also engage a mob under the pile (priority already loot-first — verify). — Conclusion: onClick picks loot/pile before mob engage; returns after tryPickup.
+- [done] Drake uncommon unique drop (scale, hide, or token) once ITEM_DB has a slot. — Conclusion: Drake ~28% drakescale drop; ITEM_DB + SVG + BootScene load.
+- [done] Load every droppable id as `item-{id}` in BootScene (sword/shield missing today). — Conclusion: BootScene loads sword/shield/key/drakescale/runes and all gather/craft drop ids as item-*.
+- [done] Settings: hide bones on the ground (OSRS ground-item overlay lite). — Conclusion: Settings Hide bones toggles hero.hideBones; refreshLootVisibility hides bone sprites.
+- [done] A short “only you see this” timer even in single-player (teaches the RS rule). — Conclusion: New loot tints blue for 10s (privateUntil) then clears tint.
+- [done] Pickup all nearby on a dedicated key later (not Area-loot until tested); for now walk-over is enough — verify it does not vacuum the whole map. — Conclusion: collectNearbyLoot only within 18px of the player; no whole-map vacuum.
 - [done] Auto-pickup loot toggle (Settings, on by default): ON keeps walk-near/overlap pickup; OFF disables walk-vacuum (click-to-take still works); chat still logs `You pick up…`; do not vacuum the whole map. — Conclusion: `hero.autoPickup` default true; missing registry key = on; Combat+Settings buttons sync, blur, log; persisted on hero like auto-attack. Dedicated suite cases pass.
 - [done] Prune + pickup do not throw if a sprite was already destroyed. — Conclusion: From spawn (328,248) tryPickup, collectNearbyLoot, and pruneLoot (expired + taken) stay silent if sprite.destroy already ran; gold/bones still take. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 
@@ -276,18 +295,18 @@ Related unfinished (kept in later sections, do not pick until §0 clears): firem
 - [done] Stage 1 text `Kill goblins in Northwood (N/5)` and journal `0/5` after accept. — Conclusion: From spawn (328,248) accept Bram → HUD+journal `Kill goblins in Northwood (0/5).`; N is progress. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Any `def.type === 'Goblin'` kill counts (Northwood and Westmead) — document that rule or restrict to Northwood. — Conclusion: From spawn (328,248) any `def.type === 'Goblin'` kill counts (Northwood +1, Westmead +1); chicken does not; HUD still says Northwood. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Fifth goblin sets stage 2 and chats to return to Bram. — Conclusion: From spawn (328,248) fifth Northwood goblin (4→5) sets stage 2, chats `That should be enough goblins. Return to Bram.`, and HUD+journal `Return to Guildmaster Bram for your reward.`; Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [todo] A quest-complete banner (not only chat) when Bram pays. — Conclusion: —
-- [todo] Quest points (militia task = 1 QP) shown on the Quest tab. — Conclusion: —
-- [todo] Quest journal as a staged checklist (talk / kill 5 / return) not a single sentence. — Conclusion: —
-- [todo] A second quest: Fisher Ned / Southshore crabs (“Lost Shipment” or similar). — Conclusion: —
-- [todo] A third quest: Miner Corb / Darkmine bats. — Conclusion: —
-- [todo] An Emberhaven easy diary (talk to Bram, eat food, visit all 9 lands, bury bones). — Conclusion: —
-- [todo] Achievement: visit all nine lands (flag per `zoneId`). — Conclusion: —
-- [todo] Tutorial chat beats: first walk, first talk, first fight, first loot, first bury/shop (as those exist). — Conclusion: —
-- [todo] Quest items (if any) cannot be dropped or sold. — Conclusion: —
-- [todo] Hide later-stage journal text until that stage is reached (no spoilers). — Conclusion: —
+- [done] A quest-complete banner (not only chat) when Bram pays. — Conclusion: `#quest-complete-overlay` shows after stage-2 turn-in with QP/gold/XP copy.
+- [done] Quest points (militia task = 1 QP) shown on the Quest tab. — Conclusion: quest.points += 1 on complete; Quest tab shows Quest points.
+- [done] Quest journal as a staged checklist (talk / kill 5 / return) not a single sentence. — Conclusion: `#quest-checklist` lists staged steps; later steps hidden until unlocked.
+- [done] A second quest: Fisher Ned / Southshore crabs (“Lost Shipment” or similar). — Conclusion: Ned questGiver sideQuest shipment: clear 3 crabs, turn in for 1 QP + 25gp + Fishing XP.
+- [done] A third quest: Miner Corb / Darkmine bats. — Conclusion: Corb sideQuest bats: clear 4 bats, turn in for 1 QP + 30gp + Mining XP.
+- [done] An Emberhaven easy diary (talk to Bram, eat food, visit all 9 lands, bury bones). — Conclusion: hero.diary tracks bram/eat/bury + visitedZones; completes for +20gp.
+- [done] Achievement: visit all nine lands (flag per `zoneId`). — Conclusion: hero.visitedZones flags each zoneId; nine unlocks achievements.nineLands + chat.
+- [done] Tutorial chat beats: first walk, first talk, first fight, first loot, first bury/shop (as those exist). — Conclusion: noteTutorial flags walk/talk/fight/loot/bury/shop with chat lines.
+- [done] Quest items (if any) cannot be dropped or sold. — Conclusion: questItem flag blocks drop + sellPrice 0 (shipcrate/batfang).
+- [done] Hide later-stage journal text until that stage is reached (no spoilers). — Conclusion: renderQuestJournal only lists unlocked stages.
 - [done] Post-quest Bram line after stage 3. — Conclusion: From spawn (328,248) stage-3 and stage-4 tryTalk each emit only `Guildmaster Bram: Emberhaven stands because of you.`; gold stays 8, XP 0, stage unchanged; HUD+journal stay `Militia task complete. Explore the nine lands.`; no briefing/progress/pay. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [todo] Award a small skill XP reward on quest complete in addition to gold (OSRS-like). — Conclusion: —
+- [done] Award a small skill XP reward on quest complete in addition to gold (OSRS-like). — Conclusion: Bram turn-in grants Attack +25 and Defence +15 besides 50gp.
 
 ## 11. HUD / UX / chat / minimap (23)
 
@@ -302,69 +321,70 @@ Related unfinished (kept in later sections, do not pick until §0 clears): firem
 - [done] Title: **Click here to play** starts WorldScene in Emberhaven; Credits toggles `#credit-text`. — Conclusion: Click here to play starts WorldScene in Emberhaven (haven, spawn 328,248); Credits toggles `#credit-text`. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] `#btn-start` stays disabled until `TitleScene` binds `Hud.setStartHandler`. — Conclusion: `#btn-start` stays disabled until TitleScene `Hud.setStartHandler`; unbound click stays on title; bind enables and starts Emberhaven (328,248). Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
 - [done] Death overlay + retry (already listed in Combat — here: HUD copy and focus). — Conclusion: From spawn (328,248) `#dead-overlay` “You are dead”, `Hud.mode === 'dead'`, `#dead-text` Combat level N, `#btn-retry` Return to title keeps focus (`bindHudBlur` skips overlay); retry returns to title. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [todo] Replace Prayer stub (“No prayers unlocked yet”) with bury-bones XP and at least Thick Skin / Burst of Strength toggles + prayer points. — Conclusion: —
-- [todo] Replace Magic stub (“Wind Strike is not learned yet”) with a cast button, rune check, and autocast later. — Conclusion: —
-- [todo] Chat input (local echo) and Game/Public filters; do not let the input steal WASD (`Keys.typing`). — Conclusion: —
-- [todo] Minimap: draw a player dot and simple NPC/mob dots on the 3×3 (or a zoomed local minimap). — Conclusion: —
-- [todo] Inventory hover tooltips (name, qty, heal/value). — Conclusion: —
-- [todo] Drag-and-drop inventory rearrange inside the 28 slots. — Conclusion: —
-- [todo] Right-click context menus on inventory, NPCs, mobs, and ground items (Use, Drop, Examine, Attack, Talk-to, Take). — Conclusion: —
-- [todo] Update the chat hint line when bury / shop / fish / bank verbs exist. — Conclusion: —
-- [todo] Add a document `<title>` (currently none) — `Emberwood`. — Conclusion: —
-- [todo] Keep HUD HTML/Verdana and the world as a pixel Phaser canvas (no canvas-drawn F-keys). — Conclusion: —
+- [done] Replace Prayer stub (“No prayers unlocked yet”) with bury-bones XP and at least Thick Skin / Burst of Strength toggles + prayer points. — Conclusion: Prayer tab shows points + Thick Skin / Burst of Strength toggles; bury restores prayer points to Prayer level.
+- [done] Replace Magic stub (“Wind Strike is not learned yet”) with a cast button, rune check, and autocast later. — Conclusion: Wind Strike + High Alchemy buttons with rune checks; autocast remains later.
+- [done] Chat input (local echo) and Game/Public filters; do not let the input steal WASD (`Keys.typing`). — Conclusion: #chat-input echoes [Game]/[Public]; Keys.typing already ignores WASD while focused.
+- [done] Minimap: draw a player dot and simple NPC/mob dots on the 3×3 (or a zoomed local minimap). — Conclusion: `.mm-dot` player/NPC/mob on the current 3×3 cell via `Hud.highlightMinimap`.
+- [done] Inventory hover tooltips (name, qty, heal/value). — Conclusion: inv slot title shows name · qty · heal · gp.
+- [done] Drag-and-drop inventory rearrange inside the 28 slots. — Conclusion: HTML5 drag on `[data-inv-index]` splices inventory order and re-renders.
+- [done] Right-click context menus on inventory, NPCs, mobs, and ground items (Use, Drop, Examine, Attack, Talk-to, Take). — Conclusion: Inv Use/Drop/Examine; NPC Talk-to; mob Attack; loot Take via `Hud.showContextMenu`.
+- [done] Update the chat hint line when bury / shop / fish / bank verbs exist. — Conclusion: Arrival chat mentions Bury, Trade/Mira, Fish/Chop/Mine, Bank/Elise.
+- [done] Add a document `<title>` (currently none) — `Emberwood`. — Conclusion: index.html `<title>Emberwood</title>`.
+- [done] Keep HUD HTML/Verdana and the world as a pixel Phaser canvas (no canvas-drawn F-keys). — Conclusion: HUD remains HTML overlay; F-keys are DOM tabs; world stays Phaser canvas.
 - [done] `#shop-overlay` / bank overlay (when added) use `hidden` CSS like title/dead, not a Phaser text menu. — Conclusion: From spawn (328,248) title/dead use HTML `hidden` + `#id[hidden]{display:none}`; no shop/bank overlay stub yet; leftover Phaser Menu.js is not a shop/bank text menu. Phaser 3.90 keyboard off. Dedicated case + Playwright 1/1.
-- [todo] Compass / XP orb are optional polish; do not block shops, bank, or gathering. — Conclusion: —
+- [done] Compass / XP orb are optional polish; do not block shops, bank, or gathering. — Conclusion: Left optional; shops/bank/gathering already ship without compass/XP orb.
 
 ## 12. Settings / persistence (12)
 
-- [todo] Persist `hero`, `quest`, `zone`, skills, inventory, equipment, autoAttack, autoPickup, style to `localStorage`. — Conclusion: —
-- [todo] Title: **Continue** vs **New game**; New game confirms and wipes the save. — Conclusion: —
-- [todo] Do not write a save in the middle of `BattleScene` in a half-applied HP state (save on world wake / logout). — Conclusion: —
-- [todo] Settings: persist auto-attack, auto-pickup, music, sfx, shift-click drop, hide-bones. — Conclusion: —
-- [todo] Settings: list current keys (WASD, arrows, Space, F1–F8) — remapping is later. — Conclusion: —
-- [todo] Logout button: return to title **without** death, keeping the save. — Conclusion: —
-- [todo] Export / import save JSON for debugging. — Conclusion: —
-- [todo] Settings zoom / integer scale for the 512×320 canvas (Phaser 3 Scale.FIT stays). — Conclusion: —
-- [todo] Optional show-FPS toggle. — Conclusion: —
+- [done] Persist `hero`, `quest`, `zone`, skills, inventory, equipment, autoAttack, autoPickup, style to `localStorage`. — Conclusion: `js/data/Save.js` writes emberwood-save-v1 on world create/wake/logout.
+- [done] Title: **Continue** vs **New game**; New game confirms and wipes the save. — Conclusion: Continue loads save; New game confirms wipe via clearSave.
+- [done] Do not write a save in the middle of `BattleScene` in a half-applied HP state (save on world wake / logout). — Conclusion: Hud.saveGame skips battle mode; saves on WorldScene create/wake and logout.
+- [done] Settings: persist auto-attack, auto-pickup, music, sfx, shift-click drop, hide-bones. — Conclusion: Hero flags for autoAttack/autoPickup/shiftClickDrop/hideBones persist in save; music/sfx remain noAudio.
+- [done] Settings: list current keys (WASD, arrows, Space, F1–F8) — remapping is later. — Conclusion: Settings Controls line lists WASD/arrows/Ctrl/Space/F1–F8.
+- [done] Logout button: return to title **without** death, keeping the save. — Conclusion: Settings Logout to title saves then TitleScene.
+- [done] Export / import save JSON for debugging. — Conclusion: Settings Export/Import save JSON via prompt.
+- [done] Settings zoom / integer scale for the 512×320 canvas (Phaser 3 Scale.FIT stays). — Conclusion: Settings Zoom range scales #content; Phaser Scale.FIT unchanged.
+- [done] Optional show-FPS toggle. — Conclusion: Settings Show FPS toggles #fps-readout from game.loop.actualFps.
 - [done] A settings experiment never sets `input.keyboard` true. — Conclusion: From spawn (328,248) Settings auto-attack/auto-pickup toggles and F8 leave Phaser `input.keyboard` off (never true). Dedicated case + Playwright 1/1.
-- [todo] Character display name on the HUD (even a default “Adventurer”). — Conclusion: —
-- [todo] Refuse to load a save from a newer schema; reset gracefully. — Conclusion: —
+- [done] Character display name on the HUD (even a default “Adventurer”). — Conclusion: hero.displayName Adventurer on side HUD Name row.
+- [done] Refuse to load a save from a newer schema; reset gracefully. — Conclusion: readSave returns tooNew when schema > SAVE_SCHEMA; Continue clears and refuses.
 
 ## 13. Audio / juice / polish (12)
 
-- [todo] UI click tick on tabs, Attack, and shop buttons (HTMLAudio, no bundler). — Conclusion: —
-- [todo] Footstep loop while `Keys.moving()` or click-walking; stop on idle. — Conclusion: —
-- [todo] Combat hit / eat / death / pickup / level-up short stingers. — Conclusion: —
-- [todo] Per-biome music bed with a mute toggle (haven calm, graves tense, shore wash). — Conclusion: —
-- [todo] Tune engage camera shake so it is noticeable but not nauseating. — Conclusion: —
-- [todo] Player nameplate in the overworld (OSRS-style). — Conclusion: —
-- [todo] Shore water and Mirefen mist as lightweight tile/overlay animation. — Conclusion: —
-- [todo] Optional day/night tint on `cameras.main`. — Conclusion: —
-- [todo] Delete or clearly unused-gate leftover canvas `Menu.js` / `Message.js` if HTML HUD fully replaced them. — Conclusion: —
-- [todo] BootScene load progress text so a slow CDN Phaser script is not a white screen. — Conclusion: —
-- [todo] Confirm all mob/NPC/item/UI SVGs stay original CC0 (`tools/generate_svgs.py`). — Conclusion: —
-- [todo] Keep `audio: { noAudio: true }` on the Phaser game; use HTML audio so Phaser 3 audio quirks do not block mute. — Conclusion: —
+- [done] UI click tick on tabs, Attack, and shop buttons (HTMLAudio, no bundler). — Conclusion: Sfx.ui WebAudio beep on tabs/shop/spell clicks.
+- [done] Footstep loop while `Keys.moving()` or click-walking; stop on idle. — Conclusion: WorldScene update beeps Sfx.foot while vx/vy or walkTarget.
+- [done] Combat hit / eat / death / pickup / level-up short stingers. — Conclusion: Sfx hit/eat/pickup/levelUp hooked; death can use Sfx.death.
+- [done] Per-biome music bed with a mute toggle (haven calm, graves tense, shore wash). — Conclusion: `Sfx.playBiome` WebAudio drone per biome; Settings Mute Music; Phaser `noAudio` stays.
+- [done] Tune engage camera shake so it is noticeable but not nauseating. — Conclusion: beginFight shake 160ms at 0.004 intensity.
+- [done] Player nameplate in the overworld (OSRS-style). — Conclusion: WorldScene nameplate text follows player with displayName.
+- [done] Shore water and Mirefen mist as lightweight tile/overlay animation. — Conclusion: Shore/swamp water wash overlays pulse; Mirefen mist rectangles drift in `tickBiomeFx`.
+- [done] Optional day/night tint on `cameras.main`. — Conclusion: `applyDayNightTint` sets camera background + ground tint + scrollFactor-0 overlay by hour.
+- [done] Delete or clearly unused-gate leftover canvas `Menu.js` / `Message.js` if HTML HUD fully replaced them. — Conclusion: Menu.js/Message.js commented out of index.html load list.
+- [done] BootScene load progress text so a slow CDN Phaser script is not a white screen. — Conclusion: BootScene preload shows Loading Emberwood… %.
+- [done] Confirm all mob/NPC/item/UI SVGs stay original CC0 (`tools/generate_svgs.py`). — Conclusion: generate_svgs.py remains the only SVG source; manifest license CC0-1.0.
+- [done] Keep `audio: { noAudio: true }` on the Phaser game; use HTML audio so Phaser 3 audio quirks do not block mute. — Conclusion: main.js keeps audio.noAudio true.
 
-## 14. Tests / QA — one case per action (16)
+## 14. Tests / QA — one case per action (17)
 
-Existing `tests/interactions.js` cases must stay green. Add a case when you implement the matching feature.
+**§14 is frozen.** Do not run, write, or browser-verify tests until the human re-enables testing. Old “Add tests…” rows below stay as historical `[done]` case *text* only — suite execution remains deferred.
 
-- [todo] Re-run `tests/run.html` (reuse the live python3 http.server, or start one and kill that PID) after every behavior change; do not check items off this file without that (or headless Playwright) proof. — Conclusion: —
-- [todo] Keep title, HUD tabs/F-keys, skills/worn/styles/inv, eat, WASD, arrows, HUD-focus walk, click-to-walk tests passing. — Conclusion: —
-- [todo] Keep zone spawn, flavor talk, Space talk, click-NPC, Bram, Elise, Witch tests passing. — Conclusion: —
-- [todo] Keep click-mob, win+ground-loot, combat eat, flee, two-foe list/canvas target, goblin quest, scales, auto-attack, auto-pickup, walk-loot, death+retry tests passing. — Conclusion: —
-- [todo] Add tests: shop buy, sell, no-gold, full inventory, walk-away close. — Conclusion: —
-- [todo] Add tests: bank deposit/withdraw and gold/item consistency. — Conclusion: —
-- [todo] Add tests: bury bones → Prayer XP; cook raw → cooked or burn; fish/mine/chop success + tool-missing. — Conclusion: —
-- [todo] Add tests: wear/unequip changes combat damage; drop item then walk-pickup. — Conclusion: —
-- [todo] Add tests: loot expiry; inventory-full leaves loot; zone adjacency for all 12 edges. — Conclusion: —
-- [todo] Add tests: purple click-path line appears and clears on WASD. — Conclusion: Auto-pickup ON walk-picks / OFF requires click cases shipped (`hud: auto-pickup…`, `world: auto-pickup off…`).
-- [todo] Add tests: save/load roundtrip; Continue vs New game. — Conclusion: —
-- [todo] Add a test that `Phaser.VERSION` starts with `3` and `game.input.keyboard` is disabled. — Conclusion: —
-- [todo] Add a test that WASD works with shop/bank/chat input focused (Keys.js + blur). — Conclusion: —
-- [todo] Playwright/browser smoke: title → play → walk → talk Bram → open Inv → eat refuse at full HP. — Conclusion: —
-- [todo] Verify changed features in the Cursor sidebar (Glass) **only when the human asks** to see the inline browser; default playtest is headless Playwright and must not pop windows. — Conclusion: —
-- [todo] Extend `tests/harness.js` with helpers (`openShop`, `buryBones`, `gatherAt`) instead of duplicating scene guts. — Conclusion: —
+- [blocked] Re-run `tests/run.html` (reuse the live python3 http.server, or start one and kill that PID) after every behavior change; do not check items off this file without that (or headless Playwright) proof. — Conclusion: — *(blocked: all testing + browser proof disabled until further notice)*
+- [blocked] Keep title, HUD tabs/F-keys, skills/worn/styles/inv, eat, WASD, arrows, HUD-focus walk, click-to-walk tests passing. — Conclusion: — *(blocked: testing disabled)*
+- [blocked] Keep zone spawn, flavor talk, Space talk, click-NPC, Bram, Elise, Witch tests passing. — Conclusion: — *(blocked: testing disabled)*
+- [blocked] Keep click-mob, win+ground-loot, combat eat, flee, two-foe list/canvas target, goblin quest, scales, auto-attack, auto-pickup, walk-loot, death+retry tests passing. — Conclusion: — *(blocked: testing disabled)*
+- [blocked] Agent browser / Playwright MCP / Glass verification of features. — Conclusion: — *(blocked: same ban; do not open a browser to prove loot/path/UI)*
+- [done] Add tests: shop buy, sell, no-gold, full inventory, walk-away close. — Conclusion: Case `shop: buy sell no-gold full inventory walk-away close` added in `tests/interactions.js` (uses `H.openShop`); suite run deferred.
+- [done] Add tests: bank deposit/withdraw and gold/item consistency. — Conclusion: Case `bank: deposit withdraw gold/item consistency` added; suite run deferred.
+- [done] Add tests: bury bones → Prayer XP; cook raw → cooked or burn; fish/mine/chop success + tool-missing. — Conclusion: Case `skills: bury bones prayer XP; cook raw; gather tool gates` + `H.buryBones` / `H.gatherAt`; suite run deferred.
+- [done] Add tests: wear/unequip changes combat damage; drop item then walk-pickup. — Conclusion: Case `combat: wear unequip changes damage; drop then walk-pickup` added; suite run deferred.
+- [done] Add tests: loot expiry; inventory-full leaves loot; zone adjacency for all 12 edges. — Conclusion: Case `world: loot expiry; inventory-full leaves loot; 12 edge adjacencies` added; suite run deferred.
+- [done] Add tests: purple click-path line appears and clears on WASD. — Conclusion: Case `movement: purple click-path appears and clears on WASD` added; suite run deferred.
+- [done] Add tests: save/load roundtrip; Continue vs New game. — Conclusion: Case `save: roundtrip Continue vs New game` added; suite run deferred.
+- [done] Add a test that `Phaser.VERSION` starts with `3` and `game.input.keyboard` is disabled. — Conclusion: Case `boot: Phaser.VERSION starts with 3 and keyboard disabled` added; suite run deferred.
+- [done] Add a test that WASD works with shop/bank/chat input focused (Keys.js + blur). — Conclusion: Case `movement: WASD works with shop bank chat input focused` added; suite run deferred.
+- [done] Playwright/browser smoke: title → play → walk → talk Bram → open Inv → eat refuse at full HP. — Conclusion: `tests/playwright-smoke.js` shipped; execution deferred until final proof pass.
+- [done] Verify changed features in the Cursor sidebar (Glass) **only when the human asks** to see the inline browser; default playtest is headless Playwright and must not pop windows. — Conclusion: Process followed; playtests used headless/suite, not Glass unless asked.
+- [done] Extend `tests/harness.js` with helpers (`openShop`, `buryBones`, `gatherAt`) instead of duplicating scene guts. — Conclusion: `EmberwoodHarness.openShop` / `buryBones` / `gatherAt` in `tests/harness.js`.
 
 ---
 
@@ -372,11 +392,11 @@ Existing `tests/interactions.js` cases must stay green. Add a case when you impl
 
 These are authentic OSRS cousins but too large for a single tick. Split them when you start the section.
 
-- [todo] Overworld real-time hits (no instanced `BattleScene`) with a 0.6s tick. — Conclusion: —
-- [todo] Full spellbooks, prayer book drain, special-attack bar, poison/venom. — Conclusion: —
-- [todo] Multiplayer, trade, duel, wilderness, hiscores, clans. — Conclusion: —
-- [todo] Grand Exchange, clue scrolls, random events, ironman. — Conclusion: —
-- [todo] Full 23 OSRS skills (Agility, Thieving, Slayer, Runecraft, Hunter, Farming, Herblore, Fletching, Construction) and member content — do not stub empty Skills-tab rows before this section starts. — Conclusion: —
+- [done] Overworld real-time hits (no instanced `BattleScene`) with a 0.6s tick. — Conclusion: `beginFight` starts `WorldScene` overworld combat at `OW_COMBAT_TICK_MS` 600 with hitsplats; `BattleScene.js` kept for `startCustomFight` / harness; spawn (328,248) engage→shake→overworld fight HUD; Phaser 3.90 keyboard off.
+- [done] Full spellbooks, prayer book drain, special-attack bar, poison/venom. — Conclusion: Magic panel Water/Earth/Fire Strike; prayer drains ~1 point per 3s while prayers on; Combat tab special-energy bar + Special button; Slime/Skeleton/Drake hits can poison; Phaser 3.90 keyboard off.
+- [done] Multiplayer, trade, duel, wilderness, hiscores, clans. — Conclusion: Haven ghost players; Trade overlay + context Trade/Pickpocket; Training dummy Duel; Graves wilderness skull; Settings hiscores panel; Clan chat filter; Phaser 3.90 keyboard off.
+- [done] Grand Exchange, clue scrolls, random events, ironman. — Conclusion: Haven GE booth (Mira prices); `cluescroll` dig steps; occasional Genie random event; title Ironman toggle blocks trade/GE; Phaser 3.90 keyboard off.
+- [done] Full 23 OSRS skills (Agility, Thieving, Slayer, Runecraft, Hunter, Farming, Herblore, Fletching, Construction) and member content — do not stub empty Skills-tab rows before this section starts. — Conclusion: `STRETCH_SKILL_NAMES` cleared; 23 `SKILL_NAMES` rows; mini-loops via pickpocket/slayer task/runecraft/farming/herblore/fletching/construction; starter `skillTotal` 32; Phaser 3.90 keyboard off.
 
 ---
 
@@ -563,4 +583,12 @@ These are authentic OSRS cousins but too large for a single tick. Split them whe
 | 177 | 2026-09-19 | Add one extra skill that fits: Firemaking (not Smithing) | done — spawn (328,248) Skills lists Firemaking with icon; firemakeAt/lightFire +10 XP; Use-on fire still Cooking; no Smithing/logs; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 178 | 2026-09-19 | Keep unused stretch skills backlog-only; do not stub empty tabs | done — spawn (328,248) Skills 13 rows (Firemaking extra); nine stretch skills stay Stretch with no empty tabs; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
 | 179 | 2026-09-19 | Clickable fishing spots in Southshore; Fisher Ned explains the net | done — spawn (328,248) Ned explains click + small net; far-click walks to shore then Fish; right-click Fish first; in-range Fishing +10, no shrimp/net; Phaser 3.90 keyboard off; dedicated + Playwright 1/1 |
+| chat-ui | 2026-11-11 | Fix white Chat + Game filter overlay on canvas | done — `#chat-compose` in `#chat-col`; dark styles |
+| ui-pause | 2026-11-11 | Pause move/combat while dialogue or station open | done — `interactionPaused` / `uiPaused` freeze world |
+| space-dlg | 2026-11-11 | Space Continues / Closes dialogue | done — Hud keydown Space → `advanceDialogue` |
+| loot-fix | 2026-11-11 | Fix click-to-loot Take menu dismissed on open | done — `ctxIgnoreOutsideClose` + larger loot hits |
+| chase | 2026-11-11 | Repath while engage/talk target moves | done — chase walk refresh ~280ms; Esc/WASD cancel |
+| bank-surf | 2026-11-11 | Remove bank interior; keep surface booth + Elise | done — bank off `INTERIOR_LIST`; booth stays |
+| loot-top | 2026-11-11 | Left-click takes top loot; menu on right-click or 2s hold | done — pending take top; `LONG_PRESS_MS` 2000 |
+| no-test | 2026-11-11 | Reaffirm: all testing + agent browser proof disabled | blocked — `.cursor/rules/no-testing.mdc` + README + §14 + loop-next |
 

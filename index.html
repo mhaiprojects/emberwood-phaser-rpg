@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emberwood</title>
     <link rel="icon" href="assets/svg/ui/combat.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/style.css?v=questui1">
+    <link rel="stylesheet" href="css/style.css?v=chat1">
 </head>
 <body>
     <div id="shell">
@@ -21,6 +22,7 @@
                 </div>
                 <div class="panel">
                     <h2 id="hud-zone">{{ zone }}</h2>
+                    <div class="stat"><span>Name</span><strong id="hud-name">{{ displayName }}</strong></div>
                     <div class="stat"><span><img class="pix" src="assets/svg/ui/combat.svg" alt=""> Combat</span><strong id="hud-level">{{ level }}</strong></div>
                     <div class="stat"><span><img class="pix" src="assets/svg/ui/skills.svg" alt=""> Total</span><strong id="hud-total">{{ total }}</strong></div>
                     <div class="stat"><span><img class="pix" src="assets/svg/skills/hitpoints.svg" alt=""> Hitpoints</span><strong id="hud-hp">{{ hpText }}</strong></div>
@@ -54,6 +56,14 @@
                     <div id="chat-log" ref="chatLog">
                         <div v-for="(line, i) in chatLines" :key="i" class="chat-line" :class="line.kind || undefined">{{ line.text }}</div>
                     </div>
+                    <div id="chat-compose">
+                        <input id="chat-input" type="text" maxlength="120" placeholder="Chat…" autocomplete="off" spellcheck="false">
+                        <select id="chat-filter" title="Chat filter">
+                            <option value="game">Game</option>
+                            <option value="public">Public</option>
+                            <option value="clan">Clan</option>
+                        </select>
+                    </div>
                     <p class="hint">WASD or arrows to walk. Ctrl toggles run. Click ground, NPCs, or monsters. F1–F8 switch panels. Auto-attack, auto-retaliate, and auto-pickup are in Combat and Settings. Loot drops on the ground — walk over it when auto-pickup is on, or click it. Click food in Inventory to eat.</p>
                 </div>
                 <div id="iface">
@@ -82,6 +92,10 @@
                             <h3>Run</h3>
                             <p>Ctrl or this toggle sprints. Run energy drains while running and restores while walking or idle.</p>
                             <button type="button" class="run-mode-btn" data-run-toggle title="Toggle walk or run (Ctrl)" :class="{ 'is-on': running }">{{ runLabel }}</button>
+                            <h3>Special attack</h3>
+                            <p>Builds on successful hits. Uses 25% energy for a stronger strike.</p>
+                            <div class="hp-bar" id="special-energy"><div id="special-fill" style="width:100%;background:#e8a030"></div></div>
+                            <button type="button" id="btn-special" data-special-attack title="Special attack (25% energy)">Special</button>
                         </div>
                         <div id="panel-skills" class="tab-panel" v-show="tab === 'skills'">
                             <h3>Skills</h3>
@@ -89,7 +103,9 @@
                         </div>
                         <div id="panel-quest" class="tab-panel" v-show="tab === 'quest'">
                             <h3>Quest journal</h3>
+                            <p id="hud-quest-points">Quest points: 0</p>
                             <p id="hud-quest-tab">{{ quest }}</p>
+                            <ul id="quest-checklist" v-manual></ul>
                         </div>
                         <div id="panel-equip" class="tab-panel" v-show="tab === 'equip'">
                             <h3>Worn equipment</h3>
@@ -98,17 +114,25 @@
                         </div>
                         <div id="panel-prayer" class="tab-panel" v-show="tab === 'prayer'">
                             <h3>Prayer</h3>
-                            <p>No prayers unlocked yet.</p>
+                            <p id="prayer-points">Prayer points: 1 / 1</p>
+                            <div id="prayer-list" v-manual>
+                                <button type="button" data-prayer="thickskin" title="+Defence while active">Thick Skin</button>
+                                <button type="button" data-prayer="burststrength" title="+Strength while active">Burst of Strength</button>
+                            </div>
                         </div>
                         <div id="panel-magic" class="tab-panel" v-show="tab === 'magic'">
                             <h3>Magic</h3>
                             <div id="magic-list">
                                 <button type="button" id="btn-wind-strike" data-spell="windstrike" title="Air rune + Mind rune">Wind Strike</button>
+                                <button type="button" id="btn-water-strike" data-spell="waterstrike" title="Air + Water runes">Water Strike</button>
+                                <button type="button" id="btn-earth-strike" data-spell="earthstrike" title="Air + Earth runes">Earth Strike</button>
+                                <button type="button" id="btn-fire-strike" data-spell="firestrike" title="Air + Fire runes">Fire Strike</button>
+                                <button type="button" id="btn-high-alch" data-spell="highalch" title="5 Fire runes + 1 Nature rune">High Alchemy</button>
                             </div>
                         </div>
                         <div id="panel-settings" class="tab-panel" v-show="tab === 'settings'">
                             <h3>Settings</h3>
-                            <p>Move with WASD or arrow keys. Click to walk. Eat shrimp or bread from Inventory.</p>
+                            <p>Move with WASD or arrow keys. Click to walk. Eat shrimp or bread from Inventory. Bury bones, Trade, Fish, Bank from the panels.</p>
                             <h3>Auto-attack</h3>
                             <p>Toggle automatic engagement of nearby monsters, like classic RuneScape.</p>
                             <button type="button" class="auto-attack-btn" data-auto-attack title="When on, walking into a nearby foe starts a fight." :class="{ 'is-on': autoAttackOn }">{{ autoAttackLabel }}</button>
@@ -121,6 +145,25 @@
                             <h3>Shift-click drop</h3>
                             <p>When on, Shift+left-click drops an inventory item, like Old School RuneScape. Right-click Drop still works. New games start with this on.</p>
                             <button type="button" class="shift-click-drop-btn" data-shift-click-drop title="When on, Shift+left-click drops an inventory item (OSRS default)." :class="{ 'is-on': shiftClickDropOn }">{{ shiftClickDropLabel }}</button>
+                            <h3>Hide bones</h3>
+                            <p>When on, bone piles on the ground are hidden (OSRS ground-item overlay lite).</p>
+                            <button type="button" class="hide-bones-btn" data-hide-bones title="When on, bones on the ground are hidden." :class="{ 'is-on': hideBonesOn }">{{ hideBonesLabel }}</button>
+                            <h3>Controls</h3>
+                            <p>WASD / arrows move, Ctrl run, Space talk, F1–F8 panels, click to walk/act.</p>
+                            <h3>Audio</h3>
+                            <button type="button" data-sfx-mute title="Mute UI/SFX beeps">Mute SFX</button>
+                            <button type="button" data-music-mute title="Mute biome music bed">Mute Music</button>
+                            <h3>Display</h3>
+                            <button type="button" data-show-fps title="Toggle FPS read-out">Show FPS</button>
+                            <label>Zoom
+                                <input id="setting-zoom" type="range" min="1" max="2" step="0.05" value="1">
+                            </label>
+                            <h3>Hiscores (local)</h3>
+                            <p id="hiscores-panel">Local hiscores from your save.</p>
+                            <h3>Save</h3>
+                            <button type="button" data-save-action="logout">Logout to title</button>
+                            <button type="button" data-save-action="export">Export save JSON</button>
+                            <button type="button" data-save-action="import">Import save JSON</button>
                             <h3>Run</h3>
                             <p>Ctrl toggles run. Energy drains while running and restores while walking or idle.</p>
                             <button type="button" class="run-mode-btn" data-run-toggle title="Toggle walk or run (Ctrl)" :class="{ 'is-on': running }">{{ runLabel }}</button>
@@ -146,13 +189,16 @@
                 <div class="title-card">
                     <h1>EMBERWOOD</h1>
                     <p>A free-roam adventure in the style of classic RuneScape.</p>
-                    <button type="button" id="btn-start" :disabled="!startEnabled" @click="onStart">Click here to play</button>
+                    <button type="button" id="btn-continue" class="ghost" :disabled="!continueEnabled" @click="onContinue" v-show="continueEnabled">Continue</button>
+                    <label id="ironman-label" style="display:block;margin:0.5rem 0"><input type="checkbox" id="ironman-toggle"> Ironman (no trading)</label>
+                    <button type="button" id="btn-start" :disabled="!startEnabled" @click="onStart">{{ continueEnabled ? 'New game' : 'Click here to play' }}</button>
                     <button type="button" id="btn-credits" class="ghost" @click="onCredits">Credits</button>
-                    <p id="credit-text" v-show="creditsOpen">Phaser 3 turn-based combat inspired by the GameDev Academy RPG series. World, NPCs, HUD, and SVG icons are original (CC0). No Zenva or commercial asset packs. HUD mirror uses Vue 3 (CDN, no build).</p>
+                    <p id="credit-text" hidden v-show="creditsOpen">Phaser 3 turn-based combat inspired by the GameDev Academy RPG series. World, NPCs, HUD, and SVG icons are original (CC0). No Zenva or commercial asset packs. HUD mirror uses Vue 3 (CDN, no build).</p>
                 </div>
             </div>
 
             <div id="ctx-menu" v-manual hidden></div>
+            <div id="fps-readout" hidden>FPS —</div>
 
             <div id="level-up-overlay" hidden>
                 <div class="level-up-card" role="dialog" aria-labelledby="level-up-title">
@@ -163,12 +209,21 @@
                 </div>
             </div>
 
+            <div id="quest-complete-overlay" hidden>
+                <div class="level-up-card" role="dialog" aria-labelledby="quest-complete-title">
+                    <img id="quest-complete-icon" class="pix" src="assets/svg/ui/quest.svg" alt="">
+                    <h2 id="quest-complete-title">Quest complete</h2>
+                    <p id="quest-complete-copy"></p>
+                    <button type="button" id="btn-quest-complete-close">Continue</button>
+                </div>
+            </div>
+
             <div id="dialogue-overlay" hidden>
                 <div class="dialogue-card">
                     <h2 id="dialogue-speaker"></h2>
                     <p id="dialogue-text"></p>
                     <div id="dialogue-options" hidden></div>
-                    <p id="dialogue-continue" class="hint">Click to continue</p>
+                    <p id="dialogue-continue" class="hint">Click or Space to continue</p>
                 </div>
             </div>
 
@@ -273,21 +328,27 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
     <script src="js/input/Keys.js?v=run1"></script>
-    <script src="js/data/Items.js?v=questui1"></script>
+    <script src="js/data/Items.js?v=st23"></script>
+    <script src="js/data/Save.js?v=save1"></script>
     <script src="js/data/Scales.js?v=hunt1"></script>
     <script src="js/ui/HudApp.js?v=vue1"></script>
-    <script src="js/ui/Hud.js?v=questui1"></script>
-    <script src="js/world/MapGen.js?v=questui1"></script>
-    <script src="js/world/Pathfind.js?v=questui1"></script>
-    <script src="js/world/Zones.js?v=questui1"></script>
+    <script src="js/ui/Sfx.js?v=music1"></script>
+    <script src="js/ui/Hud.js?v=space1"></script>
+    <script src="js/world/MapGen.js?v=fm1"></script>
+    <script src="js/world/Pathfind.js?v=fm1"></script>
+    <script src="js/world/Zones.js?v=fm1"></script>
     <script src="js/sprites/Unit.js?v=hitxp1"></script>
     <script src="js/sprites/PlayerCharacter.js"></script>
     <script src="js/sprites/Enemy.js"></script>
+    <!-- Leftover Phaser canvas Menu/Message unused by HTML HUD; kept for reference, not loaded.
     <script src="js/ui/Menu.js"></script>
     <script src="js/ui/Message.js"></script>
-    <script src="js/scenes/BootScene.js?v=questui1"></script>
+    -->
+    <script src="js/scenes/BootScene.js?v=furnace1"></script>
     <script src="js/scenes/TitleScene.js?v=move4"></script>
-    <script src="js/scenes/WorldScene.js?v=questui1"></script>
+    <script src="js/scenes/WorldScene.js?v=space1"></script>
+    <script src="js/world/OverworldCombat.js?v=ow2"></script>
+    <script src="js/world/StretchLite.js?v=st2"></script>
     <script src="js/scenes/BattleScene.js?v=magic1"></script>
     <script src="js/scenes/UIScene.js"></script>
     <script src="js/scenes/GameOverScene.js?v=cmb1"></script>

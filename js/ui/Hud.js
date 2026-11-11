@@ -27,6 +27,11 @@ var Hud = {
             total: document.getElementById('hud-total'),
             quest: document.getElementById('hud-quest'),
             questTab: document.getElementById('hud-quest-tab'),
+            questPoints: document.getElementById('hud-quest-points'),
+            questChecklist: document.getElementById('quest-checklist'),
+            questComplete: document.getElementById('quest-complete-overlay'),
+            questCompleteCopy: document.getElementById('quest-complete-copy'),
+            questCompleteClose: document.getElementById('btn-quest-complete-close'),
             minimap: document.getElementById('minimap'),
             minimapChrome: document.getElementById('minimap-chrome'),
             worldMap: document.getElementById('world-map-overlay'),
@@ -111,6 +116,7 @@ var Hud = {
         }
         this.bindEls();
         this.bindShellResize();
+        this.bindAutosave();
         if (!this._vueReady) {
             this.onVueMounted();
         }
@@ -336,8 +342,117 @@ var Hud = {
             var spell = btn && btn.getAttribute('data-spell');
             if (spell === 'windstrike') {
                 self.castWindStrike();
+            } else if (spell === 'highalch') {
+                self.beginHighAlch();
+            } else if (spell === 'waterstrike' || spell === 'earthstrike' || spell === 'firestrike') {
+                self.castCombatSpell(spell);
             }
         });
+        document.addEventListener('click', function (event) {
+            var spec = event.target.closest('[data-special-attack]');
+            if (!spec) {
+                return;
+            }
+            self.trySpecialAttack();
+        });
+        document.addEventListener('click', function (event) {
+            var btn = event.target.closest('[data-hide-bones]');
+            if (!btn) {
+                return;
+            }
+            var hero = self.hero();
+            if (!hero) {
+                return;
+            }
+            hero.hideBones = !hero.hideBones;
+            self.saveHero(hero);
+            self.syncHideBones();
+            self.log('Hide bones ' + (hero.hideBones ? 'on' : 'off') + '.');
+            var world = window.game && window.game.scene.getScene('WorldScene');
+            if (world && world.refreshLootVisibility) {
+                world.refreshLootVisibility();
+            }
+        });
+        document.addEventListener('click', function (event) {
+            var btn = event.target.closest('[data-prayer]');
+            var id = btn && btn.getAttribute('data-prayer');
+            if (!id) {
+                return;
+            }
+            self.togglePrayer(id);
+        });
+        document.addEventListener('click', function (event) {
+            var btn = event.target.closest('[data-save-action]');
+            var action = btn && btn.getAttribute('data-save-action');
+            if (!action) {
+                return;
+            }
+            if (window.Sfx && Sfx.ui) {
+                Sfx.ui();
+            }
+            if (action === 'logout') {
+                self.logoutToTitle();
+                return;
+            }
+            if (action === 'export') {
+                self.exportSavePrompt();
+                return;
+            }
+            if (action === 'import') {
+                self.importSavePrompt();
+            }
+        });
+        document.addEventListener('click', function (event) {
+            var tab = event.target.closest('[data-tab], [data-shop-action], [data-spell], .auto-attack-btn, .auto-pickup-btn');
+            if (tab && window.Sfx && Sfx.ui) {
+                Sfx.ui();
+            }
+            if (event.target.closest('[data-sfx-mute]') && window.Sfx) {
+                Sfx.muted = !Sfx.muted;
+                self.log('SFX ' + (Sfx.muted ? 'muted' : 'on') + '.');
+            }
+            if (event.target.closest('[data-music-mute]') && window.Sfx) {
+                Sfx.setMusicMuted(!Sfx.musicMuted);
+                self.log('Music ' + (Sfx.musicMuted ? 'muted' : 'on') + '.');
+                if (!Sfx.musicMuted && window.game) {
+                    var worldMusic = window.game.scene.getScene('WorldScene');
+                    if (worldMusic && worldMusic.playZoneMusic) {
+                        worldMusic.playZoneMusic();
+                    }
+                }
+            }
+            if (event.target.closest('[data-show-fps]')) {
+                self.toggleFps();
+            }
+        });
+        var zoom = document.getElementById('setting-zoom');
+        if (zoom) {
+            zoom.addEventListener('input', function () {
+                self.applyZoom(Number(zoom.value) || 1);
+            });
+        }
+        var chatInput = document.getElementById('chat-input');
+        if (chatInput) {
+            chatInput.addEventListener('keydown', function (event) {
+                if (event.code !== 'Enter') {
+                    return;
+                }
+                event.preventDefault();
+                var text = String(chatInput.value || '').trim();
+                var filter = document.getElementById('chat-filter');
+                var channel = filter ? filter.value : 'game';
+                if (channel !== 'public' && channel !== 'clan') {
+                    channel = 'game';
+                }
+                if (!text) {
+                    return;
+                }
+                chatInput.value = '';
+                var prefix = channel === 'public' ? '[Public] ' : (channel === 'clan' ? '[Clan] ' : '[Game] ');
+                self.log(prefix + text, channel === 'clan' ? 'clan' : '');
+                chatInput.blur();
+            });
+        }
         this.el.inv.addEventListener('click', function (event) {
             var slot = event.target.closest('[data-item]');
             if (!slot) {
@@ -392,7 +507,7 @@ var Hud = {
                 if (!btn) {
                     return;
                 }
-                self.chooseContext(btn.getAttribute('data-ctx'));
+                self.chooseContext(btn.getAttribute('data-ctx'), btn.getAttribute('data-ctx-loot'));
             });
         }
         document.addEventListener('mousedown', function (event) {
@@ -400,6 +515,10 @@ var Hud = {
                 return;
             }
             if (event.button !== 0) {
+                return;
+            }
+            /* Phaser opens the menu on the same mousedown; ignore that opener so the Take menu stays. */
+            if (self.ctxIgnoreOutsideClose) {
                 return;
             }
             if (event.target && event.target.closest && event.target.closest('#ctx-menu')) {
@@ -556,8 +675,31 @@ var Hud = {
             });
         }
         window.addEventListener('keydown', function (event) {
+            var isSpace = event.code === 'Space' || event.key === ' ' || event.key === 'Spacebar';
+            if (isSpace && self.dialogueOpen()) {
+                if (window.Keys && Keys.typing(event)) {
+                    return;
+                }
+                event.preventDefault();
+                if (event.repeat) {
+                    return;
+                }
+                if (document.activeElement && document.activeElement.blur) {
+                    document.activeElement.blur();
+                }
+                /* Consume so WorldScene update does not also advance. */
+                if (window.Keys && Keys.pressed) {
+                    Keys.pressed.Space = false;
+                }
+                self.advanceDialogue();
+                return;
+            }
             if (event.code === 'Escape' && self.el.levelUp && !self.el.levelUp.hidden) {
                 self.hideLevelUp();
+                return;
+            }
+            if (event.code === 'Escape' && self.dialogueOpen()) {
+                self.hideDialogue();
                 return;
             }
             if (event.code === 'Escape' && self.el.shop && !self.el.shop.hidden) {
@@ -614,6 +756,8 @@ var Hud = {
     showTab: function (id) {
         this.tab = id;
         var vue = this.vueState();
+        var panels;
+        var p;
         if (vue) {
             vue.tab = id;
         }
@@ -622,6 +766,10 @@ var Hud = {
             for (var b = 0; b < buttons.length; b++) {
                 buttons[b].classList.toggle('is-on', buttons[b].getAttribute('data-tab') === id);
             }
+        }
+        panels = document.querySelectorAll('.tab-panel');
+        for (p = 0; p < panels.length; p++) {
+            panels[p].hidden = panels[p].id !== ('panel-' + id);
         }
     },
 
@@ -647,6 +795,10 @@ var Hud = {
             return;
         }
         if (this.mode === 'title' || this.mode === 'dead') {
+            return;
+        }
+        if (this.alchArmed) {
+            this.castHighAlch(id);
             return;
         }
         if (this.useOnId) {
@@ -713,6 +865,17 @@ var Hud = {
             }
             this.saveHero(hero);
             this.log('You eat ' + eaten.name + ' and recover ' + eaten.heal + ' HP.');
+            if (window.Sfx && Sfx.eat) {
+                Sfx.eat();
+            }
+            if (hero.diary) {
+                hero.diary.eat = true;
+                this.saveHero(hero);
+            }
+            var worldEat = window.game && window.game.scene.getScene('WorldScene');
+            if (worldEat && worldEat.checkDiaryComplete) {
+                worldEat.checkDiaryComplete(hero);
+            }
             return;
         }
         if (verb === 'wield' || verb === 'wear') {
@@ -796,6 +959,77 @@ var Hud = {
         return world.dropFromInventory(id, qty || 1);
     },
 
+    togglePrayer: function (id) {
+        var hero = this.hero();
+        var on;
+        if (!hero || this.mode === 'title' || this.mode === 'dead') {
+            return;
+        }
+        if (!hero.prayers) {
+            hero.prayers = { thickskin: false, burststrength: false };
+        }
+        if (typeof hero.prayerPoints !== 'number') {
+            hero.prayerPoints = heroSkillLevel(hero, 'prayer');
+            hero.maxPrayerPoints = hero.prayerPoints;
+        }
+        on = !hero.prayers[id];
+        if (on && hero.prayerPoints < 1) {
+            this.log('You need more prayer points.');
+            return;
+        }
+        hero.prayers[id] = on;
+        this.saveHero(hero);
+        this.renderPrayers(hero);
+        this.log((id === 'thickskin' ? 'Thick Skin' : 'Burst of Strength') + (on ? ' on.' : ' off.'));
+    },
+
+    renderPrayers: function (hero) {
+        var points = hero && typeof hero.prayerPoints === 'number' ? hero.prayerPoints : 1;
+        var max = hero && typeof hero.maxPrayerPoints === 'number' ? hero.maxPrayerPoints : points;
+        var el = document.getElementById('prayer-points');
+        var buttons;
+        var i;
+        var id;
+        if (el) {
+            el.textContent = 'Prayer points: ' + points + ' / ' + max;
+        }
+        buttons = document.querySelectorAll('[data-prayer]');
+        for (i = 0; i < buttons.length; i++) {
+            id = buttons[i].getAttribute('data-prayer');
+            buttons[i].classList.toggle('is-on', !!(hero && hero.prayers && hero.prayers[id]));
+        }
+    },
+
+    exportSavePrompt: function () {
+        var json = typeof exportSaveJson === 'function' && window.game
+            ? exportSaveJson(window.game.registry)
+            : '';
+        if (!json) {
+            this.log('Nothing to export.');
+            return;
+        }
+        window.prompt('Copy your Emberwood save JSON:', json);
+    },
+
+    importSavePrompt: function () {
+        var text = window.prompt('Paste Emberwood save JSON:');
+        var data;
+        if (!text) {
+            return;
+        }
+        data = typeof importSaveJson === 'function' ? importSaveJson(text) : null;
+        if (!data) {
+            this.log('Import failed.');
+            return;
+        }
+        if (data.tooNew) {
+            this.log('Save is from a newer Emberwood.');
+            return;
+        }
+        this.log('Save imported. Continue from the title screen.');
+        this.refreshTitleSaveButtons();
+    },
+
     buryFromInventory: function (id) {
         var hero = this.hero();
         if (!hero || !id || this.mode !== 'world') {
@@ -811,6 +1045,17 @@ var Hud = {
         }
         this.saveHero(hero);
         this.log('You bury the bones.');
+        if (hero.diary) {
+            hero.diary.bury = true;
+            this.saveHero(hero);
+        }
+        var world = window.game && window.game.scene.getScene('WorldScene');
+        if (world && world.noteTutorial) {
+            world.noteTutorial('bury');
+        }
+        if (world && world.checkDiaryComplete) {
+            world.checkDiaryComplete(hero);
+        }
         return true;
     },
 
@@ -838,11 +1083,35 @@ var Hud = {
         return true;
     },
 
+    castCombatSpell: function (spellId) {
+        var world = window.game && window.game.scene.getScene('WorldScene');
+        if (world && world.overworldFight && world.castOverworldSpell) {
+            return world.castOverworldSpell(spellId);
+        }
+        if (spellId === 'windstrike') {
+            return this.castWindStrike();
+        }
+        var hero = this.hero();
+        var cast = typeof spellCastFn === 'function' ? spellCastFn(spellId) : null;
+        var result = cast && hero ? cast(hero) : null;
+        if (!result) {
+            this.log('You do not have the runes for that spell.');
+            return false;
+        }
+        this.saveHero(hero);
+        this.log('You cast ' + (result.label || spellId) + '.');
+        return true;
+    },
+
     castWindStrike: function () {
         var hero = this.hero();
         var world;
         if (!hero || this.mode === 'title' || this.mode === 'dead') {
             return false;
+        }
+        world = window.game && window.game.scene.getScene('WorldScene');
+        if (world && world.overworldFight) {
+            return world.castOverworldSpell('windstrike');
         }
         if (this.mode === 'battle') {
             if (!this.canBattleAct()) {
@@ -854,7 +1123,6 @@ var Hud = {
             this.battle.receivePlayerSelection('windstrike', this.battle.targetIndex);
             return true;
         }
-        world = window.game && window.game.scene.getScene('WorldScene');
         if (!world || world.encounterLock) {
             return false;
         }
@@ -868,6 +1136,48 @@ var Hud = {
         }
         this.saveHero(hero);
         this.log('You cast Wind Strike.');
+        return true;
+    },
+
+    beginHighAlch: function () {
+        var hero = this.hero();
+        if (!hero || this.mode !== 'world') {
+            return false;
+        }
+        if (typeof hasHighAlchRunes === 'function' && !hasHighAlchRunes(hero)) {
+            this.log('You need 5 Fire runes and 1 Nature rune.');
+            return false;
+        }
+        this.alchArmed = true;
+        this.clearUseOn();
+        this.log('High Alchemy -> choose an inventory item.');
+        this.showTab('inv');
+        return true;
+    },
+
+    castHighAlch: function (id) {
+        var hero = this.hero();
+        var result;
+        if (!hero || !id || this.mode !== 'world') {
+            this.alchArmed = false;
+            return false;
+        }
+        result = typeof highAlchItem === 'function' ? highAlchItem(hero, id) : null;
+        this.alchArmed = false;
+        if (!result) {
+            this.log('Nothing interesting happens.');
+            return false;
+        }
+        if (!result.ok) {
+            if (result.need === 'runes') {
+                this.log('You need 5 Fire runes and 1 Nature rune.');
+            } else {
+                this.log('Nothing interesting happens.');
+            }
+            return false;
+        }
+        this.saveHero(hero);
+        this.log('You convert the ' + itemName(id) + ' into ' + result.coins + ' coins.');
         return true;
     },
 
@@ -894,6 +1204,11 @@ var Hud = {
         var skill = hero && hero.skills && hero.skills[id];
         var line = typeof skillXpText === 'function' ? skillXpText(named[1], skill) : named[1];
         this.log(line);
+        var world = window.game && window.game.scene.getScene('WorldScene');
+        var playable = ['slayer', 'runecraft', 'farming', 'herblore', 'fletching', 'construction'];
+        if (world && world.tryStretchSkillAction && playable.indexOf(id) !== -1) {
+            world.tryStretchSkillAction(id);
+        }
         return true;
     },
 
@@ -948,6 +1263,15 @@ var Hud = {
                 }
             });
         }
+        if (this.el && this.el.questComplete && !this.el.questComplete._bound) {
+            this.el.questComplete._bound = true;
+            this.el.questComplete.addEventListener('click', function (event) {
+                var close = event.target && event.target.closest && event.target.closest('#btn-quest-complete-close');
+                if (event.target === self.el.questComplete || close) {
+                    self.hideQuestComplete();
+                }
+            });
+        }
         return host;
     },
 
@@ -982,6 +1306,9 @@ var Hud = {
             this.el.levelUpCopy.textContent = 'Your ' + name + ' level is now ' + shown + '.';
         }
         host.hidden = false;
+        if (window.Sfx && Sfx.levelUp) {
+            Sfx.levelUp();
+        }
         return host;
     },
 
@@ -993,6 +1320,74 @@ var Hud = {
         if (this.el && this.el.levelUpClose) {
             this.el.levelUpClose.blur();
         }
+    },
+
+    showQuestComplete: function (title, copy) {
+        var host = this.el && this.el.questComplete;
+        if (!host) {
+            return null;
+        }
+        if (this.el.questCompleteCopy) {
+            this.el.questCompleteCopy.textContent = copy || 'Quest complete.';
+        }
+        var titleEl = document.getElementById('quest-complete-title');
+        if (titleEl) {
+            titleEl.textContent = title || 'Quest complete';
+        }
+        host.hidden = false;
+        this.log(copy || 'Quest complete.', 'chat-fanfare');
+        return host;
+    },
+
+    hideQuestComplete: function () {
+        if (this.el && this.el.questComplete) {
+            this.el.questComplete.hidden = true;
+        }
+        if (this.el && this.el.questCompleteClose) {
+            this.el.questCompleteClose.blur();
+        }
+    },
+
+    renderQuestJournal: function (quest) {
+        var stage = quest && quest.stage != null ? quest.stage : 0;
+        var progress = quest && quest.progress != null ? quest.progress : 0;
+        var goal = quest && quest.goal != null ? quest.goal : 5;
+        var qp = quest && quest.points != null ? quest.points : 0;
+        var steps = [
+            { label: 'Talk to Guildmaster Bram', done: stage >= 1 },
+            { label: 'Kill goblins in Northwood (' + Math.min(progress, goal) + '/' + goal + ')', done: stage >= 2 || (stage === 1 && progress >= goal) },
+            { label: 'Return to Bram for your reward', done: stage >= 3 }
+        ];
+        var html = '';
+        var i;
+        if (this.el && this.el.questPoints) {
+            this.el.questPoints.textContent = 'Quest points: ' + qp;
+        }
+        if (!this.el || !this.el.questChecklist) {
+            return;
+        }
+        for (i = 0; i < steps.length; i++) {
+            if (stage < 1 && i > 0) {
+                continue;
+            }
+            if (stage < 2 && i > 1 && stage < 1) {
+                continue;
+            }
+            if (stage === 0 && i > 0) {
+                continue;
+            }
+            if (stage === 1 && i > 1) {
+                continue;
+            }
+            html += '<li' + (steps[i].done ? ' class="is-done"' : '') + '>' + steps[i].label + '</li>';
+        }
+        if (stage >= 3) {
+            html = '';
+            for (i = 0; i < steps.length; i++) {
+                html += '<li class="is-done">' + steps[i].label + '</li>';
+            }
+        }
+        this.el.questChecklist.innerHTML = html;
     },
 
     showXpDrop: function (skill, amount) {
@@ -1129,20 +1524,154 @@ var Hud = {
     },
 
     onStart: function () {
+        if (typeof hasSave === 'function' && hasSave()) {
+            if (!window.confirm('Start a new game? This will wipe your Emberwood save.')) {
+                return;
+            }
+            if (typeof clearSave === 'function') {
+                clearSave();
+            }
+            this._loadSave = false;
+            this._pendingSave = null;
+            if (window.game && window.game.registry) {
+                window.game.registry.set('resumeAt', null);
+                window.game.registry.set('playerX', null);
+                window.game.registry.set('playerY', null);
+                window.game.registry.set('interiorId', null);
+            }
+        }
+        var iron = document.getElementById('ironman-toggle');
+        this._ironmanNewGame = !!(iron && iron.checked);
         if (this._startHandler) {
             this._startHandler();
         }
     },
 
-    setStartHandler: function (fn) {
-        this._startHandler = fn;
+    onContinue: function () {
+        var data = typeof readSave === 'function' ? readSave() : null;
+        if (!data || data.tooNew || !data.hero) {
+            if (data && data.tooNew) {
+                this.log('Save is from a newer Emberwood. Resetting.');
+                if (typeof clearSave === 'function') {
+                    clearSave();
+                }
+            }
+            return;
+        }
+        this._loadSave = true;
+        this._pendingSave = data;
+        if (this._startHandler) {
+            this._startHandler();
+        }
+    },
+
+    refreshTitleSaveButtons: function () {
         var vue = this.vueState();
+        var canContinue = typeof hasSave === 'function' && hasSave();
         if (vue) {
+            vue.continueEnabled = canContinue;
             vue.startEnabled = true;
         }
         if (this.el && this.el.start) {
             this.el.start.disabled = false;
         }
+    },
+
+    setStartHandler: function (fn) {
+        this._startHandler = fn;
+        this.refreshTitleSaveButtons();
+    },
+
+    applyPendingSave: function (registry) {
+        var data = this._pendingSave;
+        this._pendingSave = null;
+        this._loadSave = false;
+        if (!data || !data.hero || !registry) {
+            return false;
+        }
+        registry.set('hero', data.hero);
+        registry.set('quest', data.quest || { id: 'goblins', stage: 0, progress: 0, goal: 5, points: 0 });
+        registry.set('zone', data.zone || 'haven');
+        if (typeof data.playerX === 'number' && typeof data.playerY === 'number') {
+            registry.set('resumeAt', {
+                x: data.playerX,
+                y: data.playerY,
+                interiorId: data.interiorId || null
+            });
+            registry.set('playerX', data.playerX);
+            registry.set('playerY', data.playerY);
+            registry.set('interiorId', data.interiorId || null);
+        } else {
+            registry.set('resumeAt', null);
+            registry.set('playerX', null);
+            registry.set('playerY', null);
+            registry.set('interiorId', null);
+        }
+        return true;
+    },
+
+    syncSavePosition: function () {
+        var world;
+        if (!window.game || !window.game.registry) {
+            return;
+        }
+        world = window.game.scene.getScene('WorldScene');
+        if (!world || !world.player) {
+            return;
+        }
+        window.game.registry.set('zone', world.zoneId || window.game.registry.get('zone') || 'haven');
+        window.game.registry.set('playerX', world.player.x);
+        window.game.registry.set('playerY', world.player.y);
+        window.game.registry.set('interiorId', world.interiorId || null);
+    },
+
+    saveGame: function () {
+        if (!window.game || this.mode === 'battle') {
+            return false;
+        }
+        this.syncSavePosition();
+        return typeof writeSave === 'function' ? writeSave(window.game.registry) : false;
+    },
+
+    bindAutosave: function () {
+        var self = this;
+        if (this._autosaveBound) {
+            return;
+        }
+        this._autosaveBound = true;
+        window.addEventListener('pagehide', function () {
+            self.saveGame();
+        });
+        window.addEventListener('beforeunload', function () {
+            self.saveGame();
+        });
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'hidden') {
+                self.saveGame();
+            }
+        });
+    },
+
+    logoutToTitle: function () {
+        this.saveGame();
+        this.hideShop();
+        this.hideBank();
+        this.hideStation();
+        this.hideDialogue();
+        this.hideQuestComplete();
+        this.hideLevelUp();
+        if (window.game) {
+            window.game.scene.getScenes(true).forEach(function (scene) {
+                var key = scene.sys.settings.key;
+                if (key && key !== 'TitleScene') {
+                    window.game.scene.stop(key);
+                }
+            });
+            window.game.scene.start('TitleScene');
+        }
+        this.showTitle();
+        this.refreshTitleSaveButtons();
+        this.log('You log out. Progress saved.');
     },
 
     setMode: function (mode) {
@@ -1163,8 +1692,11 @@ var Hud = {
         this.hideBank();
         this.hideStation();
         this.hideLevelUp();
+        this.hideQuestComplete();
         this.clearUseOn();
+        this.alchArmed = false;
         this.setMode('title');
+        this.refreshTitleSaveButtons();
         if (this.el && this.el.title) {
             this.el.title.hidden = false;
         }
@@ -1264,6 +1796,11 @@ var Hud = {
             return;
         }
         this.ctxTarget = pos || null;
+        if (pos && pos.lootPile) {
+            this.ctxLootPile = pos.lootPile;
+        } else {
+            this.ctxLootPile = null;
+        }
         menu.innerHTML = '';
         items = items || [];
         for (var i = 0; i < items.length; i++) {
@@ -1274,10 +1811,21 @@ var Hud = {
             var btn = document.createElement('button');
             btn.type = 'button';
             btn.textContent = item.label || item.action;
-            btn.setAttribute('data-ctx', item.action);
+            if (item.action === 'take-loot') {
+                btn.setAttribute('data-ctx', 'take-loot');
+                btn.setAttribute('data-ctx-loot', String(item.lootIndex != null ? item.lootIndex : i));
+            } else {
+                btn.setAttribute('data-ctx', item.action);
+            }
             menu.appendChild(btn);
         }
+        /* Same-event mousedown on the canvas must not immediately dismiss this menu. */
+        this.ctxIgnoreOutsideClose = true;
         menu.hidden = false;
+        var self = this;
+        setTimeout(function () {
+            self.ctxIgnoreOutsideClose = false;
+        }, 0);
         var x = pos && pos.clientX != null ? pos.clientX : 16;
         var y = pos && pos.clientY != null ? pos.clientY : 16;
         menu.style.left = x + 'px';
@@ -1297,6 +1845,8 @@ var Hud = {
             menu.style.top = '';
         }
         this.ctxTarget = null;
+        this.ctxLootPile = null;
+        this.ctxIgnoreOutsideClose = false;
     },
 
     showWorldMap: function () {
@@ -1345,12 +1895,35 @@ var Hud = {
         this.hideShop();
         this.hideBank();
         this.hideStation();
+        this.pauseWorldForUi();
         this.dialogue = { speaker: speaker || '', pages: clean, index: 0, options: options };
         this.renderDialogue(true);
     },
 
     dialogueOpen: function () {
         return !!(this.dialogue && this.el && this.el.dialogue && !this.el.dialogue.hidden);
+    },
+
+    interactionPaused: function () {
+        return this.dialogueOpen() || this.stationOpen();
+    },
+
+    pauseWorldForUi: function () {
+        var world = window.game && window.game.scene.getScene('WorldScene');
+        if (!world || !world.player) {
+            return;
+        }
+        if (world.clearWalk) {
+            world.clearWalk();
+        }
+        if (world.clearGather) {
+            world.clearGather();
+        }
+        world.talkTarget = null;
+        world.engageTarget = null;
+        if (world.player.body) {
+            world.player.body.setVelocity(0, 0);
+        }
     },
 
     renderDialogue: function (logPage) {
@@ -1423,9 +1996,10 @@ var Hud = {
     },
 
     advanceDialogue: function () {
-        if (!this.dialogueOpen()) {
+        if (!this.dialogueOpen() || !this.dialogue || !this.dialogue.pages) {
             return false;
         }
+        /* Last page: Space/click acts as Close. Earlier pages: Continue. */
         if (this.dialogue.index >= this.dialogue.pages.length - 1) {
             this.hideDialogue();
             return true;
@@ -1457,6 +2031,11 @@ var Hud = {
         if (!this.el || !this.el.shop || this.mode !== 'world') {
             return;
         }
+        var hero = this.hero();
+        if (hero && hero.ironman) {
+            this.log('Ironman accounts cannot trade.');
+            return;
+        }
         this.hideContextMenu();
         this.hideWorldMap();
         this.hideDialogue();
@@ -1476,6 +2055,10 @@ var Hud = {
         this.el.shop.hidden = false;
         this.el.shop.setAttribute('data-shop', this.shopKey);
         this.log('Take a look at the wares.');
+        var world = window.game && window.game.scene.getScene('WorldScene');
+        if (world && world.noteTutorial) {
+            world.noteTutorial('shop');
+        }
         this.renderShop();
     },
 
@@ -1494,6 +2077,48 @@ var Hud = {
 
     shopOpen: function () {
         return !!(this.el && this.el.shop && !this.el.shop.hidden);
+    },
+
+    showPlayerTrade: function (def) {
+        var hero = this.hero();
+        if (hero && hero.ironman) {
+            this.log('Ironman accounts cannot trade.');
+            return;
+        }
+        this.showShop(def || { name: 'Trader', shopKey: 'mira' });
+        if (this.el && this.el.shopCopy) {
+            this.el.shopCopy.textContent = 'A travelling trader shows their pack.';
+        }
+        this.log('Trading with ' + ((def && def.name) || 'a trader') + '.');
+    },
+
+    showGrandExchange: function () {
+        var hero = this.hero();
+        if (hero && hero.ironman) {
+            this.log('Ironman accounts cannot use the Grand Exchange.');
+            return;
+        }
+        this.showShop({ name: 'Grand Exchange clerk', shopKey: 'mira' });
+        if (this.el && this.el.shopTitle) {
+            this.el.shopTitle.textContent = 'Grand Exchange';
+        } else if (this.el && this.el.shopSpeaker) {
+            this.el.shopSpeaker.textContent = 'Grand Exchange';
+        }
+        if (this.el && this.el.shopCopy) {
+            this.el.shopCopy.textContent = 'Post buy/sell offers at Mira stock prices.';
+        }
+        this.log('You open the Grand Exchange booth.');
+    },
+
+    renderHiscores: function () {
+        var hero = this.hero();
+        var el = document.getElementById('hiscores-panel');
+        if (!el || !hero) {
+            return;
+        }
+        var kills = hero.hiscores && hero.hiscores.kills != null ? hero.hiscores.kills : 0;
+        var total = typeof skillTotal === 'function' ? skillTotal(hero) : 0;
+        el.textContent = 'Local hiscores — Kills: ' + kills + ', Skill total: ' + total + ', Name: ' + (hero.displayName || 'Adventurer');
     },
 
     renderShop: function () {
@@ -1719,6 +2344,7 @@ var Hud = {
         this.hideDialogue();
         this.hideShop();
         this.hideBank();
+        this.pauseWorldForUi();
         this.stationKind = kind;
         if (this.el.stationTitle) {
             this.el.stationTitle.textContent = this.stationTitleFor(kind);
@@ -1963,14 +2589,47 @@ var Hud = {
         return n;
     },
 
-    chooseContext: function (action) {
+    chooseContext: function (action, lootIndex) {
         var target = this.ctxTarget;
+        var pile = this.ctxLootPile;
         this.hideContextMenu();
         if (this.mode !== 'world' || !target) {
             return;
         }
         var world = window.game && window.game.scene.getScene('WorldScene');
         if (!world || world.encounterLock) {
+            return;
+        }
+        if (action === 'take-loot') {
+            var idx = parseInt(lootIndex, 10);
+            var drop = pile && pile[idx] ? pile[idx] : null;
+            if (drop && world.tryPickup) {
+                world.tryPickup(drop);
+            }
+            return;
+        }
+        if (action === 'take') {
+            if (target.loot && world.tryPickup) {
+                world.tryPickup(target.loot);
+            }
+            return;
+        }
+        if (action === 'talk') {
+            var talkNpc = target.npc || (world.pickSprite && world.pickSprite(world.npcs, target.worldX, target.worldY, 18));
+            if (talkNpc) {
+                world.engageTarget = null;
+                world.talkTarget = talkNpc;
+                world.setWalk(talkNpc.x, talkNpc.y, { allowEnd: true });
+            }
+            return;
+        }
+        if (action === 'attack') {
+            var foe = target.mob || (world.pickSprite && world.pickSprite(world.mobs, target.worldX, target.worldY, 18));
+            if (foe && foe.aliveMob) {
+                world.engageTarget = foe;
+                world.setWalk(foe.x, foe.y, { allowEnd: true });
+                this.log('You target the ' + foe.mobDef.type + '.');
+            }
             return;
         }
         if (action === 'examine') {
@@ -2025,6 +2684,36 @@ var Hud = {
             }
             return;
         }
+        if (action === 'pickpocket') {
+            var pickNpc = target.npc;
+            if (pickNpc && world.tryPickpocket) {
+                world.tryPickpocket(pickNpc);
+            }
+            return;
+        }
+        if (action === 'duel') {
+            var duelNpc = target.npc;
+            if (duelNpc && world.beginFight) {
+                var fake = world.physics.add.sprite(duelNpc.x, duelNpc.y, 'mob-chicken', 0);
+                fake.mobDef = { type: 'Dummy', hp: 18, damage: 2, xp: 6, gold: 0 };
+                fake.aliveMob = true;
+                world.beginFight(fake);
+            }
+            return;
+        }
+        if (action === 'trade-npc') {
+            var trNpc = target.npc;
+            if (trNpc && trNpc.npcDef) {
+                this.showPlayerTrade(trNpc.npcDef);
+            }
+            return;
+        }
+        if (action === 'ge') {
+            if (this.showGrandExchange) {
+                this.showGrandExchange();
+            }
+            return;
+        }
         if (action !== 'walk-here' || !world.setWalk) {
             return;
         }
@@ -2046,6 +2735,9 @@ var Hud = {
         }
         var world = window.game && window.game.scene.getScene('WorldScene');
         if (!world || !world.walkTowardZone || world.encounterLock) {
+            return;
+        }
+        if (this.interactionPaused && this.interactionPaused()) {
             return;
         }
         world.walkTowardZone(zoneId);
@@ -2102,6 +2794,9 @@ var Hud = {
             vue.level = state.level;
             vue.total = total;
             vue.quest = state.quest;
+            if (state.displayName) {
+                vue.displayName = state.displayName;
+            }
         }
         /* Mirror into DOM immediately so suite/live reads do not wait on Vue flush. */
         if (this.el) {
@@ -2195,7 +2890,11 @@ var Hud = {
         this.renderAutoRetaliate(hero);
         this.renderAutoPickup(hero);
         this.renderShiftClickDrop(hero);
+        this.renderHideBones(hero);
+        this.renderPrayers(hero);
         this.renderRun(hero);
+        this.renderSpecialEnergy(hero);
+        this.renderHiscores();
         this.renderCollisionDebug();
         if (this.bankOpen()) {
             this.renderBank();
@@ -2293,23 +2992,91 @@ var Hud = {
         this.paintRunEnergy(energy, 100, on);
     },
 
+    invTooltip: function (id, qty) {
+        var def = ITEM_DB[id] || {};
+        var name = typeof itemName === 'function' ? itemName(id) : (def.name || id);
+        var bits = [name];
+        if (qty > 1) {
+            bits.push('x' + qty);
+        }
+        if (def.heal) {
+            bits.push('heals ' + def.heal);
+        }
+        if (typeof def.value === 'number') {
+            bits.push(def.value + 'gp');
+        }
+        return bits.join(' · ');
+    },
+
     renderInventory: function (hero) {
         var html = '';
         var i;
+        var self = this;
         for (i = 0; i < INVENTORY_CAP; i++) {
             var stack = hero.inventory[i];
             if (stack) {
                 var name = typeof itemName === 'function' ? itemName(stack.id) : ((ITEM_DB[stack.id] && ITEM_DB[stack.id].name) || stack.id);
-                html += '<button type="button" class="inv-slot" data-item="' + stack.id + '" title="' + name + '">' +
+                var tip = this.invTooltip(stack.id, stack.qty);
+                html += '<button type="button" class="inv-slot" draggable="true" data-item="' + stack.id +
+                    '" data-inv-index="' + i + '" title="' + tip + '">' +
                     '<img class="pix" src="' + itemIcon(stack.id) + '" alt="">' +
                     '<span class="inv-name">' + name + '</span>' +
                     (stack.qty > 1 ? '<span class="qty">' + stack.qty + '</span>' : '') +
                     '</button>';
             } else {
-                html += '<div class="inv-slot"></div>';
+                html += '<div class="inv-slot" data-inv-index="' + i + '"></div>';
             }
         }
         this.el.inv.innerHTML = html;
+        if (!this._invDragBound) {
+            this._invDragBound = true;
+            this.el.inv.addEventListener('dragstart', function (event) {
+                var slot = event.target.closest('[data-inv-index]');
+                if (!slot || !slot.getAttribute('data-item')) {
+                    return;
+                }
+                event.dataTransfer.setData('text/inv-index', slot.getAttribute('data-inv-index'));
+            });
+            this.el.inv.addEventListener('dragover', function (event) {
+                event.preventDefault();
+            });
+            this.el.inv.addEventListener('drop', function (event) {
+                var from;
+                var to;
+                var slot;
+                var heroNow;
+                var inv;
+                var moved;
+                event.preventDefault();
+                from = parseInt(event.dataTransfer.getData('text/inv-index'), 10);
+                slot = event.target.closest('[data-inv-index]');
+                if (!slot || !(from >= 0)) {
+                    return;
+                }
+                to = parseInt(slot.getAttribute('data-inv-index'), 10);
+                if (!(to >= 0) || from === to) {
+                    return;
+                }
+                heroNow = self.hero();
+                if (!heroNow || !heroNow.inventory) {
+                    return;
+                }
+                inv = heroNow.inventory;
+                if (from >= inv.length) {
+                    return;
+                }
+                moved = inv.splice(from, 1)[0];
+                if (!moved) {
+                    return;
+                }
+                if (to > inv.length) {
+                    to = inv.length;
+                }
+                inv.splice(to, 0, moved);
+                self.saveHero(heroNow);
+                self.renderInventory(heroNow);
+            });
+        }
     },
 
     renderSkills: function (hero) {
@@ -2446,6 +3213,49 @@ var Hud = {
         }
     },
 
+    toggleFps: function () {
+        var el = document.getElementById('fps-readout');
+        if (!el) {
+            return;
+        }
+        el.hidden = !el.hidden;
+        this._showFps = !el.hidden;
+        this.log('FPS readout ' + (this._showFps ? 'on' : 'off') + '.');
+    },
+
+    applyZoom: function (zoom) {
+        var content = document.getElementById('content');
+        var z = zoom;
+        if (!(z >= 1) || z > 2) {
+            z = 1;
+        }
+        if (content) {
+            content.style.transformOrigin = 'center top';
+            content.style.transform = z === 1 ? '' : ('scale(' + z + ')');
+        }
+        if (window.game && window.game.scale && window.game.scale.refresh) {
+            window.game.scale.refresh();
+        }
+    },
+
+    syncHideBones: function () {
+        this.renderHideBones(this.hero());
+    },
+
+    renderHideBones: function (hero) {
+        var on = !!(hero && hero.hideBones);
+        var vue = this.vueState();
+        if (vue) {
+            vue.hideBonesOn = on;
+            vue.hideBonesLabel = 'Hide bones: ' + (on ? 'On' : 'Off');
+        }
+        var buttons = document.querySelectorAll('[data-hide-bones]');
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].classList.toggle('is-on', on);
+            buttons[i].textContent = 'Hide bones: ' + (on ? 'On' : 'Off');
+        }
+    },
+
     buildMinimap: function () {
         this.el.minimap.innerHTML = '';
         var order = [
@@ -2511,8 +3321,44 @@ var Hud = {
 
     highlightMinimap: function (zoneId) {
         var cells = this.el.minimap.querySelectorAll('.mm-cell');
-        for (var i = 0; i < cells.length; i++) {
+        var world = window.game && window.game.scene.getScene('WorldScene');
+        var i;
+        for (i = 0; i < cells.length; i++) {
             cells[i].classList.toggle('is-here', cells[i].dataset.zone === zoneId);
+            cells[i].querySelectorAll('.mm-dot').forEach(function (dot) {
+                dot.remove();
+            });
+        }
+        if (!world || !world.player || world.zoneId !== zoneId) {
+            return;
+        }
+        var here = this.el.minimap.querySelector('.mm-cell.is-here');
+        if (!here) {
+            return;
+        }
+        function addDot(cls, wx, wy) {
+            var dot = document.createElement('span');
+            var px = Math.max(8, Math.min(92, (wx / (MAP_W * 16)) * 100));
+            var py = Math.max(8, Math.min(92, (wy / (MAP_H * 16)) * 100));
+            dot.className = 'mm-dot ' + cls;
+            dot.style.left = px + '%';
+            dot.style.top = py + '%';
+            here.appendChild(dot);
+        }
+        addDot('is-player', world.player.x, world.player.y);
+        if (world.npcs) {
+            world.npcs.children.iterate(function (npc) {
+                if (npc) {
+                    addDot('is-npc', npc.x, npc.y);
+                }
+            });
+        }
+        if (world.mobs) {
+            world.mobs.children.iterate(function (mob) {
+                if (mob && mob.aliveMob) {
+                    addDot('is-mob', mob.x, mob.y);
+                }
+            });
         }
     },
 
@@ -2562,11 +3408,93 @@ var Hud = {
     },
 
     canBattleAct: function () {
+        if (this.worldCombat) {
+            return true;
+        }
         var battle = this.battle;
         return !!(battle && battle.isPlayerTurn() && battle.waitingForPlayer);
     },
 
+    showOverworldBattle: function (world, mob, fight) {
+        this.hideContextMenu();
+        this.hideWorldMap();
+        this.hideDialogue();
+        this.hideShop();
+        this.hideBank();
+        this.hideStation();
+        this.clearUseOn();
+        this.battle = null;
+        this.worldCombat = { world: world, mob: mob, fight: fight };
+        this.selectingEnemy = false;
+        if (this.el && this.el.battle) {
+            this.el.battle.hidden = false;
+        }
+        this.setMode('battle');
+        this.renderOverworldBattle(fight);
+        this.setActionsEnabled(true);
+        this.battleLog('You enter combat with ' + mob.mobDef.type + '.');
+    },
+
+    hideOverworldBattle: function () {
+        this.worldCombat = null;
+        this.hideBattle();
+    },
+
+    renderOverworldBattle: function (fight) {
+        var mob;
+        if (!this.el || !this.el.enemies || !fight) {
+            return;
+        }
+        mob = fight.mob;
+        this.el.enemies.innerHTML = '';
+        if (!mob) {
+            return;
+        }
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'enemy-btn is-target';
+        btn.textContent = mob.mobDef.type + '  ' + fight.hp + '/' + fight.maxHp;
+        this.el.enemies.appendChild(btn);
+        this.renderHero(this.hero());
+        this.renderSpecialEnergy(this.hero());
+    },
+
+    renderSpecialEnergy: function (hero) {
+        var el = document.getElementById('special-energy');
+        var fill = document.getElementById('special-fill');
+        var pct;
+        if (!el || !fill) {
+            return;
+        }
+        pct = hero && typeof hero.specialEnergy === 'number' ? hero.specialEnergy : 100;
+        fill.style.width = Math.max(0, Math.min(100, pct)) + '%';
+        el.hidden = false;
+    },
+
+    trySpecialAttack: function () {
+        var hero = this.hero();
+        var wc = this.worldCombat;
+        if (!wc || !hero) {
+            return false;
+        }
+        ensureSpecialEnergy(hero);
+        if (hero.specialEnergy < 25) {
+            this.log('You need at least 25% special attack energy.');
+            return false;
+        }
+        hero.specialEnergy -= 25;
+        wc.fight.specialQueued = true;
+        this.saveHero(hero);
+        this.renderSpecialEnergy(hero);
+        wc.world.tickOverworldFight(true);
+        return true;
+    },
+
     tryAttack: function () {
+        if (this.worldCombat) {
+            this.worldCombat.world.tickOverworldFight(true);
+            return;
+        }
         if (!this.canBattleAct()) {
             return;
         }
@@ -2638,6 +3566,9 @@ var Hud = {
         if (on && !this.canBattleAct()) {
             on = false;
         }
+        if (this.worldCombat) {
+            on = true;
+        }
         var buttons = this.el.actions.querySelectorAll('button[data-action]');
         for (var i = 0; i < buttons.length; i++) {
             buttons[i].disabled = !on;
@@ -2649,7 +3580,25 @@ var Hud = {
         this.el.actions.addEventListener('click', function (event) {
             var btn = event.target.closest('[data-action]');
             var action = btn && btn.getAttribute('data-action');
-            if (!action || !self.battle) {
+            if (!action) {
+                return;
+            }
+            if (self.worldCombat) {
+                var world = self.worldCombat.world;
+                if (action === 'attack') {
+                    self.tryAttack();
+                    return;
+                }
+                if (action === 'heal') {
+                    world.tryOverworldEat();
+                    return;
+                }
+                if (action === 'flee') {
+                    world.tryOverworldFlee();
+                }
+                return;
+            }
+            if (!self.battle) {
                 return;
             }
             if (!self.canBattleAct()) {

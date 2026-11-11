@@ -1,0 +1,16 @@
+---
+description: Auto-commit locally after each coherent change set (no push unless asked)
+alwaysApply: true
+---
+
+# Local auto-commit after each change
+
+When you finish a coherent code/docs change in this repo, **create a local git commit** before ending the turn (unless the user said not to commit that change).
+
+## Rules
+
+- Commit only to the local repo; **do not push** unless the user explicitly asks
+- Follow the existing git safety protocol (status/diff/log, HEREDOC message, no `--no-verify`, no amend unless amend rules apply)
+- One commit per logical change when practical; include related files together
+- Never commit secrets (`.env`, credentials, etc.)
+- Testing remains disabled per `no-testing.mdc` — commits are for feature/docs work only
