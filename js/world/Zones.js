@@ -224,51 +224,51 @@ var NPC_DEFS = {
 
 var MOB_DEFS = {
     haven: [
-        { type: 'Chicken', texture: 'mob-chicken', tint: 0xffffff, hp: 12, damage: 3, gold: 1, xp: 4, x: 400, y: 250 },
-        { type: 'Chicken', texture: 'mob-chicken', tint: 0xffffff, hp: 12, damage: 3, gold: 1, xp: 4, x: 420, y: 190 }
+        { type: 'Chicken', texture: 'mob-chicken', tint: 0xffffff, level: 1, hp: 12, damage: 3, gold: 1, xp: 4, x: 400, y: 250 },
+        { type: 'Chicken', texture: 'mob-chicken', tint: 0xffffff, level: 1, hp: 12, damage: 3, gold: 1, xp: 4, x: 420, y: 190 }
     ],
     northwood: [
-        { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, hp: 28, damage: 8, gold: 6, xp: 12, x: 160, y: 120 },
-        { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, hp: 28, damage: 8, gold: 6, xp: 12, x: 300, y: 140 },
-        { type: 'Goblin', texture: 'mob-goblin', tint: 0xbbffbb, hp: 30, damage: 9, gold: 7, xp: 12, x: 400, y: 260 },
-        { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, hp: 28, damage: 8, gold: 6, xp: 12, x: 220, y: 300 }
+        { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, level: 9, hp: 28, damage: 8, gold: 6, xp: 12, x: 160, y: 120 },
+        { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, level: 9, hp: 28, damage: 8, gold: 6, xp: 12, x: 300, y: 140 },
+        { type: 'Goblin', texture: 'mob-goblin', tint: 0xbbffbb, level: 10, hp: 30, damage: 9, gold: 7, xp: 12, x: 400, y: 260 },
+        { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, level: 9, hp: 28, damage: 8, gold: 6, xp: 12, x: 220, y: 300 }
     ],
     highlands: [
-        { type: 'Drake', texture: 'mob-drake', tint: 0xffffff, hp: 48, damage: 13, gold: 18, xp: 28, x: 180, y: 160 },
-        { type: 'Drake', texture: 'mob-drake', tint: 0xffffff, hp: 52, damage: 14, gold: 20, xp: 30, x: 380, y: 220 }
+        { type: 'Drake', texture: 'mob-drake', tint: 0xffffff, level: 28, hp: 48, damage: 13, gold: 18, xp: 28, x: 180, y: 160 },
+        { type: 'Drake', texture: 'mob-drake', tint: 0xffffff, level: 30, hp: 52, damage: 14, gold: 20, xp: 30, x: 380, y: 220 }
     ],
     millfields: [
-        { type: 'Cow', texture: 'mob-cow', tint: 0xffffff, hp: 22, damage: 5, gold: 3, xp: 8, x: 150, y: 200 },
-        { type: 'Cow', texture: 'mob-cow', tint: 0xffffff, hp: 22, damage: 5, gold: 3, xp: 8, x: 300, y: 120 },
-        { type: 'Cow', texture: 'mob-cow', tint: 0xeeddcc, hp: 24, damage: 6, gold: 3, xp: 8, x: 400, y: 260 }
+        { type: 'Cow', texture: 'mob-cow', tint: 0xffffff, level: 3, hp: 22, damage: 5, gold: 3, xp: 8, x: 150, y: 200 },
+        { type: 'Cow', texture: 'mob-cow', tint: 0xffffff, level: 3, hp: 22, damage: 5, gold: 3, xp: 8, x: 300, y: 120 },
+        { type: 'Cow', texture: 'mob-cow', tint: 0xeeddcc, level: 4, hp: 24, damage: 6, gold: 3, xp: 8, x: 400, y: 260 }
     ],
     mire: [
-        { type: 'Slime', texture: 'mob-slime', tint: 0xffffff, hp: 26, damage: 7, gold: 5, xp: 10, x: 160, y: 140 },
-        { type: 'Slime', texture: 'mob-slime', tint: 0x88ffaa, hp: 28, damage: 8, gold: 5, xp: 10, x: 320, y: 200 },
-        { type: 'Slime', texture: 'mob-slime', tint: 0xffffff, hp: 26, damage: 7, gold: 5, xp: 10, x: 420, y: 280 }
+        { type: 'Slime', texture: 'mob-slime', tint: 0xffffff, level: 10, hp: 26, damage: 7, gold: 5, xp: 10, x: 160, y: 140 },
+        { type: 'Slime', texture: 'mob-slime', tint: 0x88ffaa, level: 11, hp: 28, damage: 8, gold: 5, xp: 10, x: 320, y: 200 },
+        { type: 'Slime', texture: 'mob-slime', tint: 0xffffff, level: 10, hp: 26, damage: 7, gold: 5, xp: 10, x: 420, y: 280 }
     ],
     southshore: [
-        { type: 'Crab', texture: 'mob-crab', tint: 0xffffff, hp: 24, damage: 7, gold: 4, xp: 9, x: 140, y: 180 },
-        { type: 'Crab', texture: 'mob-crab', tint: 0xffccaa, hp: 26, damage: 8, gold: 5, xp: 9, x: 280, y: 200 },
-        { type: 'Crab', texture: 'mob-crab', tint: 0xffffff, hp: 24, damage: 7, gold: 4, xp: 9, x: 400, y: 160 }
+        { type: 'Crab', texture: 'mob-crab', tint: 0xffffff, level: 5, hp: 24, damage: 7, gold: 4, xp: 9, x: 140, y: 180 },
+        { type: 'Crab', texture: 'mob-crab', tint: 0xffccaa, level: 6, hp: 26, damage: 8, gold: 5, xp: 9, x: 280, y: 200 },
+        { type: 'Crab', texture: 'mob-crab', tint: 0xffffff, level: 5, hp: 24, damage: 7, gold: 4, xp: 9, x: 400, y: 160 }
     ],
     darkmine: [
-        { type: 'Bat', texture: 'mob-bat', tint: 0xffffff, hp: 20, damage: 8, gold: 4, xp: 10, x: 150, y: 120 },
-        { type: 'Bat', texture: 'mob-bat', tint: 0xffffff, hp: 20, damage: 8, gold: 4, xp: 10, x: 260, y: 180 },
-        { type: 'Bat', texture: 'mob-bat', tint: 0xddbbff, hp: 22, damage: 9, gold: 5, xp: 11, x: 380, y: 240 },
-        { type: 'Bat', texture: 'mob-bat', tint: 0xffffff, hp: 20, damage: 8, gold: 4, xp: 10, x: 200, y: 300 }
+        { type: 'Bat', texture: 'mob-bat', tint: 0xffffff, level: 7, hp: 20, damage: 8, gold: 4, xp: 10, x: 150, y: 120 },
+        { type: 'Bat', texture: 'mob-bat', tint: 0xffffff, level: 7, hp: 20, damage: 8, gold: 4, xp: 10, x: 260, y: 180 },
+        { type: 'Bat', texture: 'mob-bat', tint: 0xddbbff, level: 8, hp: 22, damage: 9, gold: 5, xp: 11, x: 380, y: 240 },
+        { type: 'Bat', texture: 'mob-bat', tint: 0xffffff, level: 7, hp: 20, damage: 8, gold: 4, xp: 10, x: 200, y: 300 }
     ],
     westmead: [
-        { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, hp: 26, damage: 7, gold: 5, xp: 11, x: 180, y: 140 },
-        { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, hp: 26, damage: 8, gold: 5, xp: 11, x: 340, y: 220 },
-        { type: 'Rabbit', texture: 'mob-rabbit', tint: 0xffffff, hp: 10, damage: 2, gold: 1, xp: 5, x: 260, y: 180 },
-        { type: 'Rabbit', texture: 'mob-rabbit', tint: 0xffffff, hp: 10, damage: 2, gold: 1, xp: 5, x: 380, y: 160 },
-        { type: 'Rabbit', texture: 'mob-rabbit', tint: 0xeeddcc, hp: 12, damage: 2, gold: 1, xp: 6, x: 420, y: 280 }
+        { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, level: 8, hp: 26, damage: 7, gold: 5, xp: 11, x: 180, y: 140 },
+        { type: 'Goblin', texture: 'mob-goblin', tint: 0xffffff, level: 9, hp: 26, damage: 8, gold: 5, xp: 11, x: 340, y: 220 },
+        { type: 'Rabbit', texture: 'mob-rabbit', tint: 0xffffff, level: 1, hp: 10, damage: 2, gold: 1, xp: 5, x: 260, y: 180 },
+        { type: 'Rabbit', texture: 'mob-rabbit', tint: 0xffffff, level: 1, hp: 10, damage: 2, gold: 1, xp: 5, x: 380, y: 160 },
+        { type: 'Rabbit', texture: 'mob-rabbit', tint: 0xeeddcc, level: 2, hp: 12, damage: 2, gold: 1, xp: 6, x: 420, y: 280 }
     ],
     graves: [
-        { type: 'Skeleton', texture: 'mob-skeleton', tint: 0xffffff, hp: 34, damage: 10, gold: 8, xp: 16, x: 160, y: 150 },
-        { type: 'Skeleton', texture: 'mob-skeleton', tint: 0xffffff, hp: 36, damage: 11, gold: 9, xp: 16, x: 300, y: 210 },
-        { type: 'Skeleton', texture: 'mob-skeleton', tint: 0xeeeeff, hp: 34, damage: 10, gold: 8, xp: 16, x: 400, y: 120 }
+        { type: 'Skeleton', texture: 'mob-skeleton', tint: 0xffffff, level: 14, hp: 34, damage: 10, gold: 8, xp: 16, x: 160, y: 150 },
+        { type: 'Skeleton', texture: 'mob-skeleton', tint: 0xffffff, level: 15, hp: 36, damage: 11, gold: 9, xp: 16, x: 300, y: 210 },
+        { type: 'Skeleton', texture: 'mob-skeleton', tint: 0xeeeeff, level: 14, hp: 34, damage: 10, gold: 8, xp: 16, x: 400, y: 120 }
     ]
 };
 

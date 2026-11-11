@@ -691,10 +691,10 @@ function generateDungeonFloor(floor) {
 function dungeonMobDefsForFloor(floor) {
     var scale = dungeonFloorScale(floor);
     var templates = [
-        { type: 'Bat', texture: 'mob-bat', hp: 20, damage: 8, gold: 4, xp: 10 },
-        { type: 'Goblin', texture: 'mob-goblin', hp: 28, damage: 8, gold: 6, xp: 12 },
-        { type: 'Skeleton', texture: 'mob-skeleton', hp: 34, damage: 10, gold: 8, xp: 16 },
-        { type: 'Slime', texture: 'mob-slime', hp: 26, damage: 7, gold: 5, xp: 10 }
+        { type: 'Bat', texture: 'mob-bat', level: 7, hp: 20, damage: 8, gold: 4, xp: 10 },
+        { type: 'Goblin', texture: 'mob-goblin', level: 9, hp: 28, damage: 8, gold: 6, xp: 12 },
+        { type: 'Skeleton', texture: 'mob-skeleton', level: 14, hp: 34, damage: 10, gold: 8, xp: 16 },
+        { type: 'Slime', texture: 'mob-slime', level: 10, hp: 26, damage: 7, gold: 5, xp: 10 }
     ];
     var spots = [
         { x: 200, y: 180 },
@@ -709,15 +709,20 @@ function dungeonMobDefsForFloor(floor) {
     var i;
     var base;
     var def;
+    var baseLevel;
     if (floor >= 8) {
-        templates.push({ type: 'Drake', texture: 'mob-drake', hp: 48, damage: 13, gold: 18, xp: 28 });
+        templates.push({ type: 'Drake', texture: 'mob-drake', level: 28, hp: 48, damage: 13, gold: 18, xp: 28 });
     }
     for (i = 0; i < count; i++) {
         base = templates[(floor + i * 3) % templates.length];
+        baseLevel = typeof base.level === 'number'
+            ? base.level
+            : (typeof MOB_BASE_LEVEL !== 'undefined' && MOB_BASE_LEVEL[base.type]) || 5;
         def = {
             type: base.type,
             texture: base.texture,
             tint: 0xffffff,
+            level: Math.max(1, Math.round(baseLevel * scale) + Math.max(0, floor - 1)),
             hp: Math.max(1, Math.round(base.hp * scale)),
             damage: Math.max(1, Math.round(base.damage * scale)),
             gold: Math.max(1, Math.round(base.gold * scale)),

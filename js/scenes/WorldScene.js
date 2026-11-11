@@ -869,9 +869,13 @@ var WorldScene = new Phaser.Class({
             if (typeof mobCombatClass === 'function') {
                 sprite.mobDef.combatClass = mobCombatClass(sprite.mobDef);
             }
+            if (typeof mobLevel === 'function' && typeof sprite.mobDef.level !== 'number') {
+                sprite.mobDef.level = mobLevel(sprite.mobDef);
+            }
             sprite.aliveMob = true;
             sprite.respawnAt = 0;
-            var label = self.add.text(def.x, def.y - Math.round(8 * scale) - 6, def.type, {
+            var label = self.add.text(def.x, def.y - Math.round(8 * scale) - 6,
+                typeof mobLabelText === 'function' ? mobLabelText(sprite.mobDef) : def.type, {
                 fontSize: '8px',
                 fontFamily: 'Verdana, Geneva, sans-serif',
                 color: '#ffb0a0',
@@ -998,12 +1002,16 @@ var WorldScene = new Phaser.Class({
             if (typeof mobCombatClass === 'function') {
                 sprite.mobDef.combatClass = mobCombatClass(sprite.mobDef);
             }
+            if (typeof mobLevel === 'function' && typeof sprite.mobDef.level !== 'number') {
+                sprite.mobDef.level = mobLevel(sprite.mobDef);
+            }
             sprite.aliveMob = true;
             sprite.respawnAt = 0;
             if (isGiantMob(def.type)) {
                 self.physics.add.collider(self.player, sprite);
             }
-            var label = self.add.text(def.x, def.y - Math.round(8 * scale) - 6, def.type, {
+            var label = self.add.text(def.x, def.y - Math.round(8 * scale) - 6,
+                typeof mobLabelText === 'function' ? mobLabelText(sprite.mobDef) : def.type, {
                 fontSize: '8px',
                 fontFamily: 'Verdana, Geneva, sans-serif',
                 color: '#ffb0a0',
@@ -1210,6 +1218,9 @@ var WorldScene = new Phaser.Class({
             mob.body.enable = true;
         }
         if (mob.nameLabel) {
+            if (typeof mobLabelText === 'function') {
+                mob.nameLabel.setText(mobLabelText(mob.mobDef));
+            }
             mob.nameLabel.setVisible(true);
         }
     },
@@ -4072,20 +4083,28 @@ var WorldScene = new Phaser.Class({
         return true;
     },
 
-    beginFight: function (mob) {
+    beginFight: function (mob, opts) {
         var range;
         var dist;
+        opts = opts || {};
         if (this.uiPaused()) {
             return;
         }
         if (this.encounterLock || !mob || !mob.aliveMob) {
             return;
         }
-        range = this.heroEngageRangePx();
         dist = this.fightDistancePx(mob);
-        if (dist > range) {
-            this.queueAttack(mob);
-            return;
+        if (opts.fromMob) {
+            range = typeof mobAttackRangePx === 'function' ? mobAttackRangePx(mob) : MELEE_ENGAGE_PX;
+            if (dist > range) {
+                return;
+            }
+        } else {
+            range = this.heroEngageRangePx();
+            if (dist > range) {
+                this.queueAttack(mob);
+                return;
+            }
         }
         this.lootTarget = null;
         this.engageTarget = null;
@@ -4589,7 +4608,7 @@ var WorldScene = new Phaser.Class({
             if (!mob || !mob.aliveMob || !mob.body) {
                 return;
             }
-            if (mob === fightMob) {
+            if (mob === fightMob || mob.agroChasing) {
                 return;
             }
             if (Phaser.Math.Between(0, 80) !== 0) {
@@ -4602,6 +4621,63 @@ var WorldScene = new Phaser.Class({
                 return;
             }
             mob.body.setVelocity(vx, vy);
+        });
+    },
+
+    tickMobAgro: function () {
+        var hero;
+        var fightMob;
+        var self = this;
+        var agroRange;
+        var attackRange;
+        var dist;
+        var speed;
+        var dx;
+        var dy;
+        var len;
+        var started = false;
+        if (!this.player || !this.player.body || this.uiPaused()) {
+            return;
+        }
+        if (this.encounterLock || this.time.now < this.engageGrace) {
+            return;
+        }
+        hero = this.registry.get('hero');
+        fightMob = this.overworldFight && this.overworldFight.mob;
+        agroRange = typeof MOB_AGGRO_RANGE_PX === 'number' ? MOB_AGGRO_RANGE_PX : 112;
+        speed = typeof MOB_CHASE_SPEED === 'number' ? MOB_CHASE_SPEED : 78;
+        this.mobs.children.iterate(function (mob) {
+            var shouldAgro;
+            if (started || !mob || !mob.aliveMob || !mob.body || mob === fightMob) {
+                if (mob) {
+                    mob.agroChasing = false;
+                }
+                return;
+            }
+            shouldAgro = typeof mobShouldAgroHero === 'function'
+                ? mobShouldAgroHero(mob.mobDef, hero)
+                : false;
+            if (!shouldAgro) {
+                mob.agroChasing = false;
+                return;
+            }
+            dist = self.fightDistancePx(mob);
+            attackRange = typeof mobAttackRangePx === 'function' ? mobAttackRangePx(mob) : MELEE_ENGAGE_PX;
+            if (dist > agroRange) {
+                mob.agroChasing = false;
+                return;
+            }
+            mob.agroChasing = true;
+            if (dist <= attackRange) {
+                mob.body.setVelocity(0, 0);
+                self.beginFight(mob, { fromMob: true });
+                started = true;
+                return;
+            }
+            dx = self.player.x - mob.x;
+            dy = self.player.y - mob.y;
+            len = dist || 1;
+            mob.body.setVelocity((dx / len) * speed, (dy / len) * speed);
         });
     },
 
@@ -5084,6 +5160,7 @@ var WorldScene = new Phaser.Class({
 
         this.closeDialogueIfAway();
 
+        this.tickMobAgro();
         this.wanderMobs();
         this.wanderNpcs();
         if (this.overworldFight) {

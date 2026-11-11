@@ -2,6 +2,19 @@ var OW_COMBAT_TICK_MS = 600;
 var POISON_MOB_TYPES = { Slime: true, Skeleton: true, Drake: true };
 var COMBAT_POISON_CHANCE = 35;
 var MOB_CHASE_SPEED = 78;
+/* Detection radius for mob-initiated agro (chase / open fight). */
+var MOB_AGGRO_RANGE_PX = 112;
+var MOB_BASE_LEVEL = {
+    Chicken: 1,
+    Rabbit: 1,
+    Cow: 3,
+    Crab: 5,
+    Bat: 7,
+    Goblin: 9,
+    Slime: 10,
+    Skeleton: 14,
+    Drake: 28
+};
 var MOB_TYPE_ATTACK_RANGE = {
     Chicken: 22,
     Rabbit: 20,
@@ -13,6 +26,51 @@ var MOB_TYPE_ATTACK_RANGE = {
     Slime: 72,
     Drake: 100
 };
+
+function mobLevel(def) {
+    var type;
+    if (!def) {
+        return 1;
+    }
+    if (typeof def.level === 'number' && def.level > 0) {
+        return Math.floor(def.level);
+    }
+    type = def.type;
+    if (type && MOB_BASE_LEVEL[type] != null) {
+        return MOB_BASE_LEVEL[type];
+    }
+    return 1;
+}
+
+function mobAlwaysAgro(def) {
+    return !!(def && (def.alwaysAgro || def.alwaysAggro));
+}
+
+function heroCombatLevelForAgro(hero) {
+    if (!hero) {
+        return 1;
+    }
+    if (typeof combatLevel === 'function') {
+        return Math.max(1, combatLevel(hero) | 0);
+    }
+    if (typeof hero.level === 'number' && hero.level > 0) {
+        return Math.floor(hero.level);
+    }
+    return 1;
+}
+
+/* Mob initiates on the player only if alwaysAgro, or mob level is strictly higher. */
+function mobShouldAgroHero(def, hero) {
+    if (mobAlwaysAgro(def)) {
+        return true;
+    }
+    return mobLevel(def) > heroCombatLevelForAgro(hero);
+}
+
+function mobLabelText(def) {
+    var type = (def && def.type) || 'Foe';
+    return type + ' (Lvl ' + mobLevel(def) + ')';
+}
 
 function mobAttackRangePx(mob) {
     var def = mob && (mob.mobDef || mob);
