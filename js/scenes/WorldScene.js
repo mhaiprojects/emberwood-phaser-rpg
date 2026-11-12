@@ -3499,6 +3499,7 @@ var WorldScene = new Phaser.Class({
             return false;
         }
         if (!hit || hit.kind !== 'fishspot') {
+            this.clearFish();
             return false;
         }
         if (this.fishAction) {
@@ -3507,6 +3508,7 @@ var WorldScene = new Phaser.Class({
         hero = this.registry.get('hero');
         if (typeof hasTool === 'function' && typeof FISH_NET_ID !== 'undefined' && !hasTool(hero, FISH_NET_ID)) {
             Hud.log('You need a fishing net.');
+            this.clearFish();
             return false;
         }
         this.player.body.setVelocity(0);
