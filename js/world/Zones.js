@@ -337,7 +337,81 @@ function mobStatsFor(type, level) {
     return { hp: 12 + lv, damage: 3 + Math.floor(lv / 2), gold: 2, xp: 4 + lv };
 }
 
-/* Spread spawn tiles inside the 2-tile mob edge inset (tx 2..33, ty 2..25). */
+/*
+ * Combat-tier spawn pyramid (highest → lowest).
+ * Base count per type = 1 + stepsBelowDragon (Dragon=1, Drake=2, … Chicken=10).
+ * Final overworld count ≈ max(1, round(pyramidBase * mobSpawnModifier)).
+ */
+var MOB_TIER_ORDER = [
+    'Dragon', 'Drake', 'Skeleton', 'Slime', 'Goblin',
+    'Bat', 'Crab', 'Cow', 'Rabbit', 'Chicken'
+];
+/** Default global multiplier; hero.mobSpawnModifier overrides when set. */
+var MOB_SPAWN_MODIFIER = 1.0;
+var MOB_SPAWN_MODIFIER_OPTIONS = [0.5, 1, 1.5, 2];
+/** Pool capacity for Settings max (2×) so runtime can slice without regenerating tiles. */
+var MOB_SPAWN_POOL_MODIFIER = 2;
+
+function pyramidBaseCount(type) {
+    var idx = MOB_TIER_ORDER.indexOf(type);
+    if (idx < 0) {
+        idx = MOB_TIER_ORDER.length - 1;
+    }
+    return 1 + idx;
+}
+
+function mobSpawnModifierValue(hero) {
+    var v = hero && typeof hero.mobSpawnModifier === 'number'
+        ? hero.mobSpawnModifier
+        : MOB_SPAWN_MODIFIER;
+    if (!(v > 0)) {
+        v = MOB_SPAWN_MODIFIER;
+    }
+    return v;
+}
+
+function scaledMobSpawnCount(type, modifier) {
+    var base = pyramidBaseCount(type);
+    var mod = typeof modifier === 'number' && modifier > 0 ? modifier : MOB_SPAWN_MODIFIER;
+    if (base < 1) {
+        return 0;
+    }
+    return Math.max(1, Math.round(base * mod));
+}
+
+/** Fill short hand-authored pools with deterministic inset tiles (tx 2..33, ty 2..25). */
+function expandMobSpotPool(pool, need) {
+    var out = (pool && pool.length) ? pool.slice() : [];
+    var margin = typeof MOB_EDGE_MARGIN_TILES === 'number' ? MOB_EDGE_MARGIN_TILES : 2;
+    var mw = typeof MAP_W === 'number' ? MAP_W : 36;
+    var mh = typeof MAP_H === 'number' ? MAP_H : 28;
+    var innerW = Math.max(1, mw - margin * 2);
+    var innerH = Math.max(1, mh - margin * 2);
+    var i;
+    var tx;
+    var ty;
+    var key;
+    var seen = {};
+    for (i = 0; i < out.length; i++) {
+        seen[out[i][0] + ',' + out[i][1]] = true;
+    }
+    i = 0;
+    while (out.length < need && i < need * 40) {
+        tx = margin + ((i * 7 + 3) % innerW);
+        ty = margin + ((i * 11 + 5) % innerH);
+        key = tx + ',' + ty;
+        i += 1;
+        if (seen[key]) {
+            continue;
+        }
+        seen[key] = true;
+        out.push([tx, ty]);
+    }
+    return out.slice(0, need);
+}
+
+/* Spread spawn tiles inside the 2-tile mob edge inset (tx 2..33, ty 2..25).
+ * Builds a pool sized for MOB_SPAWN_POOL_MODIFIER; runtime slices via mobDefsForZone. */
 function buildBandMobs(zoneId, type, texture, spots, extras) {
     var out = [];
     var i;
@@ -346,13 +420,15 @@ function buildBandMobs(zoneId, type, texture, spots, extras) {
     var center;
     var def;
     var tintCycle = (extras && extras.tints) || [0xffffff];
-    for (i = 0; i < spots.length; i++) {
+    var poolNeed = scaledMobSpawnCount(type, MOB_SPAWN_POOL_MODIFIER);
+    var useSpots = expandMobSpotPool(spots || [], poolNeed);
+    for (i = 0; i < useSpots.length; i++) {
         level = zoneBandLevel(zoneId, i);
         if (extras && typeof extras.levelFor === 'function') {
             level = extras.levelFor(i, level);
         }
         stats = mobStatsFor(type, level);
-        center = tileCenter(spots[i][0], spots[i][1]);
+        center = tileCenter(useSpots[i][0], useSpots[i][1]);
         def = {
             type: type,
             texture: texture,
@@ -381,8 +457,44 @@ function buildBandMobs(zoneId, type, texture, spots, extras) {
     return out;
 }
 
+/**
+ * Overworld defs for a zone after applying the global spawn modifier.
+ * Counts are per mob type (not a shared zone total): max(1, round(pyramidBase * mod)).
+ */
+function mobDefsForZone(zoneId, hero) {
+    var all = MOB_DEFS[zoneId] || [];
+    var mod = mobSpawnModifierValue(hero);
+    var byType = {};
+    var order = [];
+    var out = [];
+    var i;
+    var def;
+    var type;
+    var keep;
+    var list;
+    for (i = 0; i < all.length; i++) {
+        def = all[i];
+        type = def && def.type;
+        if (!type) {
+            continue;
+        }
+        if (!byType[type]) {
+            byType[type] = [];
+            order.push(type);
+        }
+        byType[type].push(def);
+    }
+    for (i = 0; i < order.length; i++) {
+        type = order[i];
+        keep = scaledMobSpawnCount(type, mod);
+        list = byType[type];
+        out = out.concat(list.slice(0, Math.min(keep, list.length)));
+    }
+    return out;
+}
+
 var MOB_DEFS = {
-    /* Band 1–5 — starter wilds; lean high counts. */
+    /* Band 1–5 — starter wilds; pyramid → Chicken 10, Cow 8, Rabbit 9, Goblin 5 @ 1×. */
     haven: buildBandMobs('haven', 'Chicken', 'mob-chicken', [
         [24, 14], [26, 11], [28, 13], [30, 10], [25, 17], [27, 16], [29, 18], [22, 12],
         [31, 15], [23, 19], [26, 20], [28, 9], [21, 15], [30, 19], [24, 8], [27, 14],
@@ -395,10 +507,12 @@ var MOB_DEFS = {
     ], { tints: [0xffffff, 0xffffff, 0xeeddcc] }),
     westmead: buildBandMobs('westmead', 'Rabbit', 'mob-rabbit', [
         [10, 10], [14, 8], [18, 11], [22, 9], [26, 12], [30, 10], [28, 16], [24, 18],
-        [20, 20], [16, 17], [12, 15], [8, 18]
+        [20, 20], [16, 17], [12, 15], [8, 18], [11, 20], [15, 14], [19, 9], [23, 16],
+        [27, 11], [29, 19]
     ], { tints: [0xffffff, 0xffffff, 0xeeddcc] }).concat(
         buildBandMobs('westmead', 'Goblin', 'mob-goblin', [
-            [9, 13], [15, 12], [21, 14], [27, 13], [25, 20], [17, 8]
+            [9, 13], [15, 12], [21, 14], [27, 13], [25, 20], [17, 8],
+            [12, 19], [19, 16], [23, 10], [30, 17]
         ], {
             levelFor: function (i, bandLevel) {
                 /* Soft starter goblins: upper half of the 1–5 band. */
@@ -434,7 +548,7 @@ var MOB_DEFS = {
         [8, 8], [12, 11], [16, 9], [20, 12], [24, 10], [28, 13], [31, 16], [26, 18],
         [22, 20], [18, 17], [14, 19], [10, 15], [17, 14], [25, 15]
     ], { tints: [0xffffff, 0xffffff, 0xddbbff, 0xffffff] }),
-    /* Band 51–55 — den stays sparse; alwaysAgro kept. */
+    /* Band 51–55 — den stays sparse; alwaysAgro kept. Dragon pyramid base = 1. */
     dragonden: buildBandMobs('dragonden', 'Dragon', 'mob-drake', [
         [12, 10], [20, 12], [28, 14], [18, 18]
     ], {

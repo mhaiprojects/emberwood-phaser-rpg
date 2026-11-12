@@ -1087,6 +1087,7 @@ var WorldScene = new Phaser.Class({
 
     spawnPeople: function (zoneId) {
         var self = this;
+        var hero = this.registry.get('hero');
         (NPC_DEFS[zoneId] || []).forEach(function (def, index) {
             var sprite = self.npcs.create(def.x, def.y, def.texture || ('npc-' + def.key));
             if (def.tint && def.tint !== 0xffffff && !isUniqueMobTexture(def.texture || ('npc-' + def.key))) {
@@ -1121,7 +1122,9 @@ var WorldScene = new Phaser.Class({
         this.assertNpcSpawnSafety(zoneId);
         this.refreshQuestIcons();
 
-        (MOB_DEFS[zoneId] || []).forEach(function (def, index) {
+        (typeof mobDefsForZone === 'function'
+            ? mobDefsForZone(zoneId, hero)
+            : (MOB_DEFS[zoneId] || [])).forEach(function (def, index) {
             var sprite = self.physics.add.sprite(def.x, def.y, def.texture, def.frame || 0);
             self.mobs.add(sprite);
             if (def.tint && def.tint !== 0xffffff && !isUniqueMobTexture(def.texture)) {

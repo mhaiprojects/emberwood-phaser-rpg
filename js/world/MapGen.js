@@ -758,9 +758,20 @@ function dungeonMobDefsForFloor(floor) {
         { x: 340, y: 160 },
         { x: 240, y: 240 },
         { x: 300, y: 260 },
-        { x: 160, y: 220 }
+        { x: 160, y: 220 },
+        { x: 220, y: 150 },
+        { x: 320, y: 230 },
+        { x: 180, y: 190 },
+        { x: 260, y: 170 },
+        { x: 310, y: 210 },
+        { x: 190, y: 250 }
     ];
-    var count = Math.min(spots.length, 3 + Math.min(3, Math.floor((n - 1) / 4)));
+    var floorCount = 3 + Math.min(3, Math.floor((n - 1) / 4));
+    var hero = (typeof Hud !== 'undefined' && Hud.hero) ? Hud.hero() : null;
+    var mod = typeof mobSpawnModifierValue === 'function'
+        ? mobSpawnModifierValue(hero)
+        : (typeof MOB_SPAWN_MODIFIER === 'number' ? MOB_SPAWN_MODIFIER : 1);
+    var count = Math.min(spots.length, Math.max(1, Math.round(floorCount * mod)));
     var out = [];
     var i;
     var base;

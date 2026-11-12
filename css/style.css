@@ -373,7 +373,8 @@ img.pix {
 .auto-pickup-btn.is-on,
 .shift-click-drop-btn.is-on,
 .run-mode-btn.is-on,
-.collision-debug-btn.is-on {
+.collision-debug-btn.is-on,
+.mob-spawn-mod-btn.is-on {
     background: #7a623e;
 }
 
@@ -384,6 +385,17 @@ img.pix {
 .run-mode-btn,
 .collision-debug-btn {
     margin-top: 8px;
+}
+
+.mob-spawn-mod-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.mob-spawn-mod-btn {
+    min-width: 3.2em;
 }
 
 .tab-panel[hidden] {

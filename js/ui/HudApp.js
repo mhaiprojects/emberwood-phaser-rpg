@@ -56,6 +56,8 @@ var HudApp = {
             combatVisualsOn: true,
             rangeRingsLabel: 'Show range rings: On',
             rangeRingsOn: true,
+            mobSpawnModifier: 1,
+            mobSpawnModifierLabel: 'Mob spawn: 1×',
             runLabel: 'Run: Off',
             collisionDebugLabel: 'Collision debug: Off',
             collisionDebugOn: false,

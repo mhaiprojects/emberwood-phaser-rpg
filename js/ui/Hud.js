@@ -406,6 +406,28 @@ var Hud = {
             }
         });
         document.addEventListener('click', function (event) {
+            var btn = event.target.closest('[data-mob-spawn-mod]');
+            var raw;
+            var value;
+            var hero;
+            if (!btn) {
+                return;
+            }
+            hero = self.hero();
+            if (!hero) {
+                return;
+            }
+            raw = btn.getAttribute('data-mob-spawn-mod');
+            value = parseFloat(raw);
+            if (!(value > 0)) {
+                return;
+            }
+            hero.mobSpawnModifier = value;
+            self.saveHero(hero);
+            self.renderMobSpawnModifier(hero);
+            self.log('Mob spawn density ' + value + '× (applies on next zone enter).');
+        });
+        document.addEventListener('click', function (event) {
             var btn = event.target.closest('[data-prayer]');
             var id = btn && btn.getAttribute('data-prayer');
             if (!id) {
@@ -3386,6 +3408,7 @@ var Hud = {
         this.renderHideBones(hero);
         this.renderCombatVisuals(hero);
         this.renderRangeRings(hero);
+        this.renderMobSpawnModifier(hero);
         this.renderPrayers(hero);
         this.renderRun(hero);
         this.renderSpecialEnergy(hero);
@@ -3805,6 +3828,28 @@ var Hud = {
         for (var i = 0; i < buttons.length; i++) {
             buttons[i].classList.toggle('is-on', on);
             buttons[i].textContent = 'Show range rings: ' + (on ? 'On' : 'Off');
+        }
+    },
+
+    renderMobSpawnModifier: function (hero) {
+        var value = typeof mobSpawnModifierValue === 'function'
+            ? mobSpawnModifierValue(hero)
+            : (hero && typeof hero.mobSpawnModifier === 'number' && hero.mobSpawnModifier > 0
+                ? hero.mobSpawnModifier
+                : 1);
+        var label = 'Mob spawn: ' + value + '×';
+        var vue = this.vueState();
+        var buttons;
+        var i;
+        var btnVal;
+        if (vue) {
+            vue.mobSpawnModifier = value;
+            vue.mobSpawnModifierLabel = label;
+        }
+        buttons = document.querySelectorAll('[data-mob-spawn-mod]');
+        for (i = 0; i < buttons.length; i++) {
+            btnVal = parseFloat(buttons[i].getAttribute('data-mob-spawn-mod'));
+            buttons[i].classList.toggle('is-on', btnVal === value);
         }
     },
 

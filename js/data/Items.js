@@ -621,6 +621,7 @@ function makeHero() {
         hideBones: false,
         showCombatVisuals: true,
         showRangeRings: true,
+        mobSpawnModifier: typeof MOB_SPAWN_MODIFIER === 'number' ? MOB_SPAWN_MODIFIER : 1,
         displayName: 'Adventurer',
         ironman: false,
         prayerPoints: 1,
@@ -2827,6 +2828,9 @@ function normalizeHeroCombat(hero) {
     }
     if (typeof hero.showRangeRings !== 'boolean') {
         hero.showRangeRings = true;
+    }
+    if (typeof hero.mobSpawnModifier !== 'number' || !(hero.mobSpawnModifier > 0)) {
+        hero.mobSpawnModifier = typeof MOB_SPAWN_MODIFIER === 'number' ? MOB_SPAWN_MODIFIER : 1;
     }
     if (hero.autoAttack == null) {
         hero.autoAttack = false;
