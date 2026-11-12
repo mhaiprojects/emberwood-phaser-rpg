@@ -23,10 +23,10 @@ var BootScene = new Phaser.Class({
         this.load.image('npc', 'assets/npc.png');
 
         var self = this;
-        ['chicken', 'goblin', 'cow', 'slime', 'crab', 'bat', 'skeleton', 'drake', 'rabbit'].forEach(function (name) {
+        ['chicken', 'goblin', 'cow', 'slime', 'crab', 'bat', 'skeleton', 'drake', 'dragon', 'rabbit'].forEach(function (name) {
             self.load.svg('mob-' + name, 'assets/svg/mobs/' + name + '.svg');
         });
-        ['guild', 'banker', 'guard', 'ranger', 'farmer', 'fisher', 'wanderer', 'ghost', 'miner', 'hermit', 'witch', 'cook', 'priest', 'shopkeeper'].forEach(function (name) {
+        ['guild', 'banker', 'guard', 'ranger', 'farmer', 'fisher', 'wanderer', 'ghost', 'miner', 'hermit', 'witch', 'cook', 'priest', 'shopkeeper', 'dummy', 'arms'].forEach(function (name) {
             self.load.svg('npc-' + name, 'assets/svg/npcs/' + name + '.svg');
         });
         /* Ground loot textures: one Phaser key per inventory icon SVG (ITEM_DB.icon). */

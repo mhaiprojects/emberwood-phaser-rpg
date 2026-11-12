@@ -213,9 +213,9 @@ var NPC_DEFS = {
         /* South of shop stall */
         { key: 'shopkeep', name: 'Shopkeeper Mira', x: 264, y: 216, tint: 0xffffff, texture: 'npc-shopkeeper', options: ['talk', 'trade'], shopKey: 'mira', examine: 'The town shopkeeper. She minds the courtyard stall.', lines: ['Take a look at the wares.', 'Bones and spare food fetch a price.'] },
         /* SE training pad */
-        { key: 'dummy', name: 'Training dummy', x: 360, y: 296, tint: 0xcccccc, texture: 'npc-guard', options: ['talk', 'duel'], examine: 'A straw-filled training dummy for duels.', lines: ['Up for a practice duel?', 'No loot, just honour.'] },
+        { key: 'dummy', name: 'Training dummy', x: 360, y: 296, tint: 0xffffff, texture: 'npc-dummy', options: ['talk', 'duel'], examine: 'A straw-filled training dummy for duels.', lines: ['Up for a practice duel?', 'No loot, just honour.'] },
         /* By GE / arms stall */
-        { key: 'arms', name: 'Armsman Cole', x: 328, y: 200, tint: 0xffffff, texture: 'npc-guard', options: ['talk', 'trade'], shopKey: 'arms', examine: 'A weapons stall keeper. Oil stains his gloves.', lines: ['Blades, bows, and staves, if you have the coin.', 'Take a look at the wares.', 'A copper bow trains Ranged; a staff needs Air runes for Air Strike.'] },
+        { key: 'arms', name: 'Armsman Cole', x: 328, y: 200, tint: 0xffffff, texture: 'npc-arms', options: ['talk', 'trade'], shopKey: 'arms', examine: 'A weapons stall keeper. Oil stains his gloves.', lines: ['Blades, bows, and staves, if you have the coin.', 'Take a look at the wares.', 'A copper bow trains Ranged; a staff needs Air runes for Air Strike.'] },
         /* South of courtyard house / near range approach */
         { key: 'cook', name: 'Cook Pell', x: 296, y: 328, tint: 0xffffff, options: ['talk'], tutor: 'firemaking', examine: 'The town cook. Flour dusts her sleeves and a ladle never leaves her hand.', lines: ['Take this tinderbox.', 'Use it on logs to light a fire on open ground.', 'Cook raw food on that fire or the town range.', 'If you burn a meal it is ruined — nothing left to keep.'] },
         /* West courtyard */
@@ -389,13 +389,13 @@ var ZONE_MOB_ROSTER = {
         band: [60, 60],
         mobs: [{
             type: 'Dragon',
-            texture: 'mob-drake',
+            texture: 'mob-dragon',
             spots: [
                 [12, 10], [20, 12], [28, 14], [18, 18]
             ],
             extras: {
                 alwaysAgro: true,
-                tints: [0xff6644, 0xff4422, 0xdd2200, 0xff5533],
+                tints: [0xffffff, 0xffffff, 0xffffff, 0xffffff],
                 levelFor: function () {
                     return 60;
                 },

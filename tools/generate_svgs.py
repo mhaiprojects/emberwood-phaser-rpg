@@ -1565,28 +1565,58 @@ def skill_icons():
 
 
 def main():
+    from item_icon_variants import expand_items, extra_mobs, extra_npcs
+
     os.makedirs(SVG, exist_ok=True)
-    for name, rows in MOBS.items():
+    mobs = dict(MOBS)
+    mobs.update(extra_mobs())
+    npcs = dict(NPCS)
+    npcs.update(extra_npcs())
+    items = expand_items(ITEMS)
+    # Template-only keys used while deriving variants — do not ship as orphan icons.
+    for template_only in ("sword", "shortbow", "arrow"):
+        items.pop(template_only, None)
+
+    for name, rows in mobs.items():
         save_pixels(os.path.join("mobs", name + ".svg"), rows)
-    for name, rows in NPCS.items():
+    for name, rows in npcs.items():
         save_pixels(os.path.join("npcs", name + ".svg"), rows)
-    for name, rows in ITEMS.items():
+    for name, rows in items.items():
         save_pixels(os.path.join("items", name + ".svg"), rows)
     for name, xml in ui_icons().items():
         write(os.path.join("ui", name + ".svg"), xml)
     for name, xml in skill_icons().items():
         write(os.path.join("skills", name + ".svg"), xml)
 
+    # Drop legacy unused item SVGs that are no longer generated.
+    dead_item_svgs = (
+        "burntshrimp.svg",
+        "burntbeef.svg",
+        "tin.svg",
+        "naturerune.svg",
+        "mindrune.svg",
+        "bronzebar.svg",
+        "bronzeaxe.svg",
+        "bronzepick.svg",
+        "bronzedagger.svg",
+    )
+    items_dir = os.path.join(SVG, "items")
+    for name in dead_item_svgs:
+        path = os.path.join(items_dir, name)
+        if os.path.isfile(path):
+            os.remove(path)
+
     manifest = {
-        "mobs": sorted(MOBS),
-        "npcs": sorted(NPCS),
-        "items": sorted(ITEMS),
+        "mobs": sorted(mobs),
+        "npcs": sorted(npcs),
+        "items": sorted(items),
         "ui": sorted(ui_icons()),
         "skills": sorted(skill_icons()),
         "license": "Original Emberwood artwork. CC0-1.0.",
     }
     write("manifest.json", json.dumps(manifest, indent=2) + "\n")
     print("Wrote SVGs to", SVG)
+    print("items=%d mobs=%d npcs=%d" % (len(items), len(mobs), len(npcs)))
 
 
 if __name__ == "__main__":

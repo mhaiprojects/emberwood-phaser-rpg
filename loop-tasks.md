@@ -33,6 +33,7 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 
 Active queue — implement top-down before returning to sections 1–14.
 
+- [done] Remove deleted-content items; unique SVG/texture per remaining live ITEM_DB id + distinct dummy/arms/dragon/goblin battle art. — Conclusion: Dropped shipcrate (+ burnt/tin/nature/mind/bronze* SVGs); 114 live ids each own SVG; dragon/dummy/arms textures; battle Goblin→mob-goblin.
 - [done] Add Settings XP multipliers 50× / 100× / 200× (extend existing XP rate options). — Conclusion: Options now 1/2/5/10/25/50/100/200× via `XP_MULTIPLIER_OPTIONS` + Settings buttons; still through `gainSkillXp`.
 - [done] Woodcutting and fishing action FX like mining (player bob + target flashes/sparks while timed gather runs). — Conclusion: startFishFx/startChopFx on timed gather start; finish* + clearFish/Chop call clearGatherFx; mine path unchanged.
 - [done] Remove level-up popup; chat + sparkles over player head instead. — Conclusion: Dropped `#level-up-overlay`; chat fanfare + SFX + `showLevelUpSparkles` over player.

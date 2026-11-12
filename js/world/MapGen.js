@@ -1111,7 +1111,7 @@ function dungeonMobDefsForFloor(floor) {
         type = base.type;
         if (dragonFloor && i === 0) {
             type = 'Dragon';
-            base = { type: 'Dragon', texture: 'mob-drake' };
+            base = { type: 'Dragon', texture: 'mob-dragon' };
         }
         stats = typeof mobStatsFor === 'function'
             ? mobStatsFor(type, level)
