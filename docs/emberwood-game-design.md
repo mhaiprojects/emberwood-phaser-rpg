@@ -268,7 +268,7 @@ Architecture (combat-intent redesign): **PlayerIntent** (`world.playerIntent`) i
 **Auto-attack (default Off, Combat tab only):** walking near a living mob can engage (with grace after zone/battle). Paused during player click-walk (`intent.pauseAutos` / `playerClickWalkActive`).
 **Auto-retaliate (default Off, Combat tab only, separate):** only when a foe **agros you first** — walk into weapon range and fight back; does **not** pick passive nearby mobs. Chase also pauses during player click-walk.
 
-**In-fight chase gate:** while already fighting, player auto-close toward the mob only if **inside the mob’s attack range** but outside weapon range (and retaliate on). Safe ranging outside mob attack range does **not** auto-walk into the foe. Mob fight-chase runs **once** per update (after player move).
+**In-fight chase gate:** while already fighting, player auto-close toward the mob if **inside the mob’s attack range** but outside weapon range (does **not** require auto-retaliate — that only gates *starting* retaliate engages). Safe ranging outside mob attack range does **not** auto-walk into the foe. Click-walk still pauses close-in. `startOverworldFight` restores attack intent (beginFight had cleared it). Mob fight-chase runs **once** per update (after player move). `encounterLock` stays true during the fight but must not block in-fight engage chase.
 
 ### 5.2 Gather
 
@@ -520,6 +520,9 @@ Actionable pitfalls from project rules and recent combat/gather/save work:
 | Gate active-fight swings on autos | Autos only **acquire**; `tickOverworldFight` always swings in weapon range |
 | Path attack onto unwalkable mob tiles | Use `standInRangeWorld` / `walkToEngage` |
 | Call `chaseFightMob` twice per update | Once, after player movement |
+| Require auto-retaliate for in-fight weapon-range close | Retaliate is acquire-only; active fight closes without it |
+| Leave attack intent cleared after `beginFight` | `startOverworldFight` restores intent on the fight mob |
+| Block `tryAutoEngage` chase with `encounterLock` during fight | Lock stays for exits; chase allowed when `overworldFight` set |
 | Ignore level agro gate | Equal/higher combat player should not be agroed (unless `alwaysAgro`) |
 | Let mobs sit in the outer 2-tile border | Soft-push / clamp to inner map |
 | Let mobs enter Haven safe courtyard or break 4-tile leash | `mobForbiddenTile` + `MOB_LEASH_TILES` |

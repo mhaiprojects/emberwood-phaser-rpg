@@ -213,7 +213,7 @@ Do **not** rewrite WorldScene in one shot. Ship in layers:
 4. **Intent-primary clears** — done (`clearAttackIntent`, `cancelPlayerCombat`, chase via `attackIntentTarget` / `chaseAutosPaused`).
 5. **GDD + loop-tasks** — done.
 
-**Remaining optional polish (not blocking):** move `tickOverworldFight` body into Controller; delete mirror fields after Hud stops reading them.
+**Polish status:** in-fight close no longer requires retaliate; fight restores attack intent; `tryAutoEngage` chase works under `encounterLock` when fighting; tick `busy` cleared in `finally`; `CombatController.shouldCloseInFight` / `tickFight` helpers. Mirror fields still for Hud. Tick damage body remains on WorldScene.
 
 Testing remains disabled until human re-enables; rely on human playtest of click-attack, auto-attack, retaliate, click-walk pause, water crabs, haven chickens.
 

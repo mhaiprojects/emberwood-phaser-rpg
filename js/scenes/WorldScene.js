@@ -4779,8 +4779,9 @@ var WorldScene = new Phaser.Class({
     /*
      * During overworldFight only: auto-path the player toward the fight mob when
      * out of weapon range, but ONLY if already inside mob attack range.
-     * Safe ranging (outside mobAttackRangePx) stays put. Pre-fight queueRetaliate
-     * engage is separate and unchanged.
+     * Safe ranging (outside mobAttackRangePx) stays put.
+     * Once a fight has started, close-in does NOT require auto-retaliate (that
+     * setting only gates *starting* retaliate engages). Click-walk still pauses.
      */
     chaseFightPlayerClose: function (mob, dist, mobRange) {
         var playerRange;
@@ -4788,7 +4789,7 @@ var WorldScene = new Phaser.Class({
         if (!mob || !mob.aliveMob || !this.player || !this.overworldFight) {
             return;
         }
-        /* Click-path wins over in-fight retaliate close-in. */
+        /* Click-path wins over in-fight close-in. */
         if (this.chaseAutosPaused()) {
             return;
         }
@@ -4822,11 +4823,8 @@ var WorldScene = new Phaser.Class({
             return;
         }
 
-        /* Inside mob attack range but outside weapon range → close in when retaliating. */
+        /* Inside mob attack range but outside weapon range → close in (fight already on). */
         if (dist > playerRange) {
-            if (!this.autoRetaliateOn()) {
-                return;
-            }
             /* Don't hijack a manual click-to-walk that the player started. */
             if (this.walkTarget && !this._fightPlayerClose) {
                 return;
@@ -4839,7 +4837,7 @@ var WorldScene = new Phaser.Class({
                     dest: null,
                     pauseAutos: false,
                     silent: true,
-                    source: 'retaliate'
+                    source: 'fight'
                 });
             } else {
                 this.engageTarget = mob;
@@ -4852,11 +4850,8 @@ var WorldScene = new Phaser.Class({
 
         if (this._fightPlayerClose) {
             this._fightPlayerClose = false;
-            if (this.attackIntentTarget() === mob || this.engageTarget === mob) {
-                this.clearAttackIntent({ clearWalk: true });
-            } else {
-                this.clearWalk();
-            }
+            /* In weapon range — keep attack intent on fight mob; just stop close walk. */
+            this.clearWalk();
         }
     },
 
@@ -5464,6 +5459,20 @@ var WorldScene = new Phaser.Class({
             firstSwingTicks: this.secondsToSimTicks(0.22),
             busy: false
         };
+        /* Restore attack intent so in-fight close/chase still works (beginFight cleared it). */
+        if (typeof CombatController !== 'undefined' && CombatController.applyIntent) {
+            CombatController.applyIntent(this, {
+                kind: 'attack',
+                target: mob,
+                dest: null,
+                pauseAutos: false,
+                silent: true,
+                source: 'fight'
+            });
+        } else {
+            this.engageTarget = mob;
+            this.playerClickWalkActive = false;
+        }
         if (this.overworldTick) {
             this.overworldTick.remove(false);
             this.overworldTick = null;
@@ -5489,6 +5498,7 @@ var WorldScene = new Phaser.Class({
             return;
         }
         fight.busy = true;
+        try {
         hero = this.registry.get('hero');
         if (!hero || hero.hp <= 0) {
             this.endOverworldFight('lose');
@@ -5509,6 +5519,23 @@ var WorldScene = new Phaser.Class({
         if (dist > playerRange) {
             if (forcePlayer || specialQueued) {
                 Hud.log('You are out of attack range.');
+            }
+            /* Slip outside weapon range mid-fight → walk to stand (unless click-walking). */
+            if (!this.chaseAutosPaused() && dist <= mobRange) {
+                this._fightPlayerClose = true;
+                if (typeof CombatController !== 'undefined' && CombatController.applyIntent) {
+                    CombatController.applyIntent(this, {
+                        kind: 'attack',
+                        target: mob,
+                        dest: null,
+                        pauseAutos: false,
+                        silent: true,
+                        source: 'fight'
+                    });
+                }
+                if (!this.walkTarget) {
+                    this.walkToEngage(mob);
+                }
             }
         } else if (typeof magicWeaponEquipped === 'function' && magicWeaponEquipped(hero)) {
             if (typeof hasWindStrikeRunes === 'function' && !hasWindStrikeRunes(hero)) {
@@ -5554,7 +5581,6 @@ var WorldScene = new Phaser.Class({
         }
         if (fight.hp <= 0) {
             this.endOverworldFight('win');
-            fight.busy = false;
             return;
         }
         if (dist <= mobRange) {
@@ -5581,11 +5607,14 @@ var WorldScene = new Phaser.Class({
             }
             if (hero.hp <= 0) {
                 this.endOverworldFight('lose');
-                fight.busy = false;
                 return;
             }
         }
-        fight.busy = false;
+        } finally {
+            if (fight) {
+                fight.busy = false;
+            }
+        }
     },
 
     endOverworldFight: function (outcome) {
@@ -7329,14 +7358,18 @@ var WorldScene = new Phaser.Class({
         var tiles;
         var near;
         var engage;
-        if (this.encounterLock || this.uiPaused() || this.time.now < this.engageGrace) {
+        /* encounterLock alone must not block in-fight engage chase (lock stays true all fight). */
+        if (this.uiPaused()) {
+            return false;
+        }
+        if (!this.overworldFight && (this.encounterLock || this.time.now < this.engageGrace)) {
             return false;
         }
         if (typeof CombatController !== 'undefined' && CombatController.ensureIntent) {
             CombatController.ensureIntent(this);
         }
         range = this.heroEngageRangePx();
-        /* Click-to-attack engage continues even if a prior click-walk flag lingered. */
+        /* Click-to-attack / in-fight engage continues even if a prior click-walk flag lingered. */
         engage = this.attackIntentTarget();
         if (engage) {
             if (typeof CombatController !== 'undefined' && CombatController.applyIntent) {

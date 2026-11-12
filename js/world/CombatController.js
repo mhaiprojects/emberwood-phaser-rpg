@@ -202,7 +202,7 @@ var CombatController = {
         world.lastFought = mob || world.lastFought;
     },
 
-    /** Fight ended — drop close-in; leave walk alone. */
+    /** Fight ended — drop close-in and attack intent. */
     onEndFight: function (world) {
         if (!world) {
             return;
@@ -212,6 +212,31 @@ var CombatController = {
             world.playerIntent = CombatController.idleIntent();
             world.engageTarget = null;
         }
+    },
+
+    /**
+     * Policy helper for diagnostics / tests:
+     * once overworldFight is active, in-fight close must not require auto-retaliate.
+     */
+    shouldCloseInFight: function (world, dist, playerRange, mobRange) {
+        if (!world || !world.overworldFight) {
+            return false;
+        }
+        if (CombatController.autosPaused(world)) {
+            return false;
+        }
+        if (!(dist > playerRange) || !(dist <= mobRange)) {
+            return false;
+        }
+        return true;
+    },
+
+    /** Thin tick entry — scene owns damage bodies; always clear busy via scene finally. */
+    tickFight: function (world, forcePlayer) {
+        if (!world || typeof world.tickOverworldFight !== 'function') {
+            return;
+        }
+        world.tickOverworldFight(!!forcePlayer);
     },
 
     /**
