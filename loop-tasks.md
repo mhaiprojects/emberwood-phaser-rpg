@@ -33,6 +33,7 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 
 Active queue — implement top-down before returning to sections 1–14.
 
+- [done] Add auto-attack range settings, default 3 tiles (Combat tab; persist; Chebyshev engage). — Conclusion: Combat 1–5 tile buttons; `hero.autoAttackRange` default 3; `tryAutoEngage` Chebyshev pick; weapon ranges unchanged.
 - [done] Add TPS controls in Settings; discover/fix why TPS readout fluctuates. — Conclusion: TPS = Phaser loop steps/sec (not combat ticks); Settings Target TPS 30/60 → `applyTargetTps` (fpsLimit+_limitRate+arcade); fluctuation was short 250ms sample+round — now 1s window + EMA.
 - [doing] Zone entrance labels must match mobs in that zone; consolidate zone ↔ band ↔ spawn roster into one source of truth.
 - [done] On hard gather fails (no/wrong tool, level too low, invalid target), cancel action after one chat msg — stop retry spam for mining/woodcutting/fishing. — Conclusion: tryFish/Chop/Mine/Boulder clear target on hard fail so update-loop tryComplete* stops; soft out-of-range pathing unchanged.
