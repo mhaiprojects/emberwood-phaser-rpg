@@ -33,6 +33,8 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 
 Active queue — implement top-down before returning to sections 1–14.
 
+- [done] Add Settings XP multipliers 50× / 100× / 200× (extend existing XP rate options). — Conclusion: Options now 1/2/5/10/25/50/100/200× via `XP_MULTIPLIER_OPTIONS` + Settings buttons; still through `gainSkillXp`.
+- [doing] Woodcutting and fishing action FX like mining (player bob + target flashes/sparks while timed gather runs).
 - [done] Remove level-up popup; chat + sparkles over player head instead. — Conclusion: Dropped `#level-up-overlay`; chat fanfare + SFX + `showLevelUpSparkles` over player.
 - [done] Resource per-type visuals + standout gather tiles (trees/ores/fishspot ≠ plain terrain; no black ore corners; distinct item icons). — Conclusion: TREE_*/ROCK_*/FISHSPOT_* frames; opaque rock underfill; fish ≠ water; per-tier item SVGs; pulse accents all zones.
 - [done] Space NPCs farther apart; shop NPCs get a tiny shop icon prefix on name labels. — Conclusion: Haven NPC_DEFS spread ≥~3–4 tiles; Mira/Cole get pouch shopIcon left of nameplate.
@@ -41,7 +43,7 @@ Active queue — implement top-down before returning to sections 1–14.
 - [done] Finish combat-intent redesign: move begin/tick/end into Controller; intent primary; leash clears intent; drop dual-write footguns. — Conclusion: Controller hooks begin/end/leash; intent-primary clears/chase; mirrors kept for Hud; tick body stays on WorldScene.
 - [done] Build combat-intent redesign: playerIntent + CombatController + stand-in-range API; slim chase writers. — Conclusion: CombatController + standInRangeWorld; dual-write intent; acquire gates; chaseFightMob once/update; GDD updated.
 - [done] Remove Hero XP; Hero level = combat level from average combat skills only. — Conclusion: Dropped hero.xp + XP bar; Level = floor(avg of Atk/Str/Def/HP/Range/Mage/Pray); HUD Level label; damage scales from level.
-- [done] Add Settings XP multiplier for quick game testing. — Conclusion: Settings 1/2/5/10/25×; `hero.xpMultiplier` via `gainSkillXp`; default 1×; persists with save.
+- [done] Add Settings XP multiplier for quick game testing. — Conclusion: Settings 1/2/5/10/25/50/100/200×; `hero.xpMultiplier` via `gainSkillXp`; default 1×; persists with save.
 - [done] Click Attack on Crab/Chicken sometimes chats "You target" but player never moves/attacks. — Conclusion: Engage walks to stand-in-range tile (not mob tile); clears click-walk pause; stuck walkBlocked in-range begins fight else one "can't reach" msg.
 - [done] Execute resource-locks plan: no bronze/tin, single Armour, Wood+4 ladders, craft rules, zone gather, mob meat+loot, L1–L13. — Conclusion: ITEM_DB/recipes/loot/MapGen/Zones updated; save migrate LEGACY_ITEM_ID_MAP; testing still blocked.
 - [done] Move Emberwood Cursor plans to project-relative `.cursor/plans/` (isProject: true). — Conclusion: Moved TPS/item-actions/Vue HUD/cheap-loop from ~/.cursor/plans; stubs left globally; rule `project-plans.mdc`.

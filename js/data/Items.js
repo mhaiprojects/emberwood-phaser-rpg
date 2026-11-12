@@ -2712,7 +2712,7 @@ function ensureSkill(hero, skill) {
 }
 
 /* Settings / testing: allowed XP gain multipliers (default 1×). */
-var XP_MULTIPLIER_OPTIONS = [1, 2, 5, 10, 25];
+var XP_MULTIPLIER_OPTIONS = [1, 2, 5, 10, 25, 50, 100, 200];
 
 function normalizeXpMultiplier(value) {
     var n = typeof value === 'number' ? value : parseFloat(value);
@@ -3154,7 +3154,9 @@ function normalizeHeroCombat(hero) {
     if (typeof normalizeXpMultiplier === 'function') {
         hero.xpMultiplier = normalizeXpMultiplier(hero.xpMultiplier);
     } else if (hero.xpMultiplier !== 2 && hero.xpMultiplier !== 5
-            && hero.xpMultiplier !== 10 && hero.xpMultiplier !== 25) {
+            && hero.xpMultiplier !== 10 && hero.xpMultiplier !== 25
+            && hero.xpMultiplier !== 50 && hero.xpMultiplier !== 100
+            && hero.xpMultiplier !== 200) {
         hero.xpMultiplier = 1;
     }
     if (hero.xp != null) {

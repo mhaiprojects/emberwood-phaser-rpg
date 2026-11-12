@@ -3949,7 +3949,8 @@ var Hud = {
         var raw = hero && hero.xpMultiplier;
         var value = typeof normalizeXpMultiplier === 'function'
             ? normalizeXpMultiplier(raw)
-            : (raw === 2 || raw === 5 || raw === 10 || raw === 25 ? raw : 1);
+            : (raw === 2 || raw === 5 || raw === 10 || raw === 25
+                || raw === 50 || raw === 100 || raw === 200 ? raw : 1);
         var vue = this.vueState();
         var buttons;
         var i;
