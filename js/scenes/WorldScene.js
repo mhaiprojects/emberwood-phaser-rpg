@@ -4780,7 +4780,7 @@ var WorldScene = new Phaser.Class({
             this._fightPlayerClose = true;
             this.engageTarget = mob;
             if (!this.walkTarget) {
-                this.setWalk(mob.x, mob.y, { allowEnd: true });
+                this.walkToEngage(mob);
             }
             return;
         }
@@ -4858,6 +4858,48 @@ var WorldScene = new Phaser.Class({
         return this.tryPickup(drop, true);
     },
 
+    /**
+     * Walkable tile center within weapon engage range of the mob.
+     * Needed when the foe sits on water/rock or behind blockers — pathing onto
+     * the mob tile fails (terrain always blocks) and used to freeze the hero.
+     */
+    engageStandWorld: function (mob) {
+        var tile;
+        var stand;
+        var center;
+        var range;
+        if (!mob) {
+            return null;
+        }
+        if (!this.tileGrid || typeof worldToTile !== 'function') {
+            return { x: mob.x, y: mob.y };
+        }
+        range = this.heroEngageRangePx();
+        tile = worldToTile(mob.x, mob.y);
+        if (typeof nearestStandTileInRange === 'function') {
+            stand = nearestStandTileInRange(this.tileGrid, tile.tx, tile.ty, range);
+        } else if (typeof nearestWalkableTile === 'function') {
+            stand = nearestWalkableTile(this.tileGrid, tile.tx, tile.ty);
+        }
+        if (!stand || typeof tileCenter !== 'function') {
+            return { x: mob.x, y: mob.y };
+        }
+        center = tileCenter(stand.tx, stand.ty);
+        return { x: center.x, y: center.y };
+    },
+
+    /* Path to a stand-in-range tile; clears click-walk pause so chase can repath. */
+    walkToEngage: function (mob) {
+        var dest;
+        if (!mob || !mob.aliveMob) {
+            return false;
+        }
+        this.playerClickWalkActive = false;
+        dest = this.engageStandWorld(mob) || { x: mob.x, y: mob.y };
+        this.setWalk(dest.x, dest.y, { allowEnd: true });
+        return true;
+    },
+
     queueAttack: function (mob, opts) {
         opts = opts || {};
         if (!mob || !mob.aliveMob) {
@@ -4867,11 +4909,12 @@ var WorldScene = new Phaser.Class({
         this.talkTarget = null;
         this.clearFish();
         this.engageTarget = mob;
+        this._engageReachFailAt = 0;
         if (this.fightDistancePx(mob) <= this.heroEngageRangePx()) {
             this.beginFight(mob);
             return true;
         }
-        this.setWalk(mob.x, mob.y, { allowEnd: true });
+        this.walkToEngage(mob);
         if (!opts.silent) {
             Hud.log('You target the ' + ((mob.mobDef && mob.mobDef.type) || 'foe') + '.');
         }
@@ -4898,7 +4941,7 @@ var WorldScene = new Phaser.Class({
                 return true;
             }
             if (!this.walkTarget) {
-                this.setWalk(mob.x, mob.y, { allowEnd: true });
+                this.walkToEngage(mob);
             }
             return true;
         }
@@ -4962,6 +5005,7 @@ var WorldScene = new Phaser.Class({
     maybeRepath: function () {
         var chase = this.chaseWalkTarget();
         var now = this.time.now;
+        var dest;
         var tx;
         var ty;
         var moved;
@@ -4973,8 +5017,15 @@ var WorldScene = new Phaser.Class({
             if (this.chaseInRange(chase)) {
                 return;
             }
-            tx = chase.x;
-            ty = chase.y;
+            /* Attack chase aims at stand-in-range, not the (possibly unwalkable) mob tile. */
+            if (this.engageTarget === chase) {
+                dest = this.engageStandWorld(chase) || { x: chase.x, y: chase.y };
+                tx = dest.x;
+                ty = dest.y;
+            } else {
+                tx = chase.x;
+                ty = chase.y;
+            }
             moved = !this.walkTarget ||
                 Phaser.Math.Distance.Between(this.walkTarget.x, this.walkTarget.y, tx, ty) > 8;
             if (moved || this.walkBlocked || !this.walkPath || !this.walkPath.length ||
@@ -7172,23 +7223,22 @@ var WorldScene = new Phaser.Class({
         if (this.encounterLock || this.uiPaused() || this.time.now < this.engageGrace) {
             return false;
         }
-        /* Player click-walk pauses proximity auto-attack and engageTarget chase. */
-        if (this.playerClickWalkActive) {
-            return false;
-        }
         range = this.heroEngageRangePx();
+        /* Click-to-attack engage continues even if a prior click-walk flag lingered. */
         if (this.engageTarget && this.engageTarget.aliveMob) {
-            dist = Phaser.Math.Distance.Between(
-                this.player.x, this.player.y,
-                this.engageTarget.x, this.engageTarget.y
-            );
+            this.playerClickWalkActive = false;
+            dist = this.fightDistancePx(this.engageTarget);
             if (dist <= range) {
                 this.beginFight(this.engageTarget);
                 return true;
             }
             if (!this.walkTarget) {
-                this.setWalk(this.engageTarget.x, this.engageTarget.y, { allowEnd: true });
+                this.walkToEngage(this.engageTarget);
             }
+            return false;
+        }
+        /* Player click-walk pauses proximity auto-attack only. */
+        if (this.playerClickWalkActive) {
             return false;
         }
         if (!this.autoAttackOn()) {
@@ -7483,16 +7533,23 @@ var WorldScene = new Phaser.Class({
         } else {
             var chasing = this.playerClickWalkActive ? null : this.chaseWalkTarget();
             if (!this.walkTarget && chasing && !this.chaseInRange(chasing)) {
-                this.setWalk(chasing.x, chasing.y, { allowEnd: true });
+                if (this.engageTarget === chasing) {
+                    this.walkToEngage(chasing);
+                } else {
+                    this.setWalk(chasing.x, chasing.y, { allowEnd: true });
+                }
             }
             if (this.walkTarget) {
                 this.maybeRepath();
                 chasing = this.playerClickWalkActive ? null : this.chaseWalkTarget();
                 var destDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.walkTarget.x, this.walkTarget.y);
                 if (destDist < 6 && chasing && !this.chaseInRange(chasing)) {
-                    this.walkTarget = { x: chasing.x, y: chasing.y };
-                    this.placeWalkMarker(chasing.x, chasing.y);
-                    this.walkPath = this.computeWalkPath(chasing.x, chasing.y, { allowEnd: true });
+                    var reChase = (this.engageTarget === chasing)
+                        ? (this.engageStandWorld(chasing) || { x: chasing.x, y: chasing.y })
+                        : { x: chasing.x, y: chasing.y };
+                    this.walkTarget = { x: reChase.x, y: reChase.y };
+                    this.placeWalkMarker(reChase.x, reChase.y);
+                    this.walkPath = this.computeWalkPath(reChase.x, reChase.y, { allowEnd: true });
                     this.drawPathLine();
                     this.pathCheckAt = 0;
                     destDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.walkTarget.x, this.walkTarget.y);
@@ -7507,6 +7564,18 @@ var WorldScene = new Phaser.Class({
                         vx = 0;
                         vy = 0;
                         this.drawPathLine();
+                        /* Stuck short of an engage target (e.g. crab on water): fight if in range, else give up once. */
+                        if (this.engageTarget && this.engageTarget.aliveMob && this.walkBlocked
+                                && (!this.walkPath || !this.walkPath.length)) {
+                            if (this.fightDistancePx(this.engageTarget) <= this.heroEngageRangePx()) {
+                                this.beginFight(this.engageTarget);
+                            } else if (!this._engageReachFailAt || this.time.now >= this._engageReachFailAt) {
+                                this._engageReachFailAt = this.time.now + 2500;
+                                Hud.log('You can\'t reach that.');
+                                this.engageTarget = null;
+                                this.clearWalk();
+                            }
+                        }
                     } else {
                         var dx = aim.x - this.player.x;
                         var dy = aim.y - this.player.y;
