@@ -33,6 +33,7 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 
 Active queue — implement top-down before returning to sections 1–14.
 
+- [done] Add Settings XP multiplier for quick game testing. — Conclusion: Settings 1/2/5/10/25×; `hero.xpMultiplier` via `gainSkillXp`; default 1×; persists with save.
 - [done] Click Attack on Crab/Chicken sometimes chats "You target" but player never moves/attacks. — Conclusion: Engage walks to stand-in-range tile (not mob tile); clears click-walk pause; stuck walkBlocked in-range begins fight else one "can't reach" msg.
 - [done] Execute resource-locks plan: no bronze/tin, single Armour, Wood+4 ladders, craft rules, zone gather, mob meat+loot, L1–L13. — Conclusion: ITEM_DB/recipes/loot/MapGen/Zones updated; save migrate LEGACY_ITEM_ID_MAP; testing still blocked.
 - [done] Move Emberwood Cursor plans to project-relative `.cursor/plans/` (isProject: true). — Conclusion: Moved TPS/item-actions/Vue HUD/cheap-loop from ~/.cursor/plans; stubs left globally; rule `project-plans.mdc`.

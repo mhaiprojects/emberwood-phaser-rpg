@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&family=Cinzel:wght@500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=tps1">
+    <link rel="stylesheet" href="css/style.css?v=xpmult1">
 </head>
 <body>
     <div id="shell">
@@ -212,6 +212,15 @@
                                 <button type="button" class="game-speed-btn" data-game-speed="1.5" title="1.5× speed" :class="{ 'is-on': gameSpeed === 1.5 }">1.5×</button>
                                 <button type="button" class="game-speed-btn" data-game-speed="2" title="Double speed" :class="{ 'is-on': gameSpeed === 2 }">2×</button>
                             </div>
+                            <h3>XP Multiplier</h3>
+                            <p>Boosts all skill XP gains for quicker testing (default 1×). Persists with your save.</p>
+                            <div class="xp-mult-row" role="group" aria-label="XP Multiplier">
+                                <button type="button" class="xp-mult-btn" data-xp-mult="1" title="Normal XP" :class="{ 'is-on': xpMultiplier === 1 }">1×</button>
+                                <button type="button" class="xp-mult-btn" data-xp-mult="2" title="Double XP" :class="{ 'is-on': xpMultiplier === 2 }">2×</button>
+                                <button type="button" class="xp-mult-btn" data-xp-mult="5" title="5× XP" :class="{ 'is-on': xpMultiplier === 5 }">5×</button>
+                                <button type="button" class="xp-mult-btn" data-xp-mult="10" title="10× XP" :class="{ 'is-on': xpMultiplier === 10 }">10×</button>
+                                <button type="button" class="xp-mult-btn" data-xp-mult="25" title="25× XP" :class="{ 'is-on': xpMultiplier === 25 }">25×</button>
+                            </div>
                             <label>Zoom
                                 <input id="setting-zoom" type="range" min="1" max="2" step="0.05" value="1">
                             </label>
@@ -393,12 +402,12 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
     <script src="js/input/Keys.js?v=run1"></script>
-    <script src="js/data/Items.js?v=tpsclock1"></script>
+    <script src="js/data/Items.js?v=xpmult1"></script>
     <script src="js/data/Save.js?v=resume1"></script>
     <script src="js/data/Scales.js?v=playbody1"></script>
-    <script src="js/ui/HudApp.js?v=tpsclock1"></script>
+    <script src="js/ui/HudApp.js?v=xpmult1"></script>
     <script src="js/ui/Sfx.js?v=fontaudio1"></script>
-    <script src="js/ui/Hud.js?v=tpsclock1"></script>
+    <script src="js/ui/Hud.js?v=xpmult1"></script>
     <script src="js/world/MapGen.js?v=mirewater1"></script>
     <script src="js/world/Pathfind.js?v=diag1"></script>
     <script src="js/world/GameClock.js?v=tpsclock1"></script>

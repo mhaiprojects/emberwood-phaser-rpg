@@ -520,6 +520,27 @@ var Hud = {
             self.log('Game Speed ' + applied + '×.');
         });
         document.addEventListener('click', function (event) {
+            var btn = event.target.closest('[data-xp-mult]');
+            var raw;
+            var value;
+            var hero;
+            if (!btn) {
+                return;
+            }
+            hero = self.hero();
+            if (!hero) {
+                return;
+            }
+            raw = btn.getAttribute('data-xp-mult');
+            value = typeof normalizeXpMultiplier === 'function'
+                ? normalizeXpMultiplier(raw)
+                : (parseFloat(raw) || 1);
+            hero.xpMultiplier = value;
+            self.saveHero(hero);
+            self.renderXpMultiplier(hero);
+            self.log('XP multiplier ' + value + '×.');
+        });
+        document.addEventListener('click', function (event) {
             var btn = event.target.closest('[data-prayer]');
             var id = btn && btn.getAttribute('data-prayer');
             if (!id) {
@@ -3504,6 +3525,7 @@ var Hud = {
         this.renderMobSpawnModifier(hero);
         this.renderTargetTps(hero);
         this.renderGameSpeed(hero);
+        this.renderXpMultiplier(hero);
         this.renderPrayers(hero);
         this.renderRun(hero);
         this.renderSpecialEnergy(hero);
@@ -4022,6 +4044,29 @@ var Hud = {
         buttons = document.querySelectorAll('[data-game-speed]');
         for (i = 0; i < buttons.length; i++) {
             btnVal = parseFloat(buttons[i].getAttribute('data-game-speed'));
+            buttons[i].classList.toggle('is-on', btnVal === value);
+        }
+    },
+
+    renderXpMultiplier: function (hero) {
+        var raw = hero && hero.xpMultiplier;
+        var value = typeof normalizeXpMultiplier === 'function'
+            ? normalizeXpMultiplier(raw)
+            : (raw === 2 || raw === 5 || raw === 10 || raw === 25 ? raw : 1);
+        var vue = this.vueState();
+        var buttons;
+        var i;
+        var btnVal;
+        if (hero) {
+            hero.xpMultiplier = value;
+        }
+        if (vue) {
+            vue.xpMultiplier = value;
+            vue.xpMultiplierLabel = 'XP: ' + value + '×';
+        }
+        buttons = document.querySelectorAll('[data-xp-mult]');
+        for (i = 0; i < buttons.length; i++) {
+            btnVal = parseFloat(buttons[i].getAttribute('data-xp-mult'));
             buttons[i].classList.toggle('is-on', btnVal === value);
         }
     },

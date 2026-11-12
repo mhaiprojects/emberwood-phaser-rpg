@@ -63,6 +63,8 @@ var HudApp = {
             targetTpsLabel: 'Sim TPS: 60',
             gameSpeed: 1,
             gameSpeedLabel: 'Game Speed: 1×',
+            xpMultiplier: 1,
+            xpMultiplierLabel: 'XP: 1×',
             runLabel: 'Run: Off',
             collisionDebugLabel: 'Collision debug: Off',
             collisionDebugOn: false,

@@ -712,6 +712,7 @@ function makeHero() {
         simTps: typeof normalizeTargetTps === 'function' ? normalizeTargetTps(60) : 60,
         targetTps: typeof normalizeTargetTps === 'function' ? normalizeTargetTps(60) : 60,
         gameSpeed: typeof normalizeGameSpeed === 'function' ? normalizeGameSpeed(1) : 1,
+        xpMultiplier: typeof normalizeXpMultiplier === 'function' ? normalizeXpMultiplier(1) : 1,
         displayName: 'Adventurer',
         ironman: false,
         prayerPoints: 1,
@@ -2673,13 +2674,44 @@ function ensureSkill(hero, skill) {
     return hero.skills[skill];
 }
 
+/* Settings / testing: allowed XP gain multipliers (default 1×). */
+var XP_MULTIPLIER_OPTIONS = [1, 2, 5, 10, 25];
+
+function normalizeXpMultiplier(value) {
+    var n = typeof value === 'number' ? value : parseFloat(value);
+    var i;
+    if (!(n > 0) || !isFinite(n)) {
+        return 1;
+    }
+    for (i = 0; i < XP_MULTIPLIER_OPTIONS.length; i++) {
+        if (n === XP_MULTIPLIER_OPTIONS[i]) {
+            return n;
+        }
+    }
+    return 1;
+}
+
+function xpMultiplierFor(hero) {
+    if (!hero) {
+        return 1;
+    }
+    return normalizeXpMultiplier(hero.xpMultiplier);
+}
+
 function gainSkillXp(hero, skill, amount) {
     var s = ensureSkill(hero, skill);
+    var gain;
+    var next;
+    var named;
     if (!s) {
         return;
     }
-    s.xp += amount;
-    var next = 1 + Math.floor(Math.sqrt(s.xp / 50));
+    gain = Math.max(0, Math.round(Number(amount) || 0));
+    if (gain > 0) {
+        gain = Math.max(1, Math.round(gain * xpMultiplierFor(hero)));
+    }
+    s.xp += gain;
+    next = 1 + Math.floor(Math.sqrt(s.xp / 50));
     if (skill === 'hitpoints') {
         next = Math.max(10, next);
     }
@@ -2688,7 +2720,7 @@ function gainSkillXp(hero, skill, amount) {
         if (skill === 'hitpoints') {
             hero.maxHp = 10 * s.level;
         }
-        var named = SKILL_NAMES.filter(function (n) { return n[0] === skill; })[0];
+        named = SKILL_NAMES.filter(function (n) { return n[0] === skill; })[0];
         if (named) {
             if (typeof showLevelUpModal === 'function') {
                 showLevelUpModal(skill, named[1], s.level);
@@ -2697,8 +2729,8 @@ function gainSkillXp(hero, skill, amount) {
             }
         }
     }
-    if (amount > 0 && typeof xpDropFloater === 'function') {
-        xpDropFloater(skill, amount);
+    if (gain > 0 && typeof xpDropFloater === 'function') {
+        xpDropFloater(skill, gain);
     }
     applyCombatLevel(hero, true);
 }
@@ -3081,6 +3113,12 @@ function normalizeHeroCombat(hero) {
         hero.gameSpeed = normalizeGameSpeed(hero.gameSpeed);
     } else if (hero.gameSpeed !== 0.5 && hero.gameSpeed !== 1 && hero.gameSpeed !== 1.5 && hero.gameSpeed !== 2) {
         hero.gameSpeed = 1;
+    }
+    if (typeof normalizeXpMultiplier === 'function') {
+        hero.xpMultiplier = normalizeXpMultiplier(hero.xpMultiplier);
+    } else if (hero.xpMultiplier !== 2 && hero.xpMultiplier !== 5
+            && hero.xpMultiplier !== 10 && hero.xpMultiplier !== 25) {
+        hero.xpMultiplier = 1;
     }
     if (hero.autoAttack == null) {
         hero.autoAttack = false;
