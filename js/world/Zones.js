@@ -245,6 +245,63 @@ function zoneBandLevel(zoneId, index) {
     return lo + ((index | 0) % (span + 1));
 }
 
+/** Short mob-band line for UI (e.g. "Lv 6–10"). Endless Mine is special. */
+function zoneMobBandLabel(zoneId) {
+    var band;
+    if (zoneId === 'dungeon') {
+        return 'Lv 20+';
+    }
+    band = ZONE_LEVEL_BAND[zoneId];
+    if (!band || band.length < 2) {
+        return '';
+    }
+    return 'Lv ' + band[0] + '–' + band[1];
+}
+
+/** Two-line border cue: display name + band. */
+function zoneBorderLabelText(zoneId) {
+    var zone = ZONES[zoneId];
+    var name = (zone && zone.name) || zoneId || '';
+    var band = zoneMobBandLabel(zoneId);
+    if (!name) {
+        return '';
+    }
+    return band ? (name + '\n' + band) : name;
+}
+
+/** Enter chat with optional mob band: "You enter Northwood (mobs Lv 6–10)." */
+function zoneEnterChat(zoneId) {
+    var zone = ZONES[zoneId];
+    var name = (zone && zone.name) || zoneId || 'the wilds';
+    var band = zoneMobBandLabel(zoneId);
+    if (zoneId === 'dungeon') {
+        return 'You enter the Endless Mine (mobs Lv 20+, +1 per floor).';
+    }
+    if (band) {
+        return 'You enter ' + name + ' (mobs ' + band + ').';
+    }
+    return 'You enter ' + name + '.';
+}
+
+/** World-pixel center for a faint label just inside a map-edge exit. */
+function zoneExitLabelPos(dir) {
+    var midx = Math.floor(MAP_W / 2);
+    var midy = Math.floor(MAP_H / 2);
+    if (dir === 'n') {
+        return tileCenter(midx, 1);
+    }
+    if (dir === 's') {
+        return tileCenter(midx, MAP_H - 2);
+    }
+    if (dir === 'w') {
+        return tileCenter(1, midy);
+    }
+    if (dir === 'e') {
+        return tileCenter(MAP_W - 2, midy);
+    }
+    return tileCenter(midx, midy);
+}
+
 function mobStatsFor(type, level) {
     var lv = Math.max(1, level | 0);
     if (type === 'Chicken') {

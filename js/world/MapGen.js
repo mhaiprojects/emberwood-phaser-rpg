@@ -948,10 +948,10 @@ function oreNodeColor(ore) {
 var SHAFT_MARKER_STYLE = {
     'dungeon-enter': {
         color: 0x9b6cff,
-        label: 'Endless Mine',
+        label: 'Endless Mine\nLv 20+',
         glyph: '▼',
         labelColor: '#dcc8ff',
-        approach: 'A marked shaft mouth — the Endless Mine. Click or step in to delve.'
+        approach: 'A marked shaft mouth — the Endless Mine (mobs Lv 20+, +1 per floor). Click or step in to delve.'
     },
     'stairs-down': {
         color: 0xe07030,
@@ -976,24 +976,24 @@ var SHAFT_MARKER_STYLE = {
     },
     'den-boulder': {
         color: 0xc07040,
-        label: 'Sealed Den',
+        label: 'Sealed Den\nLv 51–55',
         glyph: '◆',
         labelColor: '#ffd0a8',
-        approach: 'A sealing boulder — mine it with a diamond pickaxe to open the Dragon Den.'
+        approach: 'A sealing boulder — mine it with a diamond pickaxe to open the Dragon Den (mobs Lv 51–55).'
     },
     'dragon-den': {
         color: 0xe85d3a,
-        label: 'Dragon Den',
+        label: 'Dragon Den\nLv 51–55',
         glyph: '▼',
         labelColor: '#ffb090',
-        approach: 'Scorched cave mouth — click or step in to enter the Dragon Den.'
+        approach: 'Scorched cave mouth — Dragon Den (mobs Lv 51–55). Click or step in to enter.'
     },
     'dragon-den-exit': {
         color: 0x6ec8ff,
-        label: 'Highlands',
+        label: 'Windrock Highlands\nLv 26–30',
         glyph: '▲',
         labelColor: '#b8e8ff',
-        approach: 'Tunnel back to Windrock Highlands — click or step on it to leave.'
+        approach: 'Tunnel back to Windrock Highlands (mobs Lv 26–30) — click or step on it to leave.'
     }
 };
 

@@ -24,15 +24,16 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 5. Refresh `loop-next.md` with `python3 tools/loop-next.py` when useful — do not rewrite this whole file.
 6. **Every new user request** (feature/fix/content/process) is logged here immediately as `[todo]`/`[doing]` and status-tracked to `[done]`/`[blocked]` — see `.cursor/rules/loop-tasks-track-requests.mdc`.
 
-**Last updated:** 2026-11-12 — Orange aggro + red attack range rings toggle.
+**Last updated:** 2026-11-12 — Zone border name + mob level labels.
 
-**Total tasks: 340** (45 priority + 290 in the 14 playable sections + 5 stretch). Unfinished gathering/bank/craft todos promoted into §0 (not duplicated as active work).
+**Total tasks: 341** (46 priority + 290 in the 14 playable sections + 5 stretch). Unfinished gathering/bank/craft todos promoted into §0 (not duplicated as active work).
 
 ---
 ## 0. Priority: Bank / crafting / resizable UI / gathering & hunting
 
 Active queue — implement top-down before returning to sections 1–14.
 
+- [done] Show zone name & mob level range at map-edge entrances (border labels + enter chat); den/mine when relevant. — Conclusion: Faint 2-line labels at N/S/E/W exits; enter chat `You enter Northwood (mobs Lv 6–10).`; den/mine shaft markers include bands.
 - [done] Show aggro circle orange + attack range red; Settings toggle for range rings (default on). — Conclusion: Attack `0xff3b3b`, aggro `0xff8c20` @0.28; `showRangeRings` Settings “Show range rings”; rings on fight/engage/agroChase.
 - [done] Top-left FPS + TPS readout; cap FPS & TPS to 60 (Phaser fps.limit + arcade). — Conclusion: `#fps-readout` top-left always-on (Settings toggle); `fps.target/limit` 60 + arcade `fps` 60; step/postrender sample ~4×/s.
 - [done] Resizable UI sections: drag handles on side / bottom / chat↔iface split; CSS vars sync `#shell` + `#hud-root`; Phaser `#content` + Vue HUD stay intact; optional localStorage sizes. — Conclusion: Drag handles + CSS vars on `#shell`/`#hud-root`; sizes persist in localStorage; Phaser scale.refresh; gather-priority smoke OK.

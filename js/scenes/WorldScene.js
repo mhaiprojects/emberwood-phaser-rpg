@@ -69,6 +69,7 @@ var WorldScene = new Phaser.Class({
         this.mineAction = null;
         this.oreNodeMarkers = {};
         this.shaftMarkers = [];
+        this.zoneBorderLabels = [];
         this.mineFx = null;
         this.depletedTiles = {};
         this.dialogueNpc = null;
@@ -779,6 +780,7 @@ var WorldScene = new Phaser.Class({
         this.spawnZoneCampfires(zoneId);
         this.refreshOreNodeMarkers();
         this.refreshShaftMarkers();
+        this.refreshZoneBorderLabels();
         this.buildBiomeFx();
         this.applyDayNightTint();
         this.playZoneMusic();
@@ -788,7 +790,9 @@ var WorldScene = new Phaser.Class({
             this.refreshWildernessFlag();
         }
         if (!opts.fromSave || fromDir) {
-            Hud.log('You enter ' + zone.name + '.');
+            Hud.log(typeof zoneEnterChat === 'function'
+                ? zoneEnterChat(zoneId)
+                : ('You enter ' + zone.name + '.'));
         }
         if (pendingTravel && pendingTravel === zoneId) {
             this.travelZoneId = null;
@@ -1032,9 +1036,12 @@ var WorldScene = new Phaser.Class({
         this.spawnZoneCampfires(this.zoneId);
         this.refreshOreNodeMarkers();
         this.refreshShaftMarkers();
+        this.refreshZoneBorderLabels();
         this.refreshHud();
         this.engageGrace = this.time.now + 800;
-        Hud.log('You enter ' + zone.name + '.');
+        Hud.log(typeof zoneEnterChat === 'function'
+            ? zoneEnterChat(this.zoneId)
+            : ('You enter ' + zone.name + '.'));
         this.lockExits();
         if (window.Hud && Hud.saveGame) {
             Hud.saveGame();
@@ -1047,6 +1054,7 @@ var WorldScene = new Phaser.Class({
         this.clearBiomeFx();
         this.clearOreNodeMarkers();
         this.clearShaftMarkers();
+        this.clearZoneBorderLabels();
         this.clearMineFx();
         this.engageTarget = null;
         this.talkTarget = null;
@@ -2594,12 +2602,13 @@ var WorldScene = new Phaser.Class({
         if (kind === 'stairs-up' && (this.dungeonFloor || 0) <= 1) {
             labelText = 'Exit';
         }
-        label = this.add.text(0, -11, labelText, {
+        label = this.add.text(0, (String(labelText).indexOf('\n') >= 0) ? -16 : -11, labelText, {
             fontSize: '8px',
             fontFamily: 'Verdana, Geneva, sans-serif',
             color: style.labelColor || '#ffe08a',
             stroke: '#000000',
-            strokeThickness: 2
+            strokeThickness: 2,
+            align: 'center'
         }).setOrigin(0.5);
         root.add([glow, core, rim, glyph, label]);
         root.setDepth(depth);
@@ -2689,6 +2698,72 @@ var WorldScene = new Phaser.Class({
         }
         if (meta.surface) {
             this.paintShaftMarker(meta.surface.x, meta.surface.y, 'surface-portal');
+        }
+    },
+
+    clearZoneBorderLabels: function () {
+        var i;
+        var label;
+        if (!this.zoneBorderLabels) {
+            this.zoneBorderLabels = [];
+            return;
+        }
+        for (i = 0; i < this.zoneBorderLabels.length; i++) {
+            label = this.zoneBorderLabels[i];
+            if (label && label.destroy) {
+                label.destroy();
+            }
+        }
+        this.zoneBorderLabels = [];
+    },
+
+    refreshZoneBorderLabels: function () {
+        var zone;
+        var dirs;
+        var i;
+        var dir;
+        var nid;
+        var text;
+        var pos;
+        var label;
+        var depth;
+        this.clearZoneBorderLabels();
+        if (!this.tileGrid || this.interiorId) {
+            return;
+        }
+        if (this.zoneId === 'dungeon' || this.zoneId === 'dragonden') {
+            return;
+        }
+        zone = ZONES[this.zoneId];
+        if (!zone || zone.hidden) {
+            return;
+        }
+        dirs = ['n', 's', 'e', 'w'];
+        depth = (typeof DEPTH !== 'undefined' && DEPTH.LABEL) ? DEPTH.LABEL : 7;
+        for (i = 0; i < dirs.length; i++) {
+            dir = dirs[i];
+            nid = neighborId(zone, dir);
+            if (!nid) {
+                continue;
+            }
+            text = typeof zoneBorderLabelText === 'function'
+                ? zoneBorderLabelText(nid)
+                : ((ZONES[nid] && ZONES[nid].name) || nid);
+            if (!text) {
+                continue;
+            }
+            pos = typeof zoneExitLabelPos === 'function'
+                ? zoneExitLabelPos(dir)
+                : tileCenter(Math.floor(MAP_W / 2), Math.floor(MAP_H / 2));
+            label = this.add.text(pos.x, pos.y, text, {
+                fontSize: '9px',
+                fontFamily: 'Verdana, Geneva, sans-serif',
+                color: '#d8e6ff',
+                stroke: '#0a1020',
+                strokeThickness: 3,
+                align: 'center'
+            }).setOrigin(0.5).setDepth(depth).setAlpha(0.52);
+            this.zoneBorderLabels.push(label);
         }
     },
 
