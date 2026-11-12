@@ -24,15 +24,16 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 5. Refresh `loop-next.md` with `python3 tools/loop-next.py` when useful — do not rewrite this whole file.
 6. **Every new user request** (feature/fix/content/process) is logged here immediately as `[todo]`/`[doing]` and status-tracked to `[done]`/`[blocked]` — see `.cursor/rules/loop-tasks-track-requests.mdc`.
 
-**Last updated:** 2026-11-12 — Dialogue Close + click-away walk.
+**Last updated:** 2026-11-12 — Auto-attack/retaliate Combat-only.
 
-**Total tasks: 342** (47 priority + 290 in the 14 playable sections + 5 stretch). Unfinished gathering/bank/craft todos promoted into §0 (not duplicated as active work).
+**Total tasks: 343** (48 priority + 290 in the 14 playable sections + 5 stretch). Unfinished gathering/bank/craft todos promoted into §0 (not duplicated as active work).
 
 ---
 ## 0. Priority: Bank / crafting / resizable UI / gathering & hunting
 
 Active queue — implement top-down before returning to sections 1–14.
 
+- [done] Auto-attack & Auto-retaliate shown in Combat only (remove from Settings + battle panel). — Conclusion: Removed from Settings + `#battle-panel`; Combat tab + handlers kept; README/AGENT/GDD/hint updated.
 - [done] Show zone name & mob level range at map-edge entrances (border labels + enter chat); den/mine when relevant. — Conclusion: Faint 2-line labels at N/S/E/W exits; enter chat `You enter Northwood (mobs Lv 6–10).`; den/mine shaft markers include bands.
 - [done] Show aggro circle orange + attack range red; Settings toggle for range rings (default on). — Conclusion: Attack `0xff3b3b`, aggro `0xff8c20` @0.28; `showRangeRings` Settings “Show range rings”; rings on fight/engage/agroChase.
 - [done] Top-left FPS + TPS readout; cap FPS & TPS to 60 (Phaser fps.limit + arcade). — Conclusion: `#fps-readout` top-left always-on (Settings toggle); `fps.target/limit` 60 + arcade `fps` 60; step/postrender sample ~4×/s.
@@ -86,6 +87,7 @@ Active queue — implement top-down before returning to sections 1–14.
 - [done] Dialogue box Close button; click-away ends dialogue and walks as normal. — Conclusion: `#btn-dialogue-close` → `hideDialogue`; world click-away closes then falls through to walk/other NPC; same NPC ignored; overlay `pointer-events:none`, card `auto`.
 - [done] Commit leftovers and push to origin. — Conclusion: Cursor open-items plan + docs stubs committed; pushed master to origin.
 - [done] Turn off Auto-attack & Auto-retaliate by default. — Conclusion: `makeHero` both false; missing keys normalize off; HudApp Off/Off; README+GDD; saves with true kept.
+- [doing] Mob spawn pyramid (Dragon=1, +1 per lower tier) + global mob spawn modifier in Settings.
 
 Related unfinished (kept in later sections): depleted fish-spot move. (Firemaking / cooking / smithing / shop UI already `[done]` in §§7–8.)
 

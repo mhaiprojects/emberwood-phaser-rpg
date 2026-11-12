@@ -369,8 +369,8 @@ While mining: flash + spark FX tinted to ore; cleared on finish/cancel.
 
 | Toggle | Default | Where | Meaning |
 |--------|---------|-------|---------|
-| Auto-attack | Off | Combat, Settings, battle panel | Engage nearby foes when walking close |
-| Auto-retaliate | Off | Combat, Settings, battle panel | Only after **mob agros first**; walk into range |
+| Auto-attack | Off | Combat | Engage nearby foes when walking close |
+| Auto-retaliate | Off | Combat | Only after **mob agros first**; walk into range |
 | Auto-pickup | On | Combat, Settings | Walk-over loot vs click-only |
 | Shift-click drop | On | Settings | Shift+LMB drops inv item |
 | Hide bones | Off | Settings | Hide ground bones |

@@ -61,8 +61,6 @@
                         <button type="button" data-action="heal"><img class="pix" src="assets/svg/ui/heal.svg" alt=""> Eat food</button>
                         <button type="button" data-action="flee"><img class="pix" src="assets/svg/ui/flee.svg" alt=""> Run</button>
                     </div>
-                    <button type="button" class="auto-attack-btn" data-auto-attack :class="{ 'is-on': autoAttackOn }">{{ autoAttackLabel }}</button>
-                    <button type="button" class="auto-retaliate-btn" data-auto-retaliate title="When on, if a foe agros you first you walk in and fight back." :class="{ 'is-on': autoRetaliateOn }">{{ autoRetaliateLabel }}</button>
                 </div>
             </aside>
             <div id="bottom">
@@ -80,7 +78,7 @@
                             <option value="clan">Clan</option>
                         </select>
                     </div>
-                    <p class="hint">WASD or arrows to walk. Ctrl toggles run. Click ground, NPCs, or monsters. F1–F8 switch panels. Auto-attack, auto-retaliate, and auto-pickup are in Combat and Settings. Loot drops on the ground — walk over it when auto-pickup is on, or click it. Click food in Inventory to eat.</p>
+                    <p class="hint">WASD or arrows to walk. Ctrl toggles run. Click ground, NPCs, or monsters. F1–F8 switch panels. Auto-attack and auto-retaliate are on Combat; auto-pickup is on Combat and Settings. Loot drops on the ground — walk over it when auto-pickup is on, or click it. Click food in Inventory to eat.</p>
                 </div>
                 <div id="iface">
                     <div id="tab-panels">
@@ -156,13 +154,7 @@
                         </div>
                         <div id="panel-settings" class="tab-panel" v-show="tab === 'settings'">
                             <h3>Settings</h3>
-                            <p>Move with WASD or arrow keys. Click to walk. Eat shrimp or bread from Inventory. Bury bones, Trade, Fish, Bank from the panels.</p>
-                            <h3>Auto-attack</h3>
-                            <p>Toggle automatic engagement of nearby monsters, like classic RuneScape.</p>
-                            <button type="button" class="auto-attack-btn" data-auto-attack title="When on, walking into a nearby foe starts a fight." :class="{ 'is-on': autoAttackOn }">{{ autoAttackLabel }}</button>
-                            <h3>Auto-retaliate</h3>
-                            <p>When on, if a foe agros you first you walk into range and fight back. Does not engage passive nearby foes.</p>
-                            <button type="button" class="auto-retaliate-btn" data-auto-retaliate title="When on, if a foe agros you first you walk in and fight back." :class="{ 'is-on': autoRetaliateOn }">{{ autoRetaliateLabel }}</button>
+                            <p>Move with WASD or arrow keys. Click to walk. Eat shrimp or bread from Inventory. Bury bones, Trade, Fish, Bank from the panels. Auto-attack and auto-retaliate are on the Combat tab.</p>
                             <h3>Auto-pickup</h3>
                             <p>When on, walking near a loot pile picks it up. When off, click the pile to take it. New games start with this on.</p>
                             <button type="button" class="auto-pickup-btn" data-auto-pickup title="When on, walking near a loot pile picks it up." :class="{ 'is-on': autoPickupOn }">{{ autoPickupLabel }}</button>

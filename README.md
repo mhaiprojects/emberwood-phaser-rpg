@@ -45,7 +45,7 @@ HUD, chat, combat buttons, and the title screen are **HTML** (Verdana) so they s
 - **Title:** click **Click here to play**
 - **Walk:** WASD or arrow keys, or left-click the ground (a thin purple line shows the path). Right-click the ground for **Walk here**
 - **Talk:** click an NPC (or walk up and press Space)
-- **Fight:** click a monster, then walk into range. Auto-attack and auto-retaliate (both default off) are on Combat, Settings, and the battle panel
+- **Fight:** click a monster, then walk into range. Auto-attack and auto-retaliate (both default off) are on the Combat tab
 - **Loot:** walk over a pile when auto-pickup is on (default), or click the pile. Toggle is on Combat and Settings
 - **Bottom bar:** Combat, Skills, Quest, Inventory, Worn, Prayer, Magic, Settings (F1–F8)
 - **Inventory:** 28 slots. Click cooked shrimp or bread to eat
