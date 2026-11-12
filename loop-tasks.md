@@ -34,7 +34,7 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 Active queue — implement top-down before returning to sections 1–14.
 
 - [done] Add Settings XP multipliers 50× / 100× / 200× (extend existing XP rate options). — Conclusion: Options now 1/2/5/10/25/50/100/200× via `XP_MULTIPLIER_OPTIONS` + Settings buttons; still through `gainSkillXp`.
-- [doing] Woodcutting and fishing action FX like mining (player bob + target flashes/sparks while timed gather runs).
+- [done] Woodcutting and fishing action FX like mining (player bob + target flashes/sparks while timed gather runs). — Conclusion: startFishFx/startChopFx on timed gather start; finish* + clearFish/Chop call clearGatherFx; mine path unchanged.
 - [done] Remove level-up popup; chat + sparkles over player head instead. — Conclusion: Dropped `#level-up-overlay`; chat fanfare + SFX + `showLevelUpSparkles` over player.
 - [done] Resource per-type visuals + standout gather tiles (trees/ores/fishspot ≠ plain terrain; no black ore corners; distinct item icons). — Conclusion: TREE_*/ROCK_*/FISHSPOT_* frames; opaque rock underfill; fish ≠ water; per-tier item SVGs; pulse accents all zones.
 - [done] Space NPCs farther apart; shop NPCs get a tiny shop icon prefix on name labels. — Conclusion: Haven NPC_DEFS spread ≥~3–4 tiles; Mira/Cole get pouch shopIcon left of nameplate.

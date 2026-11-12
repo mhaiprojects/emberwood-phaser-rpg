@@ -95,6 +95,7 @@ var WorldScene = new Phaser.Class({
         this.shaftMarkers = [];
         this.zoneBorderLabels = [];
         this.mineFx = null;
+        this.gatherFx = null;
         this.depletedTiles = {};
         this.dialogueNpc = null;
         this.exitLock = false;
@@ -2688,6 +2689,7 @@ var WorldScene = new Phaser.Class({
     clearFish: function () {
         this.fishAction = null;
         this.fishTarget = null;
+        this.clearGatherFx();
     },
 
     clearGather: function () {
@@ -2700,12 +2702,13 @@ var WorldScene = new Phaser.Class({
     clearChop: function () {
         this.chopAction = null;
         this.chopTarget = null;
+        this.clearGatherFx();
     },
 
     clearMine: function () {
         this.mineAction = null;
         this.mineTarget = null;
-        this.clearMineFx();
+        this.clearGatherFx();
     },
 
     clearOreNodeMarkers: function () {
@@ -3081,9 +3084,11 @@ var WorldScene = new Phaser.Class({
         }
     },
 
-    clearMineFx: function () {
-        var fx = this.mineFx;
+    clearGatherFx: function () {
+        var fx = this.gatherFx || this.mineFx;
         if (!fx) {
+            this.gatherFx = null;
+            this.mineFx = null;
             return;
         }
         if (fx.sparkTimer && fx.sparkTimer.remove) {
@@ -3096,25 +3101,38 @@ var WorldScene = new Phaser.Class({
             if (fx.bobTween.stop) {
                 fx.bobTween.stop();
             }
-            if (this.player && typeof fx.baseX === 'number') {
-                this.player.x = fx.baseX;
+            if (this.player) {
+                if (typeof fx.baseX === 'number') {
+                    this.player.x = fx.baseX;
+                }
+                if (typeof fx.baseY === 'number') {
+                    this.player.y = fx.baseY;
+                }
             }
         }
+        this.gatherFx = null;
         this.mineFx = null;
     },
 
-    spawnMineSpark: function (x, y, color) {
+    clearMineFx: function () {
+        this.clearGatherFx();
+    },
+
+    spawnGatherSpark: function (x, y, color, kind) {
         var spark;
         var dx = Phaser.Math.Between(-5, 5);
-        var dy = Phaser.Math.Between(-8, -2);
-        spark = this.add.circle(x + dx * 0.2, y - 2, Phaser.Math.Between(1, 2), color, 0.95);
+        var dy = kind === 'fish'
+            ? Phaser.Math.Between(-4, 4)
+            : Phaser.Math.Between(-8, -2);
+        spark = this.add.circle(x + dx * 0.2, y + (kind === 'fish' ? 1 : -2),
+            Phaser.Math.Between(1, 2), color, 0.95);
         spark.setDepth(12);
         this.tweens.add({
             targets: spark,
             x: x + dx,
             y: y + dy,
             alpha: 0,
-            duration: 220,
+            duration: kind === 'fish' ? 280 : 220,
             ease: 'Quad.easeOut',
             onComplete: function () {
                 if (spark && spark.destroy) {
@@ -3124,46 +3142,96 @@ var WorldScene = new Phaser.Class({
         });
     },
 
-    startMineFx: function (hit, ore) {
+    spawnMineSpark: function (x, y, color) {
+        this.spawnGatherSpark(x, y, color, 'mine');
+    },
+
+    /**
+     * Timed gather FX: flash on target + sparks + player bob (same family as mining).
+     * kind: 'mine' | 'chop' | 'fish'
+     */
+    startGatherFx: function (hit, color, kind) {
         var self = this;
         var pos;
-        var color;
         var baseX;
-        this.clearMineFx();
+        var baseY;
+        var bobProps;
+        var delay;
+        this.clearGatherFx();
         if (!hit || !this.player) {
             return;
         }
-        pos = tileCenter(hit.tx, hit.ty);
-        color = typeof oreNodeColor === 'function' ? oreNodeColor(ore) : 0xd4a35a;
+        pos = (hit.tx != null && hit.ty != null && typeof tileCenter === 'function')
+            ? tileCenter(hit.tx, hit.ty)
+            : { x: hit.x, y: hit.y };
+        if (!pos || pos.x == null) {
+            return;
+        }
+        color = typeof color === 'number' ? color : 0xd4a35a;
+        kind = kind || 'mine';
         baseX = this.player.x;
-        this.mineFx = {
+        baseY = this.player.y;
+        delay = kind === 'fish' ? 320 : (kind === 'chop' ? 240 : 260);
+        if (kind === 'fish') {
+            bobProps = {
+                targets: this.player,
+                y: baseY + 1.5,
+                duration: 140,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            };
+        } else {
+            bobProps = {
+                targets: this.player,
+                x: baseX + (kind === 'chop' ? 2 : 1.5),
+                duration: kind === 'chop' ? 100 : 110,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            };
+        }
+        this.gatherFx = {
+            kind: kind,
             baseX: baseX,
+            baseY: baseY,
             flash: this.add.rectangle(pos.x, pos.y, 14, 14, color, 0.18).setDepth(4),
             sparkTimer: this.time.addEvent({
-                delay: 260,
+                delay: delay,
                 loop: true,
                 callback: function () {
-                    self.spawnMineSpark(pos.x, pos.y, color);
-                    if (self.mineFx && self.mineFx.flash) {
-                        self.mineFx.flash.setAlpha(0.28);
+                    self.spawnGatherSpark(pos.x, pos.y, color, kind);
+                    if (self.gatherFx && self.gatherFx.flash) {
+                        self.gatherFx.flash.setAlpha(0.28);
                         self.tweens.add({
-                            targets: self.mineFx.flash,
+                            targets: self.gatherFx.flash,
                             alpha: 0.12,
                             duration: 140
                         });
                     }
                 }
             }),
-            bobTween: this.tweens.add({
-                targets: this.player,
-                x: baseX + 1.5,
-                duration: 110,
-                yoyo: true,
-                repeat: -1,
-                ease: 'Sine.easeInOut'
-            })
+            bobTween: this.tweens.add(bobProps)
         };
-        this.spawnMineSpark(pos.x, pos.y, color);
+        this.mineFx = this.gatherFx;
+        this.spawnGatherSpark(pos.x, pos.y, color, kind);
+    },
+
+    startMineFx: function (hit, ore) {
+        var color = typeof oreNodeColor === 'function' ? oreNodeColor(ore) : 0xd4a35a;
+        this.startGatherFx(hit, color, 'mine');
+    },
+
+    startChopFx: function (hit) {
+        this.startGatherFx(hit, 0x6a9a40, 'chop');
+    },
+
+    startFishFx: function (hit) {
+        var catchId = hit && hit.catchId
+            ? hit.catchId
+            : (typeof fishCatchForZone === 'function' ? fishCatchForZone(this.zoneId) : 'rawshrimp');
+        var color = this.fishSpotPulseColor ? this.fishSpotPulseColor(catchId) : 0x7ec8ff;
+        this.startGatherFx(hit, color, 'fish');
     },
 
     depleteKey: function (tx, ty) {
@@ -3688,6 +3756,7 @@ var WorldScene = new Phaser.Class({
             authoredSec: ms / 1000,
             ticksLeft: this.secondsToSimTicks(ms / 1000)
         };
+        this.startFishFx(hit);
         Hud.log('You fish…');
         return true;
     },
@@ -3696,6 +3765,7 @@ var WorldScene = new Phaser.Class({
         var hit = this.fishTarget;
         var hero;
         var result;
+        this.clearGatherFx();
         this.fishAction = null;
         if (this.encounterLock || (window.Hud && Hud.mode === 'battle')) {
             this.fishTarget = null;
@@ -3854,6 +3924,7 @@ var WorldScene = new Phaser.Class({
             authoredSec: ms / 1000,
             ticksLeft: this.secondsToSimTicks(ms / 1000)
         };
+        this.startChopFx(hit);
         Hud.log('You swing your axe…');
         return true;
     },
@@ -3862,6 +3933,7 @@ var WorldScene = new Phaser.Class({
         var hit = this.chopTarget;
         var hero;
         var result;
+        this.clearGatherFx();
         this.chopAction = null;
         if (this.encounterLock || (window.Hud && Hud.mode === 'battle')) {
             this.chopTarget = null;
