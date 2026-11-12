@@ -59,8 +59,10 @@ def hash_n(x, y, seed):
 
 
 # --- tiles 16 x 16x16 ---
+# Frames 0..17 = GRASS..FURNACE (TILE enum 1..18).
+# Frames 18..31 = gather variants (TREE_OAK..FISHSPOT_SHARK, TILE enum 19..32).
 TILE = 16
-TILE_COUNT = 18
+TILE_COUNT = 32
 
 K = (22, 16, 14, 255)
 SKIN = (236, 188, 132, 255)
@@ -132,34 +134,92 @@ def make_tiles():
             else:
                 c = (40, 92, 156, 255)
             put(sheet, TILE * TILE_COUNT, TILE * 4 + x, y, c, TILE)
-    # 5 tree (green grass under canopy so corners blend)
-    ox = TILE * 5
-    for y in range(TILE):
-        for x in range(TILE):
-            n = hash_n(x, y, 11) % 8
-            if n == 0:
-                c = (58, 122, 52, 255)
-            elif n == 1:
-                c = (86, 158, 72, 255)
-            else:
-                c = (70, 140, 60, 255)
-            put(sheet, TILE * TILE_COUNT, ox + x, y, c, TILE)
-    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 7, 10, 2, 6, (96, 64, 32, 255))
-    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 6, 11, 4, 2, (74, 48, 24, 255))
-    for cx, cy, rad, col in ((8, 6, 6, (28, 92, 36, 255)), (8, 5, 5, (40, 122, 48, 255)), (7, 4, 3, (56, 148, 60, 255))):
+    def fill_grass_bg(ox, seed=11):
         for y in range(TILE):
             for x in range(TILE):
-                if (x - cx) ** 2 + (y - cy) ** 2 <= rad * rad * 0.85:
-                    put(sheet, TILE * TILE_COUNT, ox + x, y, col, TILE)
-    # 6 rock
-    ox = TILE * 6
-    for y in range(TILE):
-        for x in range(TILE):
-            dx, dy = x - 8, y - 9
-            if dx * dx + dy * dy * 1.4 < 36:
-                shade = 130 + (x + y) % 3 * 12
-                put(sheet, TILE * TILE_COUNT, ox + x, y, (shade, shade - 8, shade - 16, 255), TILE)
-    fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 5, 8, 6, 1, (190, 190, 180, 255))
+                n = hash_n(x, y, seed) % 8
+                if n == 0:
+                    c = (58, 122, 52, 255)
+                elif n == 1:
+                    c = (86, 158, 72, 255)
+                else:
+                    c = (70, 140, 60, 255)
+                put(sheet, TILE * TILE_COUNT, ox + x, y, c, TILE)
+
+    def fill_mine_bg(ox):
+        for y in range(TILE):
+            for x in range(TILE):
+                n = hash_n(x, y, 71) % 6
+                if n == 0:
+                    c = (72, 70, 66, 255)
+                elif n == 1:
+                    c = (88, 84, 78, 255)
+                else:
+                    c = (64, 62, 58, 255)
+                put(sheet, TILE * TILE_COUNT, ox + x, y, c, TILE)
+
+    def paint_tree(ox, canopy):
+        """canopy: list of (cx, cy, rad, rgba). Opaque grass underfill."""
+        fill_grass_bg(ox)
+        fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 7, 10, 2, 6, (96, 64, 32, 255))
+        fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 6, 11, 4, 2, (74, 48, 24, 255))
+        for cx, cy, rad, col in canopy:
+            for y in range(TILE):
+                for x in range(TILE):
+                    if (x - cx) ** 2 + (y - cy) ** 2 <= rad * rad * 0.85:
+                        put(sheet, TILE * TILE_COUNT, ox + x, y, col, TILE)
+
+    def paint_rock(ox, vein=None, mine_floor=False):
+        """Opaque underfill + boulder; optional vein color blob."""
+        if mine_floor:
+            fill_mine_bg(ox)
+        else:
+            fill_grass_bg(ox, 17)
+        for y in range(TILE):
+            for x in range(TILE):
+                dx, dy = x - 8, y - 9
+                if dx * dx + dy * dy * 1.4 < 36:
+                    shade = 130 + (x + y) % 3 * 12
+                    put(sheet, TILE * TILE_COUNT, ox + x, y, (shade, shade - 8, shade - 16, 255), TILE)
+        fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 5, 8, 6, 1, (190, 190, 180, 255))
+        if vein:
+            fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 6, 7, 4, 3, vein)
+            put(sheet, TILE * TILE_COUNT, ox + 7, 6, vein, TILE)
+            put(sheet, TILE * TILE_COUNT, ox + 8, 8, (240, 240, 230, 255), TILE)
+
+    def paint_fishspot(ox, accent, foam=(220, 240, 255, 255)):
+        """Not plain water — brighter pool + foam ring + accent sparkle."""
+        for y in range(TILE):
+            for x in range(TILE):
+                n = (x + y * 2) % 5
+                if n == 0:
+                    c = (96, 188, 220, 255)
+                elif n == 1:
+                    c = (64, 148, 200, 255)
+                else:
+                    c = (48, 120, 176, 255)
+                put(sheet, TILE * TILE_COUNT, ox + x, y, c, TILE)
+        # Foam ring
+        for x, y in (
+            (4, 4), (5, 3), (6, 3), (7, 3), (8, 3), (9, 3), (10, 3), (11, 4),
+            (12, 5), (12, 6), (12, 7), (12, 8), (12, 9), (12, 10),
+            (11, 11), (10, 12), (9, 12), (8, 12), (7, 12), (6, 12), (5, 12), (4, 11),
+            (3, 10), (3, 9), (3, 8), (3, 7), (3, 6), (3, 5),
+        ):
+            put(sheet, TILE * TILE_COUNT, ox + x, y, foam, TILE)
+        # Center accent (catch-tier color)
+        fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 6, 6, 4, 4, accent)
+        put(sheet, TILE * TILE_COUNT, ox + 7, 7, (255, 255, 255, 255), TILE)
+        put(sheet, TILE * TILE_COUNT, ox + 8, 8, foam, TILE)
+
+    # 5 tree (normal / border)
+    paint_tree(TILE * 5, (
+        (8, 6, 6, (28, 92, 36, 255)),
+        (8, 5, 5, (40, 122, 48, 255)),
+        (7, 4, 3, (56, 148, 60, 255)),
+    ))
+    # 6 rock (plain) — opaque grass underfill (no black corners)
+    paint_rock(TILE * 6)
     # 7 shrine
     ox = TILE * 7
     fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 3, 12, 10, 3, (90, 86, 80, 255))
@@ -235,18 +295,6 @@ def make_tiles():
                     c = (40, 92, 156, 255)
                 put(sheet, TILE * TILE_COUNT, ox + x, y, c, TILE)
 
-    def fill_grass_bg(ox):
-        for y in range(TILE):
-            for x in range(TILE):
-                n = hash_n(x, y, 11) % 8
-                if n == 0:
-                    c = (58, 122, 52, 255)
-                elif n == 1:
-                    c = (86, 158, 72, 255)
-                else:
-                    c = (70, 140, 60, 255)
-                put(sheet, TILE * TILE_COUNT, ox + x, y, c, TILE)
-
     # 12 dock (planks over water)
     ox = TILE * 12
     fill_water_bg(ox)
@@ -319,6 +367,49 @@ def make_tiles():
     fill_rect(sheet, TILE * TILE_COUNT, TILE, ox + 4, 12, 8, 2, (72, 64, 56, 255))
     put(sheet, TILE * TILE_COUNT, ox + 7, 5, (240, 220, 90, 255), TILE)
     put(sheet, TILE * TILE_COUNT, ox + 8, 5, (240, 220, 90, 255), TILE)
+
+    # --- Gather variants (TILE enum 19..32 / frames 18..31) ---
+    # 18 TREE_OAK — fuller canopy, browner greens
+    paint_tree(TILE * 18, (
+        (8, 6, 7, (48, 96, 36, 255)),
+        (8, 5, 6, (72, 128, 48, 255)),
+        (7, 4, 4, (96, 148, 56, 255)),
+    ))
+    # 19 TREE_ASH — taller/narrower, cooler green
+    paint_tree(TILE * 19, (
+        (8, 5, 5, (36, 108, 72, 255)),
+        (8, 4, 4, (52, 140, 88, 255)),
+        (8, 3, 3, (72, 168, 108, 255)),
+    ))
+    fill_rect(sheet, TILE * TILE_COUNT, TILE, TILE * 19 + 7, 9, 2, 7, (88, 58, 28, 255))
+    # 20 TREE_YEW — dark dense canopy
+    paint_tree(TILE * 20, (
+        (8, 6, 6, (20, 64, 28, 255)),
+        (8, 5, 5, (28, 84, 36, 255)),
+        (7, 4, 3, (40, 104, 44, 255)),
+    ))
+    # 21 TREE_MAGIC — purple-teal glow canopy
+    paint_tree(TILE * 21, (
+        (8, 6, 6, (48, 72, 120, 255)),
+        (8, 5, 5, (72, 96, 168, 255)),
+        (7, 4, 3, (120, 88, 196, 255)),
+    ))
+    put(sheet, TILE * TILE_COUNT, TILE * 21 + 8, 4, (200, 180, 255, 255), TILE)
+    put(sheet, TILE * TILE_COUNT, TILE * 21 + 6, 6, (160, 220, 255, 255), TILE)
+
+    # 22..26 ore rocks (mine floor underfill + vein color)
+    paint_rock(TILE * 22, vein=(196, 122, 58, 255), mine_floor=True)   # copper
+    paint_rock(TILE * 23, vein=(138, 144, 152, 255), mine_floor=True)  # iron
+    paint_rock(TILE * 24, vein=(110, 200, 255, 255), mine_floor=True)  # diamond
+    paint_rock(TILE * 25, vein=(232, 93, 58, 255), mine_floor=True)    # dragonite
+    paint_rock(TILE * 26, vein=(201, 160, 255, 255), mine_floor=True)  # rune essence
+
+    # 27..31 fish spots (not WATER)
+    paint_fishspot(TILE * 27, (240, 180, 120, 255))   # shrimp
+    paint_fishspot(TILE * 28, (96, 180, 120, 255))    # trout
+    paint_fishspot(TILE * 29, (220, 96, 72, 255))     # lobster
+    paint_fishspot(TILE * 30, (72, 140, 220, 255))    # swordfish
+    paint_fishspot(TILE * 31, (88, 88, 120, 255))     # shark
 
     write_png(os.path.join(ASSETS, "tiles.png"), TILE * TILE_COUNT, TILE, sheet)
 

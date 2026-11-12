@@ -399,18 +399,25 @@ Day/night uses **real clock hour**: dusk/dawn warm tint, night cool overlay alph
 - Auto-pickup default on (within pickup px); hide-bones option hides bone piles
 - Mob tables: `lootForMob` in `Scales.js` (+ coins/bones always)
 
-### 6.8 Ore colors & mining FX
+### 6.8 Gather-node visuals (trees / ores / fish)
 
-| Ore | Node color |
-|-----|------------|
+Gather spots use **dedicated tilesheet frames** (opaque underfill — no black corners on rocks). Ordinary `WATER` / plain `ROCK` / border `TREE` stay for scenery.
+
+| Family | Frames | Notes |
+|--------|--------|-------|
+| Trees | `TREE`, `TREE_OAK`, `TREE_ASH`, `TREE_YEW`, `TREE_MAGIC` | Zone choppable trees from `TREE_BY_ZONE`; borders stay generic `TREE` |
+| Ores | `ROCK` + `ROCK_COPPER`…`ROCK_ESSENCE` | Baked vein colors; small gem accent overlay (no full-tile tint) |
+| Fish | `FISHSPOT`…`FISHSPOT_SHARK` | **Not** `WATER`; pulse accent on all zones by catch tier |
+
+| Ore | Vein / accent |
+|-----|---------------|
 | copper | `#c47a3a` |
-| tin | `#b0bcc8` |
 | iron | `#8a9098` |
 | diamondore | `#6ec8ff` |
 | dragoniteore | `#e85d3a` |
 | runeessence | `#c9a0ff` |
 
-While mining: flash + spark FX tinted to ore; cleared on finish/cancel.
+While mining: flash + spark FX tinted to ore; cleared on finish/cancel. Item icons for log/ore/fish tiers are distinct SVGs.
 
 ---
 

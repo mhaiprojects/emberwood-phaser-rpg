@@ -14,7 +14,7 @@ var BootScene = new Phaser.Class({
         this.load.on('progress', function (value) {
             bar.setText('Loading Emberwood… ' + Math.floor(value * 100) + '%');
         });
-        this.load.image('tiles', 'assets/tiles.png?v=furnace1');
+        this.load.image('tiles', 'assets/tiles.png?v=gathervis1');
         this.load.spritesheet('player', 'assets/player.png', { frameWidth: 16, frameHeight: 16 });
         this.load.image('slime', 'assets/slime.png');
         this.load.image('bat', 'assets/bat.png');

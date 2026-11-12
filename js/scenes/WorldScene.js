@@ -37,7 +37,10 @@ var FLEE_GRACE_MS = 1100;
 var COLLIDE_TILES = [
     TILE.WATER, TILE.TREE, TILE.ROCK, TILE.SHRINE,
     TILE.STALL, TILE.RANGE, TILE.ANVIL, TILE.BOOTH, TILE.FURNACE,
-    TILE.BOAT, TILE.TOMB, TILE.DOOR, TILE.WALL
+    TILE.BOAT, TILE.TOMB, TILE.DOOR, TILE.WALL,
+    TILE.TREE_OAK, TILE.TREE_ASH, TILE.TREE_YEW, TILE.TREE_MAGIC,
+    TILE.ROCK_COPPER, TILE.ROCK_IRON, TILE.ROCK_DIAMOND, TILE.ROCK_DRAGONITE, TILE.ROCK_ESSENCE,
+    TILE.FISHSPOT, TILE.FISHSPOT_TROUT, TILE.FISHSPOT_LOBSTER, TILE.FISHSPOT_SWORDFISH, TILE.FISHSPOT_SHARK
 ];
 var GROUND_FIRE_MS = 45000;
 var STATION_RANGE = 28;
@@ -1584,20 +1587,7 @@ var WorldScene = new Phaser.Class({
                 this.biomeFx.push(mist);
             }
         }
-        if (this.zoneId === 'southshore' && typeof SHORE_PROPS !== 'undefined' && SHORE_PROPS.spots) {
-            for (i = 0; i < SHORE_PROPS.spots.length; i++) {
-                mist = this.add.circle(
-                    SHORE_PROPS.spots[i].x * 16 + 8,
-                    SHORE_PROPS.spots[i].y * 16 + 8,
-                    5,
-                    0x7ec8ff,
-                    0.45
-                ).setDepth(6).setOrigin(0.5);
-                mist._fishSpotPulse = true;
-                mist._mistPhase = i * 1.1;
-                this.biomeFx.push(mist);
-            }
-        }
+        this.paintFishSpotPulses();
         if (biome === 'swamp' || this.zoneId === 'mire') {
             for (i = 0; i < 10; i++) {
                 mist = this.add.rectangle(
@@ -1612,6 +1602,76 @@ var WorldScene = new Phaser.Class({
                 mist._mistSpeed = 8 + (i % 5);
                 this.biomeFx.push(mist);
             }
+        }
+    },
+
+    fishSpotPulseColor: function (catchId) {
+        if (catchId === 'rawtrout' || catchId === 'trout') {
+            return 0x60b478;
+        }
+        if (catchId === 'rawlobster' || catchId === 'lobster') {
+            return 0xdc6048;
+        }
+        if (catchId === 'rawswordfish' || catchId === 'swordfish') {
+            return 0x488cdc;
+        }
+        if (catchId === 'rawshark' || catchId === 'shark') {
+            return 0x585878;
+        }
+        return 0x7ec8ff;
+    },
+
+    paintFishSpotPulses: function () {
+        var spots = [];
+        var catchId;
+        var color;
+        var mist;
+        var i;
+        var seen = {};
+        var key;
+        var addSpot = function (sx, sy) {
+            key = sx + ',' + sy;
+            if (seen[key]) {
+                return;
+            }
+            seen[key] = true;
+            spots.push({ x: sx, y: sy });
+        };
+        if (typeof SHORE_PROPS !== 'undefined' && SHORE_PROPS.spots && this.zoneId === 'southshore') {
+            for (i = 0; i < SHORE_PROPS.spots.length; i++) {
+                addSpot(SHORE_PROPS.spots[i].x, SHORE_PROPS.spots[i].y);
+            }
+        }
+        if (typeof FISH_SPOTS_BY_ZONE !== 'undefined' && FISH_SPOTS_BY_ZONE[this.zoneId]) {
+            for (i = 0; i < FISH_SPOTS_BY_ZONE[this.zoneId].length; i++) {
+                addSpot(FISH_SPOTS_BY_ZONE[this.zoneId][i].x, FISH_SPOTS_BY_ZONE[this.zoneId][i].y);
+            }
+        }
+        if (this.tileGrid) {
+            for (i = 0; i < this.tileGrid.length; i++) {
+                if (!this.tileGrid[i]) {
+                    continue;
+                }
+                for (key = 0; key < this.tileGrid[i].length; key++) {
+                    if (typeof isFishSpotTile === 'function' && isFishSpotTile(this.tileGrid[i][key])) {
+                        addSpot(key, i);
+                    }
+                }
+            }
+        }
+        catchId = typeof fishCatchForZone === 'function' ? fishCatchForZone(this.zoneId) : 'rawshrimp';
+        color = this.fishSpotPulseColor(catchId);
+        for (i = 0; i < spots.length; i++) {
+            mist = this.add.circle(
+                spots[i].x * 16 + 8,
+                spots[i].y * 16 + 8,
+                5,
+                color,
+                0.45
+            ).setDepth(6).setOrigin(0.5);
+            mist._fishSpotPulse = true;
+            mist._mistPhase = i * 1.1;
+            this.biomeFx.push(mist);
         }
     },
 
@@ -2967,8 +3027,12 @@ var WorldScene = new Phaser.Class({
         var color = typeof oreNodeColor === 'function' ? oreNodeColor(ore) : 0x9a9088;
         var pos;
         var marker;
-        var tile;
-        if (!this.tileGrid || !this.tileGrid[ty] || this.tileGrid[ty][tx] !== TILE.ROCK) {
+        var index;
+        if (!this.tileGrid || !this.tileGrid[ty]) {
+            return;
+        }
+        index = this.tileGrid[ty][tx];
+        if (!(typeof isRockTile === 'function' ? isRockTile(index) : index === TILE.ROCK)) {
             return;
         }
         if (this.isTileDepleted(tx, ty)) {
@@ -2976,21 +3040,16 @@ var WorldScene = new Phaser.Class({
         }
         this.removeOreNodeMarker(tx, ty);
         pos = tileCenter(tx, ty);
+        /* Accent only — veins are baked into ROCK_* tiles (no full-tile tint). */
         marker = this.add.container(pos.x, pos.y);
         marker.add([
-            this.add.circle(0, 1, 5, color, 0.42),
-            this.add.circle(-2, -1, 2, color, 0.9),
-            this.add.circle(2, 0, 1.5, 0xffffff, 0.55)
+            this.add.circle(0, 1, 4, color, 0.35),
+            this.add.circle(-2, -1, 1.8, color, 0.85),
+            this.add.circle(2, 0, 1.2, 0xffffff, 0.5)
         ]);
         marker.setDepth(3);
         this.oreNodeMarkers = this.oreNodeMarkers || {};
         this.oreNodeMarkers[key] = marker;
-        if (this.ground && this.ground.getTileAt) {
-            tile = this.ground.getTileAt(tx, ty);
-            if (tile) {
-                tile.tint = color;
-            }
-        }
     },
 
     refreshOreNodeMarkers: function () {
@@ -3006,7 +3065,7 @@ var WorldScene = new Phaser.Class({
                 continue;
             }
             for (x = 0; x < this.tileGrid[y].length; x++) {
-                if (this.tileGrid[y][x] !== TILE.ROCK) {
+                if (!(typeof isRockTile === 'function' ? isRockTile(this.tileGrid[y][x]) : this.tileGrid[y][x] === TILE.ROCK)) {
                     continue;
                 }
                 rock = typeof mineRockAt === 'function'
@@ -3167,7 +3226,7 @@ var WorldScene = new Phaser.Class({
         if (this.tileGrid[ty] && this.tileGrid[ty][tx] === emptyIndex) {
             this.setTileIndex(tx, ty, fullIndex);
         }
-        if (fullIndex === TILE.ROCK) {
+        if (typeof isRockTile === 'function' ? isRockTile(fullIndex) : fullIndex === TILE.ROCK) {
             rock = typeof mineRockAt === 'function'
                 ? mineRockAt(tx, ty, this.zoneId, this.tileGrid, {
                     houseRects: this.houseRectsNow(),
@@ -3206,7 +3265,9 @@ var WorldScene = new Phaser.Class({
             tx: tx,
             ty: ty
         };
-        if (fullIndex === TILE.ROCK || (this.tileGrid && this.tileGrid[ty] && this.tileGrid[ty][tx] === TILE.ROCK)) {
+        if ((typeof isRockTile === 'function' && isRockTile(fullIndex))
+                || (this.tileGrid && this.tileGrid[ty] && typeof isRockTile === 'function'
+                    && isRockTile(this.tileGrid[ty][tx]))) {
             this.removeOreNodeMarker(tx, ty);
         }
         this.setTileIndex(tx, ty, emptyIndex);
@@ -3837,7 +3898,8 @@ var WorldScene = new Phaser.Class({
         if (!result.ok) {
             return true;
         }
-        this.depleteResource(hit.tx, hit.ty, TILE.GRASS2, WOODCUT_RESPAWN_MS, TILE.TREE);
+        this.depleteResource(hit.tx, hit.ty, TILE.GRASS2, WOODCUT_RESPAWN_MS,
+            (this.tileGrid[hit.ty] && this.tileGrid[hit.ty][hit.tx]) || TILE.TREE);
         if (Hud.saveHero) {
             Hud.saveHero(hero);
         }
@@ -4121,7 +4183,8 @@ var WorldScene = new Phaser.Class({
         if (!result.ok) {
             return true;
         }
-        this.depleteResource(hit.tx, hit.ty, TILE.GRASS, MINE_RESPAWN_MS, TILE.ROCK);
+        this.depleteResource(hit.tx, hit.ty, TILE.GRASS, MINE_RESPAWN_MS,
+            (this.tileGrid[hit.ty] && this.tileGrid[hit.ty][hit.tx]) || TILE.ROCK);
         if (Hud.saveHero) {
             Hud.saveHero(hero);
         }
@@ -5270,7 +5333,9 @@ var WorldScene = new Phaser.Class({
                 continue;
             }
             var index = row[tile.tx];
-            if (index === TILE.TREE || index === TILE.ROCK || index === TILE.WALL) {
+            if ((typeof isTreeTile === 'function' ? isTreeTile(index) : index === TILE.TREE)
+                    || (typeof isRockTile === 'function' ? isRockTile(index) : index === TILE.ROCK)
+                    || index === TILE.WALL) {
                 return true;
             }
         }

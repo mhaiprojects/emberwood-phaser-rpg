@@ -127,7 +127,10 @@ function nearestMobAllowedTile(grid, tx, ty, zoneId) {
 }
 
 function tileBlockedByTerrain(index) {
-    return index === TILE.WATER || index === TILE.TREE || index === TILE.ROCK || index === TILE.SHRINE
+    var tree = typeof isTreeTile === 'function' ? isTreeTile(index) : index === TILE.TREE;
+    var rock = typeof isRockTile === 'function' ? isRockTile(index) : index === TILE.ROCK;
+    var fish = typeof isFishSpotTile === 'function' ? isFishSpotTile(index) : false;
+    return index === TILE.WATER || fish || tree || rock || index === TILE.SHRINE
         || index === TILE.STALL || index === TILE.RANGE || index === TILE.ANVIL || index === TILE.BOOTH
         || index === TILE.FURNACE
         || index === TILE.BOAT || index === TILE.TOMB

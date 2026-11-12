@@ -16,8 +16,104 @@ var TILE = {
     TOMB: 15,
     DOOR: 16,
     WALL: 17,
-    FURNACE: 18
+    FURNACE: 18,
+    /* Gather variants — stand out from plain TREE/ROCK/WATER. */
+    TREE_OAK: 19,
+    TREE_ASH: 20,
+    TREE_YEW: 21,
+    TREE_MAGIC: 22,
+    ROCK_COPPER: 23,
+    ROCK_IRON: 24,
+    ROCK_DIAMOND: 25,
+    ROCK_DRAGONITE: 26,
+    ROCK_ESSENCE: 27,
+    FISHSPOT: 28,
+    FISHSPOT_TROUT: 29,
+    FISHSPOT_LOBSTER: 30,
+    FISHSPOT_SWORDFISH: 31,
+    FISHSPOT_SHARK: 32
 };
+
+function isTreeTile(index) {
+    return index === TILE.TREE
+        || index === TILE.TREE_OAK
+        || index === TILE.TREE_ASH
+        || index === TILE.TREE_YEW
+        || index === TILE.TREE_MAGIC;
+}
+
+function isRockTile(index) {
+    return index === TILE.ROCK
+        || index === TILE.ROCK_COPPER
+        || index === TILE.ROCK_IRON
+        || index === TILE.ROCK_DIAMOND
+        || index === TILE.ROCK_DRAGONITE
+        || index === TILE.ROCK_ESSENCE;
+}
+
+function isFishSpotTile(index) {
+    return index === TILE.FISHSPOT
+        || index === TILE.FISHSPOT_TROUT
+        || index === TILE.FISHSPOT_LOBSTER
+        || index === TILE.FISHSPOT_SWORDFISH
+        || index === TILE.FISHSPOT_SHARK;
+}
+
+function treeTileForLog(logId) {
+    if (logId === 'oaklogs') {
+        return TILE.TREE_OAK;
+    }
+    if (logId === 'ashlogs') {
+        return TILE.TREE_ASH;
+    }
+    if (logId === 'yewlogs') {
+        return TILE.TREE_YEW;
+    }
+    if (logId === 'magiclogs') {
+        return TILE.TREE_MAGIC;
+    }
+    return TILE.TREE;
+}
+
+function treeTileForZone(zoneId) {
+    var spec = typeof treeSpecForZone === 'function' ? treeSpecForZone(zoneId) : null;
+    return treeTileForLog(spec && spec.log);
+}
+
+function rockTileForOre(ore) {
+    if (ore === 'copper') {
+        return TILE.ROCK_COPPER;
+    }
+    if (ore === 'iron') {
+        return TILE.ROCK_IRON;
+    }
+    if (ore === 'diamondore') {
+        return TILE.ROCK_DIAMOND;
+    }
+    if (ore === 'dragoniteore') {
+        return TILE.ROCK_DRAGONITE;
+    }
+    if (ore === 'runeessence') {
+        return TILE.ROCK_ESSENCE;
+    }
+    return TILE.ROCK;
+}
+
+function fishTileForCatch(catchId) {
+    if (catchId === 'rawtrout' || catchId === 'trout') {
+        return TILE.FISHSPOT_TROUT;
+    }
+    if (catchId === 'rawlobster' || catchId === 'lobster') {
+        return TILE.FISHSPOT_LOBSTER;
+    }
+    if (catchId === 'rawswordfish' || catchId === 'swordfish') {
+        return TILE.FISHSPOT_SWORDFISH;
+    }
+    if (catchId === 'rawshark' || catchId === 'shark') {
+        return TILE.FISHSPOT_SHARK;
+    }
+    return TILE.FISHSPOT;
+}
 
 var MAP_W = 36;
 var MAP_H = 28;
@@ -451,7 +547,8 @@ function mapTileBlocksPath(index) {
     if (typeof tileBlockedByTerrain === 'function') {
         return tileBlockedByTerrain(index);
     }
-    return index === TILE.WATER || index === TILE.TREE || index === TILE.ROCK || index === TILE.SHRINE
+    return index === TILE.WATER || isFishSpotTile(index)
+        || isTreeTile(index) || isRockTile(index) || index === TILE.SHRINE
         || index === TILE.STALL || index === TILE.RANGE || index === TILE.ANVIL || index === TILE.BOOTH
         || index === TILE.FURNACE
         || index === TILE.BOAT || index === TILE.TOMB
@@ -518,6 +615,15 @@ function isProtectedPathBlocker(x, y, zoneId) {
     if (altar && altar.x === x && altar.y === y) {
         return true;
     }
+    /* Preserve dedicated fish-spot tiles (never clear to grass). */
+    if (zoneId && FISH_SPOTS_BY_ZONE && FISH_SPOTS_BY_ZONE[zoneId]) {
+        list = FISH_SPOTS_BY_ZONE[zoneId];
+        for (i = 0; i < list.length; i++) {
+            if (list[i].x === x && list[i].y === y) {
+                return true;
+            }
+        }
+    }
     return false;
 }
 
@@ -567,17 +673,20 @@ function enforcePathBlockCap(grid, seed, zoneId) {
                 continue;
             }
             score = hash2(x, y, seed + 401);
-            if (index === TILE.TREE || index === TILE.ROCK) {
-                candidates.push({ x: x, y: y, score: score, tile: index });
+            if (isFishSpotTile(index)) {
+                continue;
+            }
+            if (isTreeTile(index) || isRockTile(index)) {
+                candidates.push({ x: x, y: y, score: score, tile: index, rock: isRockTile(index) });
             } else if (index === TILE.WATER) {
                 waterCandidates.push({ x: x, y: y, score: score });
             }
         }
     }
     candidates.sort(function (a, b) {
-        if (a.tile !== b.tile) {
+        if (a.rock !== b.rock) {
             /* Clear ROCK before TREE so gather trees linger a bit longer. */
-            return a.tile === TILE.ROCK ? -1 : 1;
+            return a.rock ? -1 : 1;
         }
         return a.score - b.score;
     });
@@ -755,7 +864,10 @@ function generateMap(seed, biome, neighbors, zoneId) {
         setCell(grid, SHORE_PROPS.boat.x, SHORE_PROPS.boat.y, TILE.BOAT);
         var si;
         for (si = 0; si < SHORE_PROPS.spots.length; si++) {
-            setCell(grid, SHORE_PROPS.spots[si].x, SHORE_PROPS.spots[si].y, TILE.WATER);
+            setCell(grid, SHORE_PROPS.spots[si].x, SHORE_PROPS.spots[si].y,
+                fishTileForCatch(typeof fishCatchForZone === 'function'
+                    ? fishCatchForZone('southshore')
+                    : 'rawshrimp'));
         }
     } else if (biome === 'mine') {
         /* Sparse rocks so corridors stay open; ore nodes + shaft house placed after. */
@@ -799,7 +911,50 @@ function generateMap(seed, biome, neighbors, zoneId) {
     if (zoneId === 'southshore' || zoneId === 'darkmine') {
         enforcePathBlockCap(grid, seed, zoneId);
     }
+    if (zoneId) {
+        applyGatherTileFrames(grid, zoneId);
+    } else if (biome === 'town') {
+        applyGatherTileFrames(grid, 'haven');
+    }
     return grid;
+}
+
+/**
+ * Retype interior TREE/ROCK scatter to zone gather variants so nodes stand out.
+ * Border trees stay generic TREE. Ore prop tables already place ROCK_*.
+ */
+function applyGatherTileFrames(grid, zoneId) {
+    var x;
+    var y;
+    var index;
+    var treeTile;
+    var rock;
+    var oreTile;
+    if (!grid || !zoneId) {
+        return;
+    }
+    treeTile = treeTileForZone(zoneId);
+    for (y = 1; y < MAP_H - 1; y++) {
+        for (x = 1; x < MAP_W - 1; x++) {
+            if (!grid[y]) {
+                continue;
+            }
+            index = grid[y][x];
+            if (index === TILE.TREE && treeTile !== TILE.TREE) {
+                grid[y][x] = treeTile;
+                continue;
+            }
+            if (index === TILE.ROCK) {
+                rock = mineRockAt(x, y, zoneId, null, {});
+                if (rock && rock.ore) {
+                    oreTile = rockTileForOre(rock.ore);
+                    if (oreTile !== TILE.ROCK) {
+                        grid[y][x] = oreTile;
+                    }
+                }
+            }
+        }
+    }
 }
 
 function generateInterior(kind) {
@@ -1052,6 +1207,8 @@ var FISH_SPOTS_BY_ZONE = {
 function placeZoneFishSpots(grid, zoneId) {
     var spots;
     var i;
+    var catchId;
+    var tile;
     if (!grid || !zoneId || !FISH_SPOTS_BY_ZONE) {
         return;
     }
@@ -1059,9 +1216,11 @@ function placeZoneFishSpots(grid, zoneId) {
     if (!spots) {
         return;
     }
+    catchId = typeof fishCatchForZone === 'function' ? fishCatchForZone(zoneId) : 'rawshrimp';
+    tile = fishTileForCatch(catchId);
     for (i = 0; i < spots.length; i++) {
         if (inBounds(spots[i].x, spots[i].y)) {
-            setCell(grid, spots[i].x, spots[i].y, TILE.WATER);
+            setCell(grid, spots[i].x, spots[i].y, tile);
         }
     }
 }
@@ -1097,7 +1256,7 @@ function woodcutTreeAt(tx, ty, zoneId, grid) {
         return null;
     }
     if (grid) {
-        if (!grid[ty] || grid[ty][tx] !== TILE.TREE) {
+        if (!grid[ty] || !isTreeTile(grid[ty][tx])) {
             return null;
         }
     }
@@ -1289,7 +1448,7 @@ function placeOrePropTable(grid, table) {
             continue;
         }
         for (i = 0; i < list.length; i++) {
-            setCell(grid, list[i].x, list[i].y, TILE.ROCK);
+            setCell(grid, list[i].x, list[i].y, rockTileForOre(kinds[k]));
         }
     }
 }
@@ -1432,7 +1591,7 @@ function mineRockAt(tx, ty, zoneId, grid, opts) {
         return null;
     }
     if (grid) {
-        if (!grid[ty] || grid[ty][tx] !== TILE.ROCK) {
+        if (!grid[ty] || !isRockTile(grid[ty][tx])) {
             return null;
         }
         houseRects = opts.houseRects;
@@ -1496,10 +1655,10 @@ function sceneryKindAt(grid, tx, ty, opts) {
         return 'ge';
     }
     var index = grid[ty][tx];
-    if (index === TILE.TREE) {
+    if (isTreeTile(index)) {
         return 'tree';
     }
-    if (fishingSpotAt(tx, ty, opts.zoneId)) {
+    if (isFishSpotTile(index) || fishingSpotAt(tx, ty, opts.zoneId)) {
         return 'fishspot';
     }
     if (index === TILE.WATER) {
@@ -1535,7 +1694,7 @@ function sceneryKindAt(grid, tx, ty, opts) {
     if (index === TILE.WALL) {
         return 'wall';
     }
-    if (index === TILE.ROCK) {
+    if (isRockTile(index)) {
         if (opts.interior || isHouseWallAt(grid, tx, ty, opts.houseRects)) {
             return 'wall';
         }
