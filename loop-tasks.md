@@ -33,6 +33,7 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 
 Active queue — implement top-down before returning to sections 1–14.
 
+- [doing] Remove ~3/4 of Mire (swamp) water path-blockers; keep ~1/4 via thinner base fill + scatter.
 - [done] Character cannot move diagonally on tiles (keep no corner-squeeze). — Conclusion: `clampMoveNoCornerCut` only stops when both flanks blocked; open/single-flank diagonals keep velocity; A* still requires both flanks.
 - [done] Add auto-attack range settings, default 3 tiles (Combat tab; persist; Chebyshev engage). — Conclusion: Combat 1–5 tile buttons; `hero.autoAttackRange` default 3; `tryAutoEngage` Chebyshev pick; weapon ranges unchanged.
 - [done] Add TPS controls in Settings; discover/fix why TPS readout fluctuates. — Conclusion: TPS = Phaser loop steps/sec (not combat ticks); Settings Target TPS 30/60 → `applyTargetTps` (fpsLimit+_limitRate+arcade); fluctuation was short 250ms sample+round — now 1s window + EMA.
@@ -101,6 +102,7 @@ Active queue — implement top-down before returning to sections 1–14.
 - [done] Reband zone combat levels + rename Endless Mine → Deep Mine (floor 40+(N−1); Dragon Den dragons Lv 60). — Conclusion: ZONE_LEVEL_BAND/MOB_DEFS/labels rebanded; UX Deep Mine; floor 40+(N−1); den dragons Lv 60.
 - [done] Mobs stay within 4-tile radius of spawn (leash wander/agro/fight chase). — Conclusion: `MOB_LEASH_TILES=4` Chebyshev; homeX/Y on spawn (kept on restore); wander/agro/fight stop at leash; kite beyond → return home + drop agro (`leash` end).
 - [done] Improve font type and music and FX (HUD/Phaser fonts + clearer SFX + richer biome beds). — Conclusion: Cinzel + Alegreya Sans via Google Fonts; layered WebAudio biome beds; clearer UI/hit/pickup/gather/death cues; mute flags kept.
+- [done] Reduce player size to avoid getting stuck on single-tile paths. — Conclusion: Body 12×14→10×11; world scale 1→0.9; `setSize(..., true)` recenters; Scales.js cache-bust.
 
 Related unfinished (kept in later sections): depleted fish-spot move. (Firemaking / cooking / smithing / shop UI already `[done]` in §§7–8.)
 

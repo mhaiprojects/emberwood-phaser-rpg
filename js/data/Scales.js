@@ -1,8 +1,9 @@
 var TILE_SIZE = 16;
-var PLAYER_WORLD_SCALE = 1;
+var PLAYER_WORLD_SCALE = 0.9;
 var PLAYER_BATTLE_SCALE = 3;
-var PLAYER_BODY_W = 12;
-var PLAYER_BODY_H = 14;
+/* ~62–69% of TILE_SIZE so 1-tile corridors stay traversable (was 12×14). */
+var PLAYER_BODY_W = 10;
+var PLAYER_BODY_H = 11;
 
 var MOB_SCALES = {
     Chicken: { world: 0.75, battle: 2 },

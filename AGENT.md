@@ -100,7 +100,7 @@ Same origin; Glass is optional and human-requested only:
 - Maps are 36×28 tiles at 16px, generated in `js/world/MapGen.js`. Collide: WATER, TREE, ROCK, SHRINE.
 - Walk off a path at a 14px edge strip to enter the neighbor. `exitLock` ~400ms. Outer corners do not wrap.
 - Default spawn is tile **(20, 15)** = tile center `(328, 248)` in the Emberhaven courtyard (was the tile corner `320, 240`; center so a 1-tile body lines up with 1-tile doors). **Hero spawn must not overlap NPCs.** Haven NPCs sit around the courtyard (Bram 210,150; Elise 160,130; Rowan 252,168), not on the spawn tile.
-- Player **world** scale is **1** (`PLAYER_WORLD_SCALE`): sprite and collision body are one tile (body 12×14, slightly under 16px so 1-tile doors/gaps are passable). Battle player scale stays **3** (readable on the battle canvas).
+- Player **world** scale is **0.9** (`PLAYER_WORLD_SCALE`); collision body **10×11** (~62–69% of `TILE_SIZE` 16) so 1-tile corridors stay passable. Battle player scale stays **3**.
 - Emberhaven has a 1-tile courtyard gate at tile **(23, 15)** (`HAVEN_GATE_TILE`, PATH between ROCK, just east of the courtyard). House south walls still use a 1-tile PATH door (`house()`).
 - Mobs in `js/data/Scales.js`: chicken/crab/bat small (0.75), humanoid goblin/skeleton/slime **1 tile**, cow a bit bigger (1.25), **giant** drake may be **multi-tile** (world scale 2, body 28×28). Giants are not required to fit 1-tile interiors.
 - NPC names are yellow float labels; mob names are salmon. NPCs are immovable arcade bodies.
