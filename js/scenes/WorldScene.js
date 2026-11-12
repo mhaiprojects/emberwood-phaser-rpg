@@ -76,6 +76,12 @@ var WorldScene = new Phaser.Class({
         this.travelZoneId = null;
         this.walkBlocked = false;
         this.pathCheckAt = 0;
+        /* Stuck detector: little movement while walk/attack/fight intent is active. */
+        this._stuckX = 0;
+        this._stuckY = 0;
+        this._stuckSince = 0;
+        this._stuckRepathed = false;
+        this._stuckFailAt = 0;
         /* Pause auto-attack / auto-retaliate chase while player click-walk is active. */
         this.playerClickWalkActive = false;
         /* Dual-write with legacy engageTarget / playerClickWalkActive (combat-intent redesign). */
@@ -4586,6 +4592,7 @@ var WorldScene = new Phaser.Class({
         this.pathCheckAt = 0;
         this.walkPath = this.computeWalkPath(x, y, opts);
         this.drawPathLine();
+        this.resetStuckTracker(this.time ? this.time.now : 0);
     },
 
     dirTowardZone: function (here, target) {
@@ -4682,6 +4689,123 @@ var WorldScene = new Phaser.Class({
             this.destX.setVisible(false);
         }
         this.clearPathLine();
+        this.resetStuckTracker(this.time ? this.time.now : 0);
+    },
+
+    resetStuckTracker: function (now, opts) {
+        opts = opts || {};
+        this._stuckX = this.player ? this.player.x : 0;
+        this._stuckY = this.player ? this.player.y : 0;
+        this._stuckSince = now || 0;
+        if (!opts.keepRepath) {
+            this._stuckRepathed = false;
+        }
+    },
+
+    /* True when walk/attack/fight intent is active but position barely moved for ~500ms. */
+    isPlayerStuck: function (now) {
+        var engage;
+        var fightMob;
+        var trying;
+        var moved;
+        if (!this.player) {
+            return false;
+        }
+        if (this.uiPaused && this.uiPaused()) {
+            this._stuckSince = 0;
+            return false;
+        }
+        engage = this.attackIntentTarget ? this.attackIntentTarget() : null;
+        fightMob = this.overworldFight && this.overworldFight.mob;
+        /* Standing still in weapon range (swinging / about to fight) is not stuck. */
+        if (fightMob && fightMob.aliveMob
+                && this.fightDistancePx(fightMob) <= this.heroEngageRangePx()) {
+            this._stuckSince = 0;
+            this._stuckRepathed = false;
+            return false;
+        }
+        if (engage && engage.aliveMob
+                && this.fightDistancePx(engage) <= this.heroEngageRangePx()) {
+            this._stuckSince = 0;
+            this._stuckRepathed = false;
+            return false;
+        }
+        trying = !!(this.walkTarget
+            || (engage && engage.aliveMob)
+            || (fightMob && fightMob.aliveMob));
+        if (!trying) {
+            this._stuckSince = 0;
+            this._stuckRepathed = false;
+            return false;
+        }
+        moved = Phaser.Math.Distance.Between(
+            this.player.x, this.player.y, this._stuckX || 0, this._stuckY || 0);
+        if (moved > 2) {
+            this._stuckX = this.player.x;
+            this._stuckY = this.player.y;
+            this._stuckSince = now;
+            this._stuckRepathed = false;
+            return false;
+        }
+        if (!this._stuckSince) {
+            this._stuckSince = now;
+        }
+        return (now - this._stuckSince) > 500;
+    },
+
+    resolvePlayerStuck: function (now) {
+        var engage;
+        var fightMob;
+        var mob;
+        var dest;
+        if (this._stuckFailAt && now < this._stuckFailAt) {
+            return;
+        }
+        engage = this.attackIntentTarget ? this.attackIntentTarget() : null;
+        fightMob = this.overworldFight && this.overworldFight.mob;
+        mob = (fightMob && fightMob.aliveMob) ? fightMob : (engage && engage.aliveMob ? engage : null);
+
+        if (mob) {
+            if (this.fightDistancePx(mob) <= this.heroEngageRangePx()) {
+                if (!this.overworldFight) {
+                    this.beginFight(mob);
+                }
+                this.resetStuckTracker(now);
+                return;
+            }
+            if (!this._stuckRepathed) {
+                /* walkToEngage → setWalk resets tracker; mark repath after. */
+                this.walkToEngage(mob);
+                this._stuckRepathed = true;
+                this.resetStuckTracker(now, { keepRepath: true });
+                return;
+            }
+            this._stuckFailAt = now + 2500;
+            if (window.Hud && Hud.log) {
+                Hud.log('You can\'t reach that.');
+            }
+            this.clearAttackIntent({ clearWalk: true });
+            this.resetStuckTracker(now);
+            return;
+        }
+
+        if (this.walkTarget) {
+            if (!this._stuckRepathed) {
+                this._stuckRepathed = true;
+                this.pathCheckAt = 0;
+                dest = this.walkTarget;
+                this.walkPath = this.computeWalkPath(dest.x, dest.y, { allowEnd: true });
+                this.drawPathLine();
+                this.resetStuckTracker(now, { keepRepath: true });
+                return;
+            }
+            this._stuckFailAt = now + 2500;
+            if (window.Hud && Hud.log) {
+                Hud.log('You can\'t reach that.');
+            }
+            this.clearWalk();
+            this.resetStuckTracker(now);
+        }
     },
 
     clearPathLine: function () {
@@ -7954,6 +8078,10 @@ var WorldScene = new Phaser.Class({
                 this.player.body.velocity.x = slid.vx;
                 this.player.body.velocity.y = slid.vy;
             }
+        }
+
+        if (this.isPlayerStuck(time)) {
+            this.resolvePlayerStuck(time);
         }
 
         this.tickRunEnergy(simGameDt > 0 ? simGameDt : dt, !!(vx || vy));

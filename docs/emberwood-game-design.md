@@ -220,6 +220,7 @@ Leftover canvas `Menu.js` / `Message.js` are **not** the player HUD — do not r
 - If a mob blocks the only corridor: wait / stop adjacent — do not walk through
 - Repath ~every 280 ms if path becomes blocked
 - Talk/fight/loot chase repaths to moving targets (`chaseWalkTarget`) unless player click-walk is active
+- **Stuck recovery:** if walk/attack intent is active but position moves < ~2px for ~500ms (and not already in weapon range), repath once; if still stuck, clear walk/attack and chat `You can't reach that.`
 
 ### 4.3 Click / context on entities
 
