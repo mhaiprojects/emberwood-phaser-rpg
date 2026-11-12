@@ -59,6 +59,8 @@ var HudApp = {
             rangeRingsOn: true,
             mobSpawnModifier: 1,
             mobSpawnModifierLabel: 'Mob spawn: 1×',
+            targetTps: 60,
+            targetTpsLabel: 'Target TPS: 60',
             runLabel: 'Run: Off',
             collisionDebugLabel: 'Collision debug: Off',
             collisionDebugOn: false,

@@ -33,6 +33,8 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 
 Active queue — implement top-down before returning to sections 1–14.
 
+- [done] Add TPS controls in Settings; discover/fix why TPS readout fluctuates. — Conclusion: TPS = Phaser loop steps/sec (not combat ticks); Settings Target TPS 30/60 → `applyTargetTps` (fpsLimit+_limitRate+arcade); fluctuation was short 250ms sample+round — now 1s window + EMA.
+- [doing] Zone entrance labels must match mobs in that zone; consolidate zone ↔ band ↔ spawn roster into one source of truth.
 - [done] On hard gather fails (no/wrong tool, level too low, invalid target), cancel action after one chat msg — stop retry spam for mining/woodcutting/fishing. — Conclusion: tryFish/Chop/Mine/Boulder clear target on hard fail so update-loop tryComplete* stops; soft out-of-range pathing unchanged.
 - [done] Reduce Shore (southshore) / Mine (darkmine) path-blockers to ≤30% of tiles (tune TREE/ROCK scatter + post-process cap). — Conclusion: Interior-only count (excl. border); shore water band thinned + ROCK/TREE 4/4; mine ROCK/TREE 18/4; `enforcePathBlockCap`; ~21.7%→16.4% / ~10%→5.7% interior.
 - [done] Fix stalled overworld combat: enter combat with Cow/Chicken then no hits (autos off). — Conclusion: tickOverworldFight no longer gates swings on autoRetaliate; first swing + every in-range tick always fire.

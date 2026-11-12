@@ -449,6 +449,30 @@ var Hud = {
             self.renderMobSpawnModifier(hero);
             self.log('Mob spawn density ' + value + '× (applies on next zone enter).');
         });
+
+        document.addEventListener('click', function (event) {
+            var btn = event.target.closest('[data-target-tps]');
+            var raw;
+            var value;
+            var hero;
+            var applied;
+            if (!btn) {
+                return;
+            }
+            hero = self.hero();
+            if (!hero) {
+                return;
+            }
+            raw = btn.getAttribute('data-target-tps');
+            value = typeof normalizeTargetTps === 'function'
+                ? normalizeTargetTps(raw)
+                : (parseInt(raw, 10) === 30 ? 30 : 60);
+            hero.targetTps = value;
+            applied = typeof applyTargetTps === 'function' ? applyTargetTps(value) : value;
+            self.saveHero(hero);
+            self.renderTargetTps(hero);
+            self.log('Target TPS ' + applied + ' (game loop cap).');
+        });
         document.addEventListener('click', function (event) {
             var btn = event.target.closest('[data-prayer]');
             var id = btn && btn.getAttribute('data-prayer');
@@ -3432,6 +3456,7 @@ var Hud = {
         this.renderCombatVisuals(hero);
         this.renderRangeRings(hero);
         this.renderMobSpawnModifier(hero);
+        this.renderTargetTps(hero);
         this.renderPrayers(hero);
         this.renderRun(hero);
         this.renderSpecialEnergy(hero);
@@ -3891,6 +3916,29 @@ var Hud = {
         buttons = document.querySelectorAll('[data-mob-spawn-mod]');
         for (i = 0; i < buttons.length; i++) {
             btnVal = parseFloat(buttons[i].getAttribute('data-mob-spawn-mod'));
+            buttons[i].classList.toggle('is-on', btnVal === value);
+        }
+    },
+
+    renderTargetTps: function (hero) {
+        var value = typeof normalizeTargetTps === 'function'
+            ? normalizeTargetTps(hero && hero.targetTps)
+            : (hero && hero.targetTps === 30 ? 30 : 60);
+        var vue = this.vueState();
+        var buttons;
+        var i;
+        var btnVal;
+        var loop = window.game && window.game.loop;
+        if (typeof applyTargetTps === 'function' && (!loop || loop.fpsLimit !== value)) {
+            applyTargetTps(value);
+        }
+        if (vue) {
+            vue.targetTps = value;
+            vue.targetTpsLabel = 'Target TPS: ' + value;
+        }
+        buttons = document.querySelectorAll('[data-target-tps]');
+        for (i = 0; i < buttons.length; i++) {
+            btnVal = parseInt(buttons[i].getAttribute('data-target-tps'), 10);
             buttons[i].classList.toggle('is-on', btnVal === value);
         }
     },

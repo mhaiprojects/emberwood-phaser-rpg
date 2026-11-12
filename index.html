@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&family=Cinzel:wght@500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=fontaudio1">
+    <link rel="stylesheet" href="css/style.css?v=tps1">
 </head>
 <body>
     <div id="shell">
@@ -197,6 +197,12 @@
                             <button type="button" data-music-mute title="Mute biome music bed">Mute Music</button>
                             <h3>Display</h3>
                             <button type="button" data-show-fps title="Toggle FPS / TPS read-out">Show FPS</button>
+                            <h3>Target TPS</h3>
+                            <p>Caps Phaser game-loop steps and render FPS (not combat swing ticks). 60 is default; 30 lightens CPU.</p>
+                            <div class="target-tps-row" role="group" aria-label="Target TPS">
+                                <button type="button" class="target-tps-btn" data-target-tps="30" title="Cap loop at 30 steps/sec" :class="{ 'is-on': targetTps === 30 }">30</button>
+                                <button type="button" class="target-tps-btn" data-target-tps="60" title="Cap loop at 60 steps/sec" :class="{ 'is-on': targetTps === 60 }">60</button>
+                            </div>
                             <label>Zoom
                                 <input id="setting-zoom" type="range" min="1" max="2" step="0.05" value="1">
                             </label>
@@ -378,12 +384,12 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
     <script src="js/input/Keys.js?v=run1"></script>
-    <script src="js/data/Items.js?v=aarange1"></script>
+    <script src="js/data/Items.js?v=tps1"></script>
     <script src="js/data/Save.js?v=resume1"></script>
     <script src="js/data/Scales.js?v=deepmine1"></script>
-    <script src="js/ui/HudApp.js?v=aarange1"></script>
+    <script src="js/ui/HudApp.js?v=tps1"></script>
     <script src="js/ui/Sfx.js?v=fontaudio1"></script>
-    <script src="js/ui/Hud.js?v=aarange1"></script>
+    <script src="js/ui/Hud.js?v=tps1"></script>
     <script src="js/world/MapGen.js?v=blockcap1"></script>
     <script src="js/world/Pathfind.js?v=havensafe2"></script>
     <script src="js/world/Zones.js?v=deepmine1"></script>
@@ -402,6 +408,6 @@
     <script src="js/scenes/BattleScene.js?v=grave1"></script>
     <script src="js/scenes/UIScene.js"></script>
     <script src="js/scenes/GameOverScene.js?v=grave1"></script>
-    <script src="js/main.js?v=fpstps1"></script>
+    <script src="js/main.js?v=tps1"></script>
 </body>
 </html>
