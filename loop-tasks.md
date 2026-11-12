@@ -89,6 +89,8 @@ Active queue — implement top-down before returning to sections 1–14.
 - [done] Commit leftovers and push to origin. — Conclusion: Cursor open-items plan + docs stubs committed; pushed master to origin.
 - [done] Turn off Auto-attack & Auto-retaliate by default. — Conclusion: `makeHero` both false; missing keys normalize off; HudApp Off/Off; README+GDD; saves with true kept.
 - [done] Mob spawn pyramid (Dragon=1, +1 per lower tier) + global mob spawn modifier in Settings. — Conclusion: `MOB_TIER_ORDER` pyramid + `hero.mobSpawnModifier` (default 1.0; Settings 0.5/1/1.5/2×); per-type `max(1,round(base×mod))`; dungeon floor count × mod; applies on zone enter.
+- [done] Reband zone combat levels + rename Endless Mine → Deep Mine (floor 40+(N−1); Dragon Den dragons Lv 60). — Conclusion: ZONE_LEVEL_BAND/MOB_DEFS/labels rebanded; UX Deep Mine; floor 40+(N−1); den dragons Lv 60.
+- [doing] Mobs stay within 4-tile radius of spawn (leash wander/agro/fight chase).
 
 Related unfinished (kept in later sections): depleted fish-spot move. (Firemaking / cooking / smithing / shop UI already `[done]` in §§7–8.)
 

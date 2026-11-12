@@ -12,17 +12,17 @@ How major Emberwood resources are obtained today — gathering zones, crafting/s
 
 | Zone id | Name | Band | Gathering / craft relevance |
 |---------|------|------|-----------------------------|
-| `haven` | Emberhaven | 1–5 | Logs (border trees), stations, shops, bank, air altar, chickens |
+| `haven` | Emberhaven | 1–3 | Logs (border trees), stations, shops, bank, air altar, chickens |
 | `millfields` | Millfields | 1–5 | Logs, copper/tin rocks, cows (beef + hide), earth altar |
-| `westmead` | Westmead | 1–5 | Logs, copper/tin rocks, rabbits (fur), goblins |
-| `southshore` | Southshore | 6–10 | Fishing (raw shrimp), logs, copper/tin rocks, water altar, crabs |
-| `northwood` | Northwood | 6–10 | Oak (WC 15), copper/tin/some iron rocks, goblins |
-| `mire` | Mirefen | 11–15 | Oak, iron-mix rocks, nature altar, slimes |
-| `graves` | Restless Graves | 16–20 | Oak, iron-mix rocks, mind altar, skeletons |
-| `highlands` | Windrock Highlands | 26–30 | Yew (WC 40), diamond/iron nodes, fire altar, Dragon Den gate |
-| `darkmine` | Darkmine (Mine) | 36–40 | Magic trees (WC 60), full ore ladder (copper–dragonite + rune essence), bats, Endless Mine shaft |
+| `mire` | Mirefen | 6–10 | Oak, iron-mix rocks, nature altar, slimes |
+| `southshore` | Southshore | 11–15 | Fishing (raw shrimp), logs, copper/tin rocks, water altar, crabs |
+| `northwood` | Northwood | 16–20 | Oak (WC 15), copper/tin/some iron rocks, goblins |
+| `graves` | Restless Graves | 21–25 | Oak, iron-mix rocks, mind altar, skeletons |
+| `westmead` | Westmead | 26–30 | Logs, copper/tin rocks, rabbits (fur), goblins |
+| `darkmine` | Darkmine (Mine) | 31–35 | Magic trees (WC 60), full ore ladder (copper–dragonite + rune essence), bats, Deep Mine shaft |
+| `highlands` | Windrock Highlands | 36–40 | Yew (WC 40), diamond/iron nodes, fire altar, Dragon Den gate |
 
-Hidden: `dungeon` (Endless Mine from Darkmine — combat, not ore nodes) and `dragonden` (after diamond-pick boulder clear).
+Hidden: `dungeon` (Deep Mine from Darkmine — combat, not ore nodes; mobs Lv 40+(floor−1)) and `dragonden` (band 40–45; Dragons Lv 60; after diamond-pick boulder clear).
 
 ---
 
@@ -65,7 +65,7 @@ Failure chat: `You need level N.`
 | darkmine | `magiclogs` | 60 |
 
 - Tree depletes → respawns (~12s). XP: base 10 + (need level − 1).
-- Not available in the Endless Mine.
+- Not available in the Deep Mine.
 
 ### Mining
 

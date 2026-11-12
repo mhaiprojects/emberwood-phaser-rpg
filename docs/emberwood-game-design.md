@@ -62,11 +62,11 @@ Darkmine          Southshore       Mirefen
 | `westmead` | Westmead | Plains, rabbits, goblins |
 | `haven` | Emberhaven | Town hub: stations, bank booth, shops, chickens |
 | `millfields` | Millfields | Farm, cows, earth altar, locked door + key |
-| `darkmine` | Darkmine | Hardest overworld (36–40); magic trees, full ores, bats, Endless Mine shaft |
+| `darkmine` | Darkmine | Mine band (31–35); magic trees, full ores, bats, Deep Mine shaft |
 | `southshore` | Southshore | Fishing spots, water altar, crabs |
 | `mire` | Mirefen | Swamp, oak trees, nature altar, slimes |
 
-**Hidden zones:** `dungeon` (Endless Mine from Darkmine shaft), `dragonden` (after diamond+ pick clears Highlands boulder).
+**Hidden zones:** `dungeon` (Deep Mine from Darkmine shaft), `dragonden` (after diamond+ pick clears Highlands boulder).
 
 Maps: **36×28** tiles × **16 px**. Generate in `MapGen.js`. Collide / path-block: WATER, TREE, ROCK, SHRINE, STALL, RANGE, ANVIL, BOOTH, FURNACE, DOCK, BOAT, TOMB, DOOR, WALL.
 
@@ -89,7 +89,7 @@ Mobs may **not** enter the outer **`MOB_EDGE_MARGIN_TILES = 2`** border. Player 
 | Feature | Behavior |
 |---------|----------|
 | Bank interior | **Removed** — courtyard booth + Elise only |
-| Endless Mine | Darkmine shaft → floor N; mob level = 20 + (N − 1); Dragon every 21st floor; stairs up/down; escape shaft remembers floor; campfire every 5th |
+| Deep Mine | Darkmine shaft → floor N; mob level = 40 + (N − 1); Dragon every 21st floor; stairs up/down; escape shaft remembers floor; campfire every 5th |
 | Dungeon cues | Pulsing shaft/stairs markers + approach chat (throttled) |
 | Dragon Den | Highlands boulder needs pick **tier ≥ 5** (diamond+); sets `hero.flags.dragonDenOpen`; pulsing markers + approach chat; step/click enter & exit |
 
@@ -308,7 +308,7 @@ Hitpoints: `maxHp` tied to Hitpoints level (starter HP 100 / level 10). Combat l
 | Equal/higher player | Mob ignores (unless `alwaysAgro`) |
 | Labels | `Type (Lvl N)` salmon float labels |
 
-Mob base levels (fallbacks): Chicken/Rabbit 1, Cow 3, Crab/Bat/Goblin 8, Slime 13, Skeleton 18, Drake 28, Dragon 53. Zone spawns use 5-level bands (haven/millfields/westmead 1–5; southshore/northwood 6–10; mire 11–15; graves 16–20; highlands 26–30; darkmine 36–40; dragonden 51–55). Endless Mine mobs: level 20 + (floor − 1); Dragon on floors 21, 42, 63, ….
+Mob base levels (fallbacks): Chicken 1–3, Cow ~3, Slime ~8, Crab ~13, Goblin ~18, Skeleton ~23, Rabbit/Goblin (Mead) ~28, Bat ~33, Drake ~38, Dragon 60. Zone spawns use combat bands (haven 1–3; millfields 1–5; mire 6–10; southshore 11–15; northwood 16–20; graves 21–25; westmead 26–30; darkmine 31–35; highlands 36–40; dragonden 40–45 with Dragons fixed at 60). Deep Mine mobs: level 40 + (floor − 1); Dragon on floors 21, 42, 63, ….
 
 ### 6.4 Mob movement
 

@@ -171,7 +171,7 @@
                             <p>When on, orange aggro circles and red attack-range rings appear while engaged, agroing, or fighting. New games start with this on.</p>
                             <button type="button" class="range-rings-btn" data-range-rings title="When on, show orange aggro and red attack range rings." :class="{ 'is-on': rangeRingsOn }">{{ rangeRingsLabel }}</button>
                             <h3>Mob spawn density</h3>
-                            <p>Multiplies overworld pyramid spawn counts (Dragon=1, each lower tier +1). Applies on next zone enter. Endless Mine floor counts use the same multiplier.</p>
+                            <p>Multiplies overworld pyramid spawn counts (Dragon=1, each lower tier +1). Applies on next zone enter. Deep Mine floor counts use the same multiplier.</p>
                             <div class="mob-spawn-mod-row" role="group" aria-label="Mob spawn density">
                                 <button type="button" class="mob-spawn-mod-btn" data-mob-spawn-mod="0.5" title="Half density" :class="{ 'is-on': mobSpawnModifier === 0.5 }">0.5×</button>
                                 <button type="button" class="mob-spawn-mod-btn" data-mob-spawn-mod="1" title="Normal density" :class="{ 'is-on': mobSpawnModifier === 1 }">1×</button>
@@ -368,13 +368,13 @@
     <script src="js/input/Keys.js?v=run1"></script>
     <script src="js/data/Items.js?v=spawnpyr1"></script>
     <script src="js/data/Save.js?v=resume1"></script>
-    <script src="js/data/Scales.js?v=endless1"></script>
+    <script src="js/data/Scales.js?v=deepmine1"></script>
     <script src="js/ui/HudApp.js?v=spawnpyr1"></script>
     <script src="js/ui/Sfx.js?v=music1"></script>
     <script src="js/ui/Hud.js?v=spawnpyr1"></script>
-    <script src="js/world/MapGen.js?v=spawnpyr1"></script>
+    <script src="js/world/MapGen.js?v=deepmine1"></script>
     <script src="js/world/Pathfind.js?v=havensafe1"></script>
-    <script src="js/world/Zones.js?v=havensafe1"></script>
+    <script src="js/world/Zones.js?v=deepmine1"></script>
     <script src="js/sprites/Unit.js?v=hitxp1"></script>
     <script src="js/sprites/PlayerCharacter.js"></script>
     <script src="js/sprites/Enemy.js"></script>
@@ -384,7 +384,7 @@
     -->
     <script src="js/scenes/BootScene.js?v=looticon1"></script>
     <script src="js/scenes/TitleScene.js?v=darklayer1"></script>
-    <script src="js/scenes/WorldScene.js?v=havensafe1"></script>
+    <script src="js/scenes/WorldScene.js?v=deepmine1"></script>
     <script src="js/world/OverworldCombat.js?v=mobband1"></script>
     <script src="js/world/StretchLite.js?v=noghost1"></script>
     <script src="js/scenes/BattleScene.js?v=grave1"></script>

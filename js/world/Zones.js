@@ -8,7 +8,7 @@ var ZONE_LIST = [
     { id: 'darkmine', name: 'Darkmine', gx: -1, gy: 1, biome: 'mine', seed: 77 },
     { id: 'southshore', name: 'Southshore', gx: 0, gy: 1, biome: 'shore', seed: 88 },
     { id: 'mire', name: 'Mirefen', gx: 1, gy: 1, biome: 'swamp', seed: 99 },
-    { id: 'dungeon', name: 'Endless Mine', gx: -99, gy: -99, biome: 'mine', seed: 9001, hidden: true },
+    { id: 'dungeon', name: 'Deep Mine', gx: -99, gy: -99, biome: 'mine', seed: 9001, hidden: true },
     { id: 'dragonden', name: 'Dragon Den', gx: 99, gy: 99, biome: 'den', seed: 4242, hidden: true }
 ];
 
@@ -22,13 +22,13 @@ var DUNGEON_SURFACE_ZONE = 'darkmine';
 var INTERIOR_LIST = [
     {
         id: 'shaft',
-        name: 'Endless Mine',
+        name: 'Deep Mine',
         doorTx: MINE_SHAFT_HOUSE.x + Math.floor(MINE_SHAFT_HOUSE.w / 2),
         doorTy: MINE_SHAFT_HOUSE.y + MINE_SHAFT_HOUSE.h - 1,
         zoneId: 'darkmine',
         stairs: 'down',
         dungeon: true,
-        enterChat: 'You delve into the Endless Mine…'
+        enterChat: 'You delve into the Deep Mine…'
     }
 ];
 
@@ -213,7 +213,7 @@ var NPC_DEFS = {
         { key: 'ghost', name: 'Wisp', x: 200, y: 170, tint: 0xffffff, options: ['talk'], examine: 'A restless grave-wisp. Cold light pools where a face should be.', lines: ['The dead remember steel.', 'Turn back unless you seek bones.'] }
     ],
     darkmine: [
-        { key: 'miner', name: 'Miner Corb', x: 210, y: 200, tint: 0xffffff, options: ['talk', 'quest'], questGiver: true, sideQuest: 'bats', tutor: 'mining', examine: 'A Darkmine digger. He will not go down the Endless Mine.', lines: ['That shaft leads to the Endless Mine. Floor one starts at level 20 — each floor adds one.', 'Every twenty-first floor wakes a dragon. Escape marks the floor for next time.', 'Every fifth floor has a campfire. Ore still waits up here with a pickaxe.'] }
+        { key: 'miner', name: 'Miner Corb', x: 210, y: 200, tint: 0xffffff, options: ['talk', 'quest'], questGiver: true, sideQuest: 'bats', tutor: 'mining', examine: 'A Darkmine digger. He will not go down the Deep Mine.', lines: ['That shaft leads to the Deep Mine. Floor one starts at level 40 — each floor adds one.', 'Every twenty-first floor wakes a dragon. Escape marks the floor for next time.', 'Every fifth floor has a campfire. Ore still waits up here with a pickaxe.'] }
     ],
     highlands: [
         { key: 'hermit', name: 'Hermit Ola', x: 240, y: 160, tint: 0xffffff, options: ['talk'], examine: 'A windrock hermit. Drake-scale grit is stuck in her cloak.', lines: ['Drakes nest on the windrock.', 'Bring a stout shield.', 'East of here a boulder seals a deeper den — only a diamond pickaxe cracks it.'] }
@@ -223,18 +223,18 @@ var NPC_DEFS = {
     ]
 };
 
-/* Per-zone combat bands (5 levels). Starter wilds share 1–5; Mine is hardest overworld. */
+/* Per-zone combat bands. Haven 1–3; progression climbs through Farm→High; Den dragons fixed Lv 60. */
 var ZONE_LEVEL_BAND = {
-    haven: [1, 5],
+    haven: [1, 3],
     millfields: [1, 5],
-    westmead: [1, 5],
-    southshore: [6, 10],
-    northwood: [6, 10],
-    mire: [11, 15],
-    graves: [16, 20],
-    highlands: [26, 30],
-    darkmine: [36, 40],
-    dragonden: [51, 55]
+    mire: [6, 10],
+    southshore: [11, 15],
+    northwood: [16, 20],
+    graves: [21, 25],
+    westmead: [26, 30],
+    darkmine: [31, 35],
+    highlands: [36, 40],
+    dragonden: [40, 45]
 };
 
 function zoneBandLevel(zoneId, index) {
@@ -245,11 +245,11 @@ function zoneBandLevel(zoneId, index) {
     return lo + ((index | 0) % (span + 1));
 }
 
-/** Short mob-band line for UI (e.g. "Lv 6–10"). Endless Mine is special. */
+/** Short mob-band line for UI (e.g. "Lv 6–10"). Deep Mine is special. */
 function zoneMobBandLabel(zoneId) {
     var band;
     if (zoneId === 'dungeon') {
-        return 'Lv 20+';
+        return 'Lv 40+';
     }
     band = ZONE_LEVEL_BAND[zoneId];
     if (!band || band.length < 2) {
@@ -275,7 +275,10 @@ function zoneEnterChat(zoneId) {
     var name = (zone && zone.name) || zoneId || 'the wilds';
     var band = zoneMobBandLabel(zoneId);
     if (zoneId === 'dungeon') {
-        return 'You enter the Endless Mine (mobs Lv 20+, +1 per floor).';
+        return 'You enter the Deep Mine (mobs Lv 40+, +1 per floor).';
+    }
+    if (zoneId === 'dragonden') {
+        return 'You enter Dragon Den (mobs Lv 40–45; Dragons Lv 60).';
     }
     if (band) {
         return 'You enter ' + name + ' (mobs ' + band + ').';
@@ -497,27 +500,49 @@ function mobDefsForZone(zoneId, hero) {
 }
 
 var MOB_DEFS = {
-    /* Band 1–5 — starter wilds; pyramid → Chicken 10, Cow 8, Rabbit 9, Goblin 5 @ 1×.
-     * Haven: Chebyshev-safe courtyard (r≤5 from TOWN_CENTER); Lv1 ring just outside;
-     * Lv5 at N/S/E/W exit approaches (still inside 2-tile edge inset). */
+    /* Band 1–3 — Haven; pyramid → Chicken 10 @ 1×.
+     * Chebyshev-safe courtyard (r≤5 from TOWN_CENTER); Lv1 ring just outside;
+     * Lv3 at N/S/E/W exit approaches (still inside 2-tile edge inset). */
     haven: buildBandMobs('haven', 'Chicken', 'mob-chicken', [
         /* Lv1 ring (cheb 6–7 from center 18,15) — first 6 kept at 1× with 4 exits */
         [12, 15], [18, 9], [24, 15], [18, 21], [12, 11], [24, 19],
-        /* Lv5 near zone exits */
+        /* Lv3 near zone exits */
         [18, 3], [18, 24], [3, 14], [33, 14],
         /* Extra Lv1 for 2× pool */
         [11, 13], [11, 17], [25, 13], [25, 17], [15, 9], [21, 9],
         [15, 21], [21, 21], [12, 12], [24, 18]
     ], {
         levelFor: function (i) {
-            return (i >= 6 && i <= 9) ? 5 : 1;
+            return (i >= 6 && i <= 9) ? 3 : 1;
         }
     }),
+    /* Band 1–5 — Farm. */
     millfields: buildBandMobs('millfields', 'Cow', 'mob-cow', [
         [8, 12], [12, 8], [18, 7], [24, 9], [28, 12], [30, 16], [26, 18], [20, 20],
         [14, 19], [9, 16], [11, 11], [16, 14], [22, 11], [27, 8], [31, 14], [19, 16],
         [13, 17], [25, 15]
     ], { tints: [0xffffff, 0xffffff, 0xeeddcc] }),
+    /* Band 6–10 — Mire. */
+    mire: buildBandMobs('mire', 'Slime', 'mob-slime', [
+        [9, 9], [13, 11], [17, 8], [21, 12], [25, 10], [29, 13], [31, 17], [27, 19],
+        [23, 20], [19, 16], [15, 18], [11, 15]
+    ], { tints: [0xffffff, 0x88ffaa, 0xffffff] }),
+    /* Band 11–15 — Shore. */
+    southshore: buildBandMobs('southshore', 'Crab', 'mob-crab', [
+        [8, 14], [12, 12], [16, 10], [20, 11], [24, 9], [28, 12], [31, 15], [26, 17],
+        [22, 19], [18, 16], [14, 18], [10, 17], [27, 14], [19, 14]
+    ], { tints: [0xffffff, 0xffccaa, 0xffffff] }),
+    /* Band 16–20 — Woods. */
+    northwood: buildBandMobs('northwood', 'Goblin', 'mob-goblin', [
+        [8, 8], [12, 10], [16, 7], [20, 9], [24, 8], [28, 11], [31, 14], [26, 16],
+        [22, 18], [18, 20], [14, 17], [10, 19], [9, 13], [15, 14], [21, 13], [27, 19]
+    ], { tints: [0xffffff, 0xffffff, 0xbbffbb, 0xffffff] }),
+    /* Band 21–25 — Graves. */
+    graves: buildBandMobs('graves', 'Skeleton', 'mob-skeleton', [
+        [9, 9], [13, 12], [17, 8], [21, 11], [25, 9], [29, 13], [31, 16], [26, 19],
+        [22, 20], [18, 17], [14, 15], [10, 18]
+    ], { tints: [0xffffff, 0xffffff, 0xeeeeff] }),
+    /* Band 26–30 — Mead. */
     westmead: buildBandMobs('westmead', 'Rabbit', 'mob-rabbit', [
         [10, 10], [14, 8], [18, 11], [22, 9], [26, 12], [30, 10], [28, 16], [24, 18],
         [20, 20], [16, 17], [12, 15], [8, 18], [11, 20], [15, 14], [19, 9], [23, 16],
@@ -526,47 +551,27 @@ var MOB_DEFS = {
         buildBandMobs('westmead', 'Goblin', 'mob-goblin', [
             [9, 13], [15, 12], [21, 14], [27, 13], [25, 20], [17, 8],
             [12, 19], [19, 16], [23, 10], [30, 17]
-        ], {
-            levelFor: function (i, bandLevel) {
-                /* Soft starter goblins: upper half of the 1–5 band. */
-                return Math.max(3, bandLevel);
-            }
-        })
+        ])
     ),
-    /* Band 6–10 — next ring. */
-    southshore: buildBandMobs('southshore', 'Crab', 'mob-crab', [
-        [8, 14], [12, 12], [16, 10], [20, 11], [24, 9], [28, 12], [31, 15], [26, 17],
-        [22, 19], [18, 16], [14, 18], [10, 17], [27, 14], [19, 14]
-    ], { tints: [0xffffff, 0xffccaa, 0xffffff] }),
-    northwood: buildBandMobs('northwood', 'Goblin', 'mob-goblin', [
-        [8, 8], [12, 10], [16, 7], [20, 9], [24, 8], [28, 11], [31, 14], [26, 16],
-        [22, 18], [18, 20], [14, 17], [10, 19], [9, 13], [15, 14], [21, 13], [27, 19]
-    ], { tints: [0xffffff, 0xffffff, 0xbbffbb, 0xffffff] }),
-    /* Band 11–15 / 16–20 — outer danger. */
-    mire: buildBandMobs('mire', 'Slime', 'mob-slime', [
-        [9, 9], [13, 11], [17, 8], [21, 12], [25, 10], [29, 13], [31, 17], [27, 19],
-        [23, 20], [19, 16], [15, 18], [11, 15]
-    ], { tints: [0xffffff, 0x88ffaa, 0xffffff] }),
-    graves: buildBandMobs('graves', 'Skeleton', 'mob-skeleton', [
-        [9, 9], [13, 12], [17, 8], [21, 11], [25, 9], [29, 13], [31, 16], [26, 19],
-        [22, 20], [18, 17], [14, 15], [10, 18]
-    ], { tints: [0xffffff, 0xffffff, 0xeeeeff] }),
-    /* Band 26–30 — highlands. */
-    highlands: buildBandMobs('highlands', 'Drake', 'mob-drake', [
-        [10, 10], [16, 9], [22, 12], [28, 11], [30, 16], [24, 18], [18, 20], [12, 17],
-        [20, 14], [26, 15]
-    ]),
-    /* Band 36–40 — Mine (hardest overworld); Endless Mine shaft. */
+    /* Band 31–35 — Mine; Deep Mine shaft. */
     darkmine: buildBandMobs('darkmine', 'Bat', 'mob-bat', [
         [8, 8], [12, 11], [16, 9], [20, 12], [24, 10], [28, 13], [31, 16], [26, 18],
         [22, 20], [18, 17], [14, 19], [10, 15], [17, 14], [25, 15]
     ], { tints: [0xffffff, 0xffffff, 0xddbbff, 0xffffff] }),
-    /* Band 51–55 — den stays sparse; alwaysAgro kept. Dragon pyramid base = 1. */
+    /* Band 36–40 — High. */
+    highlands: buildBandMobs('highlands', 'Drake', 'mob-drake', [
+        [10, 10], [16, 9], [22, 12], [28, 11], [30, 16], [24, 18], [18, 20], [12, 17],
+        [20, 14], [26, 15]
+    ]),
+    /* Band 40–45 — Den; Dragons fixed at Lv 60; alwaysAgro kept. Pyramid base = 1. */
     dragonden: buildBandMobs('dragonden', 'Dragon', 'mob-drake', [
         [12, 10], [20, 12], [28, 14], [18, 18]
     ], {
         alwaysAgro: true,
         tints: [0xff6644, 0xff4422, 0xdd2200, 0xff5533],
+        levelFor: function () {
+            return 60;
+        },
         attackRangeFor: function (i) {
             return i === 3 ? 120 : 110;
         }

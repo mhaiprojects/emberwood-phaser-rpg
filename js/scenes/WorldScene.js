@@ -18,6 +18,8 @@ var FISH_RANGE = 28;
 var NPC_WANDER_CHANCE = 80;
 var NPC_WANDER_SPEED = 12;
 var NPC_LEASH_PX = 16;
+/* Chebyshev (king-move) tiles from spawn; wander / agro / fight chase share this leash. */
+var MOB_LEASH_TILES = 4;
 var NPC_BUSY_PX = 32;
 var NPC_FACE_ORDER = ['down', 'left', 'right', 'up'];
 var FLEE_PUSH_PX = 32;
@@ -929,12 +931,12 @@ var WorldScene = new Phaser.Class({
             if (floor > 1) {
                 Hud.log('You return through the escape shaft to floor ' + floor + '.');
             } else {
-                Hud.log('Endless Mine — floor ' + floor + '. Mobs start at level 20 and rise by 1 each floor.');
+                Hud.log('Deep Mine — floor ' + floor + '. Mobs start at level 40 and rise by 1 each floor.');
             }
         } else if (opts.from === 'save') {
-            Hud.log('You resume the Endless Mine on floor ' + floor + '.');
+            Hud.log('You resume the Deep Mine on floor ' + floor + '.');
         } else {
-            Hud.log('Floor ' + floor + ' of the Endless Mine.');
+            Hud.log('Floor ' + floor + ' of the Deep Mine.');
         }
         if (floor % 5 === 0) {
             Hud.log('A campfire burns on this floor.');
@@ -1689,7 +1691,7 @@ var WorldScene = new Phaser.Class({
         }
         Hud.setWorld({
             zone: this.zoneId === 'dungeon' && this.dungeonFloor
-                ? ('Endless Mine F' + this.dungeonFloor)
+                ? ('Deep Mine F' + this.dungeonFloor)
                 : (interior ? interior.name : (zone && zone.name) || this.zoneId),
             zoneId: this.zoneId,
             hp: hero.hp,

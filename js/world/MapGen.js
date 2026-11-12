@@ -223,10 +223,10 @@ var SCENERY_EXAMINE = {
     'door-bank': 'The old bank door. Use the courtyard counter to bank.',
     'door-shop': 'An old shop door. Mira sells from the courtyard stall.',
     'door-guild': 'The guild hall door. Bram drills in the courtyard.',
-    'stairs-down': 'Marked stairs down — delve deeper into the Endless Mine.',
+    'stairs-down': 'Marked stairs down — delve deeper into the Deep Mine.',
     'stairs-up': 'Marked stairs up — climb toward the surface (or the floor above).',
     'surface-portal': 'A rune-cut escape shaft. Escape here to remember this floor for next delve.',
-    'dungeon-enter': 'The Endless Mine shaft mouth. Delve here; it drops you at your last escape floor.',
+    'dungeon-enter': 'The Deep Mine shaft mouth. Delve here; it drops you at your last escape floor.',
     campfire: 'A warm campfire. Rest here to mend faster.',
     altar: 'A rune altar. Essence pressed here becomes runes.',
     'den-boulder': 'A massive boulder seals a dark cave mouth. Only a diamond pickaxe could crack it.',
@@ -742,7 +742,7 @@ function dungeonMobDefsForFloor(floor) {
     var n = Math.max(1, floor | 0);
     var level = typeof dungeonMobLevelForFloor === 'function'
         ? dungeonMobLevelForFloor(n)
-        : (20 + (n - 1));
+        : (40 + (n - 1));
     var dragonFloor = typeof dungeonIsDragonFloor === 'function'
         ? dungeonIsDragonFloor(n)
         : (n % 21 === 0);
@@ -959,10 +959,10 @@ function oreNodeColor(ore) {
 var SHAFT_MARKER_STYLE = {
     'dungeon-enter': {
         color: 0x9b6cff,
-        label: 'Endless Mine\nLv 20+',
+        label: 'Deep Mine\nLv 40+',
         glyph: '▼',
         labelColor: '#dcc8ff',
-        approach: 'A marked shaft mouth — the Endless Mine (mobs Lv 20+, +1 per floor). Click or step in to delve.'
+        approach: 'A marked shaft mouth — the Deep Mine (mobs Lv 40+, +1 per floor). Click or step in to delve.'
     },
     'stairs-down': {
         color: 0xe07030,
@@ -987,24 +987,24 @@ var SHAFT_MARKER_STYLE = {
     },
     'den-boulder': {
         color: 0xc07040,
-        label: 'Sealed Den\nLv 51–55',
+        label: 'Sealed Den\nLv 40–45',
         glyph: '◆',
         labelColor: '#ffd0a8',
-        approach: 'A sealing boulder — mine it with a diamond pickaxe to open the Dragon Den (mobs Lv 51–55).'
+        approach: 'A sealing boulder — mine it with a diamond pickaxe to open the Dragon Den (mobs Lv 40–45; Dragons Lv 60).'
     },
     'dragon-den': {
         color: 0xe85d3a,
-        label: 'Dragon Den\nLv 51–55',
+        label: 'Dragon Den\nLv 40–45',
         glyph: '▼',
         labelColor: '#ffb090',
-        approach: 'Scorched cave mouth — Dragon Den (mobs Lv 51–55). Click or step in to enter.'
+        approach: 'Scorched cave mouth — Dragon Den (mobs Lv 40–45; Dragons Lv 60). Click or step in to enter.'
     },
     'dragon-den-exit': {
         color: 0x6ec8ff,
-        label: 'Windrock Highlands\nLv 26–30',
+        label: 'Windrock Highlands\nLv 36–40',
         glyph: '▲',
         labelColor: '#b8e8ff',
-        approach: 'Tunnel back to Windrock Highlands (mobs Lv 26–30) — click or step on it to leave.'
+        approach: 'Tunnel back to Windrock Highlands (mobs Lv 36–40) — click or step on it to leave.'
     }
 };
 

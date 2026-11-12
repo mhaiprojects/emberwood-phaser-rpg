@@ -17,8 +17,8 @@ var MOB_SCALES = {
     Dragon: { world: 2.35, battle: 3.4 }
 };
 
-/* Endless Mine: floor 1 = level 20, then +1 per floor; Dragon every 21st floor. */
-var DUNGEON_MOB_BASE_LEVEL = 20;
+/* Deep Mine: floor 1 = level 40, then +1 per floor; Dragon every 21st floor. */
+var DUNGEON_MOB_BASE_LEVEL = 40;
 var DUNGEON_DRAGON_FLOOR_EVERY = 21;
 
 function dungeonMobLevelForFloor(floor) {
