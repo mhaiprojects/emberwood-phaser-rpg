@@ -2211,22 +2211,63 @@ function attackPotionBonus(hero) {
     return hero.attackPotBonus;
 }
 
+/**
+ * Offensive skill for the equipped weapon's class:
+ * melee → Strength, ranged → Ranged, magic → Magic.
+ * Bonus = 0.1 × that skill level (floored into final damage via callers).
+ */
+function weaponDamageSkillId(hero) {
+    var id;
+    var def;
+    var cls;
+    if (!hero || !hero.equipment || !hero.equipment.weapon) {
+        return 'strength';
+    }
+    id = hero.equipment.weapon;
+    def = ITEM_DB[id];
+    cls = def && def.combatClass ? def.combatClass : 'melee';
+    if (cls === 'ranged') {
+        return 'ranged';
+    }
+    if (cls === 'magic') {
+        return 'magic';
+    }
+    return 'strength';
+}
+
+function weaponSkillDamageBonus(hero) {
+    var skillId;
+    var skill;
+    var level;
+    if (!hero) {
+        return 0;
+    }
+    skillId = weaponDamageSkillId(hero);
+    skill = hero.skills && hero.skills[skillId];
+    level = skill && typeof skill.level === 'number' ? skill.level : 1;
+    if (!(level > 0)) {
+        level = 1;
+    }
+    return level * 0.1;
+}
+
 function equippedWeaponDamage(hero, fallback) {
     var base = typeof fallback === 'number' ? fallback : 0;
     var def;
     var id;
+    var skillBonus = weaponSkillDamageBonus(hero);
     if (!hero || !hero.equipment) {
-        return base + attackPotionBonus(hero);
+        return base + attackPotionBonus(hero) + skillBonus;
     }
     id = hero.equipment.weapon;
     if (!id) {
-        return base + attackPotionBonus(hero);
+        return base + attackPotionBonus(hero) + skillBonus;
     }
     def = ITEM_DB[id];
     if (def && typeof def.damage === 'number') {
-        return def.damage + attackPotionBonus(hero);
+        return def.damage + attackPotionBonus(hero) + skillBonus;
     }
-    return base + attackPotionBonus(hero);
+    return base + attackPotionBonus(hero) + skillBonus;
 }
 
 var DEFAULT_MELEE_ATTACK_RANGE = 24;

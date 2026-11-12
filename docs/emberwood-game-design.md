@@ -339,7 +339,8 @@ Hitpoints: `maxHp` tied to Hitpoints level (starter HP 100 / level 10). Combat l
 - Weapon `combatClass`: melee / ranged / magic  
 - **Melee range** default **24 px**; bows/staves **64 px (4 tiles)**  
 - No equipped ammo → infinite wooden arrows; other ammo consumed; ammo tier must not exceed bow tier  
-- Worn defence/damage from gear **is applied** in overworld math (shield/body/etc. as coded)  
+- Worn defence/damage from gear **is applied** in overworld math (shield/body/etc. as coded)
+- Weapon hit damage also gains **0.1 ×** the matching skill level: melee→Strength, bow→Ranged, staff→Magic (`weaponSkillDamageBonus` in `equippedWeaponDamage`)  
 - Special energy builds on hits; Special spends 25% for a stronger strike  
 - Prayers: Thick Skin / Burst of Strength (drain while on)  
 - Magic: Wind/Water/Earth/Fire Strike + High Alchemy (rune costs)  
