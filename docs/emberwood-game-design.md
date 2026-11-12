@@ -3,7 +3,7 @@
 **Saved in-repo:** `docs/emberwood-game-design.md`  
 **Audience:** humans and agents continuing the game  
 **Source of truth:** live code under `js/`, `index.html`, `css/style.css`  
-**Companion docs:** [Resource obtainability](emberwood-resource-obtainability.md), [Design plan](emberwood-design-plan.md), `README.md`, `AGENT.md`, `loop-tasks.md`  
+**Companion docs:** [Resource obtainability](emberwood-resource-obtainability.md), [Open-items Cursor plan](../.cursor/plans/emberwood-open-items.plan.md), `README.md`, `AGENT.md`, `loop-tasks.md`  
 **Last refreshed:** 2026-11-11  
 
 This document describes **current shipped behavior**. Anything aspirational is marked **(aspirational)**. Prefer code over stale AGENT.md notes when they disagree.

@@ -84,6 +84,7 @@ Active queue — implement top-down before returning to sections 1–14.
 - [done] Sync design-plan actions into loop-tasks (meta). — Conclusion: Plan 2.1 plate sets, Dragon Den, ore ladder, fishing access, pathing, combat defaults, zone bands/gather mix, click-walk pause logged in §0; no duplicate identical rows.
 - [done] Rule: track every new user request in loop-tasks. — Conclusion: Always-apply `.cursor/rules/loop-tasks-track-requests.mdc`; process step 6; backfill of recent chat requests into §0.
 - [done] Dialogue box Close button; click-away ends dialogue and walks as normal. — Conclusion: `#btn-dialogue-close` → `hideDialogue`; world click-away closes then falls through to walk/other NPC; same NPC ignored; overlay `pointer-events:none`, card `auto`.
+- [done] Commit leftovers and push to origin. — Conclusion: Cursor open-items plan + docs stubs committed; pushed master to origin.
 
 Related unfinished (kept in later sections): depleted fish-spot move. (Firemaking / cooking / smithing / shop UI already `[done]` in §§7–8.)
 
