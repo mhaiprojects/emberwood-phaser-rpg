@@ -33,6 +33,7 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 
 Active queue — implement top-down before returning to sections 1–14.
 
+- [done] TPS-driven GameClock + Game Speed + tiles/sec movement; world & battle actions on tick countdowns. — Conclusion: `GameClock.js` simTps (30/60/120) + gameSpeed (0.5–2×); movement tiles/sec via `pxPerSec`; gather/combat/regen/respawn/battle turns use `secondsToTicks`; Settings persist `hero.simTps`/`gameSpeed`; render FPS stays 60.
 - [done] Remove ~3/4 of Mire (swamp) water path-blockers; keep ~1/4 via thinner base fill + scatter. — Conclusion: Base `n%44<3` (was `n%11<3`) + water scatter 7 (was 28); mire seed99 ~232→68 WATER (~29% kept / ~71% removed); `MapGen.js?v=mirewater1`.
 - [done] Character cannot move diagonally on tiles (keep no corner-squeeze). — Conclusion: `clampMoveNoCornerCut` only stops when both flanks blocked; open/single-flank diagonals keep velocity; A* still requires both flanks.
 - [done] Add auto-attack range settings, default 3 tiles (Combat tab; persist; Chebyshev engage). — Conclusion: Combat 1–5 tile buttons; `hero.autoAttackRange` default 3; `tryAutoEngage` Chebyshev pick; weapon ranges unchanged.

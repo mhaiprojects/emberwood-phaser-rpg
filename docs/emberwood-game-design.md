@@ -35,7 +35,7 @@ This document describes **current shipped behavior**. Anything aspirational is m
 | Engine | **Phaser 3.90.0 only** (CDN). No Phaser 4, no bundler, no npm build |
 | HUD | **Vue 3.5** global CDN on `#hud-root` — **display-only** mirror; Phaser owns state (`registry`) |
 | Canvas | 512×320, `pixelArt`, `roundPixels`, `Scale.FIT`, arcade gravity 0, `input.keyboard: false`, `audio: { noAudio: true }` |
-| Loop cap | Phaser `fps.target/limit` + arcade `fps` = hero **Target TPS** (30/60, default 60); `#fps-readout` shows smoothed `FPS N \| TPS N` (~1s window + EMA) |
+| Loop / sim clock | Render FPS capped at 60; **Simulation TPS** (`hero.simTps`, 30/60/120 default 60) + **Game Speed** (`hero.gameSpeed`, 0.5–2× default 1) via `GameClock`; movement in tiles/sec; durations in game-seconds → tick countdowns; `#fps-readout` shows `FPS N \| TPS N (configured)` |
 | Audio | Phaser `noAudio` stays; WebAudio `Sfx.js` — layered biome music beds + clearer UI/hit/pickup/gather/death cues; Mute SFX / Mute Music in Settings |
 | Input | Window `Keys.js` only for walk; never Phaser cursors for movement |
 | Scenes | `BootScene` → `TitleScene` → `WorldScene` ↔ (legacy) `BattleScene` / `UIScene`; death → `GameOverScene` (launched while World sleeps) |
@@ -427,7 +427,8 @@ While mining: flash + spark FX tinted to ore; cleared on finish/cancel.
 | Ironman | Off | Title checkbox | No trading |
 | Mute SFX / Music | — | Settings | `Sfx` flags (WebAudio; Phaser stays `noAudio`) |
 | Show FPS | **On** (readout visible) | Settings | Toggle `#fps-readout` (`FPS N \| TPS N`) |
-| Target TPS | **60** | Settings 30/60 | Caps Phaser loop steps + render FPS (+ arcade `setFPS`); not combat swing ticks (~600ms) |
+| Simulation TPS | **60** | Settings 30/60/120 | Sim resolution only (`GameClock`); does not change feel by itself |
+| Game Speed | **1×** | Settings 0.5/1/1.5/2× | Global feel: scales tiles/sec movement and shortens/lengthens authored game-second durations |
 | Zoom | 1–2 | Settings slider | Camera zoom |
 | Collision debug | Off | Settings / F9 | Body + collide tile overlay |
 
@@ -573,7 +574,7 @@ Actionable pitfalls from project rules and recent combat/gather/save work:
 | Area | Files |
 |------|-------|
 | HUD / settings | `js/ui/Hud.js`, `HudApp.js`, `index.html`, `css/style.css` |
-| FPS / TPS cap | `js/main.js` (`#fps-readout`, `applyTargetTps`, smoothed sample); Settings via `Hud.js` / `hero.targetTps` |
+| Game clock | `js/world/GameClock.js`; Settings `simTps` + `gameSpeed` via `Hud.js`; readout in `js/main.js`; world/battle tick countdowns |
 | World / gather / death | `js/scenes/WorldScene.js` |
 | Combat / rings / leash | `js/world/OverworldCombat.js`, `WorldScene.js` (`combatRangeGfx`, `MOB_LEASH_TILES`) |
 | Items / skills / examine | `js/data/Items.js` |

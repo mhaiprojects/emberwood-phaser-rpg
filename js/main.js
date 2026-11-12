@@ -3,6 +3,7 @@ Hud.init();
 Hud.bindActions();
 
 var DEFAULT_TARGET_TPS = 60;
+var RENDER_FPS_CAP = 60;
 
 var config = {
     type: Phaser.AUTO,
@@ -13,8 +14,8 @@ var config = {
     roundPixels: true,
     backgroundColor: '#0b0a12',
     fps: {
-        target: DEFAULT_TARGET_TPS,
-        limit: DEFAULT_TARGET_TPS
+        target: RENDER_FPS_CAP,
+        limit: RENDER_FPS_CAP
     },
     scale: {
         mode: Phaser.Scale.FIT,
@@ -25,7 +26,7 @@ var config = {
         arcade: {
             gravity: { y: 0 },
             debug: false,
-            fps: DEFAULT_TARGET_TPS
+            fps: RENDER_FPS_CAP
         }
     },
     input: {
@@ -43,12 +44,15 @@ var config = {
 };
 
 /**
- * TPS here = Phaser game-loop steps per second (same loop that drives postrender FPS).
- * Not overworld combat ticks (those stay ~600ms via OW_COMBAT_TICK_MS).
+ * Simulation TPS (GameClock). Render FPS stays capped at 60.
+ * Legacy name normalizeTargetTps / applyTargetTps kept for Settings + saves.
  */
 window.normalizeTargetTps = function (value) {
+    if (window.GameClock && typeof GameClock.normalizeTps === 'function') {
+        return GameClock.normalizeTps(value);
+    }
     var n = typeof value === 'number' ? value : parseInt(value, 10);
-    if (n === 30 || n === 60) {
+    if (n === 30 || n === 60 || n === 120) {
         return n;
     }
     return DEFAULT_TARGET_TPS;
@@ -56,34 +60,37 @@ window.normalizeTargetTps = function (value) {
 
 window.applyTargetTps = function (value) {
     var rate = window.normalizeTargetTps(value);
-    var game = window.game;
-    var loop;
-    var scenes;
-    var i;
-    var world;
-    if (!game) {
-        return rate;
-    }
-    loop = game.loop;
-    if (loop) {
-        loop.targetFps = rate;
-        loop.fpsLimit = rate;
-        /* Phaser sets _limitRate only in the TimeStep ctor; keep it in sync for stepLimitFPS. */
-        loop._limitRate = 1000 / rate;
-        if (!loop.hasFpsLimit && rate > 0) {
-            loop.hasFpsLimit = true;
-        }
-    }
-    if (game.scene && typeof game.scene.getScenes === 'function') {
-        scenes = game.scene.getScenes(true);
-        for (i = 0; i < scenes.length; i++) {
-            world = scenes[i].physics && scenes[i].physics.world;
-            if (world && typeof world.setFPS === 'function') {
-                world.setFPS(rate);
-            }
-        }
+    if (window.GameClock && typeof GameClock.setTps === 'function') {
+        GameClock.setTps(rate);
     }
     return rate;
+};
+
+window.applyGameSpeed = function (value) {
+    var speed = typeof normalizeGameSpeed === 'function'
+        ? normalizeGameSpeed(value)
+        : (parseFloat(value) || 1);
+    if (window.GameClock && typeof GameClock.setGameSpeed === 'function') {
+        speed = GameClock.setGameSpeed(speed);
+    }
+    return speed;
+};
+
+window.recomputeOpenSimCountdowns = function (fromTps, fromSpeed) {
+    var game = window.game;
+    var scenes;
+    var i;
+    var scene;
+    if (!game || !game.scene || typeof game.scene.getScenes !== 'function') {
+        return;
+    }
+    scenes = game.scene.getScenes(true);
+    for (i = 0; i < scenes.length; i++) {
+        scene = scenes[i];
+        if (scene && typeof scene.recomputeSimCountdowns === 'function') {
+            scene.recomputeSimCountdowns(fromTps, fromSpeed);
+        }
+    }
 };
 
 window.game = new Phaser.Game(config);
@@ -94,14 +101,14 @@ window.game.events.on('ready', function () {
 
 (function bindPerfReadout(game) {
     var frameCount = 0;
-    var tickCount = 0;
+    var simTickCount = 0;
+    var lastSimSeen = 0;
     var lastSample = (typeof performance !== 'undefined' && performance.now)
         ? performance.now()
         : Date.now();
-    var smoothFps = DEFAULT_TARGET_TPS;
+    var smoothFps = RENDER_FPS_CAP;
     var smoothTps = DEFAULT_TARGET_TPS;
     var el = null;
-    /* Short windows (~250ms) + Math.round made a steady 60 look like 56–64 from boundary noise. */
     var SAMPLE_MS = 1000;
     var EMA = 0.35;
 
@@ -118,24 +125,28 @@ window.game.events.on('ready', function () {
         return el;
     }
 
-    game.events.on('step', function () {
-        tickCount += 1;
-    });
-
     game.events.on('postrender', function () {
         frameCount += 1;
+        if (window.GameClock && typeof GameClock.consumeSimTicks === 'function') {
+            var total = GameClock.consumeSimTicks();
+            if (total >= lastSimSeen) {
+                simTickCount += total - lastSimSeen;
+            }
+            lastSimSeen = total;
+        }
         var now = sampleNow();
         var elapsed = now - lastSample;
         var fpsInst;
         var tpsInst;
         var node;
+        var configured;
         if (elapsed < SAMPLE_MS) {
             return;
         }
         fpsInst = (frameCount * 1000) / elapsed;
-        tpsInst = (tickCount * 1000) / elapsed;
+        tpsInst = (simTickCount * 1000) / elapsed;
         frameCount = 0;
-        tickCount = 0;
+        simTickCount = 0;
         lastSample = now;
         smoothFps = (smoothFps * (1 - EMA)) + (fpsInst * EMA);
         smoothTps = (smoothTps * (1 - EMA)) + (tpsInst * EMA);
@@ -143,6 +154,10 @@ window.game.events.on('ready', function () {
         if (!node || node.hidden) {
             return;
         }
-        node.textContent = 'FPS ' + Math.round(smoothFps) + ' | TPS ' + Math.round(smoothTps);
+        configured = window.GameClock && typeof GameClock.getTps === 'function'
+            ? GameClock.getTps()
+            : DEFAULT_TARGET_TPS;
+        node.textContent = 'FPS ' + Math.round(smoothFps) + ' | TPS ' + Math.round(smoothTps)
+            + ' (' + configured + ')';
     });
 })(window.game);

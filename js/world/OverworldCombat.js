@@ -1,14 +1,15 @@
 var OW_COMBAT_TICK_MS = 600;
+var OW_COMBAT_TICK_SEC = 0.6;
 var POISON_MOB_TYPES = { Slime: true, Skeleton: true, Drake: true, Dragon: true };
 var COMBAT_POISON_CHANCE = 35;
-/* Cap alias (half player walk); prefer mobMoveSpeed(def) for wander + chase. */
+/* Cap alias (half player walk px @ speed 1); prefer mobMoveSpeed / mobMovePxPerSec. */
 var MOB_CHASE_SPEED = typeof MOB_MOVE_SPEED === 'number'
     ? MOB_MOVE_SPEED
     : ((typeof WALK_SPEED === 'number' ? WALK_SPEED : 90) / 2);
 /* Detection radius for mob-initiated agro (chase / open fight). */
 var MOB_AGGRO_RANGE_PX = 112;
 
-/* Fraction of (WALK_SPEED / 2) by type/size — all stay ≤ half player walk. */
+/* Fraction of (WALK_TILES_PER_SEC / 2) by type/size — all stay ≤ half player walk. */
 function mobMoveSpeedFactor(type) {
     if (typeof isGiantMob === 'function' && isGiantMob(type)) {
         return type === 'Dragon' ? 0.5 : 0.58;
@@ -26,14 +27,24 @@ function mobMoveSpeedFactor(type) {
     return 1;
 }
 
-/* Wander, agro chase, and fight chase share this speed (no combat speed-up). */
+/* Wander, agro chase, and fight chase share this speed in tiles/sec at gameSpeed 1. */
 function mobMoveSpeed(mobOrDef) {
-    var walk = typeof WALK_SPEED === 'number' ? WALK_SPEED : 90;
+    var walk = typeof WALK_TILES_PER_SEC === 'number' ? WALK_TILES_PER_SEC : (90 / 16);
     var cap = walk / 2;
     var def = mobOrDef && (mobOrDef.mobDef || mobOrDef);
     var type = def && typeof def === 'object' ? def.type : def;
     var factor = mobMoveSpeedFactor(type);
-    return Math.max(1, Math.min(cap, Math.round(cap * factor)));
+    return Math.max(0.05, Math.min(cap, cap * factor));
+}
+
+/* Arcade velocity px/sec at current GameClock gameSpeed. */
+function mobMovePxPerSec(mobOrDef) {
+    var tiles = mobMoveSpeed(mobOrDef);
+    if (window.GameClock && typeof GameClock.pxPerSec === 'function') {
+        return GameClock.pxPerSec(tiles);
+    }
+    var tile = typeof TILE_SIZE === 'number' ? TILE_SIZE : 16;
+    return tiles * tile;
 }
 var MOB_BASE_LEVEL = {
     Chicken: 1,

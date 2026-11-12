@@ -456,6 +456,8 @@ var Hud = {
             var value;
             var hero;
             var applied;
+            var fromTps;
+            var fromSpeed;
             if (!btn) {
                 return;
             }
@@ -463,15 +465,59 @@ var Hud = {
             if (!hero) {
                 return;
             }
+            fromTps = window.GameClock && typeof GameClock.getTps === 'function'
+                ? GameClock.getTps()
+                : (hero.simTps || hero.targetTps || 60);
+            fromSpeed = window.GameClock && typeof GameClock.getGameSpeed === 'function'
+                ? GameClock.getGameSpeed()
+                : (hero.gameSpeed || 1);
             raw = btn.getAttribute('data-target-tps');
             value = typeof normalizeTargetTps === 'function'
                 ? normalizeTargetTps(raw)
                 : (parseInt(raw, 10) === 30 ? 30 : 60);
+            hero.simTps = value;
             hero.targetTps = value;
             applied = typeof applyTargetTps === 'function' ? applyTargetTps(value) : value;
+            if (typeof recomputeOpenSimCountdowns === 'function') {
+                recomputeOpenSimCountdowns(fromTps, fromSpeed);
+            }
             self.saveHero(hero);
             self.renderTargetTps(hero);
-            self.log('Target TPS ' + applied + ' (game loop cap).');
+            self.log('Simulation TPS ' + applied + '.');
+        });
+        document.addEventListener('click', function (event) {
+            var btn = event.target.closest('[data-game-speed]');
+            var raw;
+            var value;
+            var hero;
+            var applied;
+            var fromTps;
+            var fromSpeed;
+            if (!btn) {
+                return;
+            }
+            hero = self.hero();
+            if (!hero) {
+                return;
+            }
+            fromTps = window.GameClock && typeof GameClock.getTps === 'function'
+                ? GameClock.getTps()
+                : (hero.simTps || hero.targetTps || 60);
+            fromSpeed = window.GameClock && typeof GameClock.getGameSpeed === 'function'
+                ? GameClock.getGameSpeed()
+                : (hero.gameSpeed || 1);
+            raw = btn.getAttribute('data-game-speed');
+            value = typeof normalizeGameSpeed === 'function'
+                ? normalizeGameSpeed(raw)
+                : parseFloat(raw);
+            hero.gameSpeed = value;
+            applied = typeof applyGameSpeed === 'function' ? applyGameSpeed(value) : value;
+            if (typeof recomputeOpenSimCountdowns === 'function') {
+                recomputeOpenSimCountdowns(fromTps, fromSpeed);
+            }
+            self.saveHero(hero);
+            self.renderGameSpeed(hero);
+            self.log('Game Speed ' + applied + '×.');
         });
         document.addEventListener('click', function (event) {
             var btn = event.target.closest('[data-prayer]');
@@ -3457,6 +3503,7 @@ var Hud = {
         this.renderRangeRings(hero);
         this.renderMobSpawnModifier(hero);
         this.renderTargetTps(hero);
+        this.renderGameSpeed(hero);
         this.renderPrayers(hero);
         this.renderRun(hero);
         this.renderSpecialEnergy(hero);
@@ -3921,24 +3968,60 @@ var Hud = {
     },
 
     renderTargetTps: function (hero) {
+        var raw = hero && (hero.simTps != null ? hero.simTps : hero.targetTps);
         var value = typeof normalizeTargetTps === 'function'
-            ? normalizeTargetTps(hero && hero.targetTps)
-            : (hero && hero.targetTps === 30 ? 30 : 60);
+            ? normalizeTargetTps(raw)
+            : (raw === 30 || raw === 120 ? raw : 60);
         var vue = this.vueState();
         var buttons;
         var i;
         var btnVal;
-        var loop = window.game && window.game.loop;
-        if (typeof applyTargetTps === 'function' && (!loop || loop.fpsLimit !== value)) {
+        var current = window.GameClock && typeof GameClock.getTps === 'function'
+            ? GameClock.getTps()
+            : null;
+        if (typeof applyTargetTps === 'function' && current !== value) {
             applyTargetTps(value);
+        }
+        if (hero) {
+            hero.simTps = value;
+            hero.targetTps = value;
         }
         if (vue) {
             vue.targetTps = value;
-            vue.targetTpsLabel = 'Target TPS: ' + value;
+            vue.targetTpsLabel = 'Sim TPS: ' + value;
         }
         buttons = document.querySelectorAll('[data-target-tps]');
         for (i = 0; i < buttons.length; i++) {
             btnVal = parseInt(buttons[i].getAttribute('data-target-tps'), 10);
+            buttons[i].classList.toggle('is-on', btnVal === value);
+        }
+    },
+
+    renderGameSpeed: function (hero) {
+        var raw = hero && hero.gameSpeed;
+        var value = typeof normalizeGameSpeed === 'function'
+            ? normalizeGameSpeed(raw)
+            : (raw === 0.5 || raw === 1.5 || raw === 2 ? raw : 1);
+        var vue = this.vueState();
+        var buttons;
+        var i;
+        var btnVal;
+        var current = window.GameClock && typeof GameClock.getGameSpeed === 'function'
+            ? GameClock.getGameSpeed()
+            : null;
+        if (typeof applyGameSpeed === 'function' && current !== value) {
+            applyGameSpeed(value);
+        }
+        if (hero) {
+            hero.gameSpeed = value;
+        }
+        if (vue) {
+            vue.gameSpeed = value;
+            vue.gameSpeedLabel = 'Game Speed: ' + value + '×';
+        }
+        buttons = document.querySelectorAll('[data-game-speed]');
+        for (i = 0; i < buttons.length; i++) {
+            btnVal = parseFloat(buttons[i].getAttribute('data-game-speed'));
             buttons[i].classList.toggle('is-on', btnVal === value);
         }
     },

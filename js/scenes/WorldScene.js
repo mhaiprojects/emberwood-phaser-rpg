@@ -1,15 +1,25 @@
-var WALK_SPEED = 90;
-var RUN_SPEED = 180;
-/* Cap for mob move (wander + chase); actual speeds via mobMoveSpeed(def). */
-var MOB_MOVE_SPEED = WALK_SPEED / 2;
+/* Author movement as tiles/sec at gameSpeed 1; GameClock converts to px/sec. */
+var WALK_TILES_PER_SEC = 90 / 16;
+var RUN_TILES_PER_SEC = 180 / 16;
+/* Legacy px aliases (gameSpeed 1, TILE_SIZE 16) for any remaining callers. */
+var WALK_SPEED = WALK_TILES_PER_SEC * 16;
+var RUN_SPEED = RUN_TILES_PER_SEC * 16;
+/* Cap for mob move (wander + chase); actual speeds via mobMoveSpeed(def) in tiles/sec. */
+var MOB_MOVE_TILES_PER_SEC = WALK_TILES_PER_SEC / 2;
+var MOB_MOVE_SPEED = MOB_MOVE_TILES_PER_SEC * 16;
 var RUN_ENERGY_MAX = 100;
 var RUN_DRAIN_PER_SEC = 25;
 var RUN_RESTORE_PER_SEC = 15;
+var OW_COMBAT_TICK_SEC = 0.6;
+var HP_REGEN_BASE_SEC = 4.5;
+var HP_REGEN_TOWN_SEC = 1.8;
+var HP_REGEN_CAMP_SEC = 1.1;
+var MOB_RESPAWN_SEC = 18;
 var DEST_X_COLOR = 0xf8ff38;
 var DEST_X_ARM = 8;
 var LONG_PRESS_MS = 2000;
 var LONG_PRESS_SLOP = 8;
-var MOB_RESPAWN_MS = 18000;
+var MOB_RESPAWN_MS = MOB_RESPAWN_SEC * 1000;
 var DOOR_ANIM_MS = 220;
 var DOOR_OPEN_SCALE_X = 0.18;
 var TALK_AWAY_PX = 40;
@@ -34,9 +44,9 @@ var STATION_RANGE = 28;
 var MELEE_ENGAGE_PX = 24;
 var LOOT_PICKUP_PX = 12;
 var GRAVE_RANGE_PX = 28;
-var HP_REGEN_BASE_MS = 4500;
-var HP_REGEN_TOWN_MS = 1800;
-var HP_REGEN_CAMP_MS = 1100;
+var HP_REGEN_BASE_MS = HP_REGEN_BASE_SEC * 1000;
+var HP_REGEN_TOWN_MS = HP_REGEN_TOWN_SEC * 1000;
+var HP_REGEN_CAMP_MS = HP_REGEN_CAMP_SEC * 1000;
 /* 5 tiles at TILE_SIZE 16 (Euclidean px, same style as weapon ranges). */
 var CAMPFIRE_REGEN_RANGE = (typeof TILE_SIZE === 'number' ? TILE_SIZE : 16) * 5;
 var COLLISION_DEBUG_FILL = 0xf38630;
@@ -50,7 +60,12 @@ var WorldScene = new Phaser.Class({
     },
 
     create: function () {
+        var bootHero;
         Keys.init();
+        bootHero = this.registry.get('hero');
+        if (bootHero && window.GameClock && typeof GameClock.applyFromHero === 'function') {
+            GameClock.applyFromHero(bootHero);
+        }
         this.zoneId = this.registry.get('zone') || 'haven';
         this.interiorId = null;
         this.walkTarget = null;
@@ -1309,6 +1324,9 @@ var WorldScene = new Phaser.Class({
         var row = {
             alive: extra && extra.alive != null ? extra.alive : !!mob.aliveMob,
             respawnAt: extra && extra.respawnAt != null ? extra.respawnAt : (mob.respawnAt || prev.respawnAt || 0),
+            respawnTicksLeft: extra && extra.respawnTicksLeft != null
+                ? extra.respawnTicksLeft
+                : (typeof mob.respawnTicksLeft === 'number' ? mob.respawnTicksLeft : (prev.respawnTicksLeft || 0)),
             x: extra && extra.x != null ? extra.x : mob.x,
             y: extra && extra.y != null ? extra.y : mob.y,
             timer: extra && extra.timer !== undefined ? extra.timer : (mob.respawnTimer || prev.timer || null)
@@ -1415,7 +1433,10 @@ var WorldScene = new Phaser.Class({
     },
 
     scheduleMobRespawn: function (mob, delay) {
-        var self = this;
+        var waitMs = Math.max(0, delay);
+        var waitSec = waitMs / 1000;
+        var zoneId = this.zoneId;
+        var id;
         if (!mob || !mob.mobDef) {
             return;
         }
@@ -1423,37 +1444,49 @@ var WorldScene = new Phaser.Class({
             mob.respawnTimer.remove(false);
             mob.respawnTimer = null;
         }
-        var wait = Math.max(0, delay);
-        var zoneId = this.zoneId;
-        var id = mob.mobDef.id;
-        mob.respawnAt = this.time.now + wait;
-        if (wait <= 0) {
+        id = mob.mobDef.id;
+        mob.respawnAuthoredSec = waitSec;
+        mob.respawnTicksLeft = waitSec > 0 ? this.secondsToSimTicks(waitSec) : 0;
+        mob.respawnAt = this.time.now + waitMs;
+        if (!(mob.respawnTicksLeft > 0)) {
             this.rememberMob(mob, { alive: true, respawnAt: 0, timer: null, zoneId: zoneId });
             this.reviveMob(mob);
             return;
         }
-        mob.respawnTimer = this.time.delayedCall(wait, function () {
-            var bag = self.mobZoneState && self.mobZoneState[zoneId];
-            if (bag && bag[id]) {
-                bag[id].alive = true;
-                bag[id].respawnAt = 0;
-                bag[id].timer = null;
-            }
-            var live = self.zoneId === zoneId ? self.findMobById(id) : null;
-            if (live) {
-                live.respawnTimer = null;
-                self.reviveMob(live);
-            } else if (mob && mob.active) {
-                mob.respawnTimer = null;
-                self.reviveMob(mob);
-            }
-        });
         this.rememberMob(mob, {
             alive: false,
             respawnAt: mob.respawnAt,
-            timer: mob.respawnTimer,
+            respawnTicksLeft: mob.respawnTicksLeft,
+            respawnAuthoredSec: waitSec,
+            timer: null,
             zoneId: zoneId
         });
+    },
+
+    completeMobRespawn: function (mob) {
+        var zoneId = this.zoneId;
+        var id = mob && mob.mobDef && mob.mobDef.id;
+        var bag = this.mobZoneState && this.mobZoneState[zoneId];
+        var live;
+        if (!mob) {
+            return;
+        }
+        if (bag && id && bag[id]) {
+            bag[id].alive = true;
+            bag[id].respawnAt = 0;
+            bag[id].respawnTicksLeft = 0;
+            bag[id].timer = null;
+        }
+        live = id && this.zoneId === zoneId ? this.findMobById(id) : null;
+        if (live) {
+            live.respawnTicksLeft = 0;
+            live.respawnTimer = null;
+            this.reviveMob(live);
+        } else if (mob.active) {
+            mob.respawnTicksLeft = 0;
+            mob.respawnTimer = null;
+            this.reviveMob(mob);
+        }
     },
 
     applyDayNightTint: function () {
@@ -2260,11 +2293,11 @@ var WorldScene = new Phaser.Class({
         return Phaser.Math.Distance.Between(this.player.x, this.player.y, pos.x, pos.y) <= 72;
     },
 
-    tickHpRegen: function (dt) {
+    tickHpRegen: function (dtGameSec) {
         var hero;
-        var rate;
+        var rateSec;
         var gained = false;
-        if (!dt || this.overworldFight || this.encounterLock) {
+        if (!dtGameSec || this.overworldFight || this.encounterLock) {
             return;
         }
         hero = this.registry.get('hero');
@@ -2272,15 +2305,15 @@ var WorldScene = new Phaser.Class({
             this._regenAcc = 0;
             return;
         }
-        rate = HP_REGEN_BASE_MS;
+        rateSec = HP_REGEN_BASE_SEC;
         if (this.nearCampfire()) {
-            rate = HP_REGEN_CAMP_MS;
+            rateSec = HP_REGEN_CAMP_SEC;
         } else if (this.nearTownCenter()) {
-            rate = HP_REGEN_TOWN_MS;
+            rateSec = HP_REGEN_TOWN_SEC;
         }
-        this._regenAcc = (this._regenAcc || 0) + dt * 1000;
-        while (this._regenAcc >= rate && hero.hp < hero.maxHp) {
-            this._regenAcc -= rate;
+        this._regenAcc = (this._regenAcc || 0) + dtGameSec;
+        while (this._regenAcc >= rateSec && hero.hp < hero.maxHp) {
+            this._regenAcc -= rateSec;
             hero.hp += 1;
             gained = true;
         }
@@ -2554,9 +2587,6 @@ var WorldScene = new Phaser.Class({
     },
 
     clearFish: function () {
-        if (this.fishAction && this.fishAction.timer) {
-            this.fishAction.timer.remove(false);
-        }
         this.fishAction = null;
         this.fishTarget = null;
     },
@@ -2569,17 +2599,11 @@ var WorldScene = new Phaser.Class({
     },
 
     clearChop: function () {
-        if (this.chopAction && this.chopAction.timer) {
-            this.chopAction.timer.remove(false);
-        }
         this.chopAction = null;
         this.chopTarget = null;
     },
 
     clearMine: function () {
-        if (this.mineAction && this.mineAction.timer) {
-            this.mineAction.timer.remove(false);
-        }
         this.mineAction = null;
         this.mineTarget = null;
         this.clearMineFx();
@@ -3061,7 +3085,18 @@ var WorldScene = new Phaser.Class({
     isTileDepleted: function (tx, ty) {
         var key = this.depleteKey(tx, ty);
         var entry = this.depletedTiles && this.depletedTiles[key];
-        var until = this.depleteUntil(entry);
+        var until;
+        if (!entry) {
+            return false;
+        }
+        if (typeof entry.ticksLeft === 'number') {
+            if (entry.ticksLeft <= 0) {
+                delete this.depletedTiles[key];
+                return false;
+            }
+            return true;
+        }
+        until = this.depleteUntil(entry);
         if (!until) {
             return false;
         }
@@ -3082,47 +3117,60 @@ var WorldScene = new Phaser.Class({
         }
     },
 
+    restoreDepletedTile: function (key, tx, ty, emptyIndex, fullIndex) {
+        var rock;
+        if (!this.tileGrid || this.zoneId !== key.split(':')[0]) {
+            return;
+        }
+        if (this.depletedTiles) {
+            delete this.depletedTiles[key];
+        }
+        if (this.tileGrid[ty] && this.tileGrid[ty][tx] === emptyIndex) {
+            this.setTileIndex(tx, ty, fullIndex);
+        }
+        if (fullIndex === TILE.ROCK) {
+            rock = typeof mineRockAt === 'function'
+                ? mineRockAt(tx, ty, this.zoneId, this.tileGrid, {
+                    houseRects: this.houseRectsNow(),
+                    interior: !!this.interiorId
+                })
+                : null;
+            if (rock && rock.ore) {
+                this.paintOreNodeAt(tx, ty, rock.ore);
+            }
+        }
+    },
+
     scheduleDepleteRestore: function (key, tx, ty, emptyIndex, fullIndex, ms) {
+        /* Legacy wall-clock fallback for saves without ticksLeft. */
         var self = this;
         this.time.delayedCall(Math.max(0, ms), function () {
-            var rock;
-            if (!self.tileGrid || self.zoneId !== key.split(':')[0]) {
+            var entry = self.depletedTiles && self.depletedTiles[key];
+            if (entry && typeof entry.ticksLeft === 'number') {
                 return;
             }
-            if (self.depletedTiles) {
-                delete self.depletedTiles[key];
-            }
-            if (self.tileGrid[ty] && self.tileGrid[ty][tx] === emptyIndex) {
-                self.setTileIndex(tx, ty, fullIndex);
-            }
-            if (fullIndex === TILE.ROCK) {
-                rock = typeof mineRockAt === 'function'
-                    ? mineRockAt(tx, ty, self.zoneId, self.tileGrid, {
-                        houseRects: self.houseRectsNow(),
-                        interior: !!self.interiorId
-                    })
-                    : null;
-                if (rock && rock.ore) {
-                    self.paintOreNodeAt(tx, ty, rock.ore);
-                }
-            }
+            self.restoreDepletedTile(key, tx, ty, emptyIndex, fullIndex);
         });
     },
 
     depleteResource: function (tx, ty, emptyIndex, respawnMs, fullIndex) {
         var key = this.depleteKey(tx, ty);
         var ms = typeof respawnMs === 'number' ? respawnMs : 10000;
+        var sec = ms / 1000;
         this.depletedTiles = this.depletedTiles || {};
         this.depletedTiles[key] = {
             until: this.time.now + ms,
+            authoredSec: sec,
+            ticksLeft: this.secondsToSimTicks(sec),
             emptyIndex: emptyIndex,
-            fullIndex: fullIndex
+            fullIndex: fullIndex,
+            tx: tx,
+            ty: ty
         };
         if (fullIndex === TILE.ROCK || (this.tileGrid && this.tileGrid[ty] && this.tileGrid[ty][tx] === TILE.ROCK)) {
             this.removeOreNodeMarker(tx, ty);
         }
         this.setTileIndex(tx, ty, emptyIndex);
-        this.scheduleDepleteRestore(key, tx, ty, emptyIndex, fullIndex, ms);
     },
 
     reapplyDepletedTiles: function () {
@@ -3167,11 +3215,14 @@ var WorldScene = new Phaser.Class({
                 : (typeof TILE !== 'undefined' ? TILE.TREE : emptyIndex);
             self.depletedTiles[key] = {
                 until: now + remain,
+                authoredSec: remain / 1000,
+                ticksLeft: self.secondsToSimTicks(remain / 1000),
                 emptyIndex: emptyIndex,
-                fullIndex: fullIndex
+                fullIndex: fullIndex,
+                tx: tx,
+                ty: ty
             };
             self.setTileIndex(tx, ty, emptyIndex);
-            self.scheduleDepleteRestore(key, tx, ty, emptyIndex, fullIndex, remain);
         });
     },
 
@@ -3191,7 +3242,10 @@ var WorldScene = new Phaser.Class({
                 var row = bag[id] || {};
                 var remain = 0;
                 if (row.alive === false) {
-                    if (typeof row.remain === 'number') {
+                    if (typeof row.respawnTicksLeft === 'number' && row.respawnTicksLeft > 0
+                            && window.GameClock && typeof GameClock.ticksToSeconds === 'function') {
+                        remain = Math.max(0, Math.round(GameClock.ticksToSeconds(row.respawnTicksLeft) * 1000));
+                    } else if (typeof row.remain === 'number') {
                         remain = Math.max(0, row.remain);
                     } else if (row.timer) {
                         remain = self.remainingOfTimer(row.timer);
@@ -3243,7 +3297,13 @@ var WorldScene = new Phaser.Class({
         Object.keys(this.depletedTiles || {}).forEach(function (key) {
             var entry = self.depletedTiles[key];
             var until = self.depleteUntil(entry);
-            var remain = until - now;
+            var remain = 0;
+            if (entry && typeof entry.ticksLeft === 'number' && entry.ticksLeft > 0
+                    && window.GameClock && typeof GameClock.ticksToSeconds === 'function') {
+                remain = Math.max(0, Math.round(GameClock.ticksToSeconds(entry.ticksLeft) * 1000));
+            } else {
+                remain = until - now;
+            }
             if (!(remain > 0)) {
                 return;
             }
@@ -3525,10 +3585,8 @@ var WorldScene = new Phaser.Class({
         }
         this.fishAction = {
             hit: hit,
-            ms: ms,
-            timer: this.time.delayedCall(ms, function () {
-                self.finishFishAction();
-            })
+            authoredSec: ms / 1000,
+            ticksLeft: this.secondsToSimTicks(ms / 1000)
         };
         Hud.log('You fish…');
         return true;
@@ -3685,9 +3743,8 @@ var WorldScene = new Phaser.Class({
             : 4000;
         this.chopAction = {
             hit: hit,
-            timer: this.time.delayedCall(ms, function () {
-                self.finishChopAction();
-            })
+            authoredSec: ms / 1000,
+            ticksLeft: this.secondsToSimTicks(ms / 1000)
         };
         Hud.log('You swing your axe…');
         return true;
@@ -3810,9 +3867,8 @@ var WorldScene = new Phaser.Class({
         this.mineAction = {
             hit: hit,
             denBoulder: true,
-            timer: this.time.delayedCall(ms, function () {
-                self.finishMineBoulder();
-            })
+            authoredSec: ms / 1000,
+            ticksLeft: this.secondsToSimTicks(ms / 1000)
         };
         Hud.log('You chip at the sealing boulder…');
         return true;
@@ -3970,9 +4026,8 @@ var WorldScene = new Phaser.Class({
         this.mineAction = {
             hit: hit,
             ore: ore,
-            timer: this.time.delayedCall(ms, function () {
-                self.finishMineAction();
-            })
+            authoredSec: ms / 1000,
+            ticksLeft: this.secondsToSimTicks(ms / 1000)
         };
         this.startMineFx(hit, ore);
         label = typeof oreNodeLabel === 'function' ? oreNodeLabel(ore) : 'ore';
@@ -4636,9 +4691,11 @@ var WorldScene = new Phaser.Class({
         if (dist <= range * 0.9) {
             mob.body.setVelocity(0, 0);
         } else {
-            speed = typeof mobMoveSpeed === 'function'
-                ? mobMoveSpeed(mob)
-                : (typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : WALK_SPEED / 2);
+            speed = typeof mobMovePxPerSec === 'function'
+                ? mobMovePxPerSec(mob)
+                : (typeof GameClock !== 'undefined' && GameClock.pxPerSec
+                    ? GameClock.pxPerSec(typeof mobMoveSpeed === 'function' ? mobMoveSpeed(mob) : (WALK_TILES_PER_SEC / 2))
+                    : (typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : WALK_SPEED / 2));
             dx = this.player.x - mob.x;
             dy = this.player.y - mob.y;
             len = dist || 1;
@@ -4844,8 +4901,6 @@ var WorldScene = new Phaser.Class({
     applyMobAgroHit: function (mob) {
         var hero;
         var dealt;
-        var now;
-        var tickMs;
         var shot;
         if (!mob || !mob.aliveMob || !this.player || this.overworldFight || this.encounterLock) {
             return;
@@ -4854,12 +4909,12 @@ var WorldScene = new Phaser.Class({
         if (!hero || hero.hp <= 0) {
             return;
         }
-        now = this.time.now;
-        tickMs = typeof OW_COMBAT_TICK_MS === 'number' ? OW_COMBAT_TICK_MS : 600;
-        if (mob._agroHitAt && now < mob._agroHitAt) {
+        if (mob._agroHitTicksLeft > 0) {
             return;
         }
-        mob._agroHitAt = now + tickMs;
+        mob._agroHitTicksLeft = this.secondsToSimTicks(
+            typeof OW_COMBAT_TICK_SEC === 'number' ? OW_COMBAT_TICK_SEC : 0.6
+        );
         dealt = typeof rollOverworldDamage === 'function'
             ? rollOverworldDamage(mob, 'player', hero)
             : 1;
@@ -5248,12 +5303,15 @@ var WorldScene = new Phaser.Class({
     startOverworldFight: function (mob) {
         var def = mob.mobDef || {};
         var maxHp = typeof def.hp === 'number' ? def.hp : 20;
-        var self = this;
+        var beatSec = typeof OW_COMBAT_TICK_SEC === 'number' ? OW_COMBAT_TICK_SEC : 0.6;
         this.overworldFight = {
             mob: mob,
             hp: maxHp,
             maxHp: maxHp,
             tickMs: typeof OW_COMBAT_TICK_MS === 'number' ? OW_COMBAT_TICK_MS : 600,
+            beatSec: beatSec,
+            ticksLeft: this.secondsToSimTicks(beatSec),
+            firstSwingTicks: this.secondsToSimTicks(0.22),
             busy: false
         };
         if (this.overworldTick) {
@@ -5265,18 +5323,6 @@ var WorldScene = new Phaser.Class({
         } else if (Hud.showBattle && Hud.setMode) {
             Hud.setMode('battle');
         }
-        this.overworldTick = this.time.addEvent({
-            delay: this.overworldFight.tickMs,
-            loop: true,
-            callback: function () {
-                self.tickOverworldFight();
-            },
-            callbackScope: this
-        });
-        /* First swing soon after engage — autos only gate start/chase, not in-fight hits. */
-        this.time.delayedCall(220, function () {
-            self.tickOverworldFight(true);
-        });
     },
 
     tickOverworldFight: function (forcePlayer) {
@@ -6528,9 +6574,11 @@ var WorldScene = new Phaser.Class({
             mob.leashReturning = false;
             return;
         }
-        speed = typeof mobMoveSpeed === 'function'
-            ? mobMoveSpeed(mob)
-            : (typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : WALK_SPEED / 2);
+        speed = typeof mobMovePxPerSec === 'function'
+            ? mobMovePxPerSec(mob)
+            : (typeof GameClock !== 'undefined' && GameClock.pxPerSec
+                ? GameClock.pxPerSec(typeof mobMoveSpeed === 'function' ? mobMoveSpeed(mob) : (WALK_TILES_PER_SEC / 2))
+                : (typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : WALK_SPEED / 2));
         dx = home.x - mob.x;
         dy = home.y - mob.y;
         len = dist || 1;
@@ -6593,9 +6641,11 @@ var WorldScene = new Phaser.Class({
             if (Phaser.Math.Between(0, 80) !== 0) {
                 return;
             }
-            speed = typeof mobMoveSpeed === 'function'
-                ? mobMoveSpeed(mob)
-                : (typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : WALK_SPEED / 2);
+            speed = typeof mobMovePxPerSec === 'function'
+                ? mobMovePxPerSec(mob)
+                : (typeof GameClock !== 'undefined' && GameClock.pxPerSec
+                    ? GameClock.pxPerSec(typeof mobMoveSpeed === 'function' ? mobMoveSpeed(mob) : (WALK_TILES_PER_SEC / 2))
+                    : (typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : WALK_SPEED / 2));
             angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
             vx = Math.cos(angle) * speed;
             vy = Math.sin(angle) * speed;
@@ -6709,9 +6759,11 @@ var WorldScene = new Phaser.Class({
                 self.applyMobAgroHit(mob);
                 return;
             }
-            speed = typeof mobMoveSpeed === 'function'
-                ? mobMoveSpeed(mob)
-                : (typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : WALK_SPEED / 2);
+            speed = typeof mobMovePxPerSec === 'function'
+                ? mobMovePxPerSec(mob)
+                : (typeof GameClock !== 'undefined' && GameClock.pxPerSec
+                    ? GameClock.pxPerSec(typeof mobMoveSpeed === 'function' ? mobMoveSpeed(mob) : (WALK_TILES_PER_SEC / 2))
+                    : (typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : WALK_SPEED / 2));
             dx = self.player.x - mob.x;
             dy = self.player.y - mob.y;
             len = dist || 1;
@@ -6999,12 +7051,28 @@ var WorldScene = new Phaser.Class({
         return hero;
     },
 
-    moveSpeed: function () {
+    moveTilesPerSec: function () {
         var hero = this.ensureRunState(this.registry.get('hero'));
         if (hero && hero.running && hero.runEnergy > 0) {
-            return RUN_SPEED;
+            return RUN_TILES_PER_SEC;
         }
-        return WALK_SPEED;
+        return WALK_TILES_PER_SEC;
+    },
+
+    moveSpeed: function () {
+        var tiles = this.moveTilesPerSec();
+        if (window.GameClock && typeof GameClock.pxPerSec === 'function') {
+            return GameClock.pxPerSec(tiles);
+        }
+        return tiles * (typeof TILE_SIZE === 'number' ? TILE_SIZE : 16);
+    },
+
+    secondsToSimTicks: function (sec) {
+        if (window.GameClock && typeof GameClock.secondsToTicks === 'function') {
+            return GameClock.secondsToTicks(sec);
+        }
+        var tps = 60;
+        return Math.max(1, Math.round(sec * tps));
     },
 
     tickRunEnergy: function (dtSec, moving) {
@@ -7131,20 +7199,168 @@ var WorldScene = new Phaser.Class({
         return false;
     },
 
+    recomputeSimCountdowns: function (fromTps, fromSpeed) {
+        var clock = window.GameClock;
+        var recompute;
+        var self = this;
+        if (!clock || typeof clock.recomputeTicks !== 'function') {
+            return;
+        }
+        recompute = function (ticks) {
+            return clock.recomputeTicks(ticks, fromTps, fromSpeed);
+        };
+        if (this.fishAction && this.fishAction.ticksLeft > 0) {
+            this.fishAction.ticksLeft = recompute(this.fishAction.ticksLeft);
+        }
+        if (this.chopAction && this.chopAction.ticksLeft > 0) {
+            this.chopAction.ticksLeft = recompute(this.chopAction.ticksLeft);
+        }
+        if (this.mineAction && this.mineAction.ticksLeft > 0) {
+            this.mineAction.ticksLeft = recompute(this.mineAction.ticksLeft);
+        }
+        if (this.overworldFight) {
+            if (this.overworldFight.ticksLeft > 0) {
+                this.overworldFight.ticksLeft = recompute(this.overworldFight.ticksLeft);
+            }
+            if (this.overworldFight.firstSwingTicks > 0) {
+                this.overworldFight.firstSwingTicks = recompute(this.overworldFight.firstSwingTicks);
+            }
+        }
+        if (this.mobs && this.mobs.children) {
+            this.mobs.children.iterate(function (mob) {
+                if (mob && mob.respawnTicksLeft > 0) {
+                    mob.respawnTicksLeft = recompute(mob.respawnTicksLeft);
+                }
+                if (mob && mob._agroHitTicksLeft > 0) {
+                    mob._agroHitTicksLeft = recompute(mob._agroHitTicksLeft);
+                }
+            });
+        }
+        if (this.depletedTiles) {
+            Object.keys(this.depletedTiles).forEach(function (key) {
+                var entry = self.depletedTiles[key];
+                if (entry && entry.ticksLeft > 0) {
+                    entry.ticksLeft = recompute(entry.ticksLeft);
+                }
+            });
+        }
+    },
+
+    simTickWorld: function () {
+        var fight = this.overworldFight;
+        var self = this;
+        var keys;
+        var i;
+        var key;
+        var entry;
+        var parts;
+        var tx;
+        var ty;
+
+        if (this.fishAction && this.fishAction.ticksLeft > 0) {
+            this.fishAction.ticksLeft -= 1;
+            if (this.fishAction.ticksLeft <= 0) {
+                this.finishFishAction();
+            }
+        }
+        if (this.chopAction && this.chopAction.ticksLeft > 0) {
+            this.chopAction.ticksLeft -= 1;
+            if (this.chopAction.ticksLeft <= 0) {
+                this.finishChopAction();
+            }
+        }
+        if (this.mineAction && this.mineAction.ticksLeft > 0) {
+            this.mineAction.ticksLeft -= 1;
+            if (this.mineAction.ticksLeft <= 0) {
+                if (this.mineAction.denBoulder) {
+                    this.finishMineBoulder();
+                } else {
+                    this.finishMineAction();
+                }
+            }
+        }
+
+        if (fight) {
+            if (fight.firstSwingTicks > 0) {
+                fight.firstSwingTicks -= 1;
+                if (fight.firstSwingTicks <= 0) {
+                    this.tickOverworldFight(true);
+                }
+            } else if (fight.ticksLeft > 0) {
+                fight.ticksLeft -= 1;
+                if (fight.ticksLeft <= 0) {
+                    this.tickOverworldFight();
+                    if (this.overworldFight) {
+                        this.overworldFight.ticksLeft = this.secondsToSimTicks(
+                            this.overworldFight.beatSec || OW_COMBAT_TICK_SEC || 0.6
+                        );
+                    }
+                }
+            }
+        }
+
+        if (this.mobs && this.mobs.children) {
+            this.mobs.children.iterate(function (mob) {
+                if (!mob) {
+                    return;
+                }
+                if (mob._agroHitTicksLeft > 0) {
+                    mob._agroHitTicksLeft -= 1;
+                }
+                if (mob.respawnTicksLeft > 0) {
+                    mob.respawnTicksLeft -= 1;
+                    if (mob.respawnTicksLeft <= 0) {
+                        self.completeMobRespawn(mob);
+                    }
+                }
+            });
+        }
+
+        if (this.depletedTiles) {
+            keys = Object.keys(this.depletedTiles);
+            for (i = 0; i < keys.length; i++) {
+                key = keys[i];
+                entry = this.depletedTiles[key];
+                if (!entry || typeof entry.ticksLeft !== 'number') {
+                    continue;
+                }
+                entry.ticksLeft -= 1;
+                if (entry.ticksLeft <= 0) {
+                    tx = entry.tx;
+                    ty = entry.ty;
+                    if (tx == null || ty == null) {
+                        parts = key.split(':');
+                        parts = (parts[1] || '').split(',');
+                        tx = parseInt(parts[0], 10);
+                        ty = parseInt(parts[1], 10);
+                    }
+                    this.restoreDepletedTile(key, tx, ty, entry.emptyIndex, entry.fullIndex);
+                }
+            }
+        }
+
+        this.tickHpRegen(
+            window.GameClock && typeof GameClock.gameSecondsPerTick === 'function'
+                ? GameClock.gameSecondsPerTick()
+                : (1 / 60)
+        );
+    },
+
     update: function (time, delta) {
         var dt = (typeof delta === 'number' && isFinite(delta) && delta > 0) ? Math.min(delta, 80) / 1000 : 0;
+        var simRan = 0;
+        var simGameDt = 0;
+        var si;
         if (!this.player || !this.player.body) {
             return;
         }
         if (this.encounterLock && !this.overworldFight) {
-            this.tickRunEnergy(dt, false);
             return;
         }
         if (this.uiPaused()) {
             if (this.player.body) {
                 this.player.body.setVelocity(0, 0);
             }
-            this.tickRunEnergy(dt, false);
             if (Keys.justPressed('Escape')) {
                 if (Hud.dialogueOpen && Hud.dialogueOpen() && Hud.hideDialogue) {
                     Hud.hideDialogue();
@@ -7207,6 +7423,19 @@ var WorldScene = new Phaser.Class({
 
         if (window.Hud && Hud.mode === 'world' && Keys.runTogglePressed()) {
             Hud.toggleRun();
+        }
+
+        if (window.GameClock && typeof GameClock.advance === 'function') {
+            simRan = GameClock.advance(typeof delta === 'number' ? Math.min(delta, 80) : 0);
+            simGameDt = simRan * (typeof GameClock.gameSecondsPerTick === 'function'
+                ? GameClock.gameSecondsPerTick()
+                : 0);
+            for (si = 0; si < simRan; si++) {
+                this.simTickWorld();
+            }
+        } else {
+            simGameDt = dt;
+            this.tickHpRegen(dt);
         }
 
         var speed = this.moveSpeed();
@@ -7314,7 +7543,7 @@ var WorldScene = new Phaser.Class({
             }
         }
 
-        this.tickRunEnergy(dt, !!(vx || vy));
+        this.tickRunEnergy(simGameDt > 0 ? simGameDt : dt, !!(vx || vy));
 
         if (vx < -10) {
             this.player.anims.play('left', true);
@@ -7342,7 +7571,6 @@ var WorldScene = new Phaser.Class({
             this.wildSkull.setPosition(this.player.x + 12, this.player.y - 22);
         }
 
-        this.tickHpRegen(dt);
         this.collectNearbyLoot();
         this.pruneLoot();
         this.pruneGroundFires();

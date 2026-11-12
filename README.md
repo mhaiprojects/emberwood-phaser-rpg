@@ -51,7 +51,7 @@ HUD, chat, combat buttons, and the title screen are **HTML** (Cinzel + Alegreya 
 - **Inventory:** 28 slots. Click cooked shrimp or bread to eat
 - **Minimap:** 3×3 of the nine lands; current zone is highlighted
 - **Battle:** Attack hits the highlighted foe (auto-selected when there is one). Click a foe on the canvas or in the list to choose a target and strike. Eat food uses inventory. Run to flee.
-- **Perf:** top-left `FPS | TPS` readout; Settings **Show FPS** + **Target TPS** 30/60 (loop cap; default 60)
+- **Perf:** top-left `FPS | TPS` readout; Settings **Show FPS**, **Simulation TPS** 30/60/120 (default 60), **Game Speed** 0.5–2× (default 1×) via `GameClock`
 
 ## The nine lands
 

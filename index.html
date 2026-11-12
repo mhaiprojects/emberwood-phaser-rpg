@@ -197,11 +197,20 @@
                             <button type="button" data-music-mute title="Mute biome music bed">Mute Music</button>
                             <h3>Display</h3>
                             <button type="button" data-show-fps title="Toggle FPS / TPS read-out">Show FPS</button>
-                            <h3>Target TPS</h3>
-                            <p>Caps Phaser game-loop steps and render FPS (not combat swing ticks). 60 is default; 30 lightens CPU.</p>
-                            <div class="target-tps-row" role="group" aria-label="Target TPS">
-                                <button type="button" class="target-tps-btn" data-target-tps="30" title="Cap loop at 30 steps/sec" :class="{ 'is-on': targetTps === 30 }">30</button>
-                                <button type="button" class="target-tps-btn" data-target-tps="60" title="Cap loop at 60 steps/sec" :class="{ 'is-on': targetTps === 60 }">60</button>
+                            <h3>Simulation TPS</h3>
+                            <p>Simulation resolution only (default 60). Does not change feel by itself; Game Speed does.</p>
+                            <div class="target-tps-row" role="group" aria-label="Simulation TPS">
+                                <button type="button" class="target-tps-btn" data-target-tps="30" title="30 sim ticks/sec" :class="{ 'is-on': targetTps === 30 }">30</button>
+                                <button type="button" class="target-tps-btn" data-target-tps="60" title="60 sim ticks/sec" :class="{ 'is-on': targetTps === 60 }">60</button>
+                                <button type="button" class="target-tps-btn" data-target-tps="120" title="120 sim ticks/sec" :class="{ 'is-on': targetTps === 120 }">120</button>
+                            </div>
+                            <h3>Game Speed</h3>
+                            <p>Global feel multiplier for movement and action durations (default 1×).</p>
+                            <div class="game-speed-row" role="group" aria-label="Game Speed">
+                                <button type="button" class="game-speed-btn" data-game-speed="0.5" title="Half speed" :class="{ 'is-on': gameSpeed === 0.5 }">0.5×</button>
+                                <button type="button" class="game-speed-btn" data-game-speed="1" title="Normal speed" :class="{ 'is-on': gameSpeed === 1 }">1×</button>
+                                <button type="button" class="game-speed-btn" data-game-speed="1.5" title="1.5× speed" :class="{ 'is-on': gameSpeed === 1.5 }">1.5×</button>
+                                <button type="button" class="game-speed-btn" data-game-speed="2" title="Double speed" :class="{ 'is-on': gameSpeed === 2 }">2×</button>
                             </div>
                             <label>Zoom
                                 <input id="setting-zoom" type="range" min="1" max="2" step="0.05" value="1">
@@ -384,14 +393,15 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
     <script src="js/input/Keys.js?v=run1"></script>
-    <script src="js/data/Items.js?v=tps1"></script>
+    <script src="js/data/Items.js?v=tpsclock1"></script>
     <script src="js/data/Save.js?v=resume1"></script>
     <script src="js/data/Scales.js?v=playbody1"></script>
-    <script src="js/ui/HudApp.js?v=tps1"></script>
+    <script src="js/ui/HudApp.js?v=tpsclock1"></script>
     <script src="js/ui/Sfx.js?v=fontaudio1"></script>
-    <script src="js/ui/Hud.js?v=tps1"></script>
+    <script src="js/ui/Hud.js?v=tpsclock1"></script>
     <script src="js/world/MapGen.js?v=mirewater1"></script>
     <script src="js/world/Pathfind.js?v=diag1"></script>
+    <script src="js/world/GameClock.js?v=tpsclock1"></script>
     <script src="js/world/Zones.js?v=zoneroster1"></script>
     <script src="js/sprites/Unit.js?v=fontaudio1"></script>
     <script src="js/sprites/PlayerCharacter.js"></script>
@@ -402,12 +412,12 @@
     -->
     <script src="js/scenes/BootScene.js?v=fontaudio1"></script>
     <script src="js/scenes/TitleScene.js?v=darklayer1"></script>
-    <script src="js/scenes/WorldScene.js?v=aarange1"></script>
-    <script src="js/world/OverworldCombat.js?v=fontaudio1"></script>
+    <script src="js/scenes/WorldScene.js?v=tpsclock1"></script>
+    <script src="js/world/OverworldCombat.js?v=tpsclock1"></script>
     <script src="js/world/StretchLite.js?v=noghost1"></script>
-    <script src="js/scenes/BattleScene.js?v=grave1"></script>
+    <script src="js/scenes/BattleScene.js?v=tpsclock1"></script>
     <script src="js/scenes/UIScene.js"></script>
     <script src="js/scenes/GameOverScene.js?v=grave1"></script>
-    <script src="js/main.js?v=tps1"></script>
+    <script src="js/main.js?v=tpsclock1"></script>
 </body>
 </html>

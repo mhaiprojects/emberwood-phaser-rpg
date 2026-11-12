@@ -1,6 +1,9 @@
-// Combat stays turn-based. Attack/enemy turns queue the next actor at 900ms.
-// A 0.6s real-time tick is deferred (see Stretch: overworld hits).
+// Combat stays turn-based. Attack/enemy turns queue the next actor after 0.9 game-seconds.
+var BATTLE_TURN_QUEUE_SEC = 0.9;
 var BATTLE_TURN_QUEUE_MS = 900;
+var BATTLE_HEAL_QUEUE_SEC = 0.8;
+var BATTLE_FLEE_END_SEC = 0.5;
+var BATTLE_PICK_READY_SEC = 0.18;
 
 var BattleScene = new Phaser.Class({
     Extends: Phaser.Scene,
@@ -69,20 +72,35 @@ var BattleScene = new Phaser.Class({
         }
         this.refreshTargetMarker();
         this.pickReady = false;
-        var self = this;
-        this.time.delayedCall(180, function () {
-            self.pickReady = true;
-        });
+        this.turnTicksLeft = 0;
+        this.endBattleTicksLeft = 0;
+        this.pickReadyTicksLeft = this.secondsToSimTicks(BATTLE_PICK_READY_SEC);
+        this._pendingStartTurn = true;
         Hud.showBattle(this);
         this.scene.run('UIScene');
-        var self = this;
-        this.time.delayedCall(0, function () {
-            if (self.index < 0) {
-                self.nextTurn();
-            } else if (self.waitingForPlayer) {
-                Hud.onPlayerTurn(self);
-            }
-        });
+    },
+
+    secondsToSimTicks: function (sec) {
+        if (window.GameClock && typeof GameClock.secondsToTicks === 'function') {
+            return GameClock.secondsToTicks(sec);
+        }
+        return Math.max(1, Math.round((sec || 0) * 60));
+    },
+
+    recomputeSimCountdowns: function (fromTps, fromSpeed) {
+        var clock = window.GameClock;
+        if (!clock || typeof clock.recomputeTicks !== 'function') {
+            return;
+        }
+        if (this.turnTicksLeft > 0) {
+            this.turnTicksLeft = clock.recomputeTicks(this.turnTicksLeft, fromTps, fromSpeed);
+        }
+        if (this.endBattleTicksLeft > 0) {
+            this.endBattleTicksLeft = clock.recomputeTicks(this.endBattleTicksLeft, fromTps, fromSpeed);
+        }
+        if (this.pickReadyTicksLeft > 0) {
+            this.pickReadyTicksLeft = clock.recomputeTicks(this.pickReadyTicksLeft, fromTps, fromSpeed);
+        }
     },
 
     livingEnemyIndexes: function () {
@@ -198,19 +216,23 @@ var BattleScene = new Phaser.Class({
             Hud.setActionsEnabled(false);
             var target = this.heroes[0];
             unit.attack(target);
-            this.queueTurn(BATTLE_TURN_QUEUE_MS);
+            this.queueTurn(BATTLE_TURN_QUEUE_SEC);
         }
     },
 
-    queueTurn: function (delay) {
+    queueTurn: function (delaySecOrMs) {
+        var sec;
         if (this.turnTimer) {
             this.turnTimer.remove(false);
+            this.turnTimer = null;
         }
-        this.turnTimer = this.time.addEvent({
-            delay: delay,
-            callback: this.nextTurn,
-            callbackScope: this
-        });
+        /* Accept legacy ms (>10) or game-seconds. */
+        if (typeof delaySecOrMs === 'number' && delaySecOrMs > 10) {
+            sec = delaySecOrMs / 1000;
+        } else {
+            sec = typeof delaySecOrMs === 'number' ? delaySecOrMs : BATTLE_TURN_QUEUE_SEC;
+        }
+        this.turnTicksLeft = this.secondsToSimTicks(sec);
     },
 
     receivePlayerSelection: function (action, targetIndex, itemId) {
@@ -247,7 +269,7 @@ var BattleScene = new Phaser.Class({
             this.targetIndex = targetIndex;
             this.refreshTargetMarker();
             actor.attack(target);
-            this.queueTurn(BATTLE_TURN_QUEUE_MS);
+            this.queueTurn(BATTLE_TURN_QUEUE_SEC);
             return;
         }
         this.busy = true;
@@ -273,7 +295,7 @@ var BattleScene = new Phaser.Class({
             this.registry.set('hero', hero);
             Hud.renderHero(hero);
             this.events.emit('Message', 'You eat ' + eaten.name + ' and recover ' + restored + ' HP.');
-            this.queueTurn(800);
+            this.queueTurn(BATTLE_HEAL_QUEUE_SEC);
         } else if (action === 'windstrike') {
             var hero = this.registry.get('hero');
             if (targetIndex == null) {
@@ -312,15 +334,15 @@ var BattleScene = new Phaser.Class({
             var amount = typeof WIND_STRIKE_DAMAGE === 'number' ? WIND_STRIKE_DAMAGE : 2;
             var dealt = target.takeDamage(amount);
             this.events.emit('Message', 'You cast Wind Strike on ' + target.type + ' for ' + dealt);
-            this.queueTurn(BATTLE_TURN_QUEUE_MS);
+            this.queueTurn(BATTLE_TURN_QUEUE_SEC);
         } else if (action === 'flee') {
             if (Phaser.Math.Between(0, 99) < 70) {
                 this.events.emit('Message', 'You run from the fight.');
                 this.outcome = 'flee';
-                this.time.delayedCall(500, this.endBattle, [], this);
+                this.endBattleTicksLeft = this.secondsToSimTicks(BATTLE_FLEE_END_SEC);
             } else {
                 this.events.emit('Message', 'You fail to get away!');
-                this.queueTurn(800);
+                this.queueTurn(BATTLE_HEAL_QUEUE_SEC);
             }
         } else {
             this.waitingForPlayer = true;
@@ -381,11 +403,49 @@ var BattleScene = new Phaser.Class({
         }
     },
 
-    update: function () {
+    simTickBattle: function () {
+        if (this.pickReadyTicksLeft > 0) {
+            this.pickReadyTicksLeft -= 1;
+            if (this.pickReadyTicksLeft <= 0) {
+                this.pickReady = true;
+            }
+        }
+        if (this._pendingStartTurn) {
+            this._pendingStartTurn = false;
+            if (this.index < 0) {
+                this.nextTurn();
+            } else if (this.waitingForPlayer) {
+                Hud.onPlayerTurn(this);
+            }
+        }
+        if (this.endBattleTicksLeft > 0) {
+            this.endBattleTicksLeft -= 1;
+            if (this.endBattleTicksLeft <= 0) {
+                this.endBattle();
+                return;
+            }
+        }
+        if (this.turnTicksLeft > 0) {
+            this.turnTicksLeft -= 1;
+            if (this.turnTicksLeft <= 0) {
+                this.nextTurn();
+            }
+        }
+    },
+
+    update: function (time, delta) {
+        var ran;
+        var i;
         if (!this.units) {
             return;
         }
-        for (var i = 0; i < this.units.length; i++) {
+        if (window.GameClock && typeof GameClock.advance === 'function') {
+            ran = GameClock.advance(typeof delta === 'number' ? Math.min(delta, 80) : 0);
+            for (i = 0; i < ran; i++) {
+                this.simTickBattle();
+            }
+        }
+        for (i = 0; i < this.units.length; i++) {
             if (this.units[i] && this.units[i].syncHud) {
                 this.units[i].syncHud();
             }

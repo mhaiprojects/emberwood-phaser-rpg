@@ -628,7 +628,9 @@ function makeHero() {
         showCombatVisuals: true,
         showRangeRings: true,
         mobSpawnModifier: typeof MOB_SPAWN_MODIFIER === 'number' ? MOB_SPAWN_MODIFIER : 1,
+        simTps: typeof normalizeTargetTps === 'function' ? normalizeTargetTps(60) : 60,
         targetTps: typeof normalizeTargetTps === 'function' ? normalizeTargetTps(60) : 60,
+        gameSpeed: typeof normalizeGameSpeed === 'function' ? normalizeGameSpeed(1) : 1,
         displayName: 'Adventurer',
         ironman: false,
         prayerPoints: 1,
@@ -2849,10 +2851,22 @@ function normalizeHeroCombat(hero) {
     if (typeof hero.mobSpawnModifier !== 'number' || !(hero.mobSpawnModifier > 0)) {
         hero.mobSpawnModifier = typeof MOB_SPAWN_MODIFIER === 'number' ? MOB_SPAWN_MODIFIER : 1;
     }
+    if (hero.simTps == null && hero.targetTps != null) {
+        hero.simTps = hero.targetTps;
+    }
     if (typeof normalizeTargetTps === 'function') {
-        hero.targetTps = normalizeTargetTps(hero.targetTps);
-    } else if (hero.targetTps !== 30 && hero.targetTps !== 60) {
+        hero.simTps = normalizeTargetTps(hero.simTps != null ? hero.simTps : hero.targetTps);
+        hero.targetTps = hero.simTps;
+    } else if (hero.simTps !== 30 && hero.simTps !== 60 && hero.simTps !== 120) {
+        hero.simTps = 60;
         hero.targetTps = 60;
+    } else {
+        hero.targetTps = hero.simTps;
+    }
+    if (typeof normalizeGameSpeed === 'function') {
+        hero.gameSpeed = normalizeGameSpeed(hero.gameSpeed);
+    } else if (hero.gameSpeed !== 0.5 && hero.gameSpeed !== 1 && hero.gameSpeed !== 1.5 && hero.gameSpeed !== 2) {
+        hero.gameSpeed = 1;
     }
     if (hero.autoAttack == null) {
         hero.autoAttack = false;
