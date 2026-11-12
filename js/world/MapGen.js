@@ -637,7 +637,9 @@ function generateMap(seed, biome, neighbors, zoneId) {
         for (x = 0; x < MAP_W; x++) {
             var n = hash2(x, y, seed) % 11;
             if (biome === 'swamp') {
-                grid[y][x] = n < 3 ? TILE.WATER : (n === 3 ? TILE.FLOWER : TILE.GRASS2);
+                /* Former n%11<3 (~27% water). Keep ~1/4: n%44<3 (~6.8%). */
+                var swampN = hash2(x, y, seed) % 44;
+                grid[y][x] = swampN < 3 ? TILE.WATER : ((swampN % 11) === 3 ? TILE.FLOWER : TILE.GRASS2);
             } else if (biome === 'shore') {
                 /* Thinner coast band so interior path-block stays under 30%. */
                 grid[y][x] = y > MAP_H - 6 ? TILE.WATER : (n === 0 ? TILE.FLOWER : TILE.GRASS);
@@ -732,7 +734,8 @@ function generateMap(seed, biome, neighbors, zoneId) {
         house(grid, FARM_HOUSES[0].x, FARM_HOUSES[0].y, FARM_HOUSES[0].w, FARM_HOUSES[0].h);
         setCell(grid, LOCKED_DOOR.tx, LOCKED_DOOR.ty, TILE.DOOR);
     } else if (biome === 'swamp') {
-        scatter(grid, TILE.WATER, 28, seed, true);
+        /* Was 28; keep ~1/4 of water-scatter presence (mire pathing). */
+        scatter(grid, TILE.WATER, 7, seed, true);
         scatter(grid, TILE.TREE, 22, seed + 4, true);
         scatter(grid, TILE.ROCK, 12, seed + 13, true);
     } else if (biome === 'shore') {

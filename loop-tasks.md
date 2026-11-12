@@ -33,7 +33,7 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 
 Active queue — implement top-down before returning to sections 1–14.
 
-- [doing] Remove ~3/4 of Mire (swamp) water path-blockers; keep ~1/4 via thinner base fill + scatter.
+- [done] Remove ~3/4 of Mire (swamp) water path-blockers; keep ~1/4 via thinner base fill + scatter. — Conclusion: Base `n%44<3` (was `n%11<3`) + water scatter 7 (was 28); mire seed99 ~232→68 WATER (~29% kept / ~71% removed); `MapGen.js?v=mirewater1`.
 - [done] Character cannot move diagonally on tiles (keep no corner-squeeze). — Conclusion: `clampMoveNoCornerCut` only stops when both flanks blocked; open/single-flank diagonals keep velocity; A* still requires both flanks.
 - [done] Add auto-attack range settings, default 3 tiles (Combat tab; persist; Chebyshev engage). — Conclusion: Combat 1–5 tile buttons; `hero.autoAttackRange` default 3; `tryAutoEngage` Chebyshev pick; weapon ranges unchanged.
 - [done] Add TPS controls in Settings; discover/fix why TPS readout fluctuates. — Conclusion: TPS = Phaser loop steps/sec (not combat ticks); Settings Target TPS 30/60 → `applyTargetTps` (fpsLimit+_limitRate+arcade); fluctuation was short 250ms sample+round — now 1s window + EMA.
