@@ -5229,12 +5229,10 @@ var WorldScene = new Phaser.Class({
             },
             callbackScope: this
         });
-        var hero = this.registry.get('hero');
-        if (hero && autoRetaliateOn(hero)) {
-            this.time.delayedCall(220, function () {
-                self.tickOverworldFight(true);
-            });
-        }
+        /* First swing soon after engage — autos only gate start/chase, not in-fight hits. */
+        this.time.delayedCall(220, function () {
+            self.tickOverworldFight(true);
+        });
     },
 
     tickOverworldFight: function (forcePlayer) {
@@ -5259,62 +5257,65 @@ var WorldScene = new Phaser.Class({
         dist = this.fightDistancePx(mob);
         playerRange = typeof weaponAttackRangePx === 'function' ? weaponAttackRangePx(hero) : MELEE_ENGAGE_PX;
         mobRange = typeof mobAttackRangePx === 'function' ? mobAttackRangePx(mob) : MELEE_ENGAGE_PX;
-        if (forcePlayer || autoRetaliateOn(hero)) {
-            hpBefore = fight.hp;
-            dealt = 0;
-            specialQueued = !!fight.specialQueued;
-            fight.specialQueued = false;
-            if (dist > playerRange) {
-                if (forcePlayer || specialQueued) {
-                    Hud.log('You are out of attack range.');
-                }
-            } else if (typeof magicWeaponEquipped === 'function' && magicWeaponEquipped(hero)) {
-                if (typeof hasWindStrikeRunes === 'function' && !hasWindStrikeRunes(hero)) {
-                    Hud.log('You need Air and Mind runes to attack with a staff.');
-                } else if (typeof consumeAirStrikeRunes === 'function' && consumeAirStrikeRunes(hero)) {
-                    dealt = rollOverworldDamage('player', mob, hero, { special: specialQueued });
-                } else {
-                    Hud.log('You need Air and Mind runes to attack with a staff.');
-                }
-            } else if (typeof rangedWeaponEquipped === 'function' && rangedWeaponEquipped(hero)) {
-                if (typeof canShoot === 'function' && !canShoot(hero)) {
-                    Hud.log('Your bow needs suitable arrows (or leave ammo empty for wooden shafts).');
-                } else {
-                    dealt = rollOverworldDamage('player', mob, hero, { special: specialQueued });
-                    if (typeof consumeAmmo === 'function') {
-                        consumeAmmo(hero);
-                    }
-                }
+        /*
+         * Once a fight has started (manual click or engage), swing every tick while in
+         * weapon range. autoAttack / autoRetaliate only control starting fights and
+         * chase-into-range — not whether an active fight deals damage.
+         */
+        hpBefore = fight.hp;
+        dealt = 0;
+        specialQueued = !!fight.specialQueued;
+        fight.specialQueued = false;
+        if (dist > playerRange) {
+            if (forcePlayer || specialQueued) {
+                Hud.log('You are out of attack range.');
+            }
+        } else if (typeof magicWeaponEquipped === 'function' && magicWeaponEquipped(hero)) {
+            if (typeof hasWindStrikeRunes === 'function' && !hasWindStrikeRunes(hero)) {
+                Hud.log('You need Air and Mind runes to attack with a staff.');
+            } else if (typeof consumeAirStrikeRunes === 'function' && consumeAirStrikeRunes(hero)) {
+                dealt = rollOverworldDamage('player', mob, hero, { special: specialQueued });
+            } else {
+                Hud.log('You need Air and Mind runes to attack with a staff.');
+            }
+        } else if (typeof rangedWeaponEquipped === 'function' && rangedWeaponEquipped(hero)) {
+            if (typeof canShoot === 'function' && !canShoot(hero)) {
+                Hud.log('Your bow needs suitable arrows (or leave ammo empty for wooden shafts).');
             } else {
                 dealt = rollOverworldDamage('player', mob, hero, { special: specialQueued });
-            }
-            if (dealt > 0) {
-                if (typeof showCombatVisualsOn === 'function' ? showCombatVisualsOn(hero) : true) {
-                    var playerShot = typeof combatProjectileKind === 'function'
-                        ? combatProjectileKind('player', hero)
-                        : null;
-                    if (playerShot && typeof spawnCombatProjectile === 'function') {
-                        spawnCombatProjectile(this, this.player.x, this.player.y, mob.x, mob.y, playerShot);
-                    }
+                if (typeof consumeAmmo === 'function') {
+                    consumeAmmo(hero);
                 }
-                fight.hp = Math.max(0, fight.hp - dealt);
-                showWorldHitSplat(this, mob.x, mob.y, '-' + dealt, 'hit');
-                grantOverworldHitXp(hero, fight, mob, dealt, hpBefore);
-                ensureSpecialEnergy(hero);
-                hero.specialEnergy = Math.min(100, hero.specialEnergy + 10);
             }
-            this.registry.set('hero', hero);
-            if (Hud.renderOverworldBattle) {
-                Hud.renderOverworldBattle(fight);
+        } else {
+            dealt = rollOverworldDamage('player', mob, hero, { special: specialQueued });
+        }
+        if (dealt > 0) {
+            if (typeof showCombatVisualsOn === 'function' ? showCombatVisualsOn(hero) : true) {
+                var playerShot = typeof combatProjectileKind === 'function'
+                    ? combatProjectileKind('player', hero)
+                    : null;
+                if (playerShot && typeof spawnCombatProjectile === 'function') {
+                    spawnCombatProjectile(this, this.player.x, this.player.y, mob.x, mob.y, playerShot);
+                }
             }
-            if (Hud.renderHero) {
-                Hud.renderHero(hero);
-            }
-            if (fight.hp <= 0) {
-                this.endOverworldFight('win');
-                fight.busy = false;
-                return;
-            }
+            fight.hp = Math.max(0, fight.hp - dealt);
+            showWorldHitSplat(this, mob.x, mob.y, '-' + dealt, 'hit');
+            grantOverworldHitXp(hero, fight, mob, dealt, hpBefore);
+            ensureSpecialEnergy(hero);
+            hero.specialEnergy = Math.min(100, hero.specialEnergy + 10);
+        }
+        this.registry.set('hero', hero);
+        if (Hud.renderOverworldBattle) {
+            Hud.renderOverworldBattle(fight);
+        }
+        if (Hud.renderHero) {
+            Hud.renderHero(hero);
+        }
+        if (fight.hp <= 0) {
+            this.endOverworldFight('win');
+            fight.busy = false;
+            return;
         }
         if (dist <= mobRange) {
             dealt = rollOverworldDamage(mob, 'player', hero);
