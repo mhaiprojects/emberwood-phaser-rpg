@@ -248,6 +248,53 @@ function showWorldHitSplat(scene, x, y, text, kind) {
     });
 }
 
+/** Brief gold sparkles above the hero on skill level-up (no modal). */
+function showLevelUpSparkles(scene, x, y) {
+    var i;
+    var spark;
+    var angle;
+    var dist;
+    var ox;
+    var oy;
+    var hx;
+    var hy;
+    if (!scene || !scene.add || !scene.tweens) {
+        return;
+    }
+    hx = typeof x === 'number' ? x : 0;
+    hy = (typeof y === 'number' ? y : 0) - 14;
+    for (i = 0; i < 10; i++) {
+        angle = (Math.PI * 2 * i) / 10 + (Math.random() * 0.4 - 0.2);
+        dist = 4 + Math.random() * 10;
+        ox = Math.cos(angle) * dist;
+        oy = Math.sin(angle) * dist * 0.7 - 6;
+        spark = scene.add.circle(
+            hx + ox * 0.15,
+            hy,
+            1 + Math.random() * 1.5,
+            i % 2 === 0 ? 0xffe08a : 0xffffff,
+            0.95
+        );
+        spark.setDepth(31);
+        scene.tweens.add({
+            targets: spark,
+            x: hx + ox,
+            y: hy + oy,
+            alpha: 0,
+            scale: 0.3,
+            duration: 480 + Math.floor(Math.random() * 180),
+            ease: 'Quad.easeOut',
+            onComplete: (function (sprite) {
+                return function () {
+                    if (sprite && sprite.destroy) {
+                        sprite.destroy();
+                    }
+                };
+            }(spark))
+        });
+    }
+}
+
 function mobPoisonChance(def) {
     if (!def || !def.type) {
         return false;

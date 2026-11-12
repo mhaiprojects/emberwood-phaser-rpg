@@ -79,11 +79,6 @@ var Hud = {
             stationList: document.getElementById('station-list'),
             stationActions: document.getElementById('station-actions'),
             stationClose: document.getElementById('btn-station-close'),
-            levelUp: document.getElementById('level-up-overlay'),
-            levelUpIcon: document.getElementById('level-up-icon'),
-            levelUpTitle: document.getElementById('level-up-title'),
-            levelUpCopy: document.getElementById('level-up-copy'),
-            levelUpClose: document.getElementById('btn-level-up-close')
         };
     },
 
@@ -91,7 +86,7 @@ var Hud = {
         this.bindEls();
         if (!this._vueReady) {
             this._vueReady = true;
-            this.ensureLevelUpModal();
+            this.ensureQuestCompleteBind();
             this.buildMinimap();
             this.renderWorldMap();
             this.bindInterface();
@@ -885,10 +880,6 @@ var Hud = {
                 self.advanceDialogue();
                 return;
             }
-            if (event.code === 'Escape' && self.el.levelUp && !self.el.levelUp.hidden) {
-                self.hideLevelUp();
-                return;
-            }
             if (event.code === 'Escape' && self.dialogueOpen()) {
                 self.hideDialogue();
                 return;
@@ -1471,40 +1462,8 @@ var Hud = {
         return host;
     },
 
-    ensureLevelUpModal: function () {
-        var host = this.el && this.el.levelUp && this.el.levelUp.parentNode
-            ? this.el.levelUp
-            : document.getElementById('level-up-overlay');
-        if (!host) {
-            var parent = document.getElementById('content') || document.body;
-            host = document.createElement('div');
-            host.id = 'level-up-overlay';
-            host.hidden = true;
-            host.innerHTML = '<div class="level-up-card" role="dialog" aria-labelledby="level-up-title">' +
-                '<img id="level-up-icon" class="pix" alt="">' +
-                '<h2 id="level-up-title">Level up</h2>' +
-                '<p id="level-up-copy"></p>' +
-                '<button type="button" id="btn-level-up-close">Continue</button>' +
-                '</div>';
-            parent.appendChild(host);
-        }
-        if (this.el) {
-            this.el.levelUp = host;
-            this.el.levelUpIcon = host.querySelector('#level-up-icon');
-            this.el.levelUpTitle = host.querySelector('#level-up-title');
-            this.el.levelUpCopy = host.querySelector('#level-up-copy');
-            this.el.levelUpClose = host.querySelector('#btn-level-up-close');
-        }
-        if (!host.getAttribute('data-bound')) {
-            var self = this;
-            host.setAttribute('data-bound', '1');
-            host.addEventListener('click', function (event) {
-                var close = event.target && event.target.closest && event.target.closest('#btn-level-up-close');
-                if (event.target === host || close) {
-                    self.hideLevelUp();
-                }
-            });
-        }
+    ensureQuestCompleteBind: function () {
+        var self = this;
         if (this.el && this.el.questComplete && !this.el.questComplete._bound) {
             this.el.questComplete._bound = true;
             this.el.questComplete.addEventListener('click', function (event) {
@@ -1514,58 +1473,41 @@ var Hud = {
                 }
             });
         }
-        return host;
     },
 
     showLevelUp: function (skill, name, level) {
         var n = Number(level);
-        var host;
         var shown;
+        var article;
+        var world;
+        var player;
         if (!name || !(n > 0)) {
             return null;
         }
         shown = String(Math.floor(n));
-        var article = /^[aeiou]/i.test(name) ? 'an' : 'a';
+        article = /^[aeiou]/i.test(name) ? 'an' : 'a';
         this.log('Congratulations, you just advanced ' + article + ' ' + name + ' level.', 'chat-fanfare');
         this.log('Your ' + name + ' level is now ' + shown + '.', 'chat-fanfare');
-        this.log(name + ' increased to ' + shown + '.');
-        host = this.ensureLevelUpModal();
-        if (!host) {
-            return null;
-        }
-        host.setAttribute('data-skill', skill || '');
-        host.setAttribute('data-level', shown);
-        if (this.el.levelUpIcon) {
-            this.el.levelUpIcon.alt = name;
-            this.el.levelUpIcon.src = typeof skillIcon === 'function'
-                ? skillIcon(skill)
-                : ('assets/svg/skills/' + skill + '.svg');
-        }
-        if (this.el.levelUpTitle) {
-            this.el.levelUpTitle.textContent = 'Congratulations!';
-        }
-        if (this.el.levelUpCopy) {
-            this.el.levelUpCopy.textContent = 'Your ' + name + ' level is now ' + shown + '.';
-        }
-        host.hidden = false;
         if (window.Sfx && Sfx.levelUp) {
             Sfx.levelUp();
         }
-        return host;
+        world = window.game && window.game.scene && window.game.scene.getScene
+            ? window.game.scene.getScene('WorldScene')
+            : null;
+        player = world && world.player;
+        if (player && typeof showLevelUpSparkles === 'function') {
+            showLevelUpSparkles(world, player.x, player.y);
+        }
+        return { skill: skill || '', level: shown };
     },
 
     hideLevelUp: function () {
-        var host = this.el && this.el.levelUp;
-        if (host) {
-            host.hidden = true;
-        }
-        if (this.el && this.el.levelUpClose) {
-            this.el.levelUpClose.blur();
-        }
+        /* Level-up is chat + sparkles only; kept as a no-op for callers. */
     },
 
     showQuestComplete: function (title, copy) {
         var host = this.el && this.el.questComplete;
+        this.ensureQuestCompleteBind();
         if (!host) {
             return null;
         }

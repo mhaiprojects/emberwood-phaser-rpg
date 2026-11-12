@@ -33,6 +33,8 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 
 Active queue — implement top-down before returning to sections 1–14.
 
+- [done] Remove level-up popup; chat + sparkles over player head instead. — Conclusion: Dropped `#level-up-overlay`; chat fanfare + SFX + `showLevelUpSparkles` over player.
+- [doing] Resource per-type visuals + standout gather tiles (trees/ores/fishspot ≠ plain terrain; no black ore corners; distinct item icons).
 - [done] Space NPCs farther apart; shop NPCs get a tiny shop icon prefix on name labels. — Conclusion: Haven NPC_DEFS spread ≥~3–4 tiles; Mira/Cole get pouch shopIcon left of nameplate.
 - [done] Strength/Ranged/Magic levels boost weapon damage by 0.1 × relevant skill level. — Conclusion: `weaponSkillDamageBonus` via equippedWeaponDamage; melee→Str, ranged→Ranged, magic→Magic.
 - [done] Polish combat-intent; fix enter-combat-no-attack (Cow). — Conclusion: Root cause: beginFight cleared intent + in-fight close needed retaliate + tryAutoEngage blocked by encounterLock; restore intent on startFight; close without retaliate; allow chase while fighting; busy finally; tools/combat-stall-check.js.
