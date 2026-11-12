@@ -4579,9 +4579,10 @@ var WorldScene = new Phaser.Class({
         if (!mob || !mob.aliveMob || !mob.body || !this.player) {
             return;
         }
-        /* Player kited beyond leash from spawn → drop fight and return home. */
+        /* Player kited beyond leash / into haven safe zone → drop fight and return home. */
         if (this.mobTargetBeyondLeash(mob, this.player.x, this.player.y)
-            || this.mobOutsideLeash(mob)) {
+            || this.mobOutsideLeash(mob)
+            || this.playerInHavenSafe()) {
             this.releaseMobFromLeash(mob);
             return;
         }
@@ -4601,10 +4602,8 @@ var WorldScene = new Phaser.Class({
             nextX = mob.x + vx;
             nextY = mob.y + vy;
             if (this.mobBeyondLeashAt(mob, nextX, nextY)
-                || (typeof mobForbiddenAt === 'function'
-                    ? mobForbiddenAt(this.zoneId, nextX, nextY)
-                    : (typeof mobEdgeForbiddenAt === 'function' &&
-                        mobEdgeForbiddenAt(nextX, nextY)))) {
+                || this.mobStepForbidden(nextX, nextY)
+                || this.mobStepForbidden(mob.x + vx * 0.2, mob.y + vy * 0.2)) {
                 mob.body.setVelocity(0, 0);
             } else {
                 mob.body.setVelocity(vx, vy);
@@ -6447,6 +6446,19 @@ var WorldScene = new Phaser.Class({
         return typeof mobEdgeForbiddenAt === 'function' && mobEdgeForbiddenAt(wx, wy);
     },
 
+    /* Emberhaven courtyard sanctuary — player standing here should not drag mobs in. */
+    playerInHavenSafe: function () {
+        var tile;
+        if (this.zoneId !== 'haven' || !this.player) {
+            return false;
+        }
+        if (typeof havenSafeForbiddenTile === 'function' && typeof worldToTile === 'function') {
+            tile = worldToTile(this.player.x, this.player.y);
+            return havenSafeForbiddenTile(tile.tx, tile.ty);
+        }
+        return this.mobStepForbidden(this.player.x, this.player.y);
+    },
+
     steerMobHome: function (mob) {
         var home;
         var dist;
@@ -6479,7 +6491,12 @@ var WorldScene = new Phaser.Class({
         len = dist || 1;
         vx = (dx / len) * speed;
         vy = (dy / len) * speed;
-        if (this.mobStepForbidden(mob.x + vx, mob.y + vy)) {
+        if (this.mobStepForbidden(mob.x + vx, mob.y + vy)
+            || this.mobStepForbidden(mob.x + vx * 0.2, mob.y + vy * 0.2)) {
+            /* Inside a forbidden pocket — snap out, then resume home steer next frame. */
+            if (this.mobStepForbidden(mob.x, mob.y)) {
+                this.nudgeMobOffMapEdge(mob);
+            }
             mob.body.setVelocity(0, 0);
             return;
         }
@@ -6540,7 +6557,13 @@ var WorldScene = new Phaser.Class({
             nextX = mob.x + vx;
             nextY = mob.y + vy;
             type = mob.mobDef && mob.mobDef.type;
-            if (self.mobBeyondLeashAt(mob, nextX, nextY) || self.mobStepForbidden(nextX, nextY)) {
+            if (self.mobBeyondLeashAt(mob, nextX, nextY)
+                || self.mobStepForbidden(nextX, nextY)
+                || self.mobStepForbidden(mob.x + vx * 0.2, mob.y + vy * 0.2)
+                || self.mobStepForbidden(mob.x, mob.y)) {
+                if (self.mobStepForbidden(mob.x, mob.y)) {
+                    self.nudgeMobOffMapEdge(mob);
+                }
                 return;
             }
             if (isGiantMob(type) && giantBlockedAt(grid, nextX, nextY, zoneId)) {
@@ -6623,6 +6646,11 @@ var WorldScene = new Phaser.Class({
                 self.releaseMobFromLeash(mob);
                 return;
             }
+            /* Haven courtyard: drop agro at the safe rim instead of dragging mobs in. */
+            if (self.playerInHavenSafe()) {
+                self.releaseMobFromLeash(mob);
+                return;
+            }
             mob.agroChasing = true;
             /* Auto-retaliate: walk into weapon range like click-to-attack; never picks passive mobs. */
             if (retaliate && self.queueRetaliate(mob)) {
@@ -6646,10 +6674,13 @@ var WorldScene = new Phaser.Class({
             vy = (dy / len) * speed;
             nextX = mob.x + vx;
             nextY = mob.y + vy;
-            if (self.mobBeyondLeashAt(mob, nextX, nextY) || self.mobStepForbidden(nextX, nextY)) {
+            if (self.mobBeyondLeashAt(mob, nextX, nextY)
+                || self.mobStepForbidden(nextX, nextY)
+                || self.mobStepForbidden(mob.x + vx * 0.2, mob.y + vy * 0.2)) {
                 mob.body.setVelocity(0, 0);
-                /* Stuck at leash rim with player still out of step → drop if target beyond leash. */
-                if (self.mobTargetBeyondLeash(mob, self.player.x, self.player.y)) {
+                /* Stuck at leash/safe rim with player still out of step → drop chase. */
+                if (self.mobTargetBeyondLeash(mob, self.player.x, self.player.y)
+                    || self.playerInHavenSafe()) {
                     self.releaseMobFromLeash(mob);
                 }
                 return;
@@ -6736,13 +6767,17 @@ var WorldScene = new Phaser.Class({
         this.mobs.children.iterate(function (mob) {
             var vx;
             var vy;
-            var lookX;
-            var lookY;
+            var step;
+            var t;
             if (!mob || !mob.aliveMob || !mob.body) {
                 return;
             }
+            /* Player collide can shove mobs into the courtyard — eject every frame. */
             if (blockedAt(mob.x, mob.y)) {
                 self.nudgeMobOffMapEdge(mob);
+                if (mob.agroChasing || (self.overworldFight && self.overworldFight.mob === mob)) {
+                    self.releaseMobFromLeash(mob);
+                }
                 return;
             }
             vx = mob.body.velocity.x;
@@ -6750,10 +6785,13 @@ var WorldScene = new Phaser.Class({
             if (!vx && !vy) {
                 return;
             }
-            lookX = mob.x + vx * 0.2;
-            lookY = mob.y + vy * 0.2;
-            if (blockedAt(lookX, lookY)) {
-                mob.body.setVelocity(0, 0);
+            /* Sample several look-aheads so coasting cannot cross a safe-zone tile. */
+            for (step = 0; step < 4; step++) {
+                t = (step + 1) * 0.08;
+                if (blockedAt(mob.x + vx * t, mob.y + vy * t)) {
+                    mob.body.setVelocity(0, 0);
+                    return;
+                }
             }
         });
     },

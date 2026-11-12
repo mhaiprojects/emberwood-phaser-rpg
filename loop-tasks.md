@@ -34,7 +34,7 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 Active queue — implement top-down before returning to sections 1–14.
 
 - [done] Fix stalled overworld combat: enter combat with Cow/Chicken then no hits (autos off). — Conclusion: tickOverworldFight no longer gates swings on autoRetaliate; first swing + every in-range tick always fire.
-- [doing] Haven chickens (all haven mobs) must not walk into the courtyard safe zone — harden forbid/leash/constrain + eject if inside.
+- [done] Haven chickens (all haven mobs) must not walk into the courtyard safe zone — harden forbid/leash/constrain + eject if inside. — Conclusion: Fixed nearestMobAllowedTile BFS (could not exit safe tiles); multi-sample constrain + player-collide eject; agro/fight drops at haven safe rim.
 - [done] Add recent requests to the game design document (`docs/emberwood-game-design.md` + brief cross-links). — Conclusion: GDD refreshed 2026-11-12 (FPS/TPS, rings, bands, Deep Mine, haven safe, pyramid/density, leash, click-walk pause, dialogue Close, Combat-only autos, fonts/SFX, loop-tasks rule); README/AGENT/resource cross-links.
 - [done] Emberhaven center safe zone: no mob spawn/enter; Lv1 chickens just outside; Lv3 near N/S/E/W exits (band edge after Deep Mine retune). — Conclusion: Chebyshev r=5 from TOWN_CENTER (18,15) → tx 13–23, ty 10–20; 1×=6 Lv1 ring + 4 Lv3 exits; soft-block wander/agro/chase + faint ring; chickens cannot enter safe tiles.
 - [done] Auto-attack & Auto-retaliate shown in Combat only (remove from Settings + battle panel). — Conclusion: Removed from Settings + `#battle-panel`; Combat tab + handlers kept; README/AGENT/GDD/hint updated.

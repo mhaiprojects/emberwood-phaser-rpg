@@ -79,27 +79,41 @@ function clampMobTileToInner(tx, ty) {
 /** Nearest walkable tile outside edge margin (and haven safe zone when zoneId is haven). */
 function nearestMobAllowedTile(grid, tx, ty, zoneId) {
     var start = clampMobTileToInner(tx, ty);
+    var dirs;
+    var queue;
+    var seen;
+    var i;
+    var cur;
+    var d;
+    var nx;
+    var ny;
+    var key;
     if (!grid) {
         return start;
     }
     if (tileWalkable(grid, start.tx, start.ty) && !mobForbiddenTile(start.tx, start.ty, zoneId)) {
         return start;
     }
-    var dirs = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
-    var queue = [{ tx: start.tx, ty: start.ty }];
-    var seen = {};
+    /*
+     * Traverse forbidden tiles during search so a mob shoved into the haven
+     * courtyard (or deep edge inset) can still reach the nearest allowed rim.
+     * Only the returned tile must be walkable + allowed.
+     */
+    dirs = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+    queue = [{ tx: start.tx, ty: start.ty }];
+    seen = {};
     seen[start.tx + ',' + start.ty] = true;
-    var i = 0;
-    while (i < queue.length && i < 800) {
-        var cur = queue[i++];
+    i = 0;
+    while (i < queue.length && i < 1200) {
+        cur = queue[i++];
         if (tileWalkable(grid, cur.tx, cur.ty) && !mobForbiddenTile(cur.tx, cur.ty, zoneId)) {
             return { tx: cur.tx, ty: cur.ty };
         }
-        for (var d = 0; d < dirs.length; d++) {
-            var nx = cur.tx + dirs[d][0];
-            var ny = cur.ty + dirs[d][1];
-            var key = nx + ',' + ny;
-            if (seen[key] || mobForbiddenTile(nx, ny, zoneId)) {
+        for (d = 0; d < dirs.length; d++) {
+            nx = cur.tx + dirs[d][0];
+            ny = cur.ty + dirs[d][1];
+            key = nx + ',' + ny;
+            if (seen[key]) {
                 continue;
             }
             if (ny < 0 || nx < 0 || ny >= grid.length || !grid[ny] || nx >= grid[ny].length) {
