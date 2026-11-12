@@ -161,8 +161,11 @@ function diagonalFlanksOpen(grid, tx, ty, dx, dy) {
 }
 
 /**
- * Drop the velocity axis that would squeeze through a blocked corner.
- * Cardinal moves and open diagonals (both flanks clear) are unchanged;
+ * Block only a true corner squeeze (both orthogonal flanks blocked).
+ * Open diagonals and single-flank diagonals keep full velocity so click-walk /
+ * WASD can step diagonally on open tiles; mid-path centers that cross into a
+ * neighbor tile beside an unrelated solid must not stair-step into cardinal-only.
+ * A* still requires both flanks via diagonalFlanksOpen (no planned corner-cuts).
  * 1-tile door corridors stay passable via cardinal / clear-flank diagonals.
  */
 function clampMoveNoCornerCut(grid, x, y, vx, vy) {
@@ -177,10 +180,11 @@ function clampMoveNoCornerCut(grid, x, y, vx, vy) {
     if (diagonalFlanksOpen(grid, tx, ty, sx, sy)) {
         return { vx: vx, vy: vy };
     }
-    return {
-        vx: tileWalkable(grid, tx + sx, ty) ? vx : 0,
-        vy: tileWalkable(grid, tx, ty + sy) ? vy : 0
-    };
+    /* Both flanks solid → diagonal would slip between blockers; stop that axis pair. */
+    if (!tileWalkable(grid, tx + sx, ty) && !tileWalkable(grid, tx, ty + sy)) {
+        return { vx: 0, vy: 0 };
+    }
+    return { vx: vx, vy: vy };
 }
 
 /**

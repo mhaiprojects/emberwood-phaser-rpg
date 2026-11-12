@@ -33,6 +33,7 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 
 Active queue — implement top-down before returning to sections 1–14.
 
+- [done] Character cannot move diagonally on tiles (keep no corner-squeeze). — Conclusion: `clampMoveNoCornerCut` only stops when both flanks blocked; open/single-flank diagonals keep velocity; A* still requires both flanks.
 - [done] Add auto-attack range settings, default 3 tiles (Combat tab; persist; Chebyshev engage). — Conclusion: Combat 1–5 tile buttons; `hero.autoAttackRange` default 3; `tryAutoEngage` Chebyshev pick; weapon ranges unchanged.
 - [done] Add TPS controls in Settings; discover/fix why TPS readout fluctuates. — Conclusion: TPS = Phaser loop steps/sec (not combat ticks); Settings Target TPS 30/60 → `applyTargetTps` (fpsLimit+_limitRate+arcade); fluctuation was short 250ms sample+round — now 1s window + EMA.
 - [done] Zone entrance labels must match mobs in that zone; consolidate zone ↔ band ↔ spawn roster into one source of truth. — Conclusion: `ZONE_MOB_ROSTER` drives band+spawns+labels; Den fixed to Dragons Lv 60; shaft markers via `zoneShaftMarkerOverlay`.
