@@ -615,7 +615,7 @@ function makeHero() {
         style: 'shared',
         stance: 'melee',
         autoAttack: false,
-        autoRetaliate: true,
+        autoRetaliate: false,
         autoPickup: true,
         shiftClickDrop: true,
         hideBones: false,
@@ -700,13 +700,7 @@ function makeIronmanHero() {
 }
 
 function autoRetaliateOn(hero) {
-    if (!hero) {
-        return false;
-    }
-    if (hero.autoRetaliate == null) {
-        return true;
-    }
-    return !!hero.autoRetaliate;
+    return !!(hero && hero.autoRetaliate);
 }
 
 function autoAttackOn(hero) {
@@ -2838,7 +2832,7 @@ function normalizeHeroCombat(hero) {
         hero.autoAttack = false;
     }
     if (hero.autoRetaliate == null) {
-        hero.autoRetaliate = true;
+        hero.autoRetaliate = false;
     }
     if (!hero.style) {
         hero.style = 'shared';

@@ -64,7 +64,7 @@ Active queue — implement top-down before returning to sections 1–14.
 - [done] Death/ground loot only on walkable tiles near the drop. — Conclusion: Loot/death drops snap to nearest ground tiles; no piles on solids.
 - [done] Mob agro only if mob combat level > player (`alwaysAgro` excepted). — Conclusion: Proactive chase gated by levels; `alwaysAgro` still engages; chase stops if player outlevels.
 - [done] Auto-retaliate chases agroing mobs into weapon range. — Conclusion: Agro-first retaliate walks into range then fights (not melee-only instant).
-- [done] Auto-attack defaults **off**; auto-retaliate defaults **on**. — Conclusion: `makeHero` / normalize: missing `autoAttack` → false, missing `autoRetaliate` → true; HudApp labels Off/On; README + GDD updated.
+- [done] Auto-attack & auto-retaliate defaults **off**. — Conclusion: Both false in `makeHero` / missing-key normalize; HudApp Off/Off; README + GDD; superseded earlier retaliate-on default.
 - [done] Mob speeds ≤ half player walk by type; no chase speed-up. — Conclusion: Per-type `MOB_MOVE_SPEED` ≤45; wander and chase share one speed.
 - [done] Campfire heal within 5 tiles + faint effect radius ring. — Conclusion: Campfire HP regen radius 5 tiles; ring GFX matches combat range style.
 - [done] Zone exit trigger widened to 2 tiles. — Conclusion: Edge exit strips are 2 tiles (was 14px); opposite-side spawn unchanged.
@@ -85,6 +85,7 @@ Active queue — implement top-down before returning to sections 1–14.
 - [done] Rule: track every new user request in loop-tasks. — Conclusion: Always-apply `.cursor/rules/loop-tasks-track-requests.mdc`; process step 6; backfill of recent chat requests into §0.
 - [done] Dialogue box Close button; click-away ends dialogue and walks as normal. — Conclusion: `#btn-dialogue-close` → `hideDialogue`; world click-away closes then falls through to walk/other NPC; same NPC ignored; overlay `pointer-events:none`, card `auto`.
 - [done] Commit leftovers and push to origin. — Conclusion: Cursor open-items plan + docs stubs committed; pushed master to origin.
+- [done] Turn off Auto-attack & Auto-retaliate by default. — Conclusion: `makeHero` both false; missing keys normalize off; HudApp Off/Off; README+GDD; saves with true kept.
 
 Related unfinished (kept in later sections): depleted fish-spot move. (Firemaking / cooking / smithing / shop UI already `[done]` in §§7–8.)
 
