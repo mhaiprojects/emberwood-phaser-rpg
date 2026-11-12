@@ -3607,14 +3607,22 @@ var WorldScene = new Phaser.Class({
         }
         hero = this.registry.get('hero');
         result = typeof catchFish === 'function'
-            ? catchFish(hero)
+            ? catchFish(hero, {
+                catchId: hit && hit.catchId
+                    ? hit.catchId
+                    : (typeof fishCatchForZone === 'function' ? fishCatchForZone(this.zoneId) : undefined)
+            })
             : (typeof fishAtSpot === 'function' ? fishAtSpot(hero) : null);
         this.fishTarget = null;
         if (!result) {
             return this.examineScenery(hit);
         }
+        if (result.need) {
+            Hud.log(typeof needLevelChat === 'function' ? needLevelChat(result.need) : ('You need level ' + result.need + '.'));
+            return true;
+        }
         if (result.needTool) {
-            Hud.log('You need a fishing net.');
+            Hud.log(result.toolName ? ('You need ' + result.toolName + '.') : 'You need a fishing net.');
             return true;
         }
         if (result.miss) {
@@ -3721,7 +3729,7 @@ var WorldScene = new Phaser.Class({
         }
         if (typeof hasAnyToolKind === 'function' ? !hasAnyToolKind(hero, 'axe')
                 : (typeof hasTool === 'function' && typeof WOODCUT_AXE_ID !== 'undefined' && !hasTool(hero, WOODCUT_AXE_ID))) {
-            Hud.log('You need an axe.');
+            Hud.log('You need a stronger axe.');
             this.clearChop();
             return false;
         }
@@ -3780,7 +3788,7 @@ var WorldScene = new Phaser.Class({
             return true;
         }
         if (result.needTool) {
-            Hud.log('You need an axe.');
+            Hud.log('You need a stronger axe.');
             return true;
         }
         if (result.full) {
@@ -4005,7 +4013,7 @@ var WorldScene = new Phaser.Class({
         }
         if (typeof hasAnyToolKind === 'function' ? !hasAnyToolKind(hero, 'pickaxe')
                 : (typeof hasTool === 'function' && typeof MINE_PICK_ID !== 'undefined' && !hasTool(hero, MINE_PICK_ID))) {
-            Hud.log('You need a pickaxe.');
+            Hud.log('You need a stronger pickaxe.');
             this.clearMine();
             return false;
         }
@@ -4064,7 +4072,7 @@ var WorldScene = new Phaser.Class({
             return this.examineScenery(hit);
         }
         if (result.needTool) {
-            Hud.log('You need a pickaxe.');
+            Hud.log('You need a stronger pickaxe.');
             return true;
         }
         if (result.full) {

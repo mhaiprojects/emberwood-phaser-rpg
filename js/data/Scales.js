@@ -108,24 +108,28 @@ function isUniqueMobTexture(texture) {
 
 function lootForMob(def) {
     var drops = [];
-    var roll = Math.random();
     if (def && def.gold) {
         drops.push({ id: 'coins', qty: def.gold });
     }
     drops.push({ id: 'bones', qty: 1 });
     if (def && def.type === 'Chicken') {
+        drops.push({ id: 'rawchicken', qty: 1 });
         drops.push({ id: 'feather', qty: 3 });
     } else if (def && def.type === 'Cow') {
         drops.push({ id: 'rawbeef', qty: 1 });
         drops.push({ id: 'cowhide', qty: 1 });
     } else if (def && def.type === 'Crab') {
-        drops.push({ id: 'rawshrimp', qty: 1 });
+        drops.push({ id: 'rawcrab', qty: 1 });
+        drops.push({ id: 'shell', qty: 1 });
+        if (Math.random() < 0.2) {
+            drops.push({ id: 'copper', qty: 1 });
+        }
     } else if (def && def.type === 'Rabbit') {
+        drops.push({ id: 'rawrabbit', qty: 1 });
         drops.push({ id: 'rabbitfur', qty: 1 });
     } else if (def && def.type === 'Goblin') {
-        if (roll < 0.35) {
-            drops.push({ id: roll < 0.18 ? 'copper' : 'tin', qty: 1 });
-        }
+        drops.push({ id: 'rawgoblin', qty: 1 });
+        drops.push({ id: 'copper', qty: 1 });
         if (Math.random() < 0.2) {
             drops.push({ id: 'airrune', qty: 2 });
         }
@@ -133,33 +137,32 @@ function lootForMob(def) {
             drops.push({ id: 'logs', qty: 1 });
         }
     } else if (def && def.type === 'Skeleton') {
-        if (roll < 0.3) {
-            drops.push({ id: 'iron', qty: 1 });
-        }
+        drops.push({ id: 'rawrib', qty: 1 });
+        drops.push({ id: 'iron', qty: 1 });
         if (Math.random() < 0.25) {
-            drops.push({ id: 'mindrune', qty: 2 });
+            drops.push({ id: 'earthrune', qty: 2 });
         }
         if (Math.random() < 0.05) {
             drops.push({ id: 'key', qty: 1 });
         }
     } else if (def && def.type === 'Bat') {
-        if (roll < 0.4) {
-            drops.push({ id: 'runeessence', qty: 2 });
-        }
+        drops.push({ id: 'rawbat', qty: 1 });
+        drops.push({ id: 'runeessence', qty: 2 });
         if (Math.random() < 0.2) {
             drops.push({ id: 'airrune', qty: 1 });
         }
+        if (Math.random() < 0.08) {
+            drops.push({ id: 'batfang', qty: 1 });
+        }
     } else if (def && def.type === 'Slime') {
-        if (roll < 0.3) {
+        drops.push({ id: 'rawslime', qty: 1 });
+        drops.push({ id: 'waterrune', qty: 1 });
+        if (Math.random() < 0.3) {
             drops.push({ id: 'earthrune', qty: 2 });
         }
-        if (Math.random() < 0.15) {
-            drops.push({ id: 'waterrune', qty: 1 });
-        }
     } else if (def && def.type === 'Drake') {
-        if (Math.random() < 0.28) {
-            drops.push({ id: 'drakescale', qty: 1 });
-        }
+        drops.push({ id: 'rawdrake', qty: 1 });
+        drops.push({ id: 'drakescale', qty: 1 });
         if (Math.random() < 0.2) {
             drops.push({ id: 'diamondore', qty: 1 });
         }
@@ -170,6 +173,7 @@ function lootForMob(def) {
             drops.push({ id: 'firerune', qty: 3 });
         }
     } else if (def && def.type === 'Dragon') {
+        drops.push({ id: 'rawdragon', qty: 1 });
         drops.push({ id: 'drakescale', qty: 1 + (Math.random() < 0.5 ? 1 : 0) });
         if (Math.random() < 0.55) {
             drops.push({ id: 'dragoniteore', qty: 1 });
@@ -180,6 +184,9 @@ function lootForMob(def) {
         if (Math.random() < 0.4) {
             drops.push({ id: 'firerune', qty: 5 });
         }
+    }
+    if (Math.random() < 0.015) {
+        drops.push({ id: 'cluescroll', qty: 1 });
     }
     return drops;
 }

@@ -71,11 +71,13 @@ WorldScene.prototype.maybeRandomEvent = function () {
     sprite.setInteractive({ useHandCursor: true });
     sprite.on('pointerdown', function () {
         var hero = self.registry.get('hero');
-        if (addItem(hero, 'coins', 20)) {
-            syncCoins(hero);
-            self.registry.set('hero', hero);
+        if (!heroHasItem(hero, 'cluescroll') && addItem(hero, 'cluescroll', 1)) {
+            Hud.log('The genie presses a clue scroll into your hands.');
+        } else if (addItem(hero, 'coins', 20)) {
             Hud.log('The genie grants you 20 coins.');
         }
+        syncCoins(hero);
+        self.registry.set('hero', hero);
         self.dismissRandomEvent(sprite);
     });
     this.randomEventNpc = sprite;
@@ -150,7 +152,7 @@ WorldScene.prototype.tryStretchSkillAction = function (skillId) {
         Hud.log(ok ? 'You mix an attack potion.' : 'You need a guam leaf.');
     } else if (skillId === 'fletching' && typeof fletchShortbow === 'function') {
         ok = fletchShortbow(hero);
-        Hud.log(ok ? 'You fletch a shortbow (u).' : 'You need logs and string.');
+        Hud.log(ok ? 'You fletch a copper bow.' : 'You need oak logs and string (or an unstrung bow + string).');
     } else if (skillId === 'construction' && typeof buildOakBench === 'function') {
         ok = buildOakBench(hero);
         Hud.log(ok ? 'You construct an oak plank bench.' : 'You need 3 logs.');

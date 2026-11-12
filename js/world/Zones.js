@@ -141,13 +141,15 @@ function applyNpcTutor(hero, def) {
     if (def.tutor === 'fishing') {
         gift = 'net';
     } else if (def.tutor === 'mining') {
-        gift = 'bronzepick';
+        gift = 'copperpick';
     } else if (def.tutor === 'combat') {
-        gift = 'bronzeaxe';
+        gift = 'copperaxe';
     } else if (def.tutor === 'cows') {
         gift = 'string';
     } else if (def.tutor === 'firemaking') {
         gift = 'tinderbox';
+    } else if (def.tutor === 'herblore') {
+        gift = 'guam';
     }
     if (gift && typeof addItem === 'function' && typeof itemQty === 'function' && itemQty(hero, gift) < 1) {
         addItem(hero, gift, gift === 'string' ? 3 : 1);
@@ -193,12 +195,13 @@ var NPC_DEFS = {
         { key: 'guard', name: 'Guard Rowan', x: 252, y: 168, tint: 0xffffff, options: ['talk'], examine: 'A watchful town guard. He knows every path from the gate.', lines: ['Keep to the paths.', 'North is woods. East is farms. South is the sea.'] },
         { key: 'shopkeep', name: 'Shopkeeper Mira', x: 264, y: 184, tint: 0xffffff, texture: 'npc-shopkeeper', options: ['talk', 'trade'], shopKey: 'mira', examine: 'The town shopkeeper. She minds the courtyard stall.', lines: ['Take a look at the wares.', 'Bones and spare food fetch a price.'] },
         { key: 'dummy', name: 'Training dummy', x: 280, y: 264, tint: 0xcccccc, texture: 'npc-guard', options: ['talk', 'duel'], examine: 'A straw-filled training dummy for duels.', lines: ['Up for a practice duel?', 'No loot, just honour.'] },
-        { key: 'arms', name: 'Armsman Cole', x: 312, y: 200, tint: 0xffffff, texture: 'npc-guard', options: ['talk', 'trade'], shopKey: 'arms', examine: 'A weapons stall keeper. Oil stains his gloves.', lines: ['Blades, bows, and staves, if you have the coin.', 'Take a look at the wares.', 'A shortbow trains Ranged; a staff needs Air and Mind runes.'] },
-        { key: 'cook', name: 'Cook Pell', x: 280, y: 280, tint: 0xffffff, options: ['talk'], tutor: 'firemaking', examine: 'The town cook. Flour dusts her sleeves and a ladle never leaves her hand.', lines: ['Take this tinderbox.', 'Use it on logs to light a fire on open ground.', 'Cook raw food on that fire or the town range.', 'Burnt food teaches nothing — keep cooking.'] },
+        { key: 'arms', name: 'Armsman Cole', x: 312, y: 200, tint: 0xffffff, texture: 'npc-guard', options: ['talk', 'trade'], shopKey: 'arms', examine: 'A weapons stall keeper. Oil stains his gloves.', lines: ['Blades, bows, and staves, if you have the coin.', 'Take a look at the wares.', 'A copper bow trains Ranged; a staff needs Air runes for Air Strike.'] },
+        { key: 'cook', name: 'Cook Pell', x: 280, y: 280, tint: 0xffffff, options: ['talk'], tutor: 'firemaking', examine: 'The town cook. Flour dusts her sleeves and a ladle never leaves her hand.', lines: ['Take this tinderbox.', 'Use it on logs to light a fire on open ground.', 'Cook raw food on that fire or the town range.', 'If you burn a meal it is ruined — nothing left to keep.'] },
+        { key: 'herbalist', name: 'Herbalist Ivy', x: 240, y: 200, tint: 0xffffff, options: ['talk'], tutor: 'herblore', examine: 'Emberhaven\'s herbalist. Bundles of guam hang by her stall.', lines: ['Guam grows easily if you have a seed.', 'Mix a leaf into an attack potion here.', 'Bring guam and I will show you the craft.'] },
         { key: 'priest', name: 'Priest Alden', x: 296, y: 168, tint: 0xffffff, options: ['talk'], examine: 'A quiet shrine priest. Ash marks the collar of his robe.', lines: ['The shrine still hears a prayer.', 'Bury the bones of the fallen, traveler.'] }
     ],
     northwood: [
-        { key: 'ranger', name: 'Ranger Kett', x: 240, y: 200, tint: 0xffffff, options: ['talk'], tutor: 'combat', examine: 'A Northwood ranger. Goblin tracks stain her boots.', lines: ['Goblins nest in these trees.', 'Click a goblin to fight it, like the old days.', 'Wield a bow from Armsman Cole — leave ammo empty for infinite wooden arrows, or equip bronze arrows.', 'A wood staff plus Air and Mind runes casts Air Strike.', 'Shared splits XP; Strength, Ranger, or Mage train from your weapon.'] }
+        { key: 'ranger', name: 'Ranger Kett', x: 240, y: 200, tint: 0xffffff, options: ['talk'], tutor: 'combat', examine: 'A Northwood ranger. Goblin tracks stain her boots.', lines: ['Goblins nest in these trees.', 'Click a goblin to fight it, like the old days.', 'Wield a bow from Armsman Cole — leave ammo empty for infinite wooden arrows, or equip copper arrows.', 'A wood staff plus an Air rune casts Air Strike.', 'Shared splits XP; Strength, Ranger, or Mage train from your weapon.'] }
     ],
     millfields: [
         { key: 'farmer', name: 'Farmer Willa', x: 200, y: 180, tint: 0xffffff, options: ['talk'], tutor: 'cows', examine: 'A Millfields farmer. Cabbage stains her apron.', lines: ['Cows got into the cabbages again.', 'The mill road runs back to Emberhaven.', 'Click a cow when you need hide and beef.', 'They kick, so keep a combat style ready.'] }

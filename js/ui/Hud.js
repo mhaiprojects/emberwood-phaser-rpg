@@ -1367,7 +1367,7 @@ var Hud = {
             return false;
         }
         if (typeof hasHighAlchRunes === 'function' && !hasHighAlchRunes(hero)) {
-            this.log('You need 5 Fire runes and 1 Nature rune.');
+            this.log('You need 5 Fire runes.');
             return false;
         }
         this.alchArmed = true;
@@ -1392,7 +1392,7 @@ var Hud = {
         }
         if (!result.ok) {
             if (result.need === 'runes') {
-                this.log('You need 5 Fire runes and 1 Nature rune.');
+                this.log('You need 5 Fire runes.');
             } else {
                 this.log('Nothing interesting happens.');
             }

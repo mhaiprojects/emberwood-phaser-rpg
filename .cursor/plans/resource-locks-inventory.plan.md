@@ -1,10 +1,10 @@
 ---
 name: Resource locks inventory
-overview: "Complete redesign: Wood+4 parallel ladders (metal/rune/wood), single Armour (string+leather+hard), craft rules by weapon type, 1 meat/mob, per-zone ore/tree/fish. Unified execute list. Plan-only until execute."
+overview: "EXECUTED in code: Wood+4 ladders, single Armour, no bronze/tin, craft rules, mob loot, zone gather, L1–L13. Human playtest; testing still blocked."
 todos:
   - id: execute-unified
     content: "Unified execute list for full redesign"
-    status: pending
+    status: completed
   - id: ladders-locked
     content: "Wood+4 metals / 4 runes / 4 woods + zone gather + craft rules locked"
     status: completed
@@ -16,7 +16,7 @@ isProject: true
 
 # Emberwood resource & equipment plan (complete)
 
-**Phase:** plan only — no code until you say execute.
+**Phase:** executed (feature code). Testing still blocked — human playtests.
 
 ---
 
@@ -40,7 +40,7 @@ isProject: true
 | **E1** | One **Armour** slot (no helm/body/legs) |
 | **E2** | **No bronze, no tin, no alloys** |
 | **E3** | Armour craft = **string + leather + hard resource** (wood→dragonite) |
-| **E4** | **1 raw meat per mob type**; all cookable |
+| **E4** | Full mob loot tables: **meat + ≥1 other resource** each (plus coins/bones); all meats cookable |
 | **E5** | Runes = 4-tier ladder like metals; **Fire highest**; **remove Nature** (and Mind — see ladder) |
 | **E6** | Woods = Wood basic + **4 log types** (add mid-tier **ash**) |
 | **E7** | Weapon craft rules: melee wood+metal; bow wood+string; staff wood+rune; arrows wood+metal |
@@ -109,22 +109,36 @@ Names unchanged from prior plan for NEW pieces (Copper armour/shield, Diamond/Dr
 
 ---
 
-## E4 — One meat per mob
+## E4 — Full mob drop tables (meat + ≥1 other resource)
 
-| Mob | Raw meat id | Cooked | Notes |
-|-----|-------------|--------|-------|
-| Chicken | `rawchicken` **NEW** | `chicken` | Also keeps feathers |
-| Cow | `rawbeef` | `beef` | Keep |
-| Slime | `rawslime` **NEW** | `slimepudding` or `cookedslime` | Thematic |
-| Crab | `rawcrab` **NEW** | `crab` | Shrimp stays **fish**, not crab meat |
-| Goblin | `rawgoblin` **NEW** | `cookedgoblin` | “Goblin meat” |
-| Skeleton | `rawrib` **NEW** | `ribs` | Undead cut |
-| Rabbit | `rawrabbit` **NEW** | `rabbit` | Also keeps fur |
-| Bat | `rawbat` **NEW** | `cookedbat` | |
-| Drake | `rawdrake` **NEW** | `drakesteak` | |
-| Dragon | `rawdragon` **NEW** | `dragonsteak` | |
+**Rule:** Every mob always drops **coins** (if `gold`), **bones×1**, **its raw meat×1**, and **at least one other resource** (craft/gather mat — not only bones/coins). Extra rare rolls may still apply on top.
 
-All: cook at range/fire; L9 fail = discard (no burnt). Heal values scale with tier/zone.
+`rawshrimp` stays a **fish** catch, not crab meat.
+
+| Mob | Always: meat | Always: other resource(s) | Chance / rare extras | Cooked meat |
+|-----|--------------|---------------------------|----------------------|-------------|
+| Chicken | `rawchicken` **NEW** | `feather`×3 | — | `chicken` |
+| Cow | `rawbeef` | `cowhide`×1 | — | `beef` |
+| Slime | `rawslime` **NEW** | `waterrune`×1 | 30% `earthrune`×2 | `cookedslime` |
+| Crab | `rawcrab` **NEW** | `shell`×1 **NEW** (craft/alchemy mat) | 20% `copper`×1 | `crab` |
+| Goblin | `rawgoblin` **NEW** | `copper`×1 | 20% `airrune`×2; 8% `logs`×1 *(no tin)* | `cookedgoblin` |
+| Skeleton | `rawrib` **NEW** | `iron`×1 | 25% `earthrune`×2 *(was mind)*; 5% `key` | `ribs` |
+| Rabbit | `rawrabbit` **NEW** | `rabbitfur`×1 | — | `rabbit` |
+| Bat | `rawbat` **NEW** | `runeessence`×2 | 20% `airrune`×1 | `cookedbat` |
+| Drake | `rawdrake` **NEW** | `drakescale`×1 | 20% `diamondore`; 10% `dragoniteore`; 20% `firerune`×3 | `drakesteak` |
+| Dragon | `rawdragon` **NEW** | `drakescale`×1–2 | 55% `dragoniteore`; 35% `diamondore`; 40% `firerune`×5 | `dragonsteak` |
+
+### Gaps fixed vs today
+| Mob | Today missing | Plan fix |
+|-----|---------------|----------|
+| Chicken | no meat | add `rawchicken` |
+| Crab | shrimp only (no second resource) | meat=`rawcrab` + always `shell` |
+| Rabbit | fur only, no meat | add `rawrabbit` |
+| Goblin / Skeleton / Bat / Slime | no meat; some extras RNG-only | always meat + always ≥1 mat |
+| Drake | no meat; scale was RNG | always meat + always scale |
+| Dragon | no meat | always meat (scale already always) |
+
+All meats: cook at range/fire; L9 fail = discard (no burnt). Heal scales with mob tier. Retune `lootForMob` in [`js/data/Scales.js`](js/data/Scales.js) on execute.
 
 ---
 
@@ -273,7 +287,7 @@ Anti-chicken-egg: magic logs choppable with **diamond** axe (4); dragonite tools
 5. **E1** — Single Armour slot; merge plates + wizard hat.
 6. **E3** — Armour recipes = string + leather + hard mat; add copperarmour.
 7. **E7** — Rewrite melee/bow/staff/arrow recipes to wood+metal / wood+string / wood+rune / wood+metal; add diamond/dragonite blades + arrows; coppershield.
-8. **E4** — One raw+cooked meat per mob; update loot tables; cook hooks; L9 no burnt.
+8. **E4** — Full loot tables: each mob always meat + ≥1 other resource (+ coins/bones); add meats/`shell`; retune `lootForMob`; cook hooks; L9 no burnt.
 9. **L13** — toolTier 1–5 gates for mine/chop/fish.
 10. **L1** — Clue drop + genie.
 11. **L2** — Unstrung→bow; oakplank sink; fix tutor string bug.

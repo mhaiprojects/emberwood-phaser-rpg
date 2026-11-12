@@ -154,13 +154,11 @@ var DRAGON_DEN_GATE = {
     denExit: { x: 18, y: 24 },
     denSpawn: { x: 18, y: 22 }
 };
-var DEN_BOULDER_PICK_TIER = 5;
+var DEN_BOULDER_PICK_TIER = 4;
 var MINE_PROPS = {
     copper: [
         { x: 14, y: 16 },
-        { x: 15, y: 20 }
-    ],
-    tin: [
+        { x: 15, y: 20 },
         { x: 16, y: 16 },
         { x: 17, y: 20 }
     ],
@@ -195,11 +193,13 @@ var HIGHLANDS_MINE_PROPS = {
 /* Rune altars: shrine tile + interact.kind altar. */
 var RUNE_ALTARS = {
     haven: { x: 20, y: 8, rune: 'airrune' },
-    graves: { x: 18, y: 10, rune: 'mindrune' },
+    millfields: { x: 18, y: 12, rune: 'airrune' },
     southshore: { x: 18, y: 20, rune: 'waterrune' },
-    millfields: { x: 18, y: 12, rune: 'earthrune' },
+    mire: { x: 16, y: 12, rune: 'waterrune' },
+    graves: { x: 18, y: 10, rune: 'earthrune' },
+    northwood: { x: 16, y: 12, rune: 'earthrune' },
     highlands: { x: 18, y: 10, rune: 'firerune' },
-    mire: { x: 16, y: 12, rune: 'naturerune' }
+    darkmine: { x: 14, y: 14, rune: 'firerune' }
 };
 var INTERIOR_ROOM = { x: 12, y: 8, w: 12, h: 13 };
 var SCENERY_EXAMINE = {
@@ -500,7 +500,7 @@ function isProtectedPathBlocker(x, y, zoneId) {
             return true;
         }
         if (MINE_PROPS) {
-            kinds = ['copper', 'tin', 'iron', 'diamondore', 'dragoniteore', 'runeessence'];
+            kinds = ['copper', 'iron', 'diamondore', 'dragoniteore', 'runeessence'];
             for (k = 0; k < kinds.length; k++) {
                 list = MINE_PROPS[kinds[k]];
                 if (!list) {
@@ -791,8 +791,10 @@ function generateMap(seed, biome, neighbors, zoneId) {
     paintCampfireSpots(grid, zoneId || (biome === 'town' ? 'haven' : null));
     if (zoneId) {
         placeRuneAltar(grid, zoneId);
+        placeZoneFishSpots(grid, zoneId);
     } else if (biome === 'town') {
         placeRuneAltar(grid, 'haven');
+        placeZoneFishSpots(grid, 'haven');
     }
     if (zoneId === 'southshore' || zoneId === 'darkmine') {
         enforcePathBlockCap(grid, seed, zoneId);
@@ -1032,14 +1034,58 @@ function isHouseWallAt(grid, tx, ty, rects) {
     return false;
 }
 
+/* Default fishing tiles per zone (E8). Southshore also uses SHORE_PROPS.spots. */
+var FISH_SPOTS_BY_ZONE = {
+    haven: [{ x: 22, y: 18 }, { x: 24, y: 16 }],
+    millfields: [{ x: 10, y: 20 }, { x: 12, y: 22 }],
+    mire: [{ x: 14, y: 18 }, { x: 20, y: 20 }],
+    southshore: null,
+    northwood: [{ x: 8, y: 22 }, { x: 10, y: 20 }],
+    graves: [{ x: 26, y: 20 }, { x: 28, y: 18 }],
+    westmead: [{ x: 12, y: 8 }, { x: 14, y: 10 }],
+    darkmine: [{ x: 10, y: 22 }, { x: 12, y: 24 }],
+    highlands: [{ x: 8, y: 16 }, { x: 10, y: 18 }],
+    dungeon: [{ x: 16, y: 16 }],
+    dragonden: [{ x: 20, y: 20 }, { x: 22, y: 18 }]
+};
+
+function placeZoneFishSpots(grid, zoneId) {
+    var spots;
+    var i;
+    if (!grid || !zoneId || !FISH_SPOTS_BY_ZONE) {
+        return;
+    }
+    spots = FISH_SPOTS_BY_ZONE[zoneId];
+    if (!spots) {
+        return;
+    }
+    for (i = 0; i < spots.length; i++) {
+        if (inBounds(spots[i].x, spots[i].y)) {
+            setCell(grid, spots[i].x, spots[i].y, TILE.WATER);
+        }
+    }
+}
+
 function fishingSpotAt(tx, ty, zoneId) {
-    if (zoneId !== 'southshore' || !SHORE_PROPS || !SHORE_PROPS.spots) {
+    var i;
+    var spots;
+    var catchId;
+    if (zoneId === 'southshore' && SHORE_PROPS && SHORE_PROPS.spots) {
+        for (i = 0; i < SHORE_PROPS.spots.length; i++) {
+            if (SHORE_PROPS.spots[i].x === tx && SHORE_PROPS.spots[i].y === ty) {
+                catchId = typeof fishCatchForZone === 'function' ? fishCatchForZone(zoneId) : 'rawshrimp';
+                return { x: tx, y: ty, catchId: catchId };
+            }
+        }
+    }
+    spots = FISH_SPOTS_BY_ZONE && zoneId ? FISH_SPOTS_BY_ZONE[zoneId] : null;
+    if (!spots || !spots.length) {
         return null;
     }
-    var i;
-    for (i = 0; i < SHORE_PROPS.spots.length; i++) {
-        if (SHORE_PROPS.spots[i].x === tx && SHORE_PROPS.spots[i].y === ty) {
-            return SHORE_PROPS.spots[i];
+    for (i = 0; i < spots.length; i++) {
+        if (spots[i].x === tx && spots[i].y === ty) {
+            catchId = typeof fishCatchForZone === 'function' ? fishCatchForZone(zoneId) : 'rawshrimp';
+            return { x: tx, y: ty, catchId: catchId };
         }
     }
     return null;
@@ -1067,7 +1113,7 @@ function woodcutTreeAt(tx, ty, zoneId, grid) {
 }
 
 function oreFromPropTable(table, tx, ty) {
-    var kinds = ['dragoniteore', 'diamondore', 'iron', 'runeessence', 'tin', 'copper'];
+    var kinds = ['dragoniteore', 'diamondore', 'iron', 'runeessence', 'copper'];
     var k;
     var i;
     var list;
@@ -1093,7 +1139,7 @@ function mineOreAt(tx, ty) {
     if (ore) {
         return ore;
     }
-    return (tx + ty) % 2 === 0 ? 'copper' : 'tin';
+    return 'copper';
 }
 
 function highlandsOreAt(tx, ty) {
@@ -1112,7 +1158,6 @@ function highlandsOreAt(tx, ty) {
 
 var ORE_NODE_COLORS = {
     copper: 0xc47a3a,
-    tin: 0xb0bcc8,
     iron: 0x8a9098,
     diamondore: 0x6ec8ff,
     dragoniteore: 0xe85d3a,
@@ -1231,7 +1276,7 @@ function examineMineRockText(ore) {
 }
 
 function placeOrePropTable(grid, table) {
-    var kinds = ['copper', 'tin', 'iron', 'diamondore', 'dragoniteore', 'runeessence'];
+    var kinds = ['copper', 'iron', 'diamondore', 'dragoniteore', 'runeessence'];
     var k;
     var i;
     var list;
@@ -1407,14 +1452,15 @@ function mineRockAt(tx, ty, zoneId, grid, opts) {
         ore = mineOreAt(tx, ty);
     } else if (zoneId === 'highlands') {
         ore = highlandsOreAt(tx, ty);
-    } else if (zoneId === 'graves' || zoneId === 'mire') {
-        /* Mid bands: iron mix with early ores. */
-        ore = (tx + ty) % 4 === 0 ? 'iron' : ((tx + ty) % 2 === 0 ? 'copper' : 'tin');
-    } else if (zoneId === 'northwood') {
-        ore = (tx + ty) % 5 === 0 ? 'iron' : ((tx + ty) % 2 === 0 ? 'copper' : 'tin');
+    } else if (zoneId === 'westmead' || zoneId === 'graves') {
+        ore = (tx + ty) % 3 === 0 ? 'iron' : 'copper';
+    } else if (zoneId === 'mire' || zoneId === 'northwood') {
+        ore = (tx + ty) % 4 === 0 ? 'iron' : 'copper';
+    } else if (zoneId === 'dragonden') {
+        ore = (tx + ty) % 3 === 0 ? 'dragoniteore' : 'diamondore';
     } else {
-        /* Early wilds / shore / farm / plains: copper & tin. */
-        ore = (tx + ty) % 2 === 0 ? 'copper' : 'tin';
+        /* Early wilds / shore / farm / plains: copper. */
+        ore = 'copper';
     }
     level = typeof resourceNeedLevel === 'function' ? resourceNeedLevel(ore) : (ore === 'iron' ? 15 : 1);
     return { x: tx, y: ty, ore: ore, level: level };
