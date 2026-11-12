@@ -1144,6 +1144,9 @@ var WorldScene = new Phaser.Class({
             }
             sprite.aliveMob = true;
             sprite.respawnAt = 0;
+            sprite.homeX = def.x;
+            sprite.homeY = def.y;
+            sprite.leashReturning = false;
             if (isGiantMob(def.type)) {
                 self.physics.add.collider(self.player, sprite);
             }
@@ -1159,6 +1162,9 @@ var WorldScene = new Phaser.Class({
             self.floatLabels.push(label);
             self.physics.add.collider(sprite, self.ground);
             self.nudgeMobOffMapEdge(sprite);
+            /* Adopt nudged spawn as home before restore (restore keeps home, moves x/y). */
+            sprite.homeX = sprite.x;
+            sprite.homeY = sprite.y;
             self.restoreMobState(sprite, zoneId, scale);
             self.nudgeMobOffMapEdge(sprite);
         });
@@ -1335,6 +1341,7 @@ var WorldScene = new Phaser.Class({
         });
     },
 
+    /* Restores live x/y / death timer only — homeX/homeY stay at spawn. */
     restoreMobState: function (sprite, zoneId, scale) {
         var bag = this.mobZoneState && this.mobZoneState[zoneId];
         var saved = bag && sprite.mobDef && bag[sprite.mobDef.id];
@@ -4558,7 +4565,15 @@ var WorldScene = new Phaser.Class({
         var len;
         var vx;
         var vy;
+        var nextX;
+        var nextY;
         if (!mob || !mob.aliveMob || !mob.body || !this.player) {
+            return;
+        }
+        /* Player kited beyond leash from spawn → drop fight and return home. */
+        if (this.mobTargetBeyondLeash(mob, this.player.x, this.player.y)
+            || this.mobOutsideLeash(mob)) {
+            this.releaseMobFromLeash(mob);
             return;
         }
         range = typeof mobAttackRangePx === 'function' ? mobAttackRangePx(mob) : MELEE_ENGAGE_PX;
@@ -4574,10 +4589,13 @@ var WorldScene = new Phaser.Class({
             len = dist || 1;
             vx = (dx / len) * speed;
             vy = (dy / len) * speed;
-            if (typeof mobForbiddenAt === 'function'
-                ? mobForbiddenAt(this.zoneId, mob.x + vx, mob.y + vy)
-                : (typeof mobEdgeForbiddenAt === 'function' &&
-                    mobEdgeForbiddenAt(mob.x + vx, mob.y + vy))) {
+            nextX = mob.x + vx;
+            nextY = mob.y + vy;
+            if (this.mobBeyondLeashAt(mob, nextX, nextY)
+                || (typeof mobForbiddenAt === 'function'
+                    ? mobForbiddenAt(this.zoneId, nextX, nextY)
+                    : (typeof mobEdgeForbiddenAt === 'function' &&
+                        mobEdgeForbiddenAt(nextX, nextY)))) {
                 mob.body.setVelocity(0, 0);
             } else {
                 mob.body.setVelocity(vx, vy);
@@ -5343,7 +5361,7 @@ var WorldScene = new Phaser.Class({
             this.goToGameOver();
             return;
         }
-        if (outcome === 'flee') {
+        if (outcome === 'flee' || outcome === 'leash') {
             this.wake();
             return;
         }
@@ -6228,6 +6246,9 @@ var WorldScene = new Phaser.Class({
             Hud.log('You break away from the fight.');
             this.pushOffMob(this.lastFought);
             this.engageGrace = this.time.now + FLEE_GRACE_MS;
+        } else if (outcome === 'leash') {
+            /* Mob dropped agro at leash — no player flee chat. */
+            this.engageGrace = this.time.now + FLEE_GRACE_MS;
         }
         this.registry.set('battleOutcome', null);
         this.lastFought = null;
@@ -6369,34 +6390,147 @@ var WorldScene = new Phaser.Class({
         this.enterZone(next, dir);
     },
 
+    mobHomeXY: function (mob) {
+        return {
+            x: mob && mob.homeX != null ? mob.homeX : (mob ? mob.x : 0),
+            y: mob && mob.homeY != null ? mob.homeY : (mob ? mob.y : 0)
+        };
+    },
+
+    /* Chebyshev tiles from mob home tile to world pixel (prefer clarity over Euclidean px). */
+    mobLeashChebyshev: function (mob, wx, wy) {
+        var home;
+        var tile;
+        if (!mob || typeof worldToTile !== 'function') {
+            return 0;
+        }
+        home = this.mobHomeXY(mob);
+        home = worldToTile(home.x, home.y);
+        tile = worldToTile(wx, wy);
+        return Math.max(Math.abs(tile.tx - home.tx), Math.abs(tile.ty - home.ty));
+    },
+
+    mobLeashLimit: function () {
+        return typeof MOB_LEASH_TILES === 'number' ? MOB_LEASH_TILES : 4;
+    },
+
+    mobBeyondLeashAt: function (mob, wx, wy) {
+        return this.mobLeashChebyshev(mob, wx, wy) > this.mobLeashLimit();
+    },
+
+    mobOutsideLeash: function (mob) {
+        return !!(mob && this.mobBeyondLeashAt(mob, mob.x, mob.y));
+    },
+
+    /* True when the chase target itself sits outside the mob's home leash. */
+    mobTargetBeyondLeash: function (mob, tx, ty) {
+        return this.mobBeyondLeashAt(mob, tx, ty);
+    },
+
+    mobStepForbidden: function (wx, wy) {
+        if (typeof mobForbiddenAt === 'function') {
+            return mobForbiddenAt(this.zoneId, wx, wy);
+        }
+        return typeof mobEdgeForbiddenAt === 'function' && mobEdgeForbiddenAt(wx, wy);
+    },
+
+    steerMobHome: function (mob) {
+        var home;
+        var dist;
+        var speed;
+        var dx;
+        var dy;
+        var len;
+        var vx;
+        var vy;
+        if (!mob || !mob.body) {
+            return;
+        }
+        home = this.mobHomeXY(mob);
+        dist = Phaser.Math.Distance.Between(mob.x, mob.y, home.x, home.y);
+        if (dist < 3) {
+            mob.body.setVelocity(0, 0);
+            if (mob.body.reset) {
+                mob.body.reset(home.x, home.y);
+            } else {
+                mob.setPosition(home.x, home.y);
+            }
+            mob.leashReturning = false;
+            return;
+        }
+        speed = typeof mobMoveSpeed === 'function'
+            ? mobMoveSpeed(mob)
+            : (typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : WALK_SPEED / 2);
+        dx = home.x - mob.x;
+        dy = home.y - mob.y;
+        len = dist || 1;
+        vx = (dx / len) * speed;
+        vy = (dy / len) * speed;
+        if (this.mobStepForbidden(mob.x + vx, mob.y + vy)) {
+            mob.body.setVelocity(0, 0);
+            return;
+        }
+        mob.body.setVelocity(vx, vy);
+    },
+
+    /* Drop agro / fight and walk home when player kites past leash. */
+    releaseMobFromLeash: function (mob) {
+        var fight = this.overworldFight;
+        if (!mob) {
+            return;
+        }
+        this.clearMobAgroChase(mob);
+        mob.leashReturning = true;
+        this.steerMobHome(mob);
+        if (this.engageTarget === mob) {
+            this.engageTarget = null;
+            this.clearWalk();
+        }
+        if (fight && fight.mob === mob) {
+            this.endOverworldFight('leash');
+        }
+    },
+
     wanderMobs: function () {
         var grid = this.tileGrid;
         var zoneId = this.zoneId;
+        var self = this;
         var fightMob = this.overworldFight && this.overworldFight.mob;
         this.mobs.children.iterate(function (mob) {
+            var speed;
+            var angle;
+            var vx;
+            var vy;
+            var type;
+            var nextX;
+            var nextY;
             if (!mob || !mob.aliveMob || !mob.body) {
                 return;
             }
             if (mob === fightMob || mob.agroChasing) {
                 return;
             }
+            if (mob.leashReturning || self.mobOutsideLeash(mob)) {
+                mob.leashReturning = true;
+                self.steerMobHome(mob);
+                return;
+            }
             if (Phaser.Math.Between(0, 80) !== 0) {
                 return;
             }
-            var speed = typeof mobMoveSpeed === 'function'
+            speed = typeof mobMoveSpeed === 'function'
                 ? mobMoveSpeed(mob)
                 : (typeof MOB_MOVE_SPEED === 'number' ? MOB_MOVE_SPEED : WALK_SPEED / 2);
-            var angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
-            var vx = Math.cos(angle) * speed;
-            var vy = Math.sin(angle) * speed;
-            var type = mob.mobDef && mob.mobDef.type;
-            if (typeof mobForbiddenAt === 'function'
-                ? mobForbiddenAt(zoneId, mob.x + vx, mob.y + vy)
-                : (typeof mobEdgeForbiddenAt === 'function' &&
-                    mobEdgeForbiddenAt(mob.x + vx, mob.y + vy))) {
+            angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+            vx = Math.cos(angle) * speed;
+            vy = Math.sin(angle) * speed;
+            nextX = mob.x + vx;
+            nextY = mob.y + vy;
+            type = mob.mobDef && mob.mobDef.type;
+            if (self.mobBeyondLeashAt(mob, nextX, nextY) || self.mobStepForbidden(nextX, nextY)) {
                 return;
             }
-            if (isGiantMob(type) && giantBlockedAt(grid, mob.x + vx, mob.y + vy, zoneId)) {
+            if (isGiantMob(type) && giantBlockedAt(grid, nextX, nextY, zoneId)) {
                 return;
             }
             mob.body.setVelocity(vx, vy);
@@ -6426,6 +6560,8 @@ var WorldScene = new Phaser.Class({
         var len;
         var vx;
         var vy;
+        var nextX;
+        var nextY;
         var started = false;
         var retaliate;
         if (!this.player || !this.player.body || this.uiPaused()) {
@@ -6447,6 +6583,15 @@ var WorldScene = new Phaser.Class({
                 self.clearMobAgroChase(mob);
                 return;
             }
+            if (mob.leashReturning) {
+                self.clearMobAgroChase(mob);
+                self.steerMobHome(mob);
+                return;
+            }
+            if (self.mobOutsideLeash(mob)) {
+                self.releaseMobFromLeash(mob);
+                return;
+            }
             shouldAgro = typeof mobShouldAgroHero === 'function'
                 ? mobShouldAgroHero(mob.mobDef, hero)
                 : false;
@@ -6458,6 +6603,11 @@ var WorldScene = new Phaser.Class({
             attackRange = typeof mobAttackRangePx === 'function' ? mobAttackRangePx(mob) : MELEE_ENGAGE_PX;
             if (dist > agroRange) {
                 self.clearMobAgroChase(mob);
+                return;
+            }
+            /* Player already outside this mob's home leash → never chase past spawn. */
+            if (self.mobTargetBeyondLeash(mob, self.player.x, self.player.y)) {
+                self.releaseMobFromLeash(mob);
                 return;
             }
             mob.agroChasing = true;
@@ -6481,11 +6631,14 @@ var WorldScene = new Phaser.Class({
             len = dist || 1;
             vx = (dx / len) * speed;
             vy = (dy / len) * speed;
-            if (typeof mobForbiddenAt === 'function'
-                ? mobForbiddenAt(self.zoneId, mob.x + vx, mob.y + vy)
-                : (typeof mobEdgeForbiddenAt === 'function' &&
-                    mobEdgeForbiddenAt(mob.x + vx, mob.y + vy))) {
+            nextX = mob.x + vx;
+            nextY = mob.y + vy;
+            if (self.mobBeyondLeashAt(mob, nextX, nextY) || self.mobStepForbidden(nextX, nextY)) {
                 mob.body.setVelocity(0, 0);
+                /* Stuck at leash rim with player still out of step → drop if target beyond leash. */
+                if (self.mobTargetBeyondLeash(mob, self.player.x, self.player.y)) {
+                    self.releaseMobFromLeash(mob);
+                }
                 return;
             }
             mob.body.setVelocity(vx, vy);
