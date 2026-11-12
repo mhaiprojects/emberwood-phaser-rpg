@@ -6500,6 +6500,11 @@ var WorldScene = new Phaser.Class({
         return typeof showCombatVisualsOn === 'function' ? showCombatVisualsOn(hero) : true;
     },
 
+    rangeRingsOn: function () {
+        var hero = this.registry.get('hero');
+        return typeof showRangeRingsOn === 'function' ? showRangeRingsOn(hero) : true;
+    },
+
     clearCombatRangeRings: function () {
         if (this.combatRangeGfx) {
             this.combatRangeGfx.clear();
@@ -6543,31 +6548,72 @@ var WorldScene = new Phaser.Class({
         var mob;
         var playerRange;
         var mobRange;
+        var agroRange;
+        var fightMob;
+        var engageMob;
+        var showPlayer;
+        var drawn = [];
         var gfx = this.combatRangeGfx;
+        /* Attack range = red; aggro/detection = orange (faint). */
+        var ATTACK_RING = 0xff3b3b;
+        var AGGRO_RING = 0xff8c20;
+        var RING_ALPHA = 0.28;
         if (!gfx) {
             return;
         }
         gfx.clear();
-        if (!this.combatVisualsOn() || !this.player) {
+        if (!this.rangeRingsOn() || !this.player) {
             return;
         }
         hero = this.registry.get('hero');
-        mob = (this.overworldFight && this.overworldFight.mob)
-            || (this.engageTarget && this.engageTarget.aliveMob ? this.engageTarget : null);
-        if (!mob && !this.overworldFight) {
+        fightMob = this.overworldFight && this.overworldFight.mob;
+        engageMob = this.engageTarget && this.engageTarget.aliveMob ? this.engageTarget : null;
+        mob = fightMob || engageMob;
+        showPlayer = !!(fightMob || engageMob || this.overworldFight);
+        if (!showPlayer && this.mobs) {
+            this.mobs.children.iterate(function (m) {
+                if (m && m.aliveMob && m.agroChasing) {
+                    showPlayer = true;
+                }
+            });
+        }
+        if (!showPlayer) {
             return;
         }
         playerRange = typeof weaponAttackRangePx === 'function'
             ? weaponAttackRangePx(hero)
             : MELEE_ENGAGE_PX;
-        gfx.lineStyle(1, 0x88b4ff, 0.28);
+        gfx.lineStyle(1, ATTACK_RING, RING_ALPHA);
         gfx.strokeCircle(this.player.x, this.player.y, Math.max(8, playerRange));
-        if (mob && mob.active) {
+        agroRange = typeof MOB_AGGRO_RANGE_PX === 'number' ? MOB_AGGRO_RANGE_PX : 112;
+        function drawMobRings(target) {
+            var i;
+            if (!target || !target.active || !target.aliveMob) {
+                return;
+            }
+            for (i = 0; i < drawn.length; i++) {
+                if (drawn[i] === target) {
+                    return;
+                }
+            }
+            drawn.push(target);
             mobRange = typeof mobAttackRangePx === 'function'
-                ? mobAttackRangePx(mob)
+                ? mobAttackRangePx(target)
                 : MELEE_ENGAGE_PX;
-            gfx.lineStyle(1, 0xff8a7a, 0.28);
-            gfx.strokeCircle(mob.x, mob.y, Math.max(8, mobRange));
+            gfx.lineStyle(1, AGGRO_RING, RING_ALPHA);
+            gfx.strokeCircle(target.x, target.y, Math.max(8, agroRange));
+            gfx.lineStyle(1, ATTACK_RING, RING_ALPHA);
+            gfx.strokeCircle(target.x, target.y, Math.max(8, mobRange));
+        }
+        if (mob) {
+            drawMobRings(mob);
+        }
+        if (this.mobs) {
+            this.mobs.children.iterate(function (m) {
+                if (m && m.aliveMob && m.agroChasing) {
+                    drawMobRings(m);
+                }
+            });
         }
     },
 

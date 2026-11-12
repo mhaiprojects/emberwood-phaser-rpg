@@ -385,8 +385,22 @@ var Hud = {
             self.saveHero(hero);
             self.renderCombatVisuals(hero);
             self.log('Combat visuals ' + (hero.showCombatVisuals !== false ? 'on' : 'off') + '.');
+        });
+        document.addEventListener('click', function (event) {
+            var btn = event.target.closest('[data-range-rings]');
+            if (!btn) {
+                return;
+            }
+            var hero = self.hero();
+            if (!hero) {
+                return;
+            }
+            hero.showRangeRings = hero.showRangeRings === false;
+            self.saveHero(hero);
+            self.renderRangeRings(hero);
+            self.log('Range rings ' + (hero.showRangeRings !== false ? 'on' : 'off') + '.');
             var world = window.game && window.game.scene.getScene('WorldScene');
-            if (world && world.clearCombatRangeRings && hero.showCombatVisuals === false) {
+            if (world && world.clearCombatRangeRings && hero.showRangeRings === false) {
                 world.clearCombatRangeRings();
             }
         });
@@ -3362,6 +3376,7 @@ var Hud = {
         this.renderShiftClickDrop(hero);
         this.renderHideBones(hero);
         this.renderCombatVisuals(hero);
+        this.renderRangeRings(hero);
         this.renderPrayers(hero);
         this.renderRun(hero);
         this.renderSpecialEnergy(hero);
@@ -3765,6 +3780,22 @@ var Hud = {
         for (var i = 0; i < buttons.length; i++) {
             buttons[i].classList.toggle('is-on', on);
             buttons[i].textContent = 'Combat visuals: ' + (on ? 'On' : 'Off');
+        }
+    },
+
+    renderRangeRings: function (hero) {
+        var on = typeof showRangeRingsOn === 'function'
+            ? showRangeRingsOn(hero)
+            : (!hero || hero.showRangeRings !== false);
+        var vue = this.vueState();
+        if (vue) {
+            vue.rangeRingsOn = on;
+            vue.rangeRingsLabel = 'Show range rings: ' + (on ? 'On' : 'Off');
+        }
+        var buttons = document.querySelectorAll('[data-range-rings]');
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].classList.toggle('is-on', on);
+            buttons[i].textContent = 'Show range rings: ' + (on ? 'On' : 'Off');
         }
     },
 

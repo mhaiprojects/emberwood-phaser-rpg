@@ -54,6 +54,8 @@ var HudApp = {
             hideBonesOn: false,
             combatVisualsLabel: 'Combat visuals: On',
             combatVisualsOn: true,
+            rangeRingsLabel: 'Show range rings: On',
+            rangeRingsOn: true,
             runLabel: 'Run: Off',
             collisionDebugLabel: 'Collision debug: Off',
             collisionDebugOn: false,

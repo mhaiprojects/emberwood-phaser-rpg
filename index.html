@@ -173,8 +173,11 @@
                             <p>When on, bone piles on the ground are hidden (OSRS ground-item overlay lite).</p>
                             <button type="button" class="hide-bones-btn" data-hide-bones title="When on, bones on the ground are hidden." :class="{ 'is-on': hideBonesOn }">{{ hideBonesLabel }}</button>
                             <h3>Combat visuals</h3>
-                            <p>When on, attack-range rings and ranged/magic projectiles are shown in fights. New games start with this on.</p>
-                            <button type="button" class="combat-visuals-btn" data-combat-visuals title="When on, show attack-range rings and projectiles." :class="{ 'is-on': combatVisualsOn }">{{ combatVisualsLabel }}</button>
+                            <p>When on, ranged/magic projectiles are shown in fights. New games start with this on.</p>
+                            <button type="button" class="combat-visuals-btn" data-combat-visuals title="When on, show ranged/magic projectiles." :class="{ 'is-on': combatVisualsOn }">{{ combatVisualsLabel }}</button>
+                            <h3>Show range rings</h3>
+                            <p>When on, orange aggro circles and red attack-range rings appear while engaged, agroing, or fighting. New games start with this on.</p>
+                            <button type="button" class="range-rings-btn" data-range-rings title="When on, show orange aggro and red attack range rings." :class="{ 'is-on': rangeRingsOn }">{{ rangeRingsLabel }}</button>
                             <h3>Controls</h3>
                             <p>WASD / arrows move, Ctrl run, Space talk, F1–F8 panels, click to walk/act.</p>
                             <h3>Audio</h3>
@@ -360,12 +363,12 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
     <script src="js/input/Keys.js?v=run1"></script>
-    <script src="js/data/Items.js?v=zonemix1"></script>
+    <script src="js/data/Items.js?v=rangering1"></script>
     <script src="js/data/Save.js?v=resume1"></script>
     <script src="js/data/Scales.js?v=endless1"></script>
-    <script src="js/ui/HudApp.js?v=aaoff1"></script>
+    <script src="js/ui/HudApp.js?v=rangering1"></script>
     <script src="js/ui/Sfx.js?v=music1"></script>
-    <script src="js/ui/Hud.js?v=fpstps1"></script>
+    <script src="js/ui/Hud.js?v=rangering1"></script>
     <script src="js/world/MapGen.js?v=endless1"></script>
     <script src="js/world/Pathfind.js?v=fishaccess1"></script>
     <script src="js/world/Zones.js?v=endless1"></script>
@@ -378,7 +381,7 @@
     -->
     <script src="js/scenes/BootScene.js?v=looticon1"></script>
     <script src="js/scenes/TitleScene.js?v=darklayer1"></script>
-    <script src="js/scenes/WorldScene.js?v=fpstps1"></script>
+    <script src="js/scenes/WorldScene.js?v=rangering1"></script>
     <script src="js/world/OverworldCombat.js?v=mobband1"></script>
     <script src="js/world/StretchLite.js?v=noghost1"></script>
     <script src="js/scenes/BattleScene.js?v=grave1"></script>

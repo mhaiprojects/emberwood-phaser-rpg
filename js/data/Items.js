@@ -620,6 +620,7 @@ function makeHero() {
         shiftClickDrop: true,
         hideBones: false,
         showCombatVisuals: true,
+        showRangeRings: true,
         displayName: 'Adventurer',
         ironman: false,
         prayerPoints: 1,
@@ -2812,6 +2813,10 @@ function showCombatVisualsOn(hero) {
     return !hero || hero.showCombatVisuals !== false;
 }
 
+function showRangeRingsOn(hero) {
+    return !hero || hero.showRangeRings !== false;
+}
+
 function normalizeHeroCombat(hero) {
     var labels;
     if (!hero) {
@@ -2825,6 +2830,9 @@ function normalizeHeroCombat(hero) {
     }
     if (typeof hero.showCombatVisuals !== 'boolean') {
         hero.showCombatVisuals = true;
+    }
+    if (typeof hero.showRangeRings !== 'boolean') {
+        hero.showRangeRings = true;
     }
     if (hero.autoAttack == null) {
         hero.autoAttack = false;
