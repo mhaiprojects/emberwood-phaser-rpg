@@ -188,17 +188,40 @@ function questHeadIconFor(def, quest, hero) {
     return { kind: 'quest', color: QUEST_HEAD_QUEST_GREY };
 }
 
+/**
+ * True when the NPC opens a shop (Trade). Used for nameplate shop icon prefix.
+ */
+function npcHasShop(def) {
+    if (!def) {
+        return false;
+    }
+    if (def.shopKey) {
+        return true;
+    }
+    return !!(def.options && def.options.indexOf('trade') !== -1);
+}
+
 var NPC_DEFS = {
+    /* Haven — world px (tile*16+8). Keep ≥4 tiles apart in the courtyard. */
     haven: [
-        { key: 'guild', name: 'Guildmaster Bram', x: 248, y: 280, tint: 0xffffff, questGiver: true, options: ['talk', 'quest'], examine: 'A scarred militia captain. He still drills the courtyard.', lines: ['Welcome to Emberhaven, adventurer.', 'Goblins from Northwood raid our stores.', 'Slay 5 goblins and return. The militia will pay.'] },
+        /* Near guild post / south yard */
+        { key: 'guild', name: 'Guildmaster Bram', x: 168, y: 296, tint: 0xffffff, questGiver: true, options: ['talk', 'quest'], examine: 'A scarred militia captain. He still drills the courtyard.', lines: ['Welcome to Emberhaven, adventurer.', 'Goblins from Northwood raid our stores.', 'Slay 5 goblins and return. The militia will pay.'] },
+        /* Bank staff row (must stay behind counter) */
         { key: 'banker', name: 'Banker Elise', x: 232, y: 168, tint: 0xffffff, options: ['talk', 'bank'], examine: 'The town banker. She stands behind the courtyard counter.', lines: ['Your coin is safe with me.', 'Deposit what you cannot carry.', 'Step up to the counter when you need the vault.'] },
-        { key: 'guard', name: 'Guard Rowan', x: 252, y: 168, tint: 0xffffff, options: ['talk'], examine: 'A watchful town guard. He knows every path from the gate.', lines: ['Keep to the paths.', 'North is woods. East is farms. South is the sea.'] },
-        { key: 'shopkeep', name: 'Shopkeeper Mira', x: 264, y: 184, tint: 0xffffff, texture: 'npc-shopkeeper', options: ['talk', 'trade'], shopKey: 'mira', examine: 'The town shopkeeper. She minds the courtyard stall.', lines: ['Take a look at the wares.', 'Bones and spare food fetch a price.'] },
-        { key: 'dummy', name: 'Training dummy', x: 280, y: 264, tint: 0xcccccc, texture: 'npc-guard', options: ['talk', 'duel'], examine: 'A straw-filled training dummy for duels.', lines: ['Up for a practice duel?', 'No loot, just honour.'] },
-        { key: 'arms', name: 'Armsman Cole', x: 312, y: 200, tint: 0xffffff, texture: 'npc-guard', options: ['talk', 'trade'], shopKey: 'arms', examine: 'A weapons stall keeper. Oil stains his gloves.', lines: ['Blades, bows, and staves, if you have the coin.', 'Take a look at the wares.', 'A copper bow trains Ranged; a staff needs Air runes for Air Strike.'] },
-        { key: 'cook', name: 'Cook Pell', x: 280, y: 280, tint: 0xffffff, options: ['talk'], tutor: 'firemaking', examine: 'The town cook. Flour dusts her sleeves and a ladle never leaves her hand.', lines: ['Take this tinderbox.', 'Use it on logs to light a fire on open ground.', 'Cook raw food on that fire or the town range.', 'If you burn a meal it is ruined — nothing left to keep.'] },
-        { key: 'herbalist', name: 'Herbalist Ivy', x: 240, y: 200, tint: 0xffffff, options: ['talk'], tutor: 'herblore', examine: 'Emberhaven\'s herbalist. Bundles of guam hang by her stall.', lines: ['Guam grows easily if you have a seed.', 'Mix a leaf into an attack potion here.', 'Bring guam and I will show you the craft.'] },
-        { key: 'priest', name: 'Priest Alden', x: 296, y: 168, tint: 0xffffff, options: ['talk'], examine: 'A quiet shrine priest. Ash marks the collar of his robe.', lines: ['The shrine still hears a prayer.', 'Bury the bones of the fallen, traveler.'] }
+        /* East path toward Millfields */
+        { key: 'guard', name: 'Guard Rowan', x: 424, y: 248, tint: 0xffffff, options: ['talk'], examine: 'A watchful town guard. He knows every path from the gate.', lines: ['Keep to the paths.', 'North is woods. East is farms. South is the sea.'] },
+        /* South of shop stall */
+        { key: 'shopkeep', name: 'Shopkeeper Mira', x: 264, y: 216, tint: 0xffffff, texture: 'npc-shopkeeper', options: ['talk', 'trade'], shopKey: 'mira', examine: 'The town shopkeeper. She minds the courtyard stall.', lines: ['Take a look at the wares.', 'Bones and spare food fetch a price.'] },
+        /* SE training pad */
+        { key: 'dummy', name: 'Training dummy', x: 360, y: 296, tint: 0xcccccc, texture: 'npc-guard', options: ['talk', 'duel'], examine: 'A straw-filled training dummy for duels.', lines: ['Up for a practice duel?', 'No loot, just honour.'] },
+        /* By GE / arms stall */
+        { key: 'arms', name: 'Armsman Cole', x: 328, y: 200, tint: 0xffffff, texture: 'npc-guard', options: ['talk', 'trade'], shopKey: 'arms', examine: 'A weapons stall keeper. Oil stains his gloves.', lines: ['Blades, bows, and staves, if you have the coin.', 'Take a look at the wares.', 'A copper bow trains Ranged; a staff needs Air runes for Air Strike.'] },
+        /* South of courtyard house / near range approach */
+        { key: 'cook', name: 'Cook Pell', x: 296, y: 328, tint: 0xffffff, options: ['talk'], tutor: 'firemaking', examine: 'The town cook. Flour dusts her sleeves and a ladle never leaves her hand.', lines: ['Take this tinderbox.', 'Use it on logs to light a fire on open ground.', 'Cook raw food on that fire or the town range.', 'If you burn a meal it is ruined — nothing left to keep.'] },
+        /* West courtyard */
+        { key: 'herbalist', name: 'Herbalist Ivy', x: 168, y: 216, tint: 0xffffff, options: ['talk'], tutor: 'herblore', examine: 'Emberhaven\'s herbalist. Bundles of guam hang by her stall.', lines: ['Guam grows easily if you have a seed.', 'Mix a leaf into an attack potion here.', 'Bring guam and I will show you the craft.'] },
+        /* North courtyard between houses */
+        { key: 'priest', name: 'Priest Alden', x: 296, y: 152, tint: 0xffffff, options: ['talk'], examine: 'A quiet shrine priest. Ash marks the collar of his robe.', lines: ['The shrine still hears a prayer.', 'Bury the bones of the fallen, traveler.'] }
     ],
     northwood: [
         { key: 'ranger', name: 'Ranger Kett', x: 240, y: 200, tint: 0xffffff, options: ['talk'], tutor: 'combat', examine: 'A Northwood ranger. Goblin tracks stain her boots.', lines: ['Goblins nest in these trees.', 'Click a goblin to fight it, like the old days.', 'Wield a bow from Armsman Cole — leave ammo empty for infinite wooden arrows, or equip copper arrows.', 'A wood staff plus an Air rune casts Air Strike.', 'Shared splits XP; Strength, Ranger, or Mage train from your weapon.'] }

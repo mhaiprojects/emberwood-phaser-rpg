@@ -1134,11 +1134,16 @@ var WorldScene = new Phaser.Class({
             }).setOrigin(0.5).setDepth(7);
             sprite.nameLabel = label;
             self.floatLabels.push(label);
+            if (typeof npcHasShop === 'function' ? npcHasShop(def) : !!(def.shopKey || (def.options && def.options.indexOf('trade') !== -1))) {
+                sprite.shopIcon = self.makeShopNameIcon();
+                self.floatLabels.push(sprite.shopIcon);
+            }
             if (def.questGiver) {
                 sprite.questIcon = self.makeQuestHeadIcon();
                 self.floatLabels.push(sprite.questIcon);
             }
             self.nudgeNpcOffTaggedTiles(sprite, zoneId);
+            self.syncNpcNameplate(sprite);
         });
         this.assertNpcSpawnSafety(zoneId);
         this.refreshQuestIcons();
@@ -1264,9 +1269,7 @@ var WorldScene = new Phaser.Class({
             sprite.setPosition(center.x, center.y);
             sprite.homeX = center.x;
             sprite.homeY = center.y;
-            if (sprite.nameLabel) {
-                sprite.nameLabel.setPosition(center.x, center.y - 14);
-            }
+            this.syncNpcNameplate(sprite);
             return;
         }
     },
@@ -1759,6 +1762,39 @@ var WorldScene = new Phaser.Class({
         gfx.kind = null;
         gfx.iconColor = 0;
         return gfx;
+    },
+
+    /* Tiny pouch/coin bag drawn left of shop NPC nameplates. */
+    makeShopNameIcon: function () {
+        var gfx = this.add.graphics();
+        gfx.setDepth(8);
+        gfx.fillStyle(0xc9a227, 1);
+        gfx.lineStyle(1, 0x3a2a10, 0.95);
+        gfx.fillRoundedRect(-3.2, -2.4, 6.4, 5.2, 1.2);
+        gfx.strokeRoundedRect(-3.2, -2.4, 6.4, 5.2, 1.2);
+        gfx.fillStyle(0x8b6914, 1);
+        gfx.fillCircle(0, -2.6, 1.4);
+        gfx.lineStyle(1, 0x3a2a10, 0.95);
+        gfx.strokeCircle(0, -2.6, 1.4);
+        gfx.fillStyle(0xffe08a, 1);
+        gfx.fillCircle(0, 0.2, 1.1);
+        return gfx;
+    },
+
+    syncNpcNameplate: function (npc) {
+        var label;
+        var half;
+        if (!npc || !npc.nameLabel) {
+            return;
+        }
+        label = npc.nameLabel;
+        label.setPosition(npc.x, npc.y - 14);
+        if (npc.shopIcon) {
+            half = (label.width || 40) * 0.5;
+            /* Sit just left of the centered name text. */
+            npc.shopIcon.setPosition(npc.x - half - 5, npc.y - 14);
+            npc.shopIcon.setVisible(true);
+        }
     },
 
     drawBangHeadIcon: function (gfx, color) {
@@ -7592,13 +7628,11 @@ var WorldScene = new Phaser.Class({
                 if (!npc) {
                     return;
                 }
-                if (npc.nameLabel) {
-                    npc.nameLabel.setPosition(npc.x, npc.y - 14);
-                }
+                this.syncNpcNameplate(npc);
                 if (npc.questIcon) {
                     npc.questIcon.setPosition(npc.x, npc.y - 24);
                 }
-            });
+            }.bind(this));
             if (this.nameplate && this.player) {
                 var pausedName = this.registry.get('hero');
                 this.nameplate.setText((pausedName && pausedName.displayName) || 'Adventurer');
@@ -7627,13 +7661,11 @@ var WorldScene = new Phaser.Class({
             if (!npc) {
                 return;
             }
-            if (npc.nameLabel) {
-                npc.nameLabel.setPosition(npc.x, npc.y - 14);
-            }
+            this.syncNpcNameplate(npc);
             if (npc.questIcon) {
                 npc.questIcon.setPosition(npc.x, npc.y - 24);
             }
-        });
+        }.bind(this));
 
         if (window.Hud && Hud.mode === 'world' && Keys.runTogglePressed()) {
             Hud.toggleRun();
