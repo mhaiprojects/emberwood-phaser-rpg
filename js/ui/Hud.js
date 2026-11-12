@@ -112,6 +112,7 @@ var Hud = {
         this.shopKey = null;
         this.shopSelStock = null;
         this.shopSelInv = null;
+        this._showFps = true;
         this._vueReady = false;
         if (window.HudApp && typeof HudApp.mount === 'function') {
             HudApp.mount();
@@ -3715,7 +3716,7 @@ var Hud = {
         }
         el.hidden = !el.hidden;
         this._showFps = !el.hidden;
-        this.log('FPS readout ' + (this._showFps ? 'on' : 'off') + '.');
+        this.log('FPS/TPS readout ' + (this._showFps ? 'on' : 'off') + '.');
     },
 
     applyZoom: function (zoom) {

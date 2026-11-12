@@ -6943,12 +6943,6 @@ var WorldScene = new Phaser.Class({
             this.nameplate.setText((heroName && heroName.displayName) || 'Adventurer');
             this.nameplate.setPosition(this.player.x, this.player.y - 12);
         }
-        if (window.Hud && Hud._showFps) {
-            var fpsEl = document.getElementById('fps-readout');
-            if (fpsEl) {
-                fpsEl.textContent = 'FPS ' + Math.round(this.game.loop.actualFps || 0);
-            }
-        }
         if ((vx || vy || this.walkTarget) && window.Sfx && Sfx.foot) {
             if (!this._footAt || time >= this._footAt) {
                 Sfx.foot();

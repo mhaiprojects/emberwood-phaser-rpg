@@ -24,15 +24,16 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 5. Refresh `loop-next.md` with `python3 tools/loop-next.py` when useful — do not rewrite this whole file.
 6. **Every new user request** (feature/fix/content/process) is logged here immediately as `[todo]`/`[doing]` and status-tracked to `[done]`/`[blocked]` — see `.cursor/rules/loop-tasks-track-requests.mdc`.
 
-**Last updated:** 2026-11-11 — Loop-tasks request-tracking rule + meta backlog rows.
+**Last updated:** 2026-11-12 — Top-left FPS+TPS overlay + 60 cap.
 
-**Total tasks: 338** (43 priority + 290 in the 14 playable sections + 5 stretch). Unfinished gathering/bank/craft todos promoted into §0 (not duplicated as active work).
+**Total tasks: 339** (44 priority + 290 in the 14 playable sections + 5 stretch). Unfinished gathering/bank/craft todos promoted into §0 (not duplicated as active work).
 
 ---
 ## 0. Priority: Bank / crafting / resizable UI / gathering & hunting
 
 Active queue — implement top-down before returning to sections 1–14.
 
+- [done] Top-left FPS + TPS readout; cap FPS & TPS to 60 (Phaser fps.limit + arcade). — Conclusion: `#fps-readout` top-left always-on (Settings toggle); `fps.target/limit` 60 + arcade `fps` 60; step/postrender sample ~4×/s.
 - [done] Resizable UI sections: drag handles on side / bottom / chat↔iface split; CSS vars sync `#shell` + `#hud-root`; Phaser `#content` + Vue HUD stay intact; optional localStorage sizes. — Conclusion: Drag handles + CSS vars on `#shell`/`#hud-root`; sizes persist in localStorage; Phaser scale.refresh; gather-priority smoke OK.
 - [done] Require a small fishing net (shop or starter) and chat `You need a fishing net` without one. — Conclusion: Net gate before Fish; Ned tutor gifts net; smoke OK. *(promoted from §7)*
 - [done] Woodcutting full loop: Northwood trees → logs + Woodcutting XP; require bronze axe; 3–5s chop cancel on walk/combat; tree depletes and respawns. — Conclusion: Axe-gated timed chop → logs + XP; TREE→GRASS2 respawn; Kett gifts axe; smoke OK.

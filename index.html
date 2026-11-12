@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Emberwood</title>
     <link rel="icon" href="assets/svg/ui/combat.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="css/style.css?v=darklayer1">
+    <link rel="stylesheet" href="css/style.css?v=fpstps1">
 </head>
 <body>
     <div id="shell">
@@ -181,7 +181,7 @@
                             <button type="button" data-sfx-mute title="Mute UI/SFX beeps">Mute SFX</button>
                             <button type="button" data-music-mute title="Mute biome music bed">Mute Music</button>
                             <h3>Display</h3>
-                            <button type="button" data-show-fps title="Toggle FPS read-out">Show FPS</button>
+                            <button type="button" data-show-fps title="Toggle FPS / TPS read-out">Show FPS</button>
                             <label>Zoom
                                 <input id="setting-zoom" type="range" min="1" max="2" step="0.05" value="1">
                             </label>
@@ -225,7 +225,7 @@
             </div>
 
             <div id="ctx-menu" v-manual hidden></div>
-            <div id="fps-readout" hidden>FPS —</div>
+            <div id="fps-readout">FPS — | TPS —</div>
 
             <div id="level-up-overlay" hidden>
                 <div class="level-up-card" role="dialog" aria-labelledby="level-up-title">
@@ -365,7 +365,7 @@
     <script src="js/data/Scales.js?v=endless1"></script>
     <script src="js/ui/HudApp.js?v=aaoff1"></script>
     <script src="js/ui/Sfx.js?v=music1"></script>
-    <script src="js/ui/Hud.js?v=clickwalk1"></script>
+    <script src="js/ui/Hud.js?v=fpstps1"></script>
     <script src="js/world/MapGen.js?v=endless1"></script>
     <script src="js/world/Pathfind.js?v=fishaccess1"></script>
     <script src="js/world/Zones.js?v=endless1"></script>
@@ -378,12 +378,12 @@
     -->
     <script src="js/scenes/BootScene.js?v=looticon1"></script>
     <script src="js/scenes/TitleScene.js?v=darklayer1"></script>
-    <script src="js/scenes/WorldScene.js?v=clickwalk1"></script>
+    <script src="js/scenes/WorldScene.js?v=fpstps1"></script>
     <script src="js/world/OverworldCombat.js?v=mobband1"></script>
     <script src="js/world/StretchLite.js?v=noghost1"></script>
     <script src="js/scenes/BattleScene.js?v=grave1"></script>
     <script src="js/scenes/UIScene.js"></script>
     <script src="js/scenes/GameOverScene.js?v=grave1"></script>
-    <script src="js/main.js?v=vue1"></script>
+    <script src="js/main.js?v=fpstps1"></script>
 </body>
 </html>

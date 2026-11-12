@@ -816,7 +816,7 @@ button.ghost {
 #fps-readout {
     position: fixed;
     top: 8px;
-    right: 8px;
+    left: 8px;
     z-index: 40;
     background: rgba(20, 16, 10, 0.85);
     color: #c9a227;
