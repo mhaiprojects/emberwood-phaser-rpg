@@ -7,7 +7,7 @@ var BootScene = new Phaser.Class({
 
     preload: function () {
         var bar = this.add.text(8, 8, 'Loading Emberwood…', {
-            fontFamily: 'Verdana, sans-serif',
+            fontFamily: 'Alegreya Sans, Trebuchet MS, sans-serif',
             fontSize: '12px',
             color: '#c9a227'
         });

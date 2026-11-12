@@ -24,7 +24,7 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 5. Refresh `loop-next.md` with `python3 tools/loop-next.py` when useful — do not rewrite this whole file.
 6. **Every new user request** (feature/fix/content/process) is logged here immediately as `[todo]`/`[doing]` and status-tracked to `[done]`/`[blocked]` — see `.cursor/rules/loop-tasks-track-requests.mdc`.
 
-**Last updated:** 2026-11-12 — Emberhaven town-center safe zone.
+**Last updated:** 2026-11-12 — Fonts + music/FX polish.
 
 **Total tasks: 344** (49 priority + 290 in the 14 playable sections + 5 stretch). Unfinished gathering/bank/craft todos promoted into §0 (not duplicated as active work).
 
@@ -91,6 +91,7 @@ Active queue — implement top-down before returning to sections 1–14.
 - [done] Mob spawn pyramid (Dragon=1, +1 per lower tier) + global mob spawn modifier in Settings. — Conclusion: `MOB_TIER_ORDER` pyramid + `hero.mobSpawnModifier` (default 1.0; Settings 0.5/1/1.5/2×); per-type `max(1,round(base×mod))`; dungeon floor count × mod; applies on zone enter.
 - [done] Reband zone combat levels + rename Endless Mine → Deep Mine (floor 40+(N−1); Dragon Den dragons Lv 60). — Conclusion: ZONE_LEVEL_BAND/MOB_DEFS/labels rebanded; UX Deep Mine; floor 40+(N−1); den dragons Lv 60.
 - [done] Mobs stay within 4-tile radius of spawn (leash wander/agro/fight chase). — Conclusion: `MOB_LEASH_TILES=4` Chebyshev; homeX/Y on spawn (kept on restore); wander/agro/fight stop at leash; kite beyond → return home + drop agro (`leash` end).
+- [done] Improve font type and music and FX (HUD/Phaser fonts + clearer SFX + richer biome beds). — Conclusion: Cinzel + Alegreya Sans via Google Fonts; layered WebAudio biome beds; clearer UI/hit/pickup/gather/death cues; mute flags kept.
 
 Related unfinished (kept in later sections): depleted fish-spot move. (Firemaking / cooking / smithing / shop UI already `[done]` in §§7–8.)
 

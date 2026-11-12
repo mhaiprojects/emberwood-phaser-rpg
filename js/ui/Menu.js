@@ -6,7 +6,7 @@ var MenuItem = new Phaser.Class({
             color: '#ffffff',
             align: 'left',
             fontSize: '11px',
-            fontFamily: '"Courier New", Courier, monospace'
+            fontFamily: 'Alegreya Sans, Trebuchet MS, sans-serif'
         });
     },
 

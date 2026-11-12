@@ -13,7 +13,7 @@ var Message = new Phaser.Class({
             color: '#ffffff',
             align: 'center',
             fontSize: '10px',
-            fontFamily: '"Courier New", Courier, monospace',
+            fontFamily: 'Alegreya Sans, Trebuchet MS, sans-serif',
             wordWrap: { width: 200, useAdvancedWrap: true }
         });
         this.add(this.text);

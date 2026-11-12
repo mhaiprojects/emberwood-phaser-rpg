@@ -24,7 +24,7 @@ var Unit = new Phaser.Class({
         this.hpBarFill = scene.add.rectangle(x - 14, y - 20, 28, 4, 0x3dcc6a).setOrigin(0, 0.5);
         this.hpLabel = scene.add.text(x, y + 18, type, {
             fontSize: '8px',
-            fontFamily: '"Courier New", Courier, monospace',
+            fontFamily: 'Alegreya Sans, Trebuchet MS, sans-serif',
             color: '#f4e8c1'
         }).setOrigin(0.5, 0);
         this.refreshHpBar();
@@ -69,7 +69,7 @@ var Unit = new Phaser.Class({
         disc.splatKind = kind;
         var label = this.scene.add.text(this.x, y, text, {
             fontSize: '10px',
-            fontFamily: '"Courier New", Courier, monospace',
+            fontFamily: 'Alegreya Sans, Trebuchet MS, sans-serif',
             color: color
         }).setOrigin(0.5);
         label.setDepth(30);

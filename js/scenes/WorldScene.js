@@ -128,7 +128,7 @@ var WorldScene = new Phaser.Class({
         this.player.setDepth(6);
         /* Player phases through NPCs in physics; pathfinding still avoids their tiles. */
         this.nameplate = this.add.text(spawn0.x, spawn0.y - 14, 'Adventurer', {
-            fontFamily: 'Verdana, sans-serif',
+            fontFamily: 'Alegreya Sans, Trebuchet MS, sans-serif',
             fontSize: '8px',
             color: '#ffe08a'
         }).setOrigin(0.5, 1).setDepth(7);
@@ -997,7 +997,7 @@ var WorldScene = new Phaser.Class({
             var label = self.add.text(def.x, def.y - Math.round(8 * scale) - 6,
                 typeof mobLabelText === 'function' ? mobLabelText(sprite.mobDef) : def.type, {
                 fontSize: '8px',
-                fontFamily: 'Verdana, Geneva, sans-serif',
+                fontFamily: 'Alegreya Sans, Trebuchet MS, sans-serif',
                 color: '#ffb0a0',
                 stroke: '#000000',
                 strokeThickness: 2
@@ -1108,7 +1108,7 @@ var WorldScene = new Phaser.Class({
             }
             var label = self.add.text(def.x, def.y - 14, def.name, {
                 fontSize: '8px',
-                fontFamily: 'Verdana, Geneva, sans-serif',
+                fontFamily: 'Alegreya Sans, Trebuchet MS, sans-serif',
                 color: '#ffe08a',
                 stroke: '#000000',
                 strokeThickness: 2
@@ -1153,7 +1153,7 @@ var WorldScene = new Phaser.Class({
             var label = self.add.text(def.x, def.y - Math.round(8 * scale) - 6,
                 typeof mobLabelText === 'function' ? mobLabelText(sprite.mobDef) : def.type, {
                 fontSize: '8px',
-                fontFamily: 'Verdana, Geneva, sans-serif',
+                fontFamily: 'Alegreya Sans, Trebuchet MS, sans-serif',
                 color: '#ffb0a0',
                 stroke: '#000000',
                 strokeThickness: 2
@@ -2615,7 +2615,7 @@ var WorldScene = new Phaser.Class({
         }
         glyph = this.add.text(0, 1, style.glyph || '', {
             fontSize: '9px',
-            fontFamily: 'Verdana, Geneva, sans-serif',
+            fontFamily: 'Alegreya Sans, Trebuchet MS, sans-serif',
             color: '#ffffff',
             stroke: '#000000',
             strokeThickness: 2
@@ -2626,7 +2626,7 @@ var WorldScene = new Phaser.Class({
         }
         label = this.add.text(0, (String(labelText).indexOf('\n') >= 0) ? -16 : -11, labelText, {
             fontSize: '8px',
-            fontFamily: 'Verdana, Geneva, sans-serif',
+            fontFamily: 'Alegreya Sans, Trebuchet MS, sans-serif',
             color: style.labelColor || '#ffe08a',
             stroke: '#000000',
             strokeThickness: 2,
@@ -2779,7 +2779,7 @@ var WorldScene = new Phaser.Class({
                 : tileCenter(Math.floor(MAP_W / 2), Math.floor(MAP_H / 2));
             label = this.add.text(pos.x, pos.y, text, {
                 fontSize: '9px',
-                fontFamily: 'Verdana, Geneva, sans-serif',
+                fontFamily: 'Alegreya Sans, Trebuchet MS, sans-serif',
                 color: '#d8e6ff',
                 stroke: '#0a1020',
                 strokeThickness: 3,
@@ -3540,6 +3540,9 @@ var WorldScene = new Phaser.Class({
             Hud.saveHero(hero);
         }
         this.refreshHud();
+        if (window.Sfx && Sfx.gather) {
+            Sfx.gather('fish');
+        }
         Hud.log('You catch some raw shrimp.');
         return true;
     },
@@ -3697,6 +3700,9 @@ var WorldScene = new Phaser.Class({
             Hud.saveHero(hero);
         }
         this.refreshHud();
+        if (window.Sfx && Sfx.gather) {
+            Sfx.gather('chop');
+        }
         Hud.log('You chop some ' + (typeof itemName === 'function' ? itemName(result.id) : result.id) + '.');
         return true;
     },
@@ -3973,6 +3979,9 @@ var WorldScene = new Phaser.Class({
             Hud.saveHero(hero);
         }
         this.refreshHud();
+        if (window.Sfx && Sfx.gather) {
+            Sfx.gather('mine');
+        }
         label = typeof itemName === 'function' ? itemName(ore) : (ore || 'ore');
         Hud.log('You mine some ' + label + '.');
         return true;
@@ -5817,6 +5826,9 @@ var WorldScene = new Phaser.Class({
     /* scene.start(GameOver) would shut down WorldScene and destroy grave sprites.
        Sleep + launch keeps graveZoneState / sprites until respawn wakes the world. */
     goToGameOver: function () {
+        if (window.Sfx && Sfx.death) {
+            Sfx.death();
+        }
         this.scene.stop('UIScene');
         if (this.scene.isActive('GameOverScene') || this.scene.isSleeping('GameOverScene')) {
             if (this.scene.isSleeping('GameOverScene')) {
@@ -5929,7 +5941,7 @@ var WorldScene = new Phaser.Class({
             hitAreaCallback: Phaser.Geom.Rectangle.Contains
         });
         label = this.add.text(x, y - 14, 'Gravestone', {
-            fontFamily: 'Verdana, sans-serif',
+            fontFamily: 'Alegreya Sans, Trebuchet MS, sans-serif',
             fontSize: '8px',
             color: '#ffe08a'
         }).setOrigin(0.5, 1).setDepth(9.1);
@@ -7393,6 +7405,7 @@ var WorldScene = new Phaser.Class({
         }
         this.wildSkull = this.add.text(this.player.x + 12, this.player.y - 22, '☠', {
             fontSize: '10px',
+            fontFamily: 'Alegreya Sans, Trebuchet MS, sans-serif',
             color: '#ff6666'
         }).setDepth(12);
     }

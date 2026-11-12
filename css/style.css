@@ -7,7 +7,7 @@ body {
     overflow: hidden;
     background: #1a140c;
     color: #f2e6c9;
-    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-family: var(--font-ui);
     font-size: 13px;
     line-height: 1.35;
 }
@@ -16,6 +16,9 @@ body {
     --shell-side: 230px;
     --shell-bottom: 210px;
     --shell-iface: 300px;
+    /* Cinzel = medieval display; Alegreya Sans = readable HUD at 8–13px */
+    --font-ui: "Alegreya Sans", "Trebuchet MS", Tahoma, sans-serif;
+    --font-display: Cinzel, "Palatino Linotype", Palatino, Georgia, serif;
 }
 
 #shell {
@@ -421,9 +424,11 @@ canvas {
 
 .panel h2 {
     margin: 0 0 6px;
+    font-family: var(--font-display);
     font-size: 13px;
+    font-weight: 500;
     color: #ffe08a;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.04em;
 }
 
 .stat {
@@ -545,7 +550,7 @@ canvas {
 
 .mm-cell {
     position: relative;
-    font: 11px Verdana, Geneva, sans-serif;
+    font: 11px var(--font-ui);
     background: #2b2418;
     color: #d8c8a4;
     border: 1px solid #6a5638;
@@ -619,7 +624,7 @@ canvas {
 }
 
 button {
-    font: 13px Verdana, Geneva, sans-serif;
+    font: 13px var(--font-ui);
     background: #5c4a32;
     color: #fff4d6;
     border: 1px solid #e6c56a;
@@ -687,8 +692,11 @@ button.ghost {
 #quest-complete-overlay .level-up-card h2,
 #level-up-overlay .level-up-card h2 {
     margin: 8px 0 4px;
+    font-family: var(--font-display);
     font-size: 16px;
+    font-weight: 500;
     color: #ffe08a;
+    letter-spacing: 0.03em;
 }
 
 #prayer-list {
@@ -737,8 +745,11 @@ button.ghost {
 
 #dialogue-overlay .dialogue-card h2 {
     margin: 0 0 6px;
+    font-family: var(--font-display);
     font-size: 14px;
+    font-weight: 500;
     color: #ffe08a;
+    letter-spacing: 0.03em;
 }
 
 #dialogue-overlay .dialogue-card p {
@@ -849,7 +860,7 @@ button.ghost {
     z-index: 40;
     background: rgba(20, 16, 10, 0.85);
     color: #c9a227;
-    font: 12px Verdana, sans-serif;
+    font: 12px var(--font-ui);
     padding: 4px 8px;
     pointer-events: none;
 }
@@ -864,7 +875,7 @@ button.ghost {
 
 #chat-compose input,
 #chat-compose select {
-    font: 12px Verdana, Geneva, sans-serif;
+    font: 12px var(--font-ui);
     padding: 4px 6px;
     color: #f2e6c9;
     background: #1c1812;
@@ -958,7 +969,7 @@ button.ghost {
     background: #2a2116;
     color: #fff4d6;
     border: 1px solid #e6c56a;
-    font: 13px Verdana, Geneva, sans-serif;
+    font: 13px var(--font-ui);
 }
 
 #bank-tabs {
@@ -985,7 +996,7 @@ button.ghost {
     background: #2a2116;
     color: #fff4d6;
     border: 1px solid #e6c56a;
-    font: 13px Verdana, Geneva, sans-serif;
+    font: 13px var(--font-ui);
 }
 
 #bank-overlay .inv-slot.is-on {
@@ -1068,7 +1079,7 @@ button.ghost {
     border: 0;
     background: transparent;
     color: #fff4d6;
-    font: 12px Verdana, Geneva, Tahoma, sans-serif;
+    font: 12px var(--font-ui);
 }
 
 #ctx-menu button:hover {
@@ -1085,8 +1096,11 @@ button.ghost {
 
 .title-card h1 {
     margin: 0 0 8px;
+    font-family: var(--font-display);
     font-size: 32px;
+    font-weight: 700;
     color: #ffe08a;
+    letter-spacing: 0.04em;
 }
 
 #world-map-overlay .title-card {

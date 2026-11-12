@@ -218,7 +218,7 @@ function showWorldHitSplat(scene, x, y, text, kind) {
     disc.splatKind = kind;
     var label = scene.add.text(x, py, text, {
         fontSize: '10px',
-        fontFamily: '"Courier New", Courier, monospace',
+        fontFamily: 'Alegreya Sans, Trebuchet MS, sans-serif',
         color: color
     }).setOrigin(0.5);
     label.setDepth(30);
