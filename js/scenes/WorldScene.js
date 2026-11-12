@@ -75,6 +75,10 @@ var WorldScene = new Phaser.Class({
         this.pathCheckAt = 0;
         /* Pause auto-attack / auto-retaliate chase while player click-walk is active. */
         this.playerClickWalkActive = false;
+        /* Dual-write with legacy engageTarget / playerClickWalkActive (combat-intent redesign). */
+        this.playerIntent = typeof CombatController !== 'undefined' && CombatController.idleIntent
+            ? CombatController.idleIntent()
+            : { kind: 'idle', target: null, dest: null, pauseAutos: false, silent: false, source: null };
         this.tileGrid = null;
         this.engageTarget = null;
         this.talkTarget = null;
@@ -4395,6 +4399,16 @@ var WorldScene = new Phaser.Class({
         /* Only player click-intent walks pause combat auto; engage/retaliate paths omit this. */
         if (opts.playerClick) {
             this.playerClickWalkActive = true;
+            if (typeof CombatController !== 'undefined' && CombatController.applyIntent) {
+                CombatController.applyIntent(this, {
+                    kind: 'walk',
+                    target: null,
+                    dest: { x: x, y: y },
+                    pauseAutos: true,
+                    silent: false,
+                    source: 'click'
+                });
+            }
         }
         this.walkTarget = { x: x, y: y };
         this.placeWalkMarker(x, y);
@@ -4482,6 +4496,14 @@ var WorldScene = new Phaser.Class({
         this.walkBlocked = false;
         this.pathCheckAt = 0;
         this.playerClickWalkActive = false;
+        if (this.playerIntent && this.playerIntent.kind === 'walk') {
+            this.playerIntent = typeof CombatController !== 'undefined' && CombatController.idleIntent
+                ? CombatController.idleIntent()
+                : { kind: 'idle', target: null, dest: null, pauseAutos: false, silent: false, source: null };
+        } else if (this.playerIntent) {
+            this.playerIntent.pauseAutos = false;
+            this.playerIntent.dest = null;
+        }
         if (this.marker) {
             this.marker.setVisible(false);
         }
@@ -4654,6 +4676,9 @@ var WorldScene = new Phaser.Class({
 
     heroEngageRangePx: function () {
         var hero = this.registry.get('hero');
+        if (typeof CombatController !== 'undefined' && CombatController.weaponRangePx) {
+            return CombatController.weaponRangePx(hero);
+        }
         if (typeof weaponAttackRangePx === 'function') {
             return weaponAttackRangePx(hero);
         }
@@ -4863,28 +4888,18 @@ var WorldScene = new Phaser.Class({
      * the mob tile fails (terrain always blocks) and used to freeze the hero.
      */
     engageStandWorld: function (mob) {
-        var tile;
-        var stand;
-        var center;
         var range;
         if (!mob) {
             return null;
         }
-        if (!this.tileGrid || typeof worldToTile !== 'function') {
-            return { x: mob.x, y: mob.y };
-        }
         range = this.heroEngageRangePx();
-        tile = worldToTile(mob.x, mob.y);
-        if (typeof nearestStandTileInRange === 'function') {
-            stand = nearestStandTileInRange(this.tileGrid, tile.tx, tile.ty, range);
-        } else if (typeof nearestWalkableTile === 'function') {
-            stand = nearestWalkableTile(this.tileGrid, tile.tx, tile.ty);
+        if (typeof CombatController !== 'undefined' && CombatController.standForTarget) {
+            return CombatController.standForTarget(this.tileGrid, mob, range);
         }
-        if (!stand || typeof tileCenter !== 'function') {
-            return { x: mob.x, y: mob.y };
+        if (typeof standInRangeWorld === 'function') {
+            return standInRangeWorld(this.tileGrid, mob.x, mob.y, range);
         }
-        center = tileCenter(stand.tx, stand.ty);
-        return { x: center.x, y: center.y };
+        return { x: mob.x, y: mob.y };
     },
 
     /* Path to a stand-in-range tile; clears click-walk pause so chase can repath. */
@@ -4895,20 +4910,47 @@ var WorldScene = new Phaser.Class({
         }
         this.playerClickWalkActive = false;
         dest = this.engageStandWorld(mob) || { x: mob.x, y: mob.y };
+        if (typeof CombatController !== 'undefined' && CombatController.applyIntent) {
+            CombatController.applyIntent(this, {
+                kind: 'attack',
+                target: mob,
+                dest: dest,
+                pauseAutos: false,
+                silent: false,
+                source: 'engage'
+            });
+        }
         this.setWalk(dest.x, dest.y, { allowEnd: true });
         return true;
     },
 
     queueAttack: function (mob, opts) {
+        var gate;
         opts = opts || {};
         if (!mob || !mob.aliveMob) {
             return false;
+        }
+        if (typeof CombatController !== 'undefined' && CombatController.canAcquire) {
+            gate = CombatController.canAcquire(opts.source || 'click', this, mob);
+            if (!gate.ok && opts.source && opts.source !== 'click') {
+                return false;
+            }
         }
         this.lootTarget = null;
         this.talkTarget = null;
         this.clearFish();
         this.engageTarget = mob;
         this._engageReachFailAt = 0;
+        if (typeof CombatController !== 'undefined' && CombatController.applyIntent) {
+            CombatController.applyIntent(this, {
+                kind: 'attack',
+                target: mob,
+                dest: null,
+                pauseAutos: false,
+                silent: !!opts.silent,
+                source: opts.source || 'click'
+            });
+        }
         if (this.fightDistancePx(mob) <= this.heroEngageRangePx()) {
             this.beginFight(mob);
             return true;
@@ -4922,10 +4964,16 @@ var WorldScene = new Phaser.Class({
 
     /* Auto-retaliate: chase an agroing mob like click-to-attack (no spam log). */
     queueRetaliate: function (mob) {
+        var gate;
         if (!this.autoRetaliateOn() || !mob || !mob.aliveMob) {
             return false;
         }
-        if (this.playerClickWalkActive) {
+        if (typeof CombatController !== 'undefined' && CombatController.canAcquire) {
+            gate = CombatController.canAcquire('retaliate', this, mob);
+            if (!gate.ok) {
+                return false;
+            }
+        } else if (this.playerClickWalkActive) {
             return false;
         }
         if (this.encounterLock || this.uiPaused() || this.time.now < this.engageGrace) {
@@ -4944,7 +4992,7 @@ var WorldScene = new Phaser.Class({
             }
             return true;
         }
-        return this.queueAttack(mob, { silent: true });
+        return this.queueAttack(mob, { silent: true, source: 'retaliate' });
     },
 
     /* Mob can still hit while agroing even if the player does not auto-engage. */
@@ -7219,6 +7267,10 @@ var WorldScene = new Phaser.Class({
     tryAutoEngage: function () {
         var range;
         var dist;
+        var hero;
+        var tiles;
+        var near;
+        var autosPaused;
         if (this.encounterLock || this.uiPaused() || this.time.now < this.engageGrace) {
             return false;
         }
@@ -7226,6 +7278,9 @@ var WorldScene = new Phaser.Class({
         /* Click-to-attack engage continues even if a prior click-walk flag lingered. */
         if (this.engageTarget && this.engageTarget.aliveMob) {
             this.playerClickWalkActive = false;
+            if (this.playerIntent) {
+                this.playerIntent.pauseAutos = false;
+            }
             dist = this.fightDistancePx(this.engageTarget);
             if (dist <= range) {
                 this.beginFight(this.engageTarget);
@@ -7236,22 +7291,25 @@ var WorldScene = new Phaser.Class({
             }
             return false;
         }
-        /* Player click-walk pauses proximity auto-attack only. */
-        if (this.playerClickWalkActive) {
+        autosPaused = typeof CombatController !== 'undefined' && CombatController.autosPaused
+            ? CombatController.autosPaused(this)
+            : !!this.playerClickWalkActive;
+        if (autosPaused) {
             return false;
         }
         if (!this.autoAttackOn()) {
             return false;
         }
-        /* Proximity auto-attack uses hero.autoAttackRange (Chebyshev tiles); click-target uses weapon range above. */
-        var hero = this.registry.get('hero');
-        var tiles = typeof autoAttackRangeTiles === 'function'
-            ? autoAttackRangeTiles(hero)
-            : (typeof DEFAULT_AUTO_ATTACK_RANGE_TILES === 'number' ? DEFAULT_AUTO_ATTACK_RANGE_TILES : 3);
-        var near = this.pickNearestAliveMobChebyshev(tiles);
+        /* Proximity auto-attack: Chebyshev tiles (acquire only); swings use Euclidean weapon px. */
+        hero = this.registry.get('hero');
+        tiles = typeof CombatController !== 'undefined' && CombatController.autoAcquireRangeTiles
+            ? CombatController.autoAcquireRangeTiles(hero)
+            : (typeof autoAttackRangeTiles === 'function'
+                ? autoAttackRangeTiles(hero)
+                : (typeof DEFAULT_AUTO_ATTACK_RANGE_TILES === 'number' ? DEFAULT_AUTO_ATTACK_RANGE_TILES : 3));
+        near = this.pickNearestAliveMobChebyshev(tiles);
         if (near && near.aliveMob) {
-            this.beginFight(near);
-            return true;
+            return this.queueAttack(near, { silent: true, source: 'autoAttack' });
         }
         return false;
     },
@@ -7456,8 +7514,7 @@ var WorldScene = new Phaser.Class({
             if (typeof this.tickPrayerDrainLite === 'function') {
                 this.tickPrayerDrainLite(dt);
             }
-            this.chaseFightMob();
-            /* Fall through so the player can kite while the mob closes distance. */
+            /* chaseFightMob runs once at end of update (after player move) — not here. */
         }
 
         this.mobs.children.iterate(function (mob) {

@@ -255,6 +255,7 @@ function nearestStandTileInRange(grid, tx, ty, rangePx) {
             }
             cx = nx * size + size / 2;
             cy = ny * size + size / 2;
+            /* Euclidean to target tile center — same metric as weapon/mob attack range px. */
             dist = Math.sqrt((cx - spotX) * (cx - spotX) + (cy - spotY) * (cy - spotY));
             if (dist >= range || dist >= bestDist) {
                 continue;
@@ -264,6 +265,27 @@ function nearestStandTileInRange(grid, tx, ty, rangePx) {
         }
     }
     return best || nearestWalkableTile(grid, tx, ty);
+}
+
+/**
+ * Walkable world stand within rangePx of (targetX, targetY).
+ * Prefer this for combat paths — never path onto an unwalkable mob tile
+ * (A* allowEnd only waives occupancy, not terrain).
+ */
+function standInRangeWorld(grid, targetX, targetY, rangePx) {
+    var tile;
+    var stand;
+    var center;
+    if (!grid || typeof worldToTile !== 'function' || typeof tileCenter !== 'function') {
+        return targetX != null ? { x: targetX, y: targetY } : null;
+    }
+    tile = worldToTile(targetX, targetY);
+    stand = nearestStandTileInRange(grid, tile.tx, tile.ty, rangePx);
+    if (!stand) {
+        return { x: targetX, y: targetY };
+    }
+    center = tileCenter(stand.tx, stand.ty);
+    return { x: center.x, y: center.y };
 }
 
 function nearestGroundTile(grid, tx, ty) {

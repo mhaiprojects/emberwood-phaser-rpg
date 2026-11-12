@@ -254,17 +254,21 @@ World clicks ignored while title, `encounterLock` (pre-fight shake), or legacy `
 
 ### 5.1 Combat (overworld)
 
-1. Click living mob → `engageTarget` → path into **weapon range** → `beginFight` → shake → `startOverworldFight`
-2. Ticks every **600 ms**; Attack / Eat / Run / special / spells from HUD
+Architecture (combat-intent redesign, dual-write migration): **PlayerIntent** (`world.playerIntent`) + **CombatController** (`js/world/CombatController.js`) own acquire policy; legacy `engageTarget` / `playerClickWalkActive` still mirrored. Mob agro/leash stays on WorldScene. Plan: `.cursor/plans/combat-intent-redesign.plan.md`.
+
+1. Click living mob → intent `attack` / `engageTarget` → path to **stand-in-weapon-range** tile → `beginFight` → shake → `startOverworldFight`
+2. Ticks every **600 ms**; Attack / Eat / Run / special / spells from HUD. Once fighting, swings are **not** gated by autos.
 3. Hit splats + optional projectiles when **Combat visuals** on
 4. **Range rings** (separate Settings toggle, default on): **orange** aggro (`0xff8c20`), **red** attack (`0xff3b3b`) @ ~0.28 alpha — drawn while fighting / engage / agro chase
 5. Win → XP by style + Hitpoints share; loot **on ground** (not auto-bag); mob respawn ~18 s
 6. Flee: push + grace; Run success chance on legacy battle path still exists for harness
 
-**Auto-attack (default Off, Combat tab only):** walking near a living mob can engage (with grace after zone/battle). Paused during player click-walk.
+**Ranges:** weapon/mob attack = Euclidean px; auto-attack acquire = Chebyshev tiles (do not mix). Attack paths use `standInRangeWorld` (never onto unwalkable mob tiles).
+
+**Auto-attack (default Off, Combat tab only):** walking near a living mob can engage (with grace after zone/battle). Paused during player click-walk (`intent.pauseAutos` / `playerClickWalkActive`).
 **Auto-retaliate (default Off, Combat tab only, separate):** only when a foe **agros you first** — walk into weapon range and fight back; does **not** pick passive nearby mobs. Chase also pauses during player click-walk.
 
-**In-fight chase gate:** while already fighting, player auto-close toward the mob only if **inside the mob’s attack range** but outside weapon range (and retaliate on). Safe ranging outside mob attack range does **not** auto-walk into the foe.
+**In-fight chase gate:** while already fighting, player auto-close toward the mob only if **inside the mob’s attack range** but outside weapon range (and retaliate on). Safe ranging outside mob attack range does **not** auto-walk into the foe. Mob fight-chase runs **once** per update (after player move).
 
 ### 5.2 Gather
 
@@ -512,7 +516,10 @@ Actionable pitfalls from project rules and recent combat/gather/save work:
 | Auto-chase player into a mob while **safe ranging** | In-fight close only if already inside **mob attack range** |
 | Treat auto-retaliate like auto-attack | Retaliate = agro-first only; no passive nearby pull |
 | Default auto-attack or auto-retaliate **on** for new heroes | Both default **Off**; Combat tab only |
-| Keep auto-engaging during player click-walk | `playerClickWalkActive` pauses auto-attack / retaliate chase |
+| Keep auto-engaging during player click-walk | `playerIntent.pauseAutos` / `playerClickWalkActive` pauses auto-attack / retaliate chase |
+| Gate active-fight swings on autos | Autos only **acquire**; `tickOverworldFight` always swings in weapon range |
+| Path attack onto unwalkable mob tiles | Use `standInRangeWorld` / `walkToEngage` |
+| Call `chaseFightMob` twice per update | Once, after player movement |
 | Ignore level agro gate | Equal/higher combat player should not be agroed (unless `alwaysAgro`) |
 | Let mobs sit in the outer 2-tile border | Soft-push / clamp to inner map |
 | Let mobs enter Haven safe courtyard or break 4-tile leash | `mobForbiddenTile` + `MOB_LEASH_TILES` |
