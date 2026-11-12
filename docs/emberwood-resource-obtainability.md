@@ -2,9 +2,10 @@
 
 **Saved in-repo:** `docs/emberwood-resource-obtainability.md`  
 **Source of truth:** live game data in `js/data/Items.js`, `js/world/MapGen.js`, `js/world/Zones.js`, `js/data/Scales.js`, and station use in `js/scenes/WorldScene.js` / `js/ui/Hud.js`  
-**Last refreshed:** 2026-11-11
+**Companion:** [Game design document](emberwood-game-design.md) (zones, combat bands, Deep Mine, settings)  
+**Last refreshed:** 2026-11-12
 
-How major Emberwood resources are obtained today — gathering zones, crafting/smelting/smithing, shops, mob drops, altars, and tutors. Invented content is omitted; if a path is not listed, it is not wired in code.
+How major Emberwood resources are obtained today — gathering zones, crafting/smelting/smithing, shops, mob drops, altars, and tutors. Invented content is omitted; if a path is not listed, it is not wired in code. Zone combat bands match the GDD (Haven 1–3 … Deep Mine 40+(floor−1)).
 
 ---
 

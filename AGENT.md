@@ -86,7 +86,7 @@ Same origin; Glass is optional and human-requested only:
 
 ## HUD / UI
 
-- HUD, chat, combat buttons, and title/death overlays are **HTML + Verdana**, mirrored by Vue 3 CDN (`index.html`, `css/style.css`, `js/ui/HudApp.js`, `js/ui/Hud.js`). Keep them sharp; do not draw F-keys on the canvas.
+- HUD, chat, combat buttons, and title/death overlays are **HTML + Cinzel/Alegreya Sans**, mirrored by Vue 3 CDN (`index.html`, `css/style.css`, `js/ui/HudApp.js`, `js/ui/Hud.js`). Keep them sharp; do not draw F-keys on the canvas. Behavior source of truth: `docs/emberwood-game-design.md`.
 - Tabs: Combat, Skills, Quest, Inv, Worn, Prayer, Magic, Settings. F1–F8 and the tab bar switch panels.
 - Combat styles: Accurate / Aggressive / Defensive (`hero.style`). Auto-attack and auto-retaliate toggles live on the Combat tab only. Auto-pickup toggle lives on Combat and Settings — keep both in sync.
 - Chat log: append, auto-scroll, drop oldest after 40 lines.

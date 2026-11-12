@@ -40,17 +40,18 @@ runEmberwoodTests()
 
 ## Controls
 
-HUD, chat, combat buttons, and the title screen are **HTML** (Verdana) so they stay sharp. The world is a Phaser pixel canvas.
+HUD, chat, combat buttons, and the title screen are **HTML** (Cinzel + Alegreya Sans) so they stay sharp. The world is a Phaser pixel canvas. Full behavior: [`docs/emberwood-game-design.md`](docs/emberwood-game-design.md).
 
 - **Title:** click **Click here to play**
-- **Walk:** WASD or arrow keys, or left-click the ground (a thin purple line shows the path). Right-click the ground for **Walk here**
-- **Talk:** click an NPC (or walk up and press Space)
-- **Fight:** click a monster, then walk into range. Auto-attack and auto-retaliate (both default off) are on the Combat tab
+- **Walk:** WASD or arrow keys, or left-click the ground (a thin purple line shows the path). Right-click the ground for **Walk here**. Click-walk pauses auto-attack / auto-retaliate until the path ends
+- **Talk:** click an NPC (or walk up and press Space). Close or click away ends dialogue and lets you walk
+- **Fight:** click a monster, then walk into range. Auto-attack and auto-retaliate (both default **off**) are on the **Combat** tab only
 - **Loot:** walk over a pile when auto-pickup is on (default), or click the pile. Toggle is on Combat and Settings
 - **Bottom bar:** Combat, Skills, Quest, Inventory, Worn, Prayer, Magic, Settings (F1–F8)
 - **Inventory:** 28 slots. Click cooked shrimp or bread to eat
 - **Minimap:** 3×3 of the nine lands; current zone is highlighted
 - **Battle:** Attack hits the highlighted foe (auto-selected when there is one). Click a foe on the canvas or in the list to choose a target and strike. Eat food uses inventory. Run to flee.
+- **Perf:** top-left `FPS | TPS` readout (capped at 60); Settings toggles visibility
 
 ## The nine lands
 
@@ -60,7 +61,7 @@ Westmead          Emberhaven       Millfields
 Darkmine          Southshore       Mirefen
 ```
 
-Walk off a path at the map edge to enter the next land.
+Walk off a path at the map edge to enter the next land (border shows destination name + mob Lv band). Hidden: **Deep Mine** (Darkmine shaft) and **Dragon Den** (Highlands boulder).
 
 Starter task: talk to **Guildmaster Bram** in Emberhaven, kill **5 goblins** in Northwood, return for gold and XP.
 
