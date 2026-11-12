@@ -44,6 +44,7 @@ var HudApp = {
             shellTitle: true,
             autoAttackLabel: 'Auto-attack: Off',
             autoAttackOn: false,
+            autoAttackRange: 3,
             autoRetaliateLabel: 'Auto-retaliate: Off',
             autoRetaliateOn: false,
             autoPickupLabel: 'Auto-pickup: On',

@@ -282,6 +282,28 @@ var Hud = {
             self.log('Auto-attack ' + (hero.autoAttack ? 'on' : 'off') + '.');
         });
         document.addEventListener('click', function (event) {
+            var btn = event.target.closest('[data-auto-attack-range]');
+            var raw;
+            var value;
+            var hero;
+            if (!btn) {
+                return;
+            }
+            hero = self.hero();
+            if (!hero) {
+                return;
+            }
+            raw = btn.getAttribute('data-auto-attack-range');
+            value = parseInt(raw, 10);
+            if (!(value >= 1) || value > 5) {
+                return;
+            }
+            hero.autoAttackRange = value;
+            self.saveHero(hero);
+            self.renderAutoAttackRange(hero);
+            self.log('Auto-attack range ' + value + ' tile' + (value === 1 ? '' : 's') + '.');
+        });
+        document.addEventListener('click', function (event) {
             var btn = event.target.closest('[data-auto-retaliate]');
             if (!btn) {
                 return;
@@ -3402,6 +3424,7 @@ var Hud = {
         this.renderEquip(hero);
         this.renderStyles(hero);
         this.renderAutoAttack(hero);
+        this.renderAutoAttackRange(hero);
         this.renderAutoRetaliate(hero);
         this.renderAutoPickup(hero);
         this.renderShiftClickDrop(hero);
@@ -3711,6 +3734,25 @@ var Hud = {
         for (var i = 0; i < buttons.length; i++) {
             buttons[i].classList.toggle('is-on', on);
             buttons[i].textContent = 'Auto-attack: ' + (on ? 'On' : 'Off');
+        }
+    },
+
+
+    renderAutoAttackRange: function (hero) {
+        var value = typeof autoAttackRangeTiles === 'function'
+            ? autoAttackRangeTiles(hero)
+            : (hero && typeof hero.autoAttackRange === 'number' ? hero.autoAttackRange : 3);
+        var vue = this.vueState();
+        var buttons;
+        var i;
+        var btnVal;
+        if (vue) {
+            vue.autoAttackRange = value;
+        }
+        buttons = document.querySelectorAll('[data-auto-attack-range]');
+        for (i = 0; i < buttons.length; i++) {
+            btnVal = parseInt(buttons[i].getAttribute('data-auto-attack-range'), 10);
+            buttons[i].classList.toggle('is-on', btnVal === value);
         }
     },
 

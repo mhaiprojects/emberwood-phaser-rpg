@@ -604,6 +604,11 @@ function consumeAmmo(hero) {
     return true;
 }
 
+/* Chebyshev tiles for proximity auto-attack engage (not weapon attack range). */
+var DEFAULT_AUTO_ATTACK_RANGE_TILES = 3;
+var AUTO_ATTACK_RANGE_MIN = 1;
+var AUTO_ATTACK_RANGE_MAX = 5;
+
 function makeHero() {
     var hero = {
         hp: 100,
@@ -615,6 +620,7 @@ function makeHero() {
         style: 'shared',
         stance: 'melee',
         autoAttack: false,
+        autoAttackRange: DEFAULT_AUTO_ATTACK_RANGE_TILES,
         autoRetaliate: false,
         autoPickup: true,
         shiftClickDrop: true,
@@ -706,6 +712,16 @@ function autoRetaliateOn(hero) {
 
 function autoAttackOn(hero) {
     return !!(hero && hero.autoAttack);
+}
+
+function autoAttackRangeTiles(hero) {
+    var v = hero && typeof hero.autoAttackRange === 'number'
+        ? hero.autoAttackRange
+        : DEFAULT_AUTO_ATTACK_RANGE_TILES;
+    if (!(v >= AUTO_ATTACK_RANGE_MIN) || v > AUTO_ATTACK_RANGE_MAX) {
+        return DEFAULT_AUTO_ATTACK_RANGE_TILES;
+    }
+    return Math.floor(v);
 }
 
 function shiftClickDropOn(hero) {
@@ -2834,6 +2850,13 @@ function normalizeHeroCombat(hero) {
     }
     if (hero.autoAttack == null) {
         hero.autoAttack = false;
+    }
+    if (typeof hero.autoAttackRange !== 'number'
+            || !(hero.autoAttackRange >= AUTO_ATTACK_RANGE_MIN)
+            || hero.autoAttackRange > AUTO_ATTACK_RANGE_MAX) {
+        hero.autoAttackRange = DEFAULT_AUTO_ATTACK_RANGE_TILES;
+    } else {
+        hero.autoAttackRange = Math.floor(hero.autoAttackRange);
     }
     if (hero.autoRetaliate == null) {
         hero.autoRetaliate = false;

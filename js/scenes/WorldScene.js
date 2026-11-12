@@ -2071,6 +2071,38 @@ var WorldScene = new Phaser.Class({
         return best;
     },
 
+    /* Nearest living mob within Chebyshev tile range of the player (auto-attack engage). */
+    pickNearestAliveMobChebyshev: function (tiles) {
+        var kids;
+        var i;
+        var sprite;
+        var best;
+        var bestD;
+        var d;
+        var a;
+        var b;
+        if (!(tiles >= 0) || !this.mobs || !this.player || typeof worldToTile !== 'function') {
+            return null;
+        }
+        a = worldToTile(this.player.x, this.player.y);
+        kids = this.mobs.getChildren();
+        best = null;
+        bestD = tiles + 1;
+        for (i = 0; i < kids.length; i++) {
+            sprite = kids[i];
+            if (!sprite || !sprite.active || !sprite.aliveMob) {
+                continue;
+            }
+            b = worldToTile(sprite.x, sprite.y);
+            d = Math.max(Math.abs(a.tx - b.tx), Math.abs(a.ty - b.ty));
+            if (d <= tiles && d < bestD) {
+                bestD = d;
+                best = sprite;
+            }
+        }
+        return best;
+    },
+
     houseRectsNow: function () {
         if (this.interiorId) {
             return typeof INTERIOR_ROOM !== 'undefined' ? [INTERIOR_ROOM] : [];
@@ -3606,10 +3638,12 @@ var WorldScene = new Phaser.Class({
             return false;
         }
         if (!hit) {
+            this.clearChop();
             return false;
         }
         if (this.isTileDepleted(hit.tx, hit.ty)) {
             Hud.log('The tree is exhausted.');
+            this.clearChop();
             return false;
         }
         tree = typeof woodcutTreeAt === 'function'
@@ -3621,12 +3655,14 @@ var WorldScene = new Phaser.Class({
                 Hud.log(typeof needLevelChat === 'function'
                     ? needLevelChat(gate.need)
                     : ('You need level ' + gate.need + '.'));
+                this.clearChop();
                 return false;
             }
         }
         if (typeof hasAnyToolKind === 'function' ? !hasAnyToolKind(hero, 'axe')
                 : (typeof hasTool === 'function' && typeof WOODCUT_AXE_ID !== 'undefined' && !hasTool(hero, WOODCUT_AXE_ID))) {
             Hud.log('You need an axe.');
+            this.clearChop();
             return false;
         }
         if (this.chopAction) {
@@ -3740,16 +3776,19 @@ var WorldScene = new Phaser.Class({
             return false;
         }
         if (!hit) {
+            this.clearMine();
             return false;
         }
         if (typeof isDragonDenOpen === 'function' && isDragonDenOpen(hero)) {
             Hud.log('The cave mouth is already clear.');
+            this.clearMine();
             return false;
         }
         if (typeof hasDiamondPickOrBetter === 'function'
                 ? !hasDiamondPickOrBetter(hero)
                 : (typeof hasToolTierAtLeast === 'function' && !hasToolTierAtLeast(hero, 'pickaxe', needTier))) {
             Hud.log('You need a diamond pickaxe to mine this boulder.');
+            this.clearMine();
             return false;
         }
         if (this.mineAction) {
@@ -3890,10 +3929,12 @@ var WorldScene = new Phaser.Class({
             return false;
         }
         if (!hit || !rock) {
+            this.clearMine();
             return false;
         }
         if (this.isTileDepleted(hit.tx, hit.ty)) {
             Hud.log('The rock is exhausted.');
+            this.clearMine();
             return false;
         }
         gate = typeof resourceLevelGate === 'function' ? resourceLevelGate(hero, 'mining', ore) : { ok: true };
@@ -3901,11 +3942,13 @@ var WorldScene = new Phaser.Class({
             Hud.log(typeof needLevelChat === 'function'
                 ? needLevelChat(gate.need)
                 : ('You need level ' + gate.need + '.'));
+            this.clearMine();
             return false;
         }
         if (typeof hasAnyToolKind === 'function' ? !hasAnyToolKind(hero, 'pickaxe')
                 : (typeof hasTool === 'function' && typeof MINE_PICK_ID !== 'undefined' && !hasTool(hero, MINE_PICK_ID))) {
             Hud.log('You need a pickaxe.');
+            this.clearMine();
             return false;
         }
         if (this.mineAction) {
@@ -7073,8 +7116,12 @@ var WorldScene = new Phaser.Class({
         if (!this.autoAttackOn()) {
             return false;
         }
-        /* Bump-into auto-attack stays melee; click-target uses weapon range above. */
-        var near = this.pickSprite(this.mobs, this.player.x, this.player.y, MELEE_ENGAGE_PX);
+        /* Proximity auto-attack uses hero.autoAttackRange (Chebyshev tiles); click-target uses weapon range above. */
+        var hero = this.registry.get('hero');
+        var tiles = typeof autoAttackRangeTiles === 'function'
+            ? autoAttackRangeTiles(hero)
+            : (typeof DEFAULT_AUTO_ATTACK_RANGE_TILES === 'number' ? DEFAULT_AUTO_ATTACK_RANGE_TILES : 3);
+        var near = this.pickNearestAliveMobChebyshev(tiles);
         if (near && near.aliveMob) {
             this.beginFight(near);
             return true;

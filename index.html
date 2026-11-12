@@ -100,8 +100,17 @@
                                 <button type="button" data-style="shared" :class="{ 'is-on': styleSharedOn }"><img class="pix" src="assets/svg/ui/combat.svg" alt=""> Shared</button>
                             </div>
                             <h3>Auto-attack</h3>
-                            <p>When on, walking into a nearby foe starts a fight.</p>
-                            <button type="button" class="auto-attack-btn" data-auto-attack title="When on, walking into a nearby foe starts a fight." :class="{ 'is-on': autoAttackOn }">{{ autoAttackLabel }}</button>
+                            <p>When on, walking within your auto-attack range of a foe starts a fight.</p>
+                            <button type="button" class="auto-attack-btn" data-auto-attack title="When on, walking within auto-attack range of a foe starts a fight." :class="{ 'is-on': autoAttackOn }">{{ autoAttackLabel }}</button>
+                            <h3>Auto-attack range</h3>
+                            <p>How many tiles away auto-attack will engage a foe (Chebyshev / king-move). Separate from weapon attack range. New games start at 3.</p>
+                            <div class="mob-spawn-mod-row" role="group" aria-label="Auto-attack range">
+                                <button type="button" class="mob-spawn-mod-btn" data-auto-attack-range="1" title="1 tile" :class="{ 'is-on': autoAttackRange === 1 }">1</button>
+                                <button type="button" class="mob-spawn-mod-btn" data-auto-attack-range="2" title="2 tiles" :class="{ 'is-on': autoAttackRange === 2 }">2</button>
+                                <button type="button" class="mob-spawn-mod-btn" data-auto-attack-range="3" title="3 tiles" :class="{ 'is-on': autoAttackRange === 3 }">3</button>
+                                <button type="button" class="mob-spawn-mod-btn" data-auto-attack-range="4" title="4 tiles" :class="{ 'is-on': autoAttackRange === 4 }">4</button>
+                                <button type="button" class="mob-spawn-mod-btn" data-auto-attack-range="5" title="5 tiles" :class="{ 'is-on': autoAttackRange === 5 }">5</button>
+                            </div>
                             <h3>Auto-retaliate</h3>
                             <p>When on, if a foe agros you first you walk into range and fight back. Does not engage passive nearby foes. Separate from auto-attack.</p>
                             <button type="button" class="auto-retaliate-btn" data-auto-retaliate title="When on, if a foe agros you first you walk in and fight back." :class="{ 'is-on': autoRetaliateOn }">{{ autoRetaliateLabel }}</button>
@@ -369,12 +378,12 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
     <script src="js/input/Keys.js?v=run1"></script>
-    <script src="js/data/Items.js?v=spawnpyr1"></script>
+    <script src="js/data/Items.js?v=aarange1"></script>
     <script src="js/data/Save.js?v=resume1"></script>
     <script src="js/data/Scales.js?v=deepmine1"></script>
-    <script src="js/ui/HudApp.js?v=spawnpyr1"></script>
+    <script src="js/ui/HudApp.js?v=aarange1"></script>
     <script src="js/ui/Sfx.js?v=fontaudio1"></script>
-    <script src="js/ui/Hud.js?v=spawnpyr1"></script>
+    <script src="js/ui/Hud.js?v=aarange1"></script>
     <script src="js/world/MapGen.js?v=blockcap1"></script>
     <script src="js/world/Pathfind.js?v=havensafe2"></script>
     <script src="js/world/Zones.js?v=deepmine1"></script>
@@ -387,7 +396,7 @@
     -->
     <script src="js/scenes/BootScene.js?v=fontaudio1"></script>
     <script src="js/scenes/TitleScene.js?v=darklayer1"></script>
-    <script src="js/scenes/WorldScene.js?v=havensafe2"></script>
+    <script src="js/scenes/WorldScene.js?v=aarange1"></script>
     <script src="js/world/OverworldCombat.js?v=fontaudio1"></script>
     <script src="js/world/StretchLite.js?v=noghost1"></script>
     <script src="js/scenes/BattleScene.js?v=grave1"></script>

@@ -377,7 +377,8 @@ img.pix {
 .shift-click-drop-btn.is-on,
 .run-mode-btn.is-on,
 .collision-debug-btn.is-on,
-.mob-spawn-mod-btn.is-on {
+.mob-spawn-mod-btn.is-on,
+.target-tps-btn.is-on {
     background: #7a623e;
 }
 
@@ -390,14 +391,16 @@ img.pix {
     margin-top: 8px;
 }
 
-.mob-spawn-mod-row {
+.mob-spawn-mod-row,
+.target-tps-row {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
     margin-top: 8px;
 }
 
-.mob-spawn-mod-btn {
+.mob-spawn-mod-btn,
+.target-tps-btn {
     min-width: 3.2em;
 }
 

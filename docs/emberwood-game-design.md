@@ -35,7 +35,7 @@ This document describes **current shipped behavior**. Anything aspirational is m
 | Engine | **Phaser 3.90.0 only** (CDN). No Phaser 4, no bundler, no npm build |
 | HUD | **Vue 3.5** global CDN on `#hud-root` — **display-only** mirror; Phaser owns state (`registry`) |
 | Canvas | 512×320, `pixelArt`, `roundPixels`, `Scale.FIT`, arcade gravity 0, `input.keyboard: false`, `audio: { noAudio: true }` |
-| Loop cap | Phaser `fps.target/limit` **60** + arcade `fps` **60**; top-left `#fps-readout` shows `FPS N \| TPS N` (sampled ~4×/s) |
+| Loop cap | Phaser `fps.target/limit` + arcade `fps` = hero **Target TPS** (30/60, default 60); `#fps-readout` shows smoothed `FPS N \| TPS N` (~1s window + EMA) |
 | Audio | Phaser `noAudio` stays; WebAudio `Sfx.js` — layered biome music beds + clearer UI/hit/pickup/gather/death cues; Mute SFX / Mute Music in Settings |
 | Input | Window `Keys.js` only for walk; never Phaser cursors for movement |
 | Scenes | `BootScene` → `TitleScene` → `WorldScene` ↔ (legacy) `BattleScene` / `UIScene`; death → `GameOverScene` (launched while World sleeps) |
@@ -426,7 +426,8 @@ While mining: flash + spark FX tinted to ore; cleared on finish/cancel.
 | Run | Off | Combat, Settings, run bar, Ctrl | Sprint vs walk |
 | Ironman | Off | Title checkbox | No trading |
 | Mute SFX / Music | — | Settings | `Sfx` flags (WebAudio; Phaser stays `noAudio`) |
-| Show FPS | **On** (readout visible) | Settings | Toggle `#fps-readout` (`FPS N \| TPS N`, loop capped at 60) |
+| Show FPS | **On** (readout visible) | Settings | Toggle `#fps-readout` (`FPS N \| TPS N`) |
+| Target TPS | **60** | Settings 30/60 | Caps Phaser loop steps + render FPS (+ arcade `setFPS`); not combat swing ticks (~600ms) |
 | Zoom | 1–2 | Settings slider | Camera zoom |
 | Collision debug | Off | Settings / F9 | Body + collide tile overlay |
 
@@ -572,7 +573,7 @@ Actionable pitfalls from project rules and recent combat/gather/save work:
 | Area | Files |
 |------|-------|
 | HUD / settings | `js/ui/Hud.js`, `HudApp.js`, `index.html`, `css/style.css` |
-| FPS / TPS cap | `js/main.js` (`#fps-readout`, fps limit 60) |
+| FPS / TPS cap | `js/main.js` (`#fps-readout`, `applyTargetTps`, smoothed sample); Settings via `Hud.js` / `hero.targetTps` |
 | World / gather / death | `js/scenes/WorldScene.js` |
 | Combat / rings / leash | `js/world/OverworldCombat.js`, `WorldScene.js` (`combatRangeGfx`, `MOB_LEASH_TILES`) |
 | Items / skills / examine | `js/data/Items.js` |
