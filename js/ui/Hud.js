@@ -57,6 +57,7 @@ var Hud = {
             dialogueText: document.getElementById('dialogue-text'),
             dialogueOptions: document.getElementById('dialogue-options'),
             dialogueContinue: document.getElementById('dialogue-continue'),
+            dialogueClose: document.getElementById('btn-dialogue-close'),
             shop: document.getElementById('shop-overlay'),
             shopSpeaker: document.getElementById('shop-speaker'),
             shopCopy: document.getElementById('shop-copy'),
@@ -710,6 +711,14 @@ var Hud = {
         }
         if (this.el.dialogue) {
             this.el.dialogue.addEventListener('click', function (event) {
+                var closeBtn = event.target && event.target.closest && event.target.closest('#btn-dialogue-close');
+                if (closeBtn) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    closeBtn.blur();
+                    self.hideDialogue();
+                    return;
+                }
                 var btn = event.target && event.target.closest && event.target.closest('[data-dialogue-option]');
                 if (btn) {
                     event.preventDefault();

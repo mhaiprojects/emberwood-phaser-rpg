@@ -1835,10 +1835,19 @@ var WorldScene = new Phaser.Class({
             if (Hud.hideContextMenu) {
                 Hud.hideContextMenu();
             }
-            if (!this.isRightClick(pointer)) {
-                Hud.advanceDialogue();
+            if (this.isRightClick(pointer)) {
+                return;
             }
-            return;
+            /* Same NPC keeps the open dialogue; elsewhere ends talk then walks/acts as normal. */
+            var talkNpc = this.dialogueNpc;
+            var clickNpc = this.pickSprite(this.npcs, pointer.worldX, pointer.worldY, 18);
+            if (talkNpc && clickNpc === talkNpc) {
+                return;
+            }
+            if (Hud.hideDialogue) {
+                Hud.hideDialogue();
+            }
+            /* Fall through so ground / other-NPC clicks still path. */
         }
         if (Hud.stationOpen && Hud.stationOpen()) {
             this.cancelLongPress();

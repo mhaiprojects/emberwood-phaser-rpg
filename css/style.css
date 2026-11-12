@@ -139,7 +139,6 @@ body.is-shell-resize-y {
 #station-overlay,
 #quest-complete-overlay,
 #level-up-overlay,
-#dialogue-overlay,
 #ctx-menu {
     pointer-events: auto;
 }
@@ -639,6 +638,8 @@ button.ghost {
     display: flex;
     justify-content: center;
     background: none;
+    /* Pass clicks through empty strip; only the card captures. */
+    pointer-events: none;
 }
 
 #quest-complete-overlay,
@@ -719,6 +720,7 @@ button.ghost {
     padding: 10px 14px 8px;
     cursor: pointer;
     box-shadow: 2px 2px 0 #1a140c;
+    pointer-events: auto;
 }
 
 #dialogue-overlay .dialogue-card h2 {
@@ -732,10 +734,25 @@ button.ghost {
     color: #fff4d6;
 }
 
+#dialogue-overlay .dialogue-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 2px;
+}
+
 #dialogue-overlay #dialogue-continue {
     margin: 0;
     color: #c9a227;
     font-size: 11px;
+}
+
+#dialogue-overlay #btn-dialogue-close {
+    flex-shrink: 0;
+    padding: 4px 12px;
+    font-size: 12px;
+    cursor: pointer;
 }
 
 #dialogue-options {
