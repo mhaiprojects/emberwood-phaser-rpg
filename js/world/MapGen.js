@@ -21,6 +21,10 @@ var TILE = {
 
 var MAP_W = 36;
 var MAP_H = 28;
+/* Shore/Mine openness: ≤30% of *interior* tiles may block pathfinding.
+ * Count excludes the 1-tile outer border (edge TREEs kept for zone exits).
+ * Matches tileBlockedByTerrain / COLLIDE (WATER, TREE, ROCK, WALL, …). */
+var MAX_PATH_BLOCK_RATIO = 0.30;
 var HAVEN_GATE_TILE = { x: 23, y: 15 };
 var INTERIOR_EXIT_TILE = { x: 18, y: 20 };
 var TOWN_PROPS = {
@@ -443,6 +447,161 @@ function scatter(grid, tile, count, seed, avoidPath) {
     }
 }
 
+function mapTileBlocksPath(index) {
+    if (typeof tileBlockedByTerrain === 'function') {
+        return tileBlockedByTerrain(index);
+    }
+    return index === TILE.WATER || index === TILE.TREE || index === TILE.ROCK || index === TILE.SHRINE
+        || index === TILE.STALL || index === TILE.RANGE || index === TILE.ANVIL || index === TILE.BOOTH
+        || index === TILE.FURNACE
+        || index === TILE.BOAT || index === TILE.TOMB
+        || index === TILE.DOOR || index === TILE.WALL;
+}
+
+function isMapBorderTile(x, y) {
+    return x === 0 || y === 0 || x === MAP_W - 1 || y === MAP_H - 1;
+}
+
+function isProtectedPathBlocker(x, y, zoneId) {
+    var i;
+    var k;
+    var list;
+    var kinds;
+    var altar;
+    var rect;
+    if (isMapBorderTile(x, y)) {
+        return true;
+    }
+    if (zoneId === 'southshore' && SHORE_PROPS) {
+        if (SHORE_PROPS.boat && SHORE_PROPS.boat.x === x && SHORE_PROPS.boat.y === y) {
+            return true;
+        }
+        if (SHORE_PROPS.dock && SHORE_PROPS.dock.x === x && SHORE_PROPS.dock.y === y) {
+            return true;
+        }
+        if (SHORE_PROPS.planks) {
+            for (i = 0; i < SHORE_PROPS.planks.length; i++) {
+                if (SHORE_PROPS.planks[i].x === x && SHORE_PROPS.planks[i].y === y) {
+                    return true;
+                }
+            }
+        }
+        if (SHORE_PROPS.spots) {
+            for (i = 0; i < SHORE_PROPS.spots.length; i++) {
+                if (SHORE_PROPS.spots[i].x === x && SHORE_PROPS.spots[i].y === y) {
+                    return true;
+                }
+            }
+        }
+    }
+    if (zoneId === 'darkmine' && MINE_SHAFT_HOUSE) {
+        rect = MINE_SHAFT_HOUSE;
+        if (x >= rect.x && y >= rect.y && x < rect.x + rect.w && y < rect.y + rect.h) {
+            return true;
+        }
+        if (MINE_PROPS) {
+            kinds = ['copper', 'tin', 'iron', 'diamondore', 'dragoniteore', 'runeessence'];
+            for (k = 0; k < kinds.length; k++) {
+                list = MINE_PROPS[kinds[k]];
+                if (!list) {
+                    continue;
+                }
+                for (i = 0; i < list.length; i++) {
+                    if (list[i].x === x && list[i].y === y) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    altar = RUNE_ALTARS && zoneId ? RUNE_ALTARS[zoneId] : null;
+    if (altar && altar.x === x && altar.y === y) {
+        return true;
+    }
+    return false;
+}
+
+/**
+ * After scatter, convert excess interior blockers to grass until ≤ MAX_PATH_BLOCK_RATIO.
+ * Prefer clearing TREE/ROCK; only then non-spot WATER. Border + key props stay.
+ */
+function enforcePathBlockCap(grid, seed, zoneId) {
+    var x;
+    var y;
+    var interior = 0;
+    var blocked = 0;
+    var maxBlocked;
+    var candidates;
+    var waterCandidates;
+    var i;
+    var cell;
+    var index;
+    var score;
+    if (!grid || !zoneId) {
+        return;
+    }
+    if (zoneId !== 'southshore' && zoneId !== 'darkmine') {
+        return;
+    }
+    for (y = 0; y < MAP_H; y++) {
+        for (x = 0; x < MAP_W; x++) {
+            if (isMapBorderTile(x, y)) {
+                continue;
+            }
+            interior++;
+            if (mapTileBlocksPath(grid[y][x])) {
+                blocked++;
+            }
+        }
+    }
+    maxBlocked = Math.floor(interior * MAX_PATH_BLOCK_RATIO);
+    if (blocked <= maxBlocked) {
+        return;
+    }
+    candidates = [];
+    waterCandidates = [];
+    for (y = 1; y < MAP_H - 1; y++) {
+        for (x = 1; x < MAP_W - 1; x++) {
+            index = grid[y][x];
+            if (!mapTileBlocksPath(index) || isProtectedPathBlocker(x, y, zoneId)) {
+                continue;
+            }
+            score = hash2(x, y, seed + 401);
+            if (index === TILE.TREE || index === TILE.ROCK) {
+                candidates.push({ x: x, y: y, score: score, tile: index });
+            } else if (index === TILE.WATER) {
+                waterCandidates.push({ x: x, y: y, score: score });
+            }
+        }
+    }
+    candidates.sort(function (a, b) {
+        if (a.tile !== b.tile) {
+            /* Clear ROCK before TREE so gather trees linger a bit longer. */
+            return a.tile === TILE.ROCK ? -1 : 1;
+        }
+        return a.score - b.score;
+    });
+    waterCandidates.sort(function (a, b) {
+        return a.score - b.score;
+    });
+    for (i = 0; i < candidates.length && blocked > maxBlocked; i++) {
+        cell = candidates[i];
+        if (!mapTileBlocksPath(grid[cell.y][cell.x])) {
+            continue;
+        }
+        grid[cell.y][cell.x] = TILE.GRASS;
+        blocked--;
+    }
+    for (i = 0; i < waterCandidates.length && blocked > maxBlocked; i++) {
+        cell = waterCandidates[i];
+        if (grid[cell.y][cell.x] !== TILE.WATER) {
+            continue;
+        }
+        grid[cell.y][cell.x] = TILE.GRASS;
+        blocked--;
+    }
+}
+
 function house(grid, x, y, w, h) {
     var ix;
     var iy;
@@ -480,7 +639,8 @@ function generateMap(seed, biome, neighbors, zoneId) {
             if (biome === 'swamp') {
                 grid[y][x] = n < 3 ? TILE.WATER : (n === 3 ? TILE.FLOWER : TILE.GRASS2);
             } else if (biome === 'shore') {
-                grid[y][x] = y > MAP_H - 8 ? TILE.WATER : (n === 0 ? TILE.FLOWER : TILE.GRASS);
+                /* Thinner coast band so interior path-block stays under 30%. */
+                grid[y][x] = y > MAP_H - 6 ? TILE.WATER : (n === 0 ? TILE.FLOWER : TILE.GRASS);
             } else if (biome === 'hills') {
                 grid[y][x] = n === 0 ? TILE.GRASS2 : TILE.GRASS;
             } else if (biome === 'grave') {
@@ -582,8 +742,9 @@ function generateMap(seed, biome, neighbors, zoneId) {
             }
             setCell(grid, x, MAP_H - 7, TILE.PATH);
         }
-        scatter(grid, TILE.ROCK, 8, seed, true);
-        scatter(grid, TILE.TREE, 10, seed + 14, true);
+        /* Low TREE/ROCK scatter — keep dock / boat / fish spots; cap enforces ≤30%. */
+        scatter(grid, TILE.ROCK, 4, seed, true);
+        scatter(grid, TILE.TREE, 4, seed + 14, true);
         var di;
         for (di = 0; di < SHORE_PROPS.planks.length; di++) {
             setCell(grid, SHORE_PROPS.planks[di].x, SHORE_PROPS.planks[di].y, TILE.DOCK);
@@ -594,8 +755,9 @@ function generateMap(seed, biome, neighbors, zoneId) {
             setCell(grid, SHORE_PROPS.spots[si].x, SHORE_PROPS.spots[si].y, TILE.WATER);
         }
     } else if (biome === 'mine') {
-        scatter(grid, TILE.ROCK, 55, seed, true);
-        scatter(grid, TILE.TREE, 10, seed + 5, true);
+        /* Sparse rocks so corridors stay open; ore nodes + shaft house placed after. */
+        scatter(grid, TILE.ROCK, 18, seed, true);
+        scatter(grid, TILE.TREE, 4, seed + 5, true);
         house(grid, MINE_SHAFT_HOUSE.x, MINE_SHAFT_HOUSE.y, MINE_SHAFT_HOUSE.w, MINE_SHAFT_HOUSE.h);
         placeMineOres(grid);
         clearZoneTags('darkmine');
@@ -628,6 +790,9 @@ function generateMap(seed, biome, neighbors, zoneId) {
         placeRuneAltar(grid, zoneId);
     } else if (biome === 'town') {
         placeRuneAltar(grid, 'haven');
+    }
+    if (zoneId === 'southshore' || zoneId === 'darkmine') {
+        enforcePathBlockCap(grid, seed, zoneId);
     }
     return grid;
 }
