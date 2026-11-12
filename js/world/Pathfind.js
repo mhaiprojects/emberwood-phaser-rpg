@@ -1,6 +1,36 @@
 var PATH_LINE_COLOR = 0xaa66ff;
 /* Outer map border tiles mobs may not enter; player still can (zone exits). */
 var MOB_EDGE_MARGIN_TILES = 2;
+/*
+ * Emberhaven town-center safe zone (Chebyshev / king-move radius from TOWN_CENTER_TILE).
+ * Radius 5 → tiles tx 13–23, ty 10–20 around (18,15). No mob spawn or entry.
+ */
+var HAVEN_SAFE_RADIUS_TILES = 5;
+
+function havenSafeCenterTile() {
+    if (typeof TOWN_CENTER_TILE !== 'undefined' && TOWN_CENTER_TILE) {
+        return TOWN_CENTER_TILE;
+    }
+    if (typeof TOWN_PROPS !== 'undefined' && TOWN_PROPS.campfire) {
+        return TOWN_PROPS.campfire;
+    }
+    return { x: 18, y: 15 };
+}
+
+function havenSafeRadiusTiles() {
+    return typeof HAVEN_SAFE_RADIUS_TILES === 'number' ? HAVEN_SAFE_RADIUS_TILES : 5;
+}
+
+function havenSafeForbiddenTile(tx, ty) {
+    var c = havenSafeCenterTile();
+    var r = havenSafeRadiusTiles();
+    return Math.max(Math.abs(tx - c.x), Math.abs(ty - c.y)) <= r;
+}
+
+function havenSafeRadiusPx() {
+    var size = typeof TILE_SIZE === 'number' ? TILE_SIZE : 16;
+    return (havenSafeRadiusTiles() + 0.5) * size;
+}
 
 function mobEdgeForbiddenTile(tx, ty) {
     var margin = typeof MOB_EDGE_MARGIN_TILES === 'number' ? MOB_EDGE_MARGIN_TILES : 2;
@@ -17,6 +47,25 @@ function mobEdgeForbiddenAt(wx, wy) {
     return mobEdgeForbiddenTile(tile.tx, tile.ty);
 }
 
+/** Edge inset + Emberhaven safe courtyard (when zoneId is haven). */
+function mobForbiddenTile(tx, ty, zoneId) {
+    if (mobEdgeForbiddenTile(tx, ty)) {
+        return true;
+    }
+    if (zoneId === 'haven' && havenSafeForbiddenTile(tx, ty)) {
+        return true;
+    }
+    return false;
+}
+
+function mobForbiddenAt(zoneId, wx, wy) {
+    if (typeof worldToTile !== 'function') {
+        return mobEdgeForbiddenAt(wx, wy);
+    }
+    var tile = worldToTile(wx, wy);
+    return mobForbiddenTile(tile.tx, tile.ty, zoneId);
+}
+
 function clampMobTileToInner(tx, ty) {
     var margin = typeof MOB_EDGE_MARGIN_TILES === 'number' ? MOB_EDGE_MARGIN_TILES : 2;
     var mw = typeof MAP_W === 'number' ? MAP_W : 36;
@@ -27,13 +76,13 @@ function clampMobTileToInner(tx, ty) {
     };
 }
 
-/** Nearest walkable tile that is also outside the mob map-edge margin. */
-function nearestMobAllowedTile(grid, tx, ty) {
+/** Nearest walkable tile outside edge margin (and haven safe zone when zoneId is haven). */
+function nearestMobAllowedTile(grid, tx, ty, zoneId) {
     var start = clampMobTileToInner(tx, ty);
     if (!grid) {
         return start;
     }
-    if (tileWalkable(grid, start.tx, start.ty) && !mobEdgeForbiddenTile(start.tx, start.ty)) {
+    if (tileWalkable(grid, start.tx, start.ty) && !mobForbiddenTile(start.tx, start.ty, zoneId)) {
         return start;
     }
     var dirs = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
@@ -43,14 +92,14 @@ function nearestMobAllowedTile(grid, tx, ty) {
     var i = 0;
     while (i < queue.length && i < 800) {
         var cur = queue[i++];
-        if (tileWalkable(grid, cur.tx, cur.ty) && !mobEdgeForbiddenTile(cur.tx, cur.ty)) {
+        if (tileWalkable(grid, cur.tx, cur.ty) && !mobForbiddenTile(cur.tx, cur.ty, zoneId)) {
             return { tx: cur.tx, ty: cur.ty };
         }
         for (var d = 0; d < dirs.length; d++) {
             var nx = cur.tx + dirs[d][0];
             var ny = cur.ty + dirs[d][1];
             var key = nx + ',' + ny;
-            if (seen[key] || mobEdgeForbiddenTile(nx, ny)) {
+            if (seen[key] || mobForbiddenTile(nx, ny, zoneId)) {
                 continue;
             }
             if (ny < 0 || nx < 0 || ny >= grid.length || !grid[ny] || nx >= grid[ny].length) {

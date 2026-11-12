@@ -1162,21 +1162,22 @@ var WorldScene = new Phaser.Class({
         });
     },
 
-    /* Soft-push mobs out of the outer MOB_EDGE_MARGIN_TILES map border. */
+    /* Soft-push mobs out of the outer MOB_EDGE_MARGIN_TILES map border (and haven safe zone). */
     nudgeMobOffMapEdge: function (sprite) {
         var tile;
         var allowed;
         var center;
         var scale;
-        if (!sprite || typeof mobEdgeForbiddenAt !== 'function') {
-            return;
-        }
-        if (!mobEdgeForbiddenAt(sprite.x, sprite.y)) {
+        var zoneId = this.zoneId;
+        var forbidden = typeof mobForbiddenAt === 'function'
+            ? mobForbiddenAt(zoneId, sprite.x, sprite.y)
+            : (typeof mobEdgeForbiddenAt === 'function' && mobEdgeForbiddenAt(sprite.x, sprite.y));
+        if (!sprite || !forbidden) {
             return;
         }
         tile = worldToTile(sprite.x, sprite.y);
         allowed = typeof nearestMobAllowedTile === 'function'
-            ? nearestMobAllowedTile(this.tileGrid, tile.tx, tile.ty)
+            ? nearestMobAllowedTile(this.tileGrid, tile.tx, tile.ty, zoneId)
             : (typeof clampMobTileToInner === 'function'
                 ? clampMobTileToInner(tile.tx, tile.ty)
                 : { tx: tile.tx, ty: tile.ty });
@@ -4571,8 +4572,10 @@ var WorldScene = new Phaser.Class({
             len = dist || 1;
             vx = (dx / len) * speed;
             vy = (dy / len) * speed;
-            if (typeof mobEdgeForbiddenAt === 'function' &&
-                mobEdgeForbiddenAt(mob.x + vx, mob.y + vy)) {
+            if (typeof mobForbiddenAt === 'function'
+                ? mobForbiddenAt(this.zoneId, mob.x + vx, mob.y + vy)
+                : (typeof mobEdgeForbiddenAt === 'function' &&
+                    mobEdgeForbiddenAt(mob.x + vx, mob.y + vy))) {
                 mob.body.setVelocity(0, 0);
             } else {
                 mob.body.setVelocity(vx, vy);
@@ -6385,8 +6388,10 @@ var WorldScene = new Phaser.Class({
             var vx = Math.cos(angle) * speed;
             var vy = Math.sin(angle) * speed;
             var type = mob.mobDef && mob.mobDef.type;
-            if (typeof mobEdgeForbiddenAt === 'function' &&
-                mobEdgeForbiddenAt(mob.x + vx, mob.y + vy)) {
+            if (typeof mobForbiddenAt === 'function'
+                ? mobForbiddenAt(zoneId, mob.x + vx, mob.y + vy)
+                : (typeof mobEdgeForbiddenAt === 'function' &&
+                    mobEdgeForbiddenAt(mob.x + vx, mob.y + vy))) {
                 return;
             }
             if (isGiantMob(type) && giantBlockedAt(grid, mob.x + vx, mob.y + vy, zoneId)) {
@@ -6474,8 +6479,10 @@ var WorldScene = new Phaser.Class({
             len = dist || 1;
             vx = (dx / len) * speed;
             vy = (dy / len) * speed;
-            if (typeof mobEdgeForbiddenAt === 'function' &&
-                mobEdgeForbiddenAt(mob.x + vx, mob.y + vy)) {
+            if (typeof mobForbiddenAt === 'function'
+                ? mobForbiddenAt(self.zoneId, mob.x + vx, mob.y + vy)
+                : (typeof mobEdgeForbiddenAt === 'function' &&
+                    mobEdgeForbiddenAt(mob.x + vx, mob.y + vy))) {
                 mob.body.setVelocity(0, 0);
                 return;
             }
@@ -6546,10 +6553,16 @@ var WorldScene = new Phaser.Class({
         });
     },
 
-    /* Keep all mobs out of the outer MOB_EDGE_MARGIN_TILES map border. */
+    /* Keep all mobs out of the outer edge inset + Emberhaven safe courtyard. */
     constrainMobMapEdge: function () {
         var self = this;
-        if (typeof mobEdgeForbiddenAt !== 'function') {
+        var zoneId = this.zoneId;
+        var blockedAt = typeof mobForbiddenAt === 'function'
+            ? function (wx, wy) { return mobForbiddenAt(zoneId, wx, wy); }
+            : (typeof mobEdgeForbiddenAt === 'function'
+                ? mobEdgeForbiddenAt
+                : null);
+        if (!blockedAt) {
             return;
         }
         this.mobs.children.iterate(function (mob) {
@@ -6560,7 +6573,7 @@ var WorldScene = new Phaser.Class({
             if (!mob || !mob.aliveMob || !mob.body) {
                 return;
             }
-            if (mobEdgeForbiddenAt(mob.x, mob.y)) {
+            if (blockedAt(mob.x, mob.y)) {
                 self.nudgeMobOffMapEdge(mob);
                 return;
             }
@@ -6571,7 +6584,7 @@ var WorldScene = new Phaser.Class({
             }
             lookX = mob.x + vx * 0.2;
             lookY = mob.y + vy * 0.2;
-            if (mobEdgeForbiddenAt(lookX, lookY)) {
+            if (blockedAt(lookX, lookY)) {
                 mob.body.setVelocity(0, 0);
             }
         });
@@ -6608,25 +6621,35 @@ var WorldScene = new Phaser.Class({
         var i;
         var fire;
         var pos;
+        var center;
+        var safeR;
         var gfx = this.effectRadiusGfx;
         if (!gfx) {
             return;
         }
         gfx.clear();
-        if (!this.groundFires || !this.groundFires.length) {
-            return;
+        if (this.groundFires && this.groundFires.length) {
+            gfx.lineStyle(1, 0xffb060, 0.28);
+            for (i = 0; i < this.groundFires.length; i++) {
+                fire = this.groundFires[i];
+                if (!fire || (!fire.campfire && !fire.permanent)) {
+                    continue;
+                }
+                pos = fire.sprite ? fire.sprite : tileCenter(fire.tx, fire.ty);
+                if (!pos) {
+                    continue;
+                }
+                gfx.strokeCircle(pos.x, pos.y, Math.max(8, CAMPFIRE_REGEN_RANGE));
+            }
         }
-        gfx.lineStyle(1, 0xffb060, 0.28);
-        for (i = 0; i < this.groundFires.length; i++) {
-            fire = this.groundFires[i];
-            if (!fire || (!fire.campfire && !fire.permanent)) {
-                continue;
-            }
-            pos = fire.sprite ? fire.sprite : tileCenter(fire.tx, fire.ty);
-            if (!pos) {
-                continue;
-            }
-            gfx.strokeCircle(pos.x, pos.y, Math.max(8, CAMPFIRE_REGEN_RANGE));
+        /* Faint haven safe-zone cue (Chebyshev radius drawn as circle). */
+        if (this.zoneId === 'haven' && typeof havenSafeCenterTile === 'function') {
+            center = tileCenter(havenSafeCenterTile().x, havenSafeCenterTile().y);
+            safeR = typeof havenSafeRadiusPx === 'function'
+                ? havenSafeRadiusPx()
+                : ((typeof TILE_SIZE === 'number' ? TILE_SIZE : 16) * 5.5);
+            gfx.lineStyle(1, 0x88ccaa, 0.18);
+            gfx.strokeCircle(center.x, center.y, Math.max(8, safeR));
         }
     },
 

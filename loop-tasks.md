@@ -24,15 +24,16 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 5. Refresh `loop-next.md` with `python3 tools/loop-next.py` when useful — do not rewrite this whole file.
 6. **Every new user request** (feature/fix/content/process) is logged here immediately as `[todo]`/`[doing]` and status-tracked to `[done]`/`[blocked]` — see `.cursor/rules/loop-tasks-track-requests.mdc`.
 
-**Last updated:** 2026-11-12 — Mob spawn pyramid + density Settings.
+**Last updated:** 2026-11-12 — Emberhaven town-center safe zone.
 
-**Total tasks: 343** (48 priority + 290 in the 14 playable sections + 5 stretch). Unfinished gathering/bank/craft todos promoted into §0 (not duplicated as active work).
+**Total tasks: 344** (49 priority + 290 in the 14 playable sections + 5 stretch). Unfinished gathering/bank/craft todos promoted into §0 (not duplicated as active work).
 
 ---
 ## 0. Priority: Bank / crafting / resizable UI / gathering & hunting
 
 Active queue — implement top-down before returning to sections 1–14.
 
+- [done] Emberhaven center safe zone: no mob spawn/enter; Lv1 chickens just outside; Lv5 near N/S/E/W exits. — Conclusion: Chebyshev r=5 from TOWN_CENTER (18,15) → tx 13–23, ty 10–20; 1×=6 Lv1 ring + 4 Lv5 exits; soft-block wander/agro/chase + faint ring.
 - [done] Auto-attack & Auto-retaliate shown in Combat only (remove from Settings + battle panel). — Conclusion: Removed from Settings + `#battle-panel`; Combat tab + handlers kept; README/AGENT/GDD/hint updated.
 - [done] Show zone name & mob level range at map-edge entrances (border labels + enter chat); den/mine when relevant. — Conclusion: Faint 2-line labels at N/S/E/W exits; enter chat `You enter Northwood (mobs Lv 6–10).`; den/mine shaft markers include bands.
 - [done] Show aggro circle orange + attack range red; Settings toggle for range rings (default on). — Conclusion: Attack `0xff3b3b`, aggro `0xff8c20` @0.28; `showRangeRings` Settings “Show range rings”; rings on fight/engage/agroChase.

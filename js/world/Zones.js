@@ -380,7 +380,7 @@ function scaledMobSpawnCount(type, modifier) {
 }
 
 /** Fill short hand-authored pools with deterministic inset tiles (tx 2..33, ty 2..25). */
-function expandMobSpotPool(pool, need) {
+function expandMobSpotPool(pool, need, zoneId) {
     var out = (pool && pool.length) ? pool.slice() : [];
     var margin = typeof MOB_EDGE_MARGIN_TILES === 'number' ? MOB_EDGE_MARGIN_TILES : 2;
     var mw = typeof MAP_W === 'number' ? MAP_W : 36;
@@ -396,12 +396,15 @@ function expandMobSpotPool(pool, need) {
         seen[out[i][0] + ',' + out[i][1]] = true;
     }
     i = 0;
-    while (out.length < need && i < need * 40) {
+    while (out.length < need && i < need * 80) {
         tx = margin + ((i * 7 + 3) % innerW);
         ty = margin + ((i * 11 + 5) % innerH);
         key = tx + ',' + ty;
         i += 1;
         if (seen[key]) {
+            continue;
+        }
+        if (typeof mobForbiddenTile === 'function' && mobForbiddenTile(tx, ty, zoneId)) {
             continue;
         }
         seen[key] = true;
@@ -421,11 +424,11 @@ function buildBandMobs(zoneId, type, texture, spots, extras) {
     var def;
     var tintCycle = (extras && extras.tints) || [0xffffff];
     var poolNeed = scaledMobSpawnCount(type, MOB_SPAWN_POOL_MODIFIER);
-    var useSpots = expandMobSpotPool(spots || [], poolNeed);
+    var useSpots = expandMobSpotPool(spots || [], poolNeed, zoneId);
     for (i = 0; i < useSpots.length; i++) {
         level = zoneBandLevel(zoneId, i);
         if (extras && typeof extras.levelFor === 'function') {
-            level = extras.levelFor(i, level);
+            level = extras.levelFor(i, level, useSpots[i]);
         }
         stats = mobStatsFor(type, level);
         center = tileCenter(useSpots[i][0], useSpots[i][1]);
@@ -494,12 +497,22 @@ function mobDefsForZone(zoneId, hero) {
 }
 
 var MOB_DEFS = {
-    /* Band 1–5 — starter wilds; pyramid → Chicken 10, Cow 8, Rabbit 9, Goblin 5 @ 1×. */
+    /* Band 1–5 — starter wilds; pyramid → Chicken 10, Cow 8, Rabbit 9, Goblin 5 @ 1×.
+     * Haven: Chebyshev-safe courtyard (r≤5 from TOWN_CENTER); Lv1 ring just outside;
+     * Lv5 at N/S/E/W exit approaches (still inside 2-tile edge inset). */
     haven: buildBandMobs('haven', 'Chicken', 'mob-chicken', [
-        [24, 14], [26, 11], [28, 13], [30, 10], [25, 17], [27, 16], [29, 18], [22, 12],
-        [31, 15], [23, 19], [26, 20], [28, 9], [21, 15], [30, 19], [24, 8], [27, 14],
-        [29, 12], [25, 11], [22, 18], [31, 17]
-    ]),
+        /* Lv1 ring (cheb 6–7 from center 18,15) — first 6 kept at 1× with 4 exits */
+        [12, 15], [18, 9], [24, 15], [18, 21], [12, 11], [24, 19],
+        /* Lv5 near zone exits */
+        [18, 3], [18, 24], [3, 14], [33, 14],
+        /* Extra Lv1 for 2× pool */
+        [11, 13], [11, 17], [25, 13], [25, 17], [15, 9], [21, 9],
+        [15, 21], [21, 21], [12, 12], [24, 18]
+    ], {
+        levelFor: function (i) {
+            return (i >= 6 && i <= 9) ? 5 : 1;
+        }
+    }),
     millfields: buildBandMobs('millfields', 'Cow', 'mob-cow', [
         [8, 12], [12, 8], [18, 7], [24, 9], [28, 12], [30, 16], [26, 18], [20, 20],
         [14, 19], [9, 16], [11, 11], [16, 14], [22, 11], [27, 8], [31, 14], [19, 16],
