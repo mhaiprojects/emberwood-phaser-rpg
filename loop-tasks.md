@@ -24,7 +24,7 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 5. Refresh `loop-next.md` with `python3 tools/loop-next.py` when useful — do not rewrite this whole file.
 6. **Every new user request** (feature/fix/content/process) is logged here immediately as `[todo]`/`[doing]` and status-tracked to `[done]`/`[blocked]` — see `.cursor/rules/loop-tasks-track-requests.mdc`.
 
-**Last updated:** 2026-11-12 — GDD refresh (recent chat design).
+**Last updated:** 2026-11-12 — project-relative Cursor plans.
 
 **Total tasks: 345** (50 priority + 290 in the 14 playable sections + 5 stretch). Unfinished gathering/bank/craft todos promoted into §0 (not duplicated as active work).
 
@@ -33,6 +33,7 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 
 Active queue — implement top-down before returning to sections 1–14.
 
+- [done] Move Emberwood Cursor plans to project-relative `.cursor/plans/` (isProject: true). — Conclusion: Moved TPS/item-actions/Vue HUD/cheap-loop from ~/.cursor/plans; stubs left globally; rule `project-plans.mdc`.
 - [done] TPS-driven GameClock + Game Speed + tiles/sec movement; world & battle actions on tick countdowns. — Conclusion: `GameClock.js` simTps (30/60/120) + gameSpeed (0.5–2×); movement tiles/sec via `pxPerSec`; gather/combat/regen/respawn/battle turns use `secondsToTicks`; Settings persist `hero.simTps`/`gameSpeed`; render FPS stays 60.
 - [done] Remove ~3/4 of Mire (swamp) water path-blockers; keep ~1/4 via thinner base fill + scatter. — Conclusion: Base `n%44<3` (was `n%11<3`) + water scatter 7 (was 28); mire seed99 ~232→68 WATER (~29% kept / ~71% removed); `MapGen.js?v=mirewater1`.
 - [done] Character cannot move diagonally on tiles (keep no corner-squeeze). — Conclusion: `clampMoveNoCornerCut` only stops when both flanks blocked; open/single-flank diagonals keep velocity; A* still requires both flanks.

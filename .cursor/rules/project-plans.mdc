@@ -1,0 +1,12 @@
+---
+description: Keep Cursor plans for this repo under .cursor/plans (project-relative)
+alwaysApply: true
+---
+
+# Project-relative Cursor plans
+
+Store Emberwood plans in **`.cursor/plans/*.plan.md`** with frontmatter `isProject: true`.
+
+Do **not** leave new Emberwood plans only in `~/.cursor/plans/`. If a plan was created in the home plans folder, move/copy it into `.cursor/plans/` and set `isProject: true` (optional thin stub in `~/.cursor/plans/` pointing here).
+
+Canonical set lives in the repo so plans travel with the project and show the Project badge.
