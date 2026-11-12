@@ -22,7 +22,6 @@ var Hud = {
             zone: document.getElementById('hud-zone'),
             hp: document.getElementById('hud-hp'),
             gold: document.getElementById('hud-gold'),
-            xp: document.getElementById('hud-xp'),
             level: document.getElementById('hud-level'),
             total: document.getElementById('hud-total'),
             quest: document.getElementById('hud-quest'),
@@ -3349,7 +3348,6 @@ var Hud = {
             : (typeof skillTotal === 'function' ? skillTotal(this.hero()) : 0);
         var vue = this.vueState();
         var hpText = state.hp + ' / ' + state.maxHp;
-        var xpBar = this.combatXpBar(state.xp);
         if (vue) {
             vue.zone = state.zone;
             vue.zoneId = state.zoneId;
@@ -3357,10 +3355,6 @@ var Hud = {
             vue.maxHp = state.maxHp;
             vue.hpText = hpText;
             vue.gold = state.gold;
-            vue.xp = state.xp;
-            vue.xpText = xpBar.label;
-            vue.xpFillPct = xpBar.pct;
-            vue.xpFillColor = '#c9a227';
             vue.level = state.level;
             vue.total = total;
             vue.quest = state.quest;
@@ -3378,9 +3372,6 @@ var Hud = {
             }
             if (this.el.gold) {
                 this.el.gold.textContent = String(state.gold);
-            }
-            if (this.el.xp) {
-                this.el.xp.textContent = xpBar.label;
             }
             if (this.el.level) {
                 this.el.level.textContent = String(state.level);
@@ -3400,7 +3391,6 @@ var Hud = {
             this.renderWorldMap();
         }
         this.paintHpFill(state.hp, state.maxHp);
-        this.paintXpBar(state.xp);
         this.renderHero(this.hero());
     },
 
@@ -3421,20 +3411,6 @@ var Hud = {
             labelEl.textContent = text;
         }
         return pct;
-    },
-
-    combatXpBar: function (xp) {
-        var amount = typeof xp === 'number' ? xp : 0;
-        var band = 40;
-        var next = (Math.floor(amount / band) + 1) * band;
-        var into = amount - (next - band);
-        var pct = Math.max(0, Math.min(100, (into / band) * 100));
-        return {
-            xp: amount,
-            next: next,
-            pct: pct,
-            label: amount + ' / ' + next
-        };
     },
 
     paintHpFill: function (hp, maxHp) {
@@ -3464,26 +3440,6 @@ var Hud = {
         }
     },
 
-    paintXpBar: function (xp) {
-        var bar = this.combatXpBar(xp);
-        var vue = this.vueState();
-        if (vue) {
-            vue.xp = bar.xp;
-            vue.xpText = bar.label;
-            vue.xpFillPct = bar.pct;
-            vue.xpFillColor = '#c9a227';
-        }
-        var fill = document.getElementById('xp-fill');
-        var label = document.getElementById('hud-xp');
-        if (label) {
-            label.textContent = bar.label;
-        }
-        if (fill && !vue) {
-            fill.style.width = bar.pct + '%';
-            fill.style.backgroundColor = '#c9a227';
-        }
-    },
-
     renderHero: function (hero) {
         if (!hero) {
             return;
@@ -3509,7 +3465,6 @@ var Hud = {
             }
         }
         this.paintHpFill(hero.hp, hero.maxHp);
-        this.paintXpBar(hero.xp);
         this.renderInventory(hero);
         this.renderSkills(hero);
         this.renderEquip(hero);

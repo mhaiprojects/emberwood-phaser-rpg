@@ -696,7 +696,6 @@ function makeHero() {
         maxHp: 100,
         damage: 16,
         gold: 8,
-        xp: 0,
         level: 1,
         style: 'shared',
         stance: 'melee',
@@ -2626,26 +2625,19 @@ function skillTotal(hero) {
     return total;
 }
 
+/** Combat skills averaged for Hero level (no separate Hero XP). */
+var COMBAT_SKILL_IDS = [
+    'attack', 'strength', 'defence', 'hitpoints', 'ranged', 'magic', 'prayer'
+];
+
 function combatLevel(hero) {
-    var attack = heroSkillLevel(hero, 'attack');
-    var strength = heroSkillLevel(hero, 'strength');
-    var defence = heroSkillLevel(hero, 'defence');
-    var hitpoints = heroSkillLevel(hero, 'hitpoints');
-    var prayer = heroSkillLevel(hero, 'prayer');
-    var ranged = heroSkillLevel(hero, 'ranged');
-    var magic = heroSkillLevel(hero, 'magic');
-    var base = 0.25 * (defence + hitpoints + Math.floor(prayer / 2));
-    var melee = 0.325 * (attack + strength);
-    var range = 0.325 * Math.floor(ranged * 1.5);
-    var mage = 0.325 * Math.floor(magic * 1.5);
-    var power = melee;
-    if (range > power) {
-        power = range;
+    var i;
+    var sum = 0;
+    var n = COMBAT_SKILL_IDS.length;
+    for (i = 0; i < n; i++) {
+        sum += heroSkillLevel(hero, COMBAT_SKILL_IDS[i]);
     }
-    if (mage > power) {
-        power = mage;
-    }
-    return Math.floor(base + power);
+    return Math.max(1, Math.floor(sum / n));
 }
 
 function applyCombatLevel(hero, announce) {
@@ -2655,8 +2647,12 @@ function applyCombatLevel(hero, announce) {
     var next = combatLevel(hero);
     var prev = typeof hero.level === 'number' ? hero.level : 0;
     hero.level = next;
+    /* Drop legacy Hero XP pool — level is combat-skill average only. */
+    if (hero.xp != null) {
+        delete hero.xp;
+    }
     if (announce && next > prev && typeof Hud !== 'undefined' && Hud.log) {
-        Hud.log('Your combat level is now ' + next + '.');
+        Hud.log('Your level is now ' + next + '.');
     }
     return next;
 }
@@ -3119,6 +3115,12 @@ function normalizeHeroCombat(hero) {
     } else if (hero.xpMultiplier !== 2 && hero.xpMultiplier !== 5
             && hero.xpMultiplier !== 10 && hero.xpMultiplier !== 25) {
         hero.xpMultiplier = 1;
+    }
+    if (hero.xp != null) {
+        delete hero.xp;
+    }
+    if (typeof applyCombatLevel === 'function') {
+        applyCombatLevel(hero, false);
     }
     if (hero.autoAttack == null) {
         hero.autoAttack = false;

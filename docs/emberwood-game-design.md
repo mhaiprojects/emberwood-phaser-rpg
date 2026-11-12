@@ -151,8 +151,8 @@ Drag handles: `#resize-side`, `#resize-bottom`, `#resize-iface`. Sizes persist i
 ### 3.2 Side panel
 
 - Minimap (click chrome for world-map overlay)
-- Zone name, display name, combat level, total level
-- **Shared stat bars:** Hitpoints, Run energy (click toggles run), XP — fill + label overlaid (`.stat-bar`)
+- Zone name, display name, **Level** (= average of combat skills), total level
+- **Shared stat bars:** Hitpoints, Run energy (click toggles run) — fill + label overlaid (`.stat-bar`). No separate Hero XP bar.
 - Gold
 - Task blurb
 - Battle panel (overworld fight): message, enemy list, Attack / Eat food / Run — **no** auto-attack / auto-retaliate here

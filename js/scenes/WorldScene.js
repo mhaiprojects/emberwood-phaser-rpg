@@ -1737,7 +1737,6 @@ var WorldScene = new Phaser.Class({
             hp: hero.hp,
             maxHp: hero.maxHp,
             gold: hero.gold,
-            xp: hero.xp,
             level: typeof combatLevel === 'function' ? combatLevel(hero) : hero.level,
             total: typeof skillTotal === 'function' ? skillTotal(hero) : 0,
             quest: questText,
@@ -5206,7 +5205,6 @@ var WorldScene = new Phaser.Class({
                 quest.stage = 3;
                 quest.points = (quest.points || 0) + 1;
                 addItem(hero, 'coins', 50);
-                hero.xp += 40;
                 if (typeof gainSkillXp === 'function') {
                     gainSkillXp(hero, 'attack', 25);
                     gainSkillXp(hero, 'defence', 15);
@@ -5349,13 +5347,15 @@ var WorldScene = new Phaser.Class({
     },
 
     levelHero: function (hero) {
-        var rank = 1 + Math.floor(hero.xp / 40);
-        var nextDamage = 14 + rank * 2;
-        if (nextDamage > hero.damage) {
-            hero.damage = nextDamage;
-        }
+        var rank;
+        var nextDamage;
         if (typeof applyCombatLevel === 'function') {
             applyCombatLevel(hero, false);
+        }
+        rank = typeof hero.level === 'number' && hero.level > 0 ? hero.level : 1;
+        nextDamage = 14 + rank * 2;
+        if (nextDamage > hero.damage) {
+            hero.damage = nextDamage;
         }
     },
 
@@ -6353,10 +6353,9 @@ var WorldScene = new Phaser.Class({
         var hero = this.registry.get('hero');
         if (outcome === 'win' && this.lastFought) {
             var def = this.lastFought.mobDef;
-            hero.xp += def.xp || 0;
             this.levelHero(hero);
             this.registry.set('hero', hero);
-            Hud.log('The ' + def.type + ' collapses. +' + def.xp + ' xp. Loot drops to the ground.');
+            Hud.log('The ' + def.type + ' collapses. Loot drops to the ground.');
             if (def.type === 'Goblin') {
                 var quest = this.registry.get('quest');
                 if (quest.stage === 1) {
