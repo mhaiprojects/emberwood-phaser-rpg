@@ -254,7 +254,7 @@ World clicks ignored while title, `encounterLock` (pre-fight shake), or legacy `
 
 ### 5.1 Combat (overworld)
 
-Architecture (combat-intent redesign, dual-write migration): **PlayerIntent** (`world.playerIntent`) + **CombatController** (`js/world/CombatController.js`) own acquire policy; legacy `engageTarget` / `playerClickWalkActive` still mirrored. Mob agro/leash stays on WorldScene. Plan: `.cursor/plans/combat-intent-redesign.plan.md`.
+Architecture (combat-intent redesign): **PlayerIntent** (`world.playerIntent`) is primary; **CombatController** (`js/world/CombatController.js`) owns acquire policy, intent writers, and fight begin/end/leash hooks. Legacy `engageTarget` / `playerClickWalkActive` are **mirrors only** (Hud / older readers). Clears go through `clearAttackIntent` / `cancelPlayerCombat`. Mob agro AI stays on WorldScene. Plan: `.cursor/plans/combat-intent-redesign.plan.md`.
 
 1. Click living mob → intent `attack` / `engageTarget` → path to **stand-in-weapon-range** tile → `beginFight` → shake → `startOverworldFight`
 2. Ticks every **600 ms**; Attack / Eat / Run / special / spells from HUD. Once fighting, swings are **not** gated by autos.

@@ -33,6 +33,7 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 
 Active queue — implement top-down before returning to sections 1–14.
 
+- [done] Finish combat-intent redesign: move begin/tick/end into Controller; intent primary; leash clears intent; drop dual-write footguns. — Conclusion: Controller hooks begin/end/leash; intent-primary clears/chase; mirrors kept for Hud; tick body stays on WorldScene.
 - [done] Build combat-intent redesign: playerIntent + CombatController + stand-in-range API; slim chase writers. — Conclusion: CombatController + standInRangeWorld; dual-write intent; acquire gates; chaseFightMob once/update; GDD updated.
 - [done] Remove Hero XP; Hero level = combat level from average combat skills only. — Conclusion: Dropped hero.xp + XP bar; Level = floor(avg of Atk/Str/Def/HP/Range/Mage/Pray); HUD Level label; damage scales from level.
 - [done] Add Settings XP multiplier for quick game testing. — Conclusion: Settings 1/2/5/10/25×; `hero.xpMultiplier` via `gainSkillXp`; default 1×; persists with save.

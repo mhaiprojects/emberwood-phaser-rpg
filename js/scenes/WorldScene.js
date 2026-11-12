@@ -80,7 +80,7 @@ var WorldScene = new Phaser.Class({
             ? CombatController.idleIntent()
             : { kind: 'idle', target: null, dest: null, pauseAutos: false, silent: false, source: null };
         this.tileGrid = null;
-        this.engageTarget = null;
+        this.clearAttackIntent();
         this.talkTarget = null;
         this.fishTarget = null;
         this.fishAction = null;
@@ -242,7 +242,7 @@ var WorldScene = new Phaser.Class({
         this.encounterLock = false;
         this.exitLock = false;
         this.lastFought = null;
-        this.engageTarget = null;
+        this.clearAttackIntent();
         this.talkTarget = null;
         this.graveTarget = null;
         this.clearGather();
@@ -1077,7 +1077,7 @@ var WorldScene = new Phaser.Class({
         this.clearShaftMarkers();
         this.clearZoneBorderLabels();
         this.clearMineFx();
-        this.engageTarget = null;
+        this.clearAttackIntent();
         this.talkTarget = null;
         this.clearGather();
         this.dialogueNpc = null;
@@ -1862,7 +1862,7 @@ var WorldScene = new Phaser.Class({
             if (Hud.hideContextMenu) {
                 Hud.hideContextMenu();
             }
-            this.engageTarget = null;
+            this.clearAttackIntent();
             this._fightPlayerClose = false;
             this.talkTarget = null;
             this.clearGather();
@@ -1995,7 +1995,7 @@ var WorldScene = new Phaser.Class({
         var leftGrave = this.pickGravestone(x, y, 18);
         if (leftGrave) {
             this.clearFish();
-            this.engageTarget = null;
+            this.clearAttackIntent();
             this.talkTarget = null;
             this.lootTarget = null;
             this.queueGraveReclaim(leftGrave);
@@ -2005,7 +2005,7 @@ var WorldScene = new Phaser.Class({
         var leftLootPile = this.pickLootPile(x, y, 18);
         if (leftLootPile && leftLootPile.length) {
             this.clearFish();
-            this.engageTarget = null;
+            this.clearAttackIntent();
             this.talkTarget = null;
             this.queueLootTake(this.topLootFromPile(leftLootPile));
             this.armLongPress(pointer);
@@ -2041,7 +2041,7 @@ var WorldScene = new Phaser.Class({
             hit = this.findNpcByKey((scenery.interact && scenery.interact.npcKey) || 'guild');
             if (hit) {
                 this.talkTarget = hit;
-                this.engageTarget = null;
+                this.clearAttackIntent();
                 this.clearFish();
                 this.setWalk(hit.x, hit.y, { allowEnd: true });
                 return;
@@ -2063,21 +2063,21 @@ var WorldScene = new Phaser.Class({
         hit = this.pickSprite(this.npcs, x, y, 18);
         if (hit) {
             this.talkTarget = hit;
-            this.engageTarget = null;
+            this.clearAttackIntent();
             this.lootTarget = null;
             this.clearFish();
             this.setWalk(hit.x, hit.y, { allowEnd: true });
             return;
         }
         if (scenery && !(typeof isWalkableExamineKind === 'function' && isWalkableExamineKind(scenery.kind))) {
-            this.engageTarget = null;
+            this.clearAttackIntent();
             this.talkTarget = null;
             this.lootTarget = null;
             this.clearFish();
             this.examineScenery(scenery);
             return;
         }
-        this.engageTarget = null;
+        this.clearAttackIntent();
         this.talkTarget = null;
         this.lootTarget = null;
         this.clearFish();
@@ -2422,7 +2422,7 @@ var WorldScene = new Phaser.Class({
     },
 
     clickFishSpot: function (hit) {
-        this.engageTarget = null;
+        this.clearAttackIntent();
         this.talkTarget = null;
         if (!hit || hit.kind !== 'fishspot') {
             return false;
@@ -2473,7 +2473,7 @@ var WorldScene = new Phaser.Class({
     },
 
     clickStation: function (hit) {
-        this.engageTarget = null;
+        this.clearAttackIntent();
         this.talkTarget = null;
         if (!hit || !(typeof isStationKind === 'function' && isStationKind(hit.kind))) {
             return false;
@@ -2567,7 +2567,7 @@ var WorldScene = new Phaser.Class({
     clickStairs: function (hit) {
         var interact;
         var pos;
-        this.engageTarget = null;
+        this.clearAttackIntent();
         this.talkTarget = null;
         this.lootTarget = null;
         if (!hit) {
@@ -3673,7 +3673,7 @@ var WorldScene = new Phaser.Class({
     },
 
     clickChopTree: function (hit) {
-        this.engageTarget = null;
+        this.clearAttackIntent();
         this.talkTarget = null;
         this.clearGather();
         if (!hit || this.encounterLock || (window.Hud && Hud.mode === 'battle')) {
@@ -3814,7 +3814,7 @@ var WorldScene = new Phaser.Class({
     },
 
     clickMineBoulder: function (hit) {
-        this.engageTarget = null;
+        this.clearAttackIntent();
         this.talkTarget = null;
         this.clearGather();
         if (!hit || this.encounterLock || (window.Hud && Hud.mode === 'battle')) {
@@ -3958,7 +3958,7 @@ var WorldScene = new Phaser.Class({
                 && this.mineTarget.tx === hit.tx && this.mineTarget.ty === hit.ty) {
             return true;
         }
-        this.engageTarget = null;
+        this.clearAttackIntent();
         this.talkTarget = null;
         this.clearGather();
         if (this.isTileDepleted(hit.tx, hit.ty)) {
@@ -4319,7 +4319,7 @@ var WorldScene = new Phaser.Class({
                 this.clearWalk();
             }
             this.talkTarget = null;
-            this.engageTarget = null;
+            this.clearAttackIntent();
             this.clearFish();
             this.showLootContextAt(lootPile, pos);
             return;
@@ -4332,7 +4332,7 @@ var WorldScene = new Phaser.Class({
             this.clearWalk();
         }
         this.talkTarget = null;
-        this.engageTarget = null;
+        this.clearAttackIntent();
         this.clearFish();
         this.showNpcExamineMenu(npc, pos);
     },
@@ -4479,7 +4479,7 @@ var WorldScene = new Phaser.Class({
             return;
         }
         var dest = this.exitWalkPoint(dir);
-        this.engageTarget = null;
+        this.clearAttackIntent();
         this.talkTarget = null;
         this.clearFish();
         this.travelZoneId = zoneId;
@@ -4640,21 +4640,50 @@ var WorldScene = new Phaser.Class({
         return false;
     },
 
+    /* Intent-primary attack clear; mirrors engageTarget via CombatController. */
+    clearAttackIntent: function (opts) {
+        if (typeof CombatController !== 'undefined' && CombatController.clearAttack) {
+            CombatController.clearAttack(this, opts || {});
+            return;
+        }
+        this.clearAttackIntent();
+        this._fightPlayerClose = false;
+        if (opts && opts.clearWalk) {
+            this.clearWalk((opts && opts.clearWalkOpts) || {});
+        }
+    },
+
+    attackIntentTarget: function () {
+        if (typeof CombatController !== 'undefined' && CombatController.attackTarget) {
+            return CombatController.attackTarget(this);
+        }
+        return this.engageTarget && this.engageTarget.aliveMob ? this.engageTarget : null;
+    },
+
+    chaseAutosPaused: function () {
+        if (typeof CombatController !== 'undefined' && CombatController.autosPaused) {
+            return CombatController.autosPaused(this);
+        }
+        return !!this.playerClickWalkActive;
+    },
+
     chaseWalkTarget: function () {
-        if (this.engageTarget) {
-            if (!this.engageTarget.active || !this.engageTarget.aliveMob) {
-                this.engageTarget = null;
-            } else if (this.overworldFight && this.overworldFight.mob === this.engageTarget) {
+        var engage = this.attackIntentTarget();
+        var fightMobRange;
+        if (engage) {
+            if (!engage.active || !engage.aliveMob) {
+                this.clearAttackIntent();
+            } else if (this.overworldFight && this.overworldFight.mob === engage) {
                 /* In-fight chase only while already inside mob attack range. */
-                var fightMobRange = typeof mobAttackRangePx === 'function'
-                    ? mobAttackRangePx(this.engageTarget)
+                fightMobRange = typeof mobAttackRangePx === 'function'
+                    ? mobAttackRangePx(engage)
                     : MELEE_ENGAGE_PX;
-                if (this.fightDistancePx(this.engageTarget) > fightMobRange) {
+                if (this.fightDistancePx(engage) > fightMobRange) {
                     return null;
                 }
-                return this.engageTarget;
+                return engage;
             } else {
-                return this.engageTarget;
+                return engage;
             }
         }
         if (this.talkTarget) {
@@ -4760,7 +4789,7 @@ var WorldScene = new Phaser.Class({
             return;
         }
         /* Click-path wins over in-fight retaliate close-in. */
-        if (this.playerClickWalkActive) {
+        if (this.chaseAutosPaused()) {
             return;
         }
         move = this.moveFlags ? this.moveFlags() : null;
@@ -4782,12 +4811,13 @@ var WorldScene = new Phaser.Class({
         if (dist > mobRange) {
             if (this._fightPlayerClose) {
                 this._fightPlayerClose = false;
-                if (this.engageTarget === mob) {
-                    this.engageTarget = null;
+                if (this.attackIntentTarget() === mob || this.engageTarget === mob) {
+                    this.clearAttackIntent({ clearWalk: true });
+                } else {
+                    this.clearWalk();
                 }
-                this.clearWalk();
-            } else if (this.engageTarget === mob) {
-                this.engageTarget = null;
+            } else if (this.attackIntentTarget() === mob || this.engageTarget === mob) {
+                this.clearAttackIntent();
             }
             return;
         }
@@ -4802,7 +4832,18 @@ var WorldScene = new Phaser.Class({
                 return;
             }
             this._fightPlayerClose = true;
-            this.engageTarget = mob;
+            if (typeof CombatController !== 'undefined' && CombatController.applyIntent) {
+                CombatController.applyIntent(this, {
+                    kind: 'attack',
+                    target: mob,
+                    dest: null,
+                    pauseAutos: false,
+                    silent: true,
+                    source: 'retaliate'
+                });
+            } else {
+                this.engageTarget = mob;
+            }
             if (!this.walkTarget) {
                 this.walkToEngage(mob);
             }
@@ -4811,10 +4852,11 @@ var WorldScene = new Phaser.Class({
 
         if (this._fightPlayerClose) {
             this._fightPlayerClose = false;
-            if (this.engageTarget === mob) {
-                this.engageTarget = null;
+            if (this.attackIntentTarget() === mob || this.engageTarget === mob) {
+                this.clearAttackIntent({ clearWalk: true });
+            } else {
+                this.clearWalk();
             }
-            this.clearWalk();
         }
     },
 
@@ -4823,7 +4865,7 @@ var WorldScene = new Phaser.Class({
             return false;
         }
         var dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, chase.x, chase.y);
-        if (this.engageTarget === chase) {
+        if (this.attackIntentTarget() === chase || this.engageTarget === chase) {
             return dist <= this.heroEngageRangePx();
         }
         if (this.talkTarget === chase) {
@@ -4849,7 +4891,7 @@ var WorldScene = new Phaser.Class({
         if (!drop || drop.taken || !drop.sprite) {
             return false;
         }
-        this.engageTarget = null;
+        this.clearAttackIntent();
         this.talkTarget = null;
         this.clearFish();
         if (this.playerLootInRange(drop)) {
@@ -4939,7 +4981,6 @@ var WorldScene = new Phaser.Class({
         this.lootTarget = null;
         this.talkTarget = null;
         this.clearFish();
-        this.engageTarget = mob;
         this._engageReachFailAt = 0;
         if (typeof CombatController !== 'undefined' && CombatController.applyIntent) {
             CombatController.applyIntent(this, {
@@ -4950,6 +4991,8 @@ var WorldScene = new Phaser.Class({
                 silent: !!opts.silent,
                 source: opts.source || 'click'
             });
+        } else {
+            this.engageTarget = mob;
         }
         if (this.fightDistancePx(mob) <= this.heroEngageRangePx()) {
             this.beginFight(mob);
@@ -5553,7 +5596,11 @@ var WorldScene = new Phaser.Class({
             this.overworldTick = null;
         }
         this.overworldFight = null;
-        this._fightPlayerClose = false;
+        if (typeof CombatController !== 'undefined' && CombatController.onEndFight) {
+            CombatController.onEndFight(this);
+        } else {
+            this._fightPlayerClose = false;
+        }
         this.clearCombatRangeRings();
         if (Hud.hideOverworldBattle) {
             Hud.hideOverworldBattle();
@@ -5693,10 +5740,15 @@ var WorldScene = new Phaser.Class({
                 return;
             }
         }
-        this.lootTarget = null;
-        this.engageTarget = null;
+        if (typeof CombatController !== 'undefined' && CombatController.onBeginFight) {
+            CombatController.onBeginFight(this, mob);
+        } else {
+            this.lootTarget = null;
+            this.clearAttackIntent();
+            this._fightPlayerClose = false;
+            this.lastFought = mob;
+        }
         this.encounterLock = true;
-        this.lastFought = mob;
         if (Hud.hideDialogue) {
             Hud.hideDialogue();
         }
@@ -6298,7 +6350,7 @@ var WorldScene = new Phaser.Class({
         if (!grave || !(grave.items && grave.items.length)) {
             return false;
         }
-        this.engageTarget = null;
+        this.clearAttackIntent();
         this.talkTarget = null;
         this.lootTarget = null;
         this.clearGather();
@@ -6461,7 +6513,7 @@ var WorldScene = new Phaser.Class({
         }
         this.registry.set('battleOutcome', null);
         this.lastFought = null;
-        this.engageTarget = null;
+        this.clearAttackIntent();
         this.refreshHud();
     },
 
@@ -6705,14 +6757,20 @@ var WorldScene = new Phaser.Class({
     /* Drop agro / fight and walk home when player kites past leash. */
     releaseMobFromLeash: function (mob) {
         var fight = this.overworldFight;
+        var leash;
         if (!mob) {
             return;
         }
         this.clearMobAgroChase(mob);
         mob.leashReturning = true;
         this.steerMobHome(mob);
-        if (this.engageTarget === mob) {
-            this.engageTarget = null;
+        if (typeof CombatController !== 'undefined' && CombatController.onLeashRelease) {
+            leash = CombatController.onLeashRelease(this, mob);
+            if (!leash.clearedEngage && this.engageTarget === mob) {
+                this.clearAttackIntent({ clearWalk: true });
+            }
+        } else if (this.engageTarget === mob) {
+            this.clearAttackIntent();
             this.clearWalk();
         }
         if (fight && fight.mob === mob) {
@@ -7270,31 +7328,40 @@ var WorldScene = new Phaser.Class({
         var hero;
         var tiles;
         var near;
-        var autosPaused;
+        var engage;
         if (this.encounterLock || this.uiPaused() || this.time.now < this.engageGrace) {
             return false;
         }
+        if (typeof CombatController !== 'undefined' && CombatController.ensureIntent) {
+            CombatController.ensureIntent(this);
+        }
         range = this.heroEngageRangePx();
         /* Click-to-attack engage continues even if a prior click-walk flag lingered. */
-        if (this.engageTarget && this.engageTarget.aliveMob) {
-            this.playerClickWalkActive = false;
-            if (this.playerIntent) {
-                this.playerIntent.pauseAutos = false;
+        engage = this.attackIntentTarget();
+        if (engage) {
+            if (typeof CombatController !== 'undefined' && CombatController.applyIntent) {
+                CombatController.applyIntent(this, {
+                    kind: 'attack',
+                    target: engage,
+                    dest: this.walkTarget ? { x: this.walkTarget.x, y: this.walkTarget.y } : null,
+                    pauseAutos: false,
+                    silent: true,
+                    source: (this.playerIntent && this.playerIntent.source) || 'engage'
+                });
+            } else {
+                this.playerClickWalkActive = false;
             }
-            dist = this.fightDistancePx(this.engageTarget);
+            dist = this.fightDistancePx(engage);
             if (dist <= range) {
-                this.beginFight(this.engageTarget);
+                this.beginFight(engage);
                 return true;
             }
             if (!this.walkTarget) {
-                this.walkToEngage(this.engageTarget);
+                this.walkToEngage(engage);
             }
             return false;
         }
-        autosPaused = typeof CombatController !== 'undefined' && CombatController.autosPaused
-            ? CombatController.autosPaused(this)
-            : !!this.playerClickWalkActive;
-        if (autosPaused) {
+        if (this.chaseAutosPaused()) {
             return false;
         }
         if (!this.autoAttackOn()) {
@@ -7559,7 +7626,11 @@ var WorldScene = new Phaser.Class({
         if (Keys.justPressed('Escape')) {
             this.clearWalk();
             this.talkTarget = null;
-            this.engageTarget = null;
+            if (typeof CombatController !== 'undefined' && CombatController.cancelPlayerCombat) {
+                CombatController.cancelPlayerCombat(this);
+            } else {
+                this.clearAttackIntent();
+            }
             this.lootTarget = null;
             this.clearGather();
             if (window.Hud && Hud.hideContextMenu) {
@@ -7573,7 +7644,11 @@ var WorldScene = new Phaser.Class({
             this.noteTutorial('walk');
             this.clearWalk();
             this.talkTarget = null;
-            this.engageTarget = null;
+            if (typeof CombatController !== 'undefined' && CombatController.cancelPlayerCombat) {
+                CombatController.cancelPlayerCombat(this);
+            } else {
+                this.clearAttackIntent();
+            }
             this.lootTarget = null;
             this.clearGather();
             if (window.Hud && Hud.bankOpen && Hud.bankOpen() && Hud.hideBank) {
@@ -7587,9 +7662,11 @@ var WorldScene = new Phaser.Class({
             if (move.up && !move.down) { vy = -speed; }
             else if (move.down && !move.up) { vy = speed; }
         } else {
-            var chasing = this.playerClickWalkActive ? null : this.chaseWalkTarget();
+            var chasePaused = this.chaseAutosPaused();
+            var chasing = chasePaused ? null : this.chaseWalkTarget();
+            var engageNow = this.attackIntentTarget();
             if (!this.walkTarget && chasing && !this.chaseInRange(chasing)) {
-                if (this.engageTarget === chasing) {
+                if (engageNow === chasing) {
                     this.walkToEngage(chasing);
                 } else {
                     this.setWalk(chasing.x, chasing.y, { allowEnd: true });
@@ -7597,10 +7674,11 @@ var WorldScene = new Phaser.Class({
             }
             if (this.walkTarget) {
                 this.maybeRepath();
-                chasing = this.playerClickWalkActive ? null : this.chaseWalkTarget();
+                chasing = chasePaused ? null : this.chaseWalkTarget();
+                engageNow = this.attackIntentTarget();
                 var destDist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.walkTarget.x, this.walkTarget.y);
                 if (destDist < 6 && chasing && !this.chaseInRange(chasing)) {
-                    var reChase = (this.engageTarget === chasing)
+                    var reChase = (engageNow === chasing)
                         ? (this.engageStandWorld(chasing) || { x: chasing.x, y: chasing.y })
                         : { x: chasing.x, y: chasing.y };
                     this.walkTarget = { x: reChase.x, y: reChase.y };
@@ -7621,15 +7699,15 @@ var WorldScene = new Phaser.Class({
                         vy = 0;
                         this.drawPathLine();
                         /* Stuck short of an engage target (e.g. crab on water): fight if in range, else give up once. */
-                        if (this.engageTarget && this.engageTarget.aliveMob && this.walkBlocked
+                        engageNow = this.attackIntentTarget();
+                        if (engageNow && engageNow.aliveMob && this.walkBlocked
                                 && (!this.walkPath || !this.walkPath.length)) {
-                            if (this.fightDistancePx(this.engageTarget) <= this.heroEngageRangePx()) {
-                                this.beginFight(this.engageTarget);
+                            if (this.fightDistancePx(engageNow) <= this.heroEngageRangePx()) {
+                                this.beginFight(engageNow);
                             } else if (!this._engageReachFailAt || this.time.now >= this._engageReachFailAt) {
                                 this._engageReachFailAt = this.time.now + 2500;
                                 Hud.log('You can\'t reach that.');
-                                this.engageTarget = null;
-                                this.clearWalk();
+                                this.clearAttackIntent({ clearWalk: true });
                             }
                         }
                     } else {

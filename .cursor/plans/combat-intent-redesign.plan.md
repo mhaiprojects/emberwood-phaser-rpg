@@ -207,11 +207,13 @@ Keep leash (`MOB_LEASH_TILES` Chebyshev from home) / haven safe / wander in Worl
 
 Do **not** rewrite WorldScene in one shot. Ship in layers:
 
-1. **Range + stand API consolidation** — all attack paths already use `walkToEngage`; expand helper, remove remaining `setWalk(mob.x, mob.y)` for combat.
-2. **Introduce `playerIntent`** beside old flags; dual-write (`engageTarget` mirrors `intent.kind==='attack'`) for one commit.
-3. **Extract CombatController** methods (`queueAttack`, `beginFight`, `tickOverworldFight`, `tryAutoEngage`, `queueRetaliate`) behind a facade owned by WorldScene.
-4. **Delete old flags** once mirrors unused; slim update loop.
-5. **GDD + loop-tasks** — document acquire/maintain/chase split; mark old footguns under Do-not.
+1. **Range + stand API consolidation** — done (`standInRangeWorld` / `walkToEngage`).
+2. **Introduce `playerIntent`** — done; `engageTarget` / `playerClickWalkActive` are mirrors.
+3. **Extract CombatController** — done for acquire, intent, begin/end/leash hooks; tick bodies remain on WorldScene (called from sim).
+4. **Intent-primary clears** — done (`clearAttackIntent`, `cancelPlayerCombat`, chase via `attackIntentTarget` / `chaseAutosPaused`).
+5. **GDD + loop-tasks** — done.
+
+**Remaining optional polish (not blocking):** move `tickOverworldFight` body into Controller; delete mirror fields after Hud stops reading them.
 
 Testing remains disabled until human re-enables; rely on human playtest of click-attack, auto-attack, retaliate, click-walk pause, water crabs, haven chickens.
 
