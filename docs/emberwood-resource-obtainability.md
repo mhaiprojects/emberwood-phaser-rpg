@@ -23,7 +23,7 @@ How major Emberwood resources are obtained today — gathering zones, crafting/s
 | `darkmine` | Darkmine (Mine) | 31–35 | Magic trees (WC 60), full ore ladder (copper–dragonite + rune essence), bats, Deep Mine shaft |
 | `highlands` | Windrock Highlands | 36–40 | Yew (WC 40), diamond/iron nodes, fire altar, Dragon Den gate |
 
-Hidden: `dungeon` (Deep Mine from Darkmine — combat, not ore nodes; mobs Lv 40+(floor−1)) and `dragonden` (band 40–45; Dragons Lv 60; after diamond-pick boulder clear).
+Hidden: `dungeon` (Deep Mine from Darkmine — combat, not ore nodes; mobs Lv 40+(floor−1)) and `dragonden` (Dragons Lv 60; after diamond-pick boulder clear).
 
 ---
 

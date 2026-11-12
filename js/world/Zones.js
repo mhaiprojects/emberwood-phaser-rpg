@@ -223,20 +223,177 @@ var NPC_DEFS = {
     ]
 };
 
-/* Per-zone combat bands. Haven 1–3; progression climbs through Farm→High; Den dragons fixed Lv 60. */
-var ZONE_LEVEL_BAND = {
-    haven: [1, 3],
-    millfields: [1, 5],
-    mire: [6, 10],
-    southshore: [11, 15],
-    northwood: [16, 20],
-    graves: [21, 25],
-    westmead: [26, 30],
-    darkmine: [31, 35],
-    highlands: [36, 40],
-    dragonden: [40, 45]
+/*
+ * Single source of truth: zone ↔ level band ↔ mob spawn roster.
+ * Labels (border / enter / shaft) and MOB_DEFS both derive from this.
+ * `band` drives zoneBandLevel; extras.levelFor may pin specific spots (haven exits, den).
+ */
+var ZONE_MOB_ROSTER = {
+    /* Haven — Chickens; Lv1 ring + Lv3 exit approaches. */
+    haven: {
+        band: [1, 3],
+        mobs: [{
+            type: 'Chicken',
+            texture: 'mob-chicken',
+            spots: [
+                /* Lv1 ring (cheb 6–7 from center 18,15) — first 6 kept at 1× with 4 exits */
+                [12, 15], [18, 9], [24, 15], [18, 21], [12, 11], [24, 19],
+                /* Lv3 near zone exits */
+                [18, 3], [18, 24], [3, 14], [33, 14],
+                /* Extra Lv1 for 2× pool */
+                [11, 13], [11, 17], [25, 13], [25, 17], [15, 9], [21, 9],
+                [15, 21], [21, 21], [12, 12], [24, 18]
+            ],
+            extras: {
+                levelFor: function (i) {
+                    return (i >= 6 && i <= 9) ? 3 : 1;
+                }
+            }
+        }]
+    },
+    millfields: {
+        band: [1, 5],
+        mobs: [{
+            type: 'Cow',
+            texture: 'mob-cow',
+            spots: [
+                [8, 12], [12, 8], [18, 7], [24, 9], [28, 12], [30, 16], [26, 18], [20, 20],
+                [14, 19], [9, 16], [11, 11], [16, 14], [22, 11], [27, 8], [31, 14], [19, 16],
+                [13, 17], [25, 15]
+            ],
+            extras: { tints: [0xffffff, 0xffffff, 0xeeddcc] }
+        }]
+    },
+    mire: {
+        band: [6, 10],
+        mobs: [{
+            type: 'Slime',
+            texture: 'mob-slime',
+            spots: [
+                [9, 9], [13, 11], [17, 8], [21, 12], [25, 10], [29, 13], [31, 17], [27, 19],
+                [23, 20], [19, 16], [15, 18], [11, 15]
+            ],
+            extras: { tints: [0xffffff, 0x88ffaa, 0xffffff] }
+        }]
+    },
+    southshore: {
+        band: [11, 15],
+        mobs: [{
+            type: 'Crab',
+            texture: 'mob-crab',
+            spots: [
+                [8, 14], [12, 12], [16, 10], [20, 11], [24, 9], [28, 12], [31, 15], [26, 17],
+                [22, 19], [18, 16], [14, 18], [10, 17], [27, 14], [19, 14]
+            ],
+            extras: { tints: [0xffffff, 0xffccaa, 0xffffff] }
+        }]
+    },
+    northwood: {
+        band: [16, 20],
+        mobs: [{
+            type: 'Goblin',
+            texture: 'mob-goblin',
+            spots: [
+                [8, 8], [12, 10], [16, 7], [20, 9], [24, 8], [28, 11], [31, 14], [26, 16],
+                [22, 18], [18, 20], [14, 17], [10, 19], [9, 13], [15, 14], [21, 13], [27, 19]
+            ],
+            extras: { tints: [0xffffff, 0xffffff, 0xbbffbb, 0xffffff] }
+        }]
+    },
+    graves: {
+        band: [21, 25],
+        mobs: [{
+            type: 'Skeleton',
+            texture: 'mob-skeleton',
+            spots: [
+                [9, 9], [13, 12], [17, 8], [21, 11], [25, 9], [29, 13], [31, 16], [26, 19],
+                [22, 20], [18, 17], [14, 15], [10, 18]
+            ],
+            extras: { tints: [0xffffff, 0xffffff, 0xeeeeff] }
+        }]
+    },
+    westmead: {
+        band: [26, 30],
+        mobs: [
+            {
+                type: 'Rabbit',
+                texture: 'mob-rabbit',
+                spots: [
+                    [10, 10], [14, 8], [18, 11], [22, 9], [26, 12], [30, 10], [28, 16], [24, 18],
+                    [20, 20], [16, 17], [12, 15], [8, 18], [11, 20], [15, 14], [19, 9], [23, 16],
+                    [27, 11], [29, 19]
+                ],
+                extras: { tints: [0xffffff, 0xffffff, 0xeeddcc] }
+            },
+            {
+                type: 'Goblin',
+                texture: 'mob-goblin',
+                spots: [
+                    [9, 13], [15, 12], [21, 14], [27, 13], [25, 20], [17, 8],
+                    [12, 19], [19, 16], [23, 10], [30, 17]
+                ]
+            }
+        ]
+    },
+    darkmine: {
+        band: [31, 35],
+        mobs: [{
+            type: 'Bat',
+            texture: 'mob-bat',
+            spots: [
+                [8, 8], [12, 11], [16, 9], [20, 12], [24, 10], [28, 13], [31, 16], [26, 18],
+                [22, 20], [18, 17], [14, 19], [10, 15], [17, 14], [25, 15]
+            ],
+            extras: { tints: [0xffffff, 0xffffff, 0xddbbff, 0xffffff] }
+        }]
+    },
+    highlands: {
+        band: [36, 40],
+        mobs: [{
+            type: 'Drake',
+            texture: 'mob-drake',
+            spots: [
+                [10, 10], [16, 9], [22, 12], [28, 11], [30, 16], [24, 18], [18, 20], [12, 17],
+                [20, 14], [26, 15]
+            ]
+        }]
+    },
+    /* Den — Dragons fixed Lv 60 (band matches spawn levels). */
+    dragonden: {
+        band: [60, 60],
+        mobs: [{
+            type: 'Dragon',
+            texture: 'mob-drake',
+            spots: [
+                [12, 10], [20, 12], [28, 14], [18, 18]
+            ],
+            extras: {
+                alwaysAgro: true,
+                tints: [0xff6644, 0xff4422, 0xdd2200, 0xff5533],
+                levelFor: function () {
+                    return 60;
+                },
+                attackRangeFor: function (i) {
+                    return i === 3 ? 120 : 110;
+                }
+            }
+        }]
+    }
 };
 
+/** Derived from ZONE_MOB_ROSTER.band — keep for older call sites / docs. */
+var ZONE_LEVEL_BAND = {};
+(function initZoneLevelBand() {
+    var id;
+    for (id in ZONE_MOB_ROSTER) {
+        if (!Object.prototype.hasOwnProperty.call(ZONE_MOB_ROSTER, id)) {
+            continue;
+        }
+        ZONE_LEVEL_BAND[id] = ZONE_MOB_ROSTER[id].band.slice();
+    }
+}());
+
+/** Level for spawn index — cycles lo..hi (legacy). Prefer zoneBandLevelSpread for pools. */
 function zoneBandLevel(zoneId, index) {
     var band = ZONE_LEVEL_BAND[zoneId] || [1, 5];
     var lo = band[0];
@@ -245,45 +402,190 @@ function zoneBandLevel(zoneId, index) {
     return lo + ((index | 0) % (span + 1));
 }
 
-/** Short mob-band line for UI (e.g. "Lv 6–10"). Deep Mine is special. */
-function zoneMobBandLabel(zoneId) {
-    var band;
-    if (zoneId === 'dungeon') {
-        return 'Lv 40+';
+/** Spread levels evenly across band endpoints so labels match the full roster band. */
+function zoneBandLevelSpread(zoneId, index, count) {
+    var band = ZONE_LEVEL_BAND[zoneId] || [1, 5];
+    var lo = band[0];
+    var hi = band[1];
+    var span = Math.max(0, hi - lo);
+    var n = Math.max(1, count | 0);
+    var i = index | 0;
+    if (n <= 1 || span <= 0) {
+        return lo;
     }
-    band = ZONE_LEVEL_BAND[zoneId];
-    if (!band || band.length < 2) {
-        return '';
-    }
-    return 'Lv ' + band[0] + '–' + band[1];
+    return lo + Math.round(i * span / (n - 1));
 }
 
-/** Two-line border cue: display name + band. */
+function mobTypeLabelPlural(type) {
+    if (!type) {
+        return '';
+    }
+    if (type.charAt(type.length - 1) === 's') {
+        return type;
+    }
+    return type + 's';
+}
+
+/** Distinct mob types for a zone, roster order (falls back to MOB_DEFS). */
+function zoneMobTypeList(zoneId) {
+    var roster = ZONE_MOB_ROSTER[zoneId];
+    var types = [];
+    var seen = {};
+    var i;
+    var t;
+    var defs;
+    if (roster && roster.mobs && roster.mobs.length) {
+        for (i = 0; i < roster.mobs.length; i++) {
+            t = roster.mobs[i] && roster.mobs[i].type;
+            if (!t || seen[t]) {
+                continue;
+            }
+            seen[t] = true;
+            types.push(t);
+        }
+        return types;
+    }
+    defs = typeof MOB_DEFS !== 'undefined' ? (MOB_DEFS[zoneId] || []) : [];
+    for (i = 0; i < defs.length; i++) {
+        t = defs[i] && defs[i].type;
+        if (!t || seen[t]) {
+            continue;
+        }
+        seen[t] = true;
+        types.push(t);
+    }
+    return types;
+}
+
+/** Actual min/max spawn levels in MOB_DEFS (after levelFor); else roster band. */
+function zoneSpawnLevelRange(zoneId) {
+    var defs = typeof MOB_DEFS !== 'undefined' ? (MOB_DEFS[zoneId] || []) : [];
+    var lo = Infinity;
+    var hi = -Infinity;
+    var i;
+    var lv;
+    var band;
+    for (i = 0; i < defs.length; i++) {
+        lv = defs[i] && (defs[i].level | 0);
+        if (!lv) {
+            continue;
+        }
+        if (lv < lo) {
+            lo = lv;
+        }
+        if (lv > hi) {
+            hi = lv;
+        }
+    }
+    if (isFinite(lo) && isFinite(hi)) {
+        return [lo, hi];
+    }
+    band = ZONE_LEVEL_BAND[zoneId];
+    if (band && band.length >= 2) {
+        return [band[0], band[1]];
+    }
+    return null;
+}
+
+function formatZoneMobBand(lo, hi) {
+    if (lo == null || lo === '') {
+        return '';
+    }
+    if (hi == null || hi === lo) {
+        return 'Lv ' + lo;
+    }
+    return 'Lv ' + lo + '–' + hi;
+}
+
+/** Short mob-band line for UI (e.g. "Lv 16–20"). Deep Mine uses Scales base. */
+function zoneMobBandLabel(zoneId) {
+    var range;
+    var base;
+    if (zoneId === 'dungeon') {
+        base = typeof DUNGEON_MOB_BASE_LEVEL === 'number' ? DUNGEON_MOB_BASE_LEVEL : 40;
+        return 'Lv ' + base + '+';
+    }
+    range = zoneSpawnLevelRange(zoneId);
+    if (!range) {
+        return '';
+    }
+    return formatZoneMobBand(range[0], range[1]);
+}
+
+/** "Goblins Lv 16–20" / "Rabbits & Goblins Lv 26–30" / "Dragons Lv 60". */
+function zoneMobSummaryLabel(zoneId) {
+    var types = zoneMobTypeList(zoneId);
+    var band = zoneMobBandLabel(zoneId);
+    var names = [];
+    var i;
+    for (i = 0; i < types.length; i++) {
+        names.push(mobTypeLabelPlural(types[i]));
+    }
+    if (names.length && band) {
+        return names.join(' & ') + ' ' + band;
+    }
+    return band || names.join(' & ') || '';
+}
+
+/** Two-line border cue: display name + mob summary. */
 function zoneBorderLabelText(zoneId) {
     var zone = ZONES[zoneId];
     var name = (zone && zone.name) || zoneId || '';
-    var band = zoneMobBandLabel(zoneId);
+    var summary = zoneMobSummaryLabel(zoneId);
     if (!name) {
         return '';
     }
-    return band ? (name + '\n' + band) : name;
+    return summary ? (name + '\n' + summary) : name;
 }
 
-/** Enter chat with optional mob band: "You enter Northwood (mobs Lv 6–10)." */
+/** Enter chat: "You enter Northwood (Goblins Lv 16–20)." */
 function zoneEnterChat(zoneId) {
     var zone = ZONES[zoneId];
     var name = (zone && zone.name) || zoneId || 'the wilds';
-    var band = zoneMobBandLabel(zoneId);
+    var summary = zoneMobSummaryLabel(zoneId);
     if (zoneId === 'dungeon') {
-        return 'You enter the Deep Mine (mobs Lv 40+, +1 per floor).';
+        return 'You enter the Deep Mine (mobs ' + zoneMobBandLabel('dungeon') + ', +1 per floor).';
     }
-    if (zoneId === 'dragonden') {
-        return 'You enter Dragon Den (mobs Lv 40–45; Dragons Lv 60).';
-    }
-    if (band) {
-        return 'You enter ' + name + ' (mobs ' + band + ').';
+    if (summary) {
+        return 'You enter ' + name + ' (' + summary + ').';
     }
     return 'You enter ' + name + '.';
+}
+
+/** Shaft / den marker label + approach — MapGen colors stay local; text from roster. */
+function zoneShaftMarkerOverlay(kind) {
+    var summary;
+    if (kind === 'dungeon-enter') {
+        return {
+            label: 'Deep Mine\n' + zoneMobBandLabel('dungeon'),
+            approach: 'A marked shaft mouth — the Deep Mine (mobs ' + zoneMobBandLabel('dungeon') +
+                ', +1 per floor). Click or step in to delve.'
+        };
+    }
+    if (kind === 'den-boulder') {
+        summary = zoneMobSummaryLabel('dragonden');
+        return {
+            label: 'Sealed Den\n' + summary,
+            approach: 'A sealing boulder — mine it with a diamond pickaxe to open the Dragon Den (' +
+                summary + ').'
+        };
+    }
+    if (kind === 'dragon-den') {
+        summary = zoneMobSummaryLabel('dragonden');
+        return {
+            label: zoneBorderLabelText('dragonden'),
+            approach: 'Scorched cave mouth — Dragon Den (' + summary + '). Click or step in to enter.'
+        };
+    }
+    if (kind === 'dragon-den-exit') {
+        summary = zoneMobSummaryLabel('highlands');
+        return {
+            label: zoneBorderLabelText('highlands'),
+            approach: 'Tunnel back to Windrock Highlands (' + summary +
+                ') — click or step on it to leave.'
+        };
+    }
+    return null;
 }
 
 /** World-pixel center for a faint label just inside a map-edge exit. */
@@ -429,7 +731,7 @@ function buildBandMobs(zoneId, type, texture, spots, extras) {
     var poolNeed = scaledMobSpawnCount(type, MOB_SPAWN_POOL_MODIFIER);
     var useSpots = expandMobSpotPool(spots || [], poolNeed, zoneId);
     for (i = 0; i < useSpots.length; i++) {
-        level = zoneBandLevel(zoneId, i);
+        level = zoneBandLevelSpread(zoneId, i, useSpots.length);
         if (extras && typeof extras.levelFor === 'function') {
             level = extras.levelFor(i, level, useSpots[i]);
         }
@@ -499,84 +801,40 @@ function mobDefsForZone(zoneId, hero) {
     return out;
 }
 
-var MOB_DEFS = {
-    /* Band 1–3 — Haven; pyramid → Chicken 10 @ 1×.
-     * Chebyshev-safe courtyard (r≤5 from TOWN_CENTER); Lv1 ring just outside;
-     * Lv3 at N/S/E/W exit approaches (still inside 2-tile edge inset). */
-    haven: buildBandMobs('haven', 'Chicken', 'mob-chicken', [
-        /* Lv1 ring (cheb 6–7 from center 18,15) — first 6 kept at 1× with 4 exits */
-        [12, 15], [18, 9], [24, 15], [18, 21], [12, 11], [24, 19],
-        /* Lv3 near zone exits */
-        [18, 3], [18, 24], [3, 14], [33, 14],
-        /* Extra Lv1 for 2× pool */
-        [11, 13], [11, 17], [25, 13], [25, 17], [15, 9], [21, 9],
-        [15, 21], [21, 21], [12, 12], [24, 18]
-    ], {
-        levelFor: function (i) {
-            return (i >= 6 && i <= 9) ? 3 : 1;
+/** Built from ZONE_MOB_ROSTER — do not hand-author parallel spawn tables. */
+var MOB_DEFS = {};
+(function buildMobDefsFromRoster() {
+    var zoneId;
+    var roster;
+    var defs;
+    var i;
+    var mob;
+    for (zoneId in ZONE_MOB_ROSTER) {
+        if (!Object.prototype.hasOwnProperty.call(ZONE_MOB_ROSTER, zoneId)) {
+            continue;
         }
-    }),
-    /* Band 1–5 — Farm. */
-    millfields: buildBandMobs('millfields', 'Cow', 'mob-cow', [
-        [8, 12], [12, 8], [18, 7], [24, 9], [28, 12], [30, 16], [26, 18], [20, 20],
-        [14, 19], [9, 16], [11, 11], [16, 14], [22, 11], [27, 8], [31, 14], [19, 16],
-        [13, 17], [25, 15]
-    ], { tints: [0xffffff, 0xffffff, 0xeeddcc] }),
-    /* Band 6–10 — Mire. */
-    mire: buildBandMobs('mire', 'Slime', 'mob-slime', [
-        [9, 9], [13, 11], [17, 8], [21, 12], [25, 10], [29, 13], [31, 17], [27, 19],
-        [23, 20], [19, 16], [15, 18], [11, 15]
-    ], { tints: [0xffffff, 0x88ffaa, 0xffffff] }),
-    /* Band 11–15 — Shore. */
-    southshore: buildBandMobs('southshore', 'Crab', 'mob-crab', [
-        [8, 14], [12, 12], [16, 10], [20, 11], [24, 9], [28, 12], [31, 15], [26, 17],
-        [22, 19], [18, 16], [14, 18], [10, 17], [27, 14], [19, 14]
-    ], { tints: [0xffffff, 0xffccaa, 0xffffff] }),
-    /* Band 16–20 — Woods. */
-    northwood: buildBandMobs('northwood', 'Goblin', 'mob-goblin', [
-        [8, 8], [12, 10], [16, 7], [20, 9], [24, 8], [28, 11], [31, 14], [26, 16],
-        [22, 18], [18, 20], [14, 17], [10, 19], [9, 13], [15, 14], [21, 13], [27, 19]
-    ], { tints: [0xffffff, 0xffffff, 0xbbffbb, 0xffffff] }),
-    /* Band 21–25 — Graves. */
-    graves: buildBandMobs('graves', 'Skeleton', 'mob-skeleton', [
-        [9, 9], [13, 12], [17, 8], [21, 11], [25, 9], [29, 13], [31, 16], [26, 19],
-        [22, 20], [18, 17], [14, 15], [10, 18]
-    ], { tints: [0xffffff, 0xffffff, 0xeeeeff] }),
-    /* Band 26–30 — Mead. */
-    westmead: buildBandMobs('westmead', 'Rabbit', 'mob-rabbit', [
-        [10, 10], [14, 8], [18, 11], [22, 9], [26, 12], [30, 10], [28, 16], [24, 18],
-        [20, 20], [16, 17], [12, 15], [8, 18], [11, 20], [15, 14], [19, 9], [23, 16],
-        [27, 11], [29, 19]
-    ], { tints: [0xffffff, 0xffffff, 0xeeddcc] }).concat(
-        buildBandMobs('westmead', 'Goblin', 'mob-goblin', [
-            [9, 13], [15, 12], [21, 14], [27, 13], [25, 20], [17, 8],
-            [12, 19], [19, 16], [23, 10], [30, 17]
-        ])
-    ),
-    /* Band 31–35 — Mine; Deep Mine shaft. */
-    darkmine: buildBandMobs('darkmine', 'Bat', 'mob-bat', [
-        [8, 8], [12, 11], [16, 9], [20, 12], [24, 10], [28, 13], [31, 16], [26, 18],
-        [22, 20], [18, 17], [14, 19], [10, 15], [17, 14], [25, 15]
-    ], { tints: [0xffffff, 0xffffff, 0xddbbff, 0xffffff] }),
-    /* Band 36–40 — High. */
-    highlands: buildBandMobs('highlands', 'Drake', 'mob-drake', [
-        [10, 10], [16, 9], [22, 12], [28, 11], [30, 16], [24, 18], [18, 20], [12, 17],
-        [20, 14], [26, 15]
-    ]),
-    /* Band 40–45 — Den; Dragons fixed at Lv 60; alwaysAgro kept. Pyramid base = 1. */
-    dragonden: buildBandMobs('dragonden', 'Dragon', 'mob-drake', [
-        [12, 10], [20, 12], [28, 14], [18, 18]
-    ], {
-        alwaysAgro: true,
-        tints: [0xff6644, 0xff4422, 0xdd2200, 0xff5533],
-        levelFor: function () {
-            return 60;
-        },
-        attackRangeFor: function (i) {
-            return i === 3 ? 120 : 110;
+        roster = ZONE_MOB_ROSTER[zoneId];
+        defs = [];
+        if (!roster || !roster.mobs) {
+            MOB_DEFS[zoneId] = defs;
+            continue;
         }
-    })
-};
+        for (i = 0; i < roster.mobs.length; i++) {
+            mob = roster.mobs[i];
+            if (!mob || !mob.type) {
+                continue;
+            }
+            defs = defs.concat(buildBandMobs(
+                zoneId,
+                mob.type,
+                mob.texture,
+                mob.spots,
+                mob.extras
+            ));
+        }
+        MOB_DEFS[zoneId] = defs;
+    }
+}());
 
 function defaultWorldSpawn() {
     return tileCenter(20, 15);

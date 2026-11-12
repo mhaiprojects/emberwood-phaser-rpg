@@ -75,27 +75,27 @@ Maps: **36×28** tiles × **16 px**. Generate in `MapGen.js`. Collide / path-blo
 
 ### 2.2 Zone combat level bands
 
-`ZONE_LEVEL_BAND` in `Zones.js` (player-facing labels + spawn levels):
+Single source: `ZONE_MOB_ROSTER` in `Zones.js` (band + spawn types/spots). `ZONE_LEVEL_BAND` and `MOB_DEFS` derive from it; entrance labels use actual spawn levels + mob names.
 
-| Zone | Display | Mob band |
-|------|---------|----------|
-| Emberhaven | Haven | **1–3** |
-| Millfields | Farm | **1–5** |
-| Mirefen | Mire | **6–10** |
-| Southshore | Shore | **11–15** |
-| Northwood | Woods | **16–20** |
-| Restless Graves | Graves | **21–25** |
-| Westmead | Mead | **26–30** |
-| Darkmine | Mine | **31–35** |
-| Windrock Highlands | High | **36–40** |
-| Dragon Den | Den | **40–45** (Dragons fixed **Lv 60**) |
-| Deep Mine (`dungeon`) | Deep Mine | **40 + (floor − 1)**; Dragon every 21st floor |
+| Zone | Mobs | Band |
+|------|------|------|
+| Emberhaven | Chickens | **1–3** |
+| Millfields | Cows | **1–5** |
+| Mirefen | Slimes | **6–10** |
+| Southshore | Crabs | **11–15** |
+| Northwood | Goblins | **16–20** |
+| Restless Graves | Skeletons | **21–25** |
+| Westmead | Rabbits & Goblins | **26–30** |
+| Darkmine | Bats | **31–35** |
+| Windrock Highlands | Drakes | **36–40** |
+| Dragon Den | Dragons | **Lv 60** |
+| Deep Mine (`dungeon`) | (floor roster) | **40 + (floor − 1)**; Dragon every 21st floor |
 
 ### 2.3 Zone transitions & entrance labels
 
 - Walk into ~**30 px** edge strip (~**2 tiles**) on a path → neighbor zone.
-- Enter chat includes band, e.g. `You enter Northwood (mobs Lv 16–20).` (`zoneEnterChat`). Deep Mine / Den have dedicated lines.
-- Faint **2-line border labels** at N/S/E/W exits: zone name + `Lv lo–hi` (`zoneBorderLabelText`). Den/mine shaft markers include bands.
+- Enter chat includes mobs + band, e.g. `You enter Northwood (Goblins Lv 16–20).` (`zoneEnterChat`).
+- Faint **2-line border labels** at N/S/E/W exits: zone name + mob summary (`zoneBorderLabelText`). Den/mine shaft markers use the same roster helpers.
 - `exitLock` ~400 ms prevents skipping zones in one dash.
 - Outer corners do **not** wrap.
 - Spawn on opposite side of entry (`spawnPointForEntry`).
@@ -128,7 +128,7 @@ Maps: **36×28** tiles × **16 px**. Generate in `MapGen.js`. Collide / path-blo
 | Bank interior | **Removed** — courtyard booth + Elise only |
 | Deep Mine | Darkmine shaft → floor N; mob level = **40 + (N − 1)**; Dragon every 21st floor; stairs up/down; escape shaft remembers floor; campfire every 5th. Always call it **Deep Mine** in UI/chat (internal id stays `dungeon`) |
 | Dungeon cues | Pulsing shaft/stairs markers + approach chat (throttled); labels `Deep Mine` / `Lv 40+` |
-| Dragon Den | Highlands boulder needs pick **tier ≥ 5** (diamond+); sets `hero.flags.dragonDenOpen`; pulsing markers + approach chat; step/click enter & exit; band 40–45, Dragons Lv 60 |
+| Dragon Den | Highlands boulder needs pick **tier ≥ 5** (diamond+); sets `hero.flags.dragonDenOpen`; pulsing markers + approach chat; step/click enter & exit; Dragons Lv 60 |
 
 ---
 
@@ -472,7 +472,7 @@ Full obtainability matrix (gather zones, smelt/smith/craft, shops, tutors, start
 
 - Unlock path: mine diamondore (Darkmine / Highlands) → smelt diamondbar → smith (or buy) diamondpick → mine Highlands sealing boulder (pick tier ≥ 5) → `hero.flags.dragonDenOpen`
 - Markers + approach chat on sealed boulder / open cave / den exit; step or click to enter/leave
-- Den biome: Dragon mobs (Lv 60), band 40–45 others, fire altar, campfire; high-tier drops (scales, ores, fire runes)
+- Den biome: Dragon mobs (Lv 60), fire altar, campfire; high-tier drops (scales, ores, fire runes)
 
 ### 8.4 Starter kit (highlights)
 
@@ -580,7 +580,7 @@ Actionable pitfalls from project rules and recent combat/gather/save work:
 | Save | `js/data/Save.js` |
 | Scales / loot tables | `js/data/Scales.js` |
 | Maps / ores / shafts | `js/world/MapGen.js` |
-| Zones / bands / spawn pyramid | `js/world/Zones.js` (`ZONE_LEVEL_BAND`, `MOB_TIER_ORDER`, `mobDefsForZone`) |
+| Zones / bands / spawn pyramid | `js/world/Zones.js` (`ZONE_MOB_ROSTER`, `MOB_TIER_ORDER`, `mobDefsForZone`) |
 | Path / safe zone / no squeeze | `js/world/Pathfind.js` |
 | Audio | `js/ui/Sfx.js` |
 | Input | `js/input/Keys.js` |

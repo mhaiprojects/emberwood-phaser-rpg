@@ -1120,7 +1120,7 @@ function oreNodeColor(ore) {
     return (ORE_NODE_COLORS && ORE_NODE_COLORS[ore]) || 0x9a9088;
 }
 
-/* Shaft / stairs / escape cues — match ore glows + campfire warmth. */
+/* Shaft / stairs / escape cues — colors/glyphs local; zone labels from Zones.js roster. */
 var SHAFT_MARKER_STYLE = {
     'dungeon-enter': {
         color: 0x9b6cff,
@@ -1152,29 +1152,55 @@ var SHAFT_MARKER_STYLE = {
     },
     'den-boulder': {
         color: 0xc07040,
-        label: 'Sealed Den\nLv 40–45',
+        label: 'Sealed Den\nDragons Lv 60',
         glyph: '◆',
         labelColor: '#ffd0a8',
-        approach: 'A sealing boulder — mine it with a diamond pickaxe to open the Dragon Den (mobs Lv 40–45; Dragons Lv 60).'
+        approach: 'A sealing boulder — mine it with a diamond pickaxe to open the Dragon Den (Dragons Lv 60).'
     },
     'dragon-den': {
         color: 0xe85d3a,
-        label: 'Dragon Den\nLv 40–45',
+        label: 'Dragon Den\nDragons Lv 60',
         glyph: '▼',
         labelColor: '#ffb090',
-        approach: 'Scorched cave mouth — Dragon Den (mobs Lv 40–45; Dragons Lv 60). Click or step in to enter.'
+        approach: 'Scorched cave mouth — Dragon Den (Dragons Lv 60). Click or step in to enter.'
     },
     'dragon-den-exit': {
         color: 0x6ec8ff,
-        label: 'Windrock Highlands\nLv 36–40',
+        label: 'Windrock Highlands\nDrakes Lv 36–40',
         glyph: '▲',
         labelColor: '#b8e8ff',
-        approach: 'Tunnel back to Windrock Highlands (mobs Lv 36–40) — click or step on it to leave.'
+        approach: 'Tunnel back to Windrock Highlands (Drakes Lv 36–40) — click or step on it to leave.'
     }
 };
 
 function shaftMarkerStyle(kind) {
-    return (SHAFT_MARKER_STYLE && SHAFT_MARKER_STYLE[kind]) || null;
+    var base = (SHAFT_MARKER_STYLE && SHAFT_MARKER_STYLE[kind]) || null;
+    var over;
+    var out;
+    var key;
+    if (!base) {
+        return null;
+    }
+    if (typeof zoneShaftMarkerOverlay !== 'function') {
+        return base;
+    }
+    over = zoneShaftMarkerOverlay(kind);
+    if (!over) {
+        return base;
+    }
+    out = {};
+    for (key in base) {
+        if (Object.prototype.hasOwnProperty.call(base, key)) {
+            out[key] = base[key];
+        }
+    }
+    if (over.label) {
+        out.label = over.label;
+    }
+    if (over.approach) {
+        out.approach = over.approach;
+    }
+    return out;
 }
 
 function oreNodeLabel(ore) {
