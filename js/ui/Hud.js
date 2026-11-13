@@ -262,18 +262,10 @@ var Hud = {
             self.setStyle(style);
         });
         document.addEventListener('click', function (event) {
-            var btn = event.target.closest('[data-auto-attack]');
-            if (!btn) {
+            if (typeof SettingsRegistry !== 'undefined' && SettingsRegistry.handleClick
+                    && SettingsRegistry.handleClick(event, self)) {
                 return;
             }
-            var hero = self.hero();
-            if (!hero) {
-                return;
-            }
-            hero.autoAttack = !hero.autoAttack;
-            self.saveHero(hero);
-            self.renderAutoAttack(hero);
-            self.log('Auto-attack ' + (hero.autoAttack ? 'on' : 'off') + '.');
         });
         document.addEventListener('click', function (event) {
             var btn = event.target.closest('[data-auto-attack-range]');
@@ -296,48 +288,6 @@ var Hud = {
             self.saveHero(hero);
             self.renderAutoAttackRange(hero);
             self.log('Auto-attack range ' + value + ' tile' + (value === 1 ? '' : 's') + '.');
-        });
-        document.addEventListener('click', function (event) {
-            var btn = event.target.closest('[data-auto-retaliate]');
-            if (!btn) {
-                return;
-            }
-            var hero = self.hero();
-            if (!hero) {
-                return;
-            }
-            hero.autoRetaliate = !autoRetaliateOn(hero);
-            self.saveHero(hero);
-            self.renderAutoRetaliate(hero);
-            self.log('Auto-retaliate ' + (hero.autoRetaliate ? 'on' : 'off') + '.');
-        });
-        document.addEventListener('click', function (event) {
-            var btn = event.target.closest('[data-auto-pickup]');
-            if (!btn) {
-                return;
-            }
-            var hero = self.hero();
-            if (!hero) {
-                return;
-            }
-            hero.autoPickup = hero.autoPickup === false;
-            self.saveHero(hero);
-            self.renderAutoPickup(hero);
-            self.log('Auto-pickup ' + (hero.autoPickup !== false ? 'on' : 'off') + '.');
-        });
-        document.addEventListener('click', function (event) {
-            var btn = event.target.closest('[data-shift-click-drop]');
-            if (!btn) {
-                return;
-            }
-            var hero = self.hero();
-            if (!hero) {
-                return;
-            }
-            hero.shiftClickDrop = hero.shiftClickDrop === false;
-            self.saveHero(hero);
-            self.renderShiftClickDrop(hero);
-            self.log('Shift-click drop ' + (hero.shiftClickDrop !== false ? 'on' : 'off') + '.');
         });
         document.addEventListener('click', function (event) {
             var btn = event.target.closest('[data-run-toggle]');
@@ -370,56 +320,6 @@ var Hud = {
                 return;
             }
             self.trySpecialAttack();
-        });
-        document.addEventListener('click', function (event) {
-            var btn = event.target.closest('[data-hide-bones]');
-            if (!btn) {
-                return;
-            }
-            var hero = self.hero();
-            if (!hero) {
-                return;
-            }
-            hero.hideBones = !hero.hideBones;
-            self.saveHero(hero);
-            self.syncHideBones();
-            self.log('Hide bones ' + (hero.hideBones ? 'on' : 'off') + '.');
-            var world = window.game && window.game.scene.getScene('WorldScene');
-            if (world && world.refreshLootVisibility) {
-                world.refreshLootVisibility();
-            }
-        });
-        document.addEventListener('click', function (event) {
-            var btn = event.target.closest('[data-combat-visuals]');
-            if (!btn) {
-                return;
-            }
-            var hero = self.hero();
-            if (!hero) {
-                return;
-            }
-            hero.showCombatVisuals = hero.showCombatVisuals === false;
-            self.saveHero(hero);
-            self.renderCombatVisuals(hero);
-            self.log('Combat visuals ' + (hero.showCombatVisuals !== false ? 'on' : 'off') + '.');
-        });
-        document.addEventListener('click', function (event) {
-            var btn = event.target.closest('[data-range-rings]');
-            if (!btn) {
-                return;
-            }
-            var hero = self.hero();
-            if (!hero) {
-                return;
-            }
-            hero.showRangeRings = hero.showRangeRings === false;
-            self.saveHero(hero);
-            self.renderRangeRings(hero);
-            self.log('Range rings ' + (hero.showRangeRings !== false ? 'on' : 'off') + '.');
-            var world = window.game && window.game.scene.getScene('WorldScene');
-            if (world && world.clearCombatRangeRings && hero.showRangeRings === false) {
-                world.clearCombatRangeRings();
-            }
         });
         document.addEventListener('click', function (event) {
             var btn = event.target.closest('[data-mob-spawn-mod]');
@@ -3483,14 +3383,18 @@ var Hud = {
         this.renderSkills(hero);
         this.renderEquip(hero);
         this.renderStyles(hero);
-        this.renderAutoAttack(hero);
+        if (typeof SettingsRegistry !== 'undefined' && SettingsRegistry.renderAll) {
+            SettingsRegistry.renderAll(hero, this);
+        } else {
+            this.renderAutoAttack(hero);
+            this.renderAutoRetaliate(hero);
+            this.renderAutoPickup(hero);
+            this.renderShiftClickDrop(hero);
+            this.renderHideBones(hero);
+            this.renderCombatVisuals(hero);
+            this.renderRangeRings(hero);
+        }
         this.renderAutoAttackRange(hero);
-        this.renderAutoRetaliate(hero);
-        this.renderAutoPickup(hero);
-        this.renderShiftClickDrop(hero);
-        this.renderHideBones(hero);
-        this.renderCombatVisuals(hero);
-        this.renderRangeRings(hero);
         this.renderMobSpawnModifier(hero);
         this.renderTargetTps(hero);
         this.renderGameSpeed(hero);

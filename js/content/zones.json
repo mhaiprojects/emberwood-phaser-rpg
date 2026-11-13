@@ -1,0 +1,94 @@
+{
+  "list": [
+    {
+      "id": "graves",
+      "name": "Restless Graves",
+      "gx": -1,
+      "gy": -1,
+      "biome": "grave",
+      "seed": 11
+    },
+    {
+      "id": "northwood",
+      "name": "Northwood",
+      "gx": 0,
+      "gy": -1,
+      "biome": "forest",
+      "seed": 22
+    },
+    {
+      "id": "highlands",
+      "name": "Windrock Highlands",
+      "gx": 1,
+      "gy": -1,
+      "biome": "hills",
+      "seed": 33
+    },
+    {
+      "id": "westmead",
+      "name": "Westmead",
+      "gx": -1,
+      "gy": 0,
+      "biome": "plains",
+      "seed": 44
+    },
+    {
+      "id": "haven",
+      "name": "Emberhaven",
+      "gx": 0,
+      "gy": 0,
+      "biome": "town",
+      "seed": 55
+    },
+    {
+      "id": "millfields",
+      "name": "Millfields",
+      "gx": 1,
+      "gy": 0,
+      "biome": "farm",
+      "seed": 66
+    },
+    {
+      "id": "darkmine",
+      "name": "Darkmine",
+      "gx": -1,
+      "gy": 1,
+      "biome": "mine",
+      "seed": 77
+    },
+    {
+      "id": "southshore",
+      "name": "Southshore",
+      "gx": 0,
+      "gy": 1,
+      "biome": "shore",
+      "seed": 88
+    },
+    {
+      "id": "mire",
+      "name": "Mirefen",
+      "gx": 1,
+      "gy": 1,
+      "biome": "swamp",
+      "seed": 99
+    },
+    {
+      "id": "dungeon",
+      "name": "Deep Mine",
+      "gx": -99,
+      "gy": -99,
+      "biome": "mine",
+      "seed": 9001,
+      "hidden": true
+    },
+    {
+      "id": "dragonden",
+      "name": "Dragon Den",
+      "gx": 99,
+      "gy": 99,
+      "biome": "den",
+      "seed": 4242,
+      "hidden": true
+    }
+  ]
+}

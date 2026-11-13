@@ -1,0 +1,90 @@
+/* From gather-by-zone.json */
+var RESOURCE_LEVEL = {
+  "logs": 1,
+  "oaklogs": 15,
+  "ashlogs": 28,
+  "yewlogs": 40,
+  "magiclogs": 60,
+  "copper": 1,
+  "iron": 15,
+  "runeessence": 1,
+  "diamondore": 40,
+  "dragoniteore": 60,
+  "rawshrimp": 1,
+  "rawtrout": 15,
+  "rawlobster": 28,
+  "rawswordfish": 40,
+  "rawshark": 60
+};
+var RESOURCE_TOOL_TIER = {
+  "logs": 1,
+  "oaklogs": 2,
+  "ashlogs": 3,
+  "yewlogs": 4,
+  "magiclogs": 4,
+  "copper": 1,
+  "runeessence": 1,
+  "iron": 2,
+  "diamondore": 3,
+  "dragoniteore": 4,
+  "rawshrimp": 1,
+  "rawtrout": 2,
+  "rawlobster": 3,
+  "rawswordfish": 4,
+  "rawshark": 5
+};
+var TREE_BY_ZONE = {
+  "haven": {
+    "log": "logs",
+    "level": 1
+  },
+  "millfields": {
+    "log": "logs",
+    "level": 1
+  },
+  "southshore": {
+    "log": "logs",
+    "level": 1
+  },
+  "mire": {
+    "log": "oaklogs",
+    "level": 15
+  },
+  "northwood": {
+    "log": "oaklogs",
+    "level": 15
+  },
+  "graves": {
+    "log": "ashlogs",
+    "level": 28
+  },
+  "westmead": {
+    "log": "ashlogs",
+    "level": 28
+  },
+  "darkmine": {
+    "log": "yewlogs",
+    "level": 40
+  },
+  "highlands": {
+    "log": "yewlogs",
+    "level": 40
+  },
+  "dragonden": {
+    "log": "magiclogs",
+    "level": 60
+  }
+};
+var FISH_BY_ZONE = {
+  "haven": "rawshrimp",
+  "millfields": "rawshrimp",
+  "southshore": "rawshrimp",
+  "mire": "rawtrout",
+  "northwood": "rawtrout",
+  "graves": "rawtrout",
+  "westmead": "rawlobster",
+  "darkmine": "rawlobster",
+  "highlands": "rawswordfish",
+  "dungeon": "rawswordfish",
+  "dragonden": "rawshark"
+};

@@ -1,194 +1,17 @@
-var ITEM_DB = {
-    coins: { name: 'Coins', icon: 'assets/svg/items/coins.svg', stack: true, value: 1, examine: 'A small pile of copper and silver coins.' },
-    shrimp: { name: 'Cooked shrimp', icon: 'assets/svg/items/shrimp.svg', heal: 12, stack: true, value: 5, buyPrice: 8, sellPrice: 2, examine: 'A cooked shrimp, still warm enough to eat.' },
-    rawshrimp: { name: 'Raw shrimp', icon: 'assets/svg/items/rawshrimp.svg', stack: true, cook: 'shrimp', cookXp: 30, value: 5, buyPrice: 6, sellPrice: 1, examine: 'A raw shrimp. It should be cooked.' },
-    trout: { name: 'Cooked trout', icon: 'assets/svg/items/trout.svg', heal: 16, stack: true, value: 10, buyPrice: 14, sellPrice: 3, examine: 'A cooked trout.' },
-    rawtrout: { name: 'Raw trout', icon: 'assets/svg/items/rawtrout.svg', stack: true, cook: 'trout', cookXp: 40, value: 8, buyPrice: 10, sellPrice: 2, examine: 'A raw trout.' },
-    lobster: { name: 'Cooked lobster', icon: 'assets/svg/items/lobster.svg', heal: 22, stack: true, value: 18, buyPrice: 26, sellPrice: 6, examine: 'A cooked lobster.' },
-    rawlobster: { name: 'Raw lobster', icon: 'assets/svg/items/rawlobster.svg', stack: true, cook: 'lobster', cookXp: 55, value: 14, buyPrice: 18, sellPrice: 4, examine: 'A raw lobster.' },
-    swordfish: { name: 'Cooked swordfish', icon: 'assets/svg/items/swordfish.svg', heal: 28, stack: true, value: 28, buyPrice: 40, sellPrice: 10, examine: 'A cooked swordfish.' },
-    rawswordfish: { name: 'Raw swordfish', icon: 'assets/svg/items/rawswordfish.svg', stack: true, cook: 'swordfish', cookXp: 70, value: 22, buyPrice: 30, sellPrice: 8, examine: 'A raw swordfish.' },
-    shark: { name: 'Cooked shark', icon: 'assets/svg/items/shark.svg', heal: 36, stack: true, value: 45, buyPrice: 65, sellPrice: 16, examine: 'A cooked shark steak.' },
-    rawshark: { name: 'Raw shark', icon: 'assets/svg/items/rawshark.svg', stack: true, cook: 'shark', cookXp: 90, value: 35, buyPrice: 50, sellPrice: 12, examine: 'A raw shark.' },
-    chicken: { name: 'Cooked chicken', icon: 'assets/svg/items/chicken.svg', heal: 10, stack: true, value: 6, buyPrice: 9, sellPrice: 2, examine: 'Roasted chicken.' },
-    rawchicken: { name: 'Raw chicken', icon: 'assets/svg/items/rawchicken.svg', stack: true, cook: 'chicken', cookXp: 25, value: 3, sellPrice: 1, examine: 'Raw chicken meat.' },
-    rawbeef: { name: 'Raw beef', icon: 'assets/svg/items/rawbeef.svg', stack: true, cook: 'beef', cookXp: 30, value: 4, sellPrice: 1, examine: 'A cut of raw beef. Better cooked.' },
-    beef: { name: 'Cooked beef', icon: 'assets/svg/items/beef.svg', heal: 16, stack: true, value: 8, buyPrice: 12, sellPrice: 3, examine: 'A seared cut of beef.' },
-    cookedslime: { name: 'Cooked slime', icon: 'assets/svg/items/cookedslime.svg', heal: 14, stack: true, value: 7, sellPrice: 2, examine: 'Jelly-like cooked slime.' },
-    rawslime: { name: 'Raw slime', icon: 'assets/svg/items/rawslime.svg', stack: true, cook: 'cookedslime', cookXp: 28, value: 3, sellPrice: 1, examine: 'A quivering lump of slime.' },
-    crab: { name: 'Cooked crab', icon: 'assets/svg/items/crab.svg', heal: 18, stack: true, value: 12, buyPrice: 16, sellPrice: 4, examine: 'Cooked crab meat.' },
-    rawcrab: { name: 'Raw crab', icon: 'assets/svg/items/rawcrab.svg', stack: true, cook: 'crab', cookXp: 35, value: 6, sellPrice: 2, examine: 'Raw crab meat.' },
-    cookedgoblin: { name: 'Cooked goblin meat', icon: 'assets/svg/items/cookedgoblin.svg', heal: 14, stack: true, value: 6, sellPrice: 2, examine: 'Dubious but edible.' },
-    rawgoblin: { name: 'Raw goblin meat', icon: 'assets/svg/items/rawgoblin.svg', stack: true, cook: 'cookedgoblin', cookXp: 28, value: 3, sellPrice: 1, examine: 'Raw goblin meat.' },
-    ribs: { name: 'Cooked ribs', icon: 'assets/svg/items/ribs.svg', heal: 18, stack: true, value: 10, sellPrice: 3, examine: 'Roasted ribs.' },
-    rawrib: { name: 'Raw ribs', icon: 'assets/svg/items/rawrib.svg', stack: true, cook: 'ribs', cookXp: 35, value: 5, sellPrice: 1, examine: 'Bony raw ribs.' },
-    rabbit: { name: 'Cooked rabbit', icon: 'assets/svg/items/rabbit.svg', heal: 12, stack: true, value: 8, buyPrice: 12, sellPrice: 2, examine: 'Cooked rabbit.' },
-    rawrabbit: { name: 'Raw rabbit', icon: 'assets/svg/items/rawrabbit.svg', stack: true, cook: 'rabbit', cookXp: 28, value: 4, sellPrice: 1, examine: 'Raw rabbit meat.' },
-    cookedbat: { name: 'Cooked bat', icon: 'assets/svg/items/cookedbat.svg', heal: 16, stack: true, value: 9, sellPrice: 2, examine: 'Cooked bat meat.' },
-    rawbat: { name: 'Raw bat', icon: 'assets/svg/items/rawbat.svg', stack: true, cook: 'cookedbat', cookXp: 32, value: 4, sellPrice: 1, examine: 'Raw bat meat.' },
-    drakesteak: { name: 'Drake steak', icon: 'assets/svg/items/drakesteak.svg', heal: 30, stack: true, value: 40, sellPrice: 14, examine: 'A hot drake steak.' },
-    rawdrake: { name: 'Raw drake meat', icon: 'assets/svg/items/rawdrake.svg', stack: true, cook: 'drakesteak', cookXp: 80, value: 24, sellPrice: 8, examine: 'Raw drake meat.' },
-    dragonsteak: { name: 'Dragon steak', icon: 'assets/svg/items/dragonsteak.svg', heal: 40, stack: true, value: 70, sellPrice: 24, examine: 'Legendary dragon steak.' },
-    rawdragon: { name: 'Raw dragon meat', icon: 'assets/svg/items/rawdragon.svg', stack: true, cook: 'dragonsteak', cookXp: 100, value: 40, sellPrice: 14, examine: 'Raw dragon meat.' },
-    bread: { name: 'Bread', icon: 'assets/svg/items/bread.svg', heal: 20, stack: true, value: 12, buyPrice: 16, sellPrice: 4, examine: 'A dense loaf baked for the road.' },
-    shell: { name: 'Crab shell', icon: 'assets/svg/items/shell.svg', stack: true, value: 4, sellPrice: 1, examine: 'A hard crab shell. Useful for crafting.' },
-    woodclub: { name: 'Wood club', icon: 'assets/svg/items/woodclub.svg', slot: 'weapon', damage: 8, attackRange: 24, combatClass: 'melee', tier: 'wood', value: 4, buyPrice: 6, sellPrice: 1, examine: 'A crude wooden club.' },
-    copperdagger: { name: 'Copper dagger', icon: 'assets/svg/items/copperdagger.svg', slot: 'weapon', damage: 9, attackRange: 22, combatClass: 'melee', tier: 'copper', value: 10, buyPrice: 14, sellPrice: 3, examine: 'A soft copper dagger.' },
-    coppersword: { name: 'Copper sword', icon: 'assets/svg/items/coppersword.svg', slot: 'weapon', damage: 16, attackRange: 24, combatClass: 'melee', tier: 'copper', value: 26, buyPrice: 40, sellPrice: 10, examine: 'A short copper blade.' },
-    ironsword: { name: 'Iron sword', icon: 'assets/svg/items/ironsword.svg', slot: 'weapon', damage: 20, attackRange: 26, combatClass: 'melee', tier: 'iron', value: 40, buyPrice: 60, sellPrice: 16, examine: 'A sturdy iron blade.' },
-    diamondsword: { name: 'Diamond blade', icon: 'assets/svg/items/diamondsword.svg', slot: 'weapon', damage: 26, attackRange: 26, combatClass: 'melee', tier: 'diamond', value: 90, buyPrice: 140, sellPrice: 36, examine: 'A crystal-hard blade.' },
-    dragonitesword: { name: 'Dragonite blade', icon: 'assets/svg/items/dragonitesword.svg', slot: 'weapon', damage: 34, attackRange: 28, combatClass: 'melee', tier: 'dragonite', value: 180, buyPrice: 270, sellPrice: 72, examine: 'A legendary dragonite blade.' },
-    woodbow: { name: 'Wood bow', icon: 'assets/svg/items/woodbow.svg', slot: 'weapon', damage: 10, attackRange: 64, combatClass: 'ranged', tier: 'wood', bowTier: 1, value: 12, buyPrice: 18, sellPrice: 4, examine: 'A simple wooden bow.' },
-    copperbow: { name: 'Copper bow', icon: 'assets/svg/items/copperbow.svg', slot: 'weapon', damage: 16, attackRange: 64, combatClass: 'ranged', tier: 'copper', bowTier: 2, value: 32, buyPrice: 48, sellPrice: 12, examine: 'A copper-reinforced bow.' },
-    oakbow: { name: 'Ash bow', icon: 'assets/svg/items/oakbow.svg', slot: 'weapon', damage: 18, attackRange: 64, combatClass: 'ranged', tier: 'iron', bowTier: 3, value: 48, buyPrice: 72, sellPrice: 18, examine: 'An ash bow with a firm draw.' },
-    yewbow: { name: 'Yew bow', icon: 'assets/svg/items/yewbow.svg', slot: 'weapon', damage: 24, attackRange: 64, combatClass: 'ranged', tier: 'diamond', bowTier: 4, value: 90, buyPrice: 140, sellPrice: 36, examine: 'A yew war bow.' },
-    magicbow: { name: 'Magic bow', icon: 'assets/svg/items/magicbow.svg', slot: 'weapon', damage: 30, attackRange: 64, combatClass: 'ranged', tier: 'dragonite', bowTier: 5, value: 160, buyPrice: 240, sellPrice: 64, examine: 'A rare magic bow.' },
-    woodarrow: { name: 'Wooden arrows', icon: 'assets/svg/items/woodarrow.svg', slot: 'ammo', stack: true, ammoTier: 1, value: 1, buyPrice: 1, sellPrice: 1, examine: 'Simple wooden shafts. Infinite while unequipped ammo.' },
-    copperarrow: { name: 'Copper arrows', icon: 'assets/svg/items/copperarrow.svg', slot: 'ammo', stack: true, ammoTier: 2, value: 1, buyPrice: 2, sellPrice: 1, examine: 'Copper-tipped arrows.' },
-    ironarrow: { name: 'Iron arrows', icon: 'assets/svg/items/ironarrow.svg', slot: 'ammo', stack: true, ammoTier: 3, value: 2, buyPrice: 4, sellPrice: 1, examine: 'Iron-tipped arrows.' },
-    diamondarrow: { name: 'Diamond arrows', icon: 'assets/svg/items/diamondarrow.svg', slot: 'ammo', stack: true, ammoTier: 4, value: 4, buyPrice: 8, sellPrice: 2, examine: 'Crystal-tipped arrows.' },
-    dragonitearrow: { name: 'Dragonite arrows', icon: 'assets/svg/items/dragonitearrow.svg', slot: 'ammo', stack: true, ammoTier: 5, value: 8, buyPrice: 14, sellPrice: 3, examine: 'Dragonite-tipped arrows.' },
-    staff: { name: 'Wood staff', icon: 'assets/svg/items/staff.svg', slot: 'weapon', damage: 12, attackRange: 64, combatClass: 'magic', tier: 'wood', value: 20, buyPrice: 30, sellPrice: 8, examine: 'A carved staff. Channels Air Strike.' },
-    copperstaff: { name: 'Copper staff', icon: 'assets/svg/items/copperstaff.svg', slot: 'weapon', damage: 16, attackRange: 64, combatClass: 'magic', tier: 'copper', value: 36, buyPrice: 54, sellPrice: 14, examine: 'A copper-shod staff.' },
-    ironstaff: { name: 'Iron staff', icon: 'assets/svg/items/ironstaff.svg', slot: 'weapon', damage: 20, attackRange: 64, combatClass: 'magic', tier: 'iron', value: 55, buyPrice: 80, sellPrice: 22, examine: 'An iron-banded casting staff.' },
-    diamondstaff: { name: 'Diamond staff', icon: 'assets/svg/items/diamondstaff.svg', slot: 'weapon', damage: 26, attackRange: 64, combatClass: 'magic', tier: 'diamond', value: 100, buyPrice: 150, sellPrice: 40, examine: 'A crystal casting staff.' },
-    dragonitestaff: { name: 'Dragonite staff', icon: 'assets/svg/items/dragonitestaff.svg', slot: 'weapon', damage: 32, attackRange: 64, combatClass: 'magic', tier: 'dragonite', value: 180, buyPrice: 270, sellPrice: 72, examine: 'A legendary dragonite staff.' },
-    wizardrobe: { name: 'Wizard robe', icon: 'assets/svg/items/wizardrobe.svg', slot: 'armour', defence: 2, magicBonus: 3, tier: 'wood', value: 24, buyPrice: 36, sellPrice: 8, examine: 'A light robe for casting.' },
-    copperarmour: { name: 'Copper armour', icon: 'assets/svg/items/copperarmour.svg', slot: 'armour', defence: 4, tier: 'copper', value: 40, buyPrice: 60, sellPrice: 14, examine: 'Copper plates stitched into armour.' },
-    ironarmour: { name: 'Iron armour', icon: 'assets/svg/items/ironarmour.svg', slot: 'armour', defence: 10, tier: 'iron', value: 120, buyPrice: 180, sellPrice: 48, examine: 'Full iron armour.' },
-    diamondarmour: { name: 'Diamond armour', icon: 'assets/svg/items/diamondarmour.svg', slot: 'armour', defence: 17, tier: 'diamond', value: 280, buyPrice: 420, sellPrice: 100, examine: 'Crystal-hard diamond armour.' },
-    dragonitearmour: { name: 'Dragonite armour', icon: 'assets/svg/items/dragonitearmour.svg', slot: 'armour', defence: 26, tier: 'dragonite', value: 500, buyPrice: 750, sellPrice: 180, examine: 'Legendary dragonite armour.' },
-    shield: { name: 'Wooden shield', icon: 'assets/svg/items/shield.svg', slot: 'shield', defence: 1, tier: 'wood', value: 20, buyPrice: 30, sellPrice: 8, examine: 'A round wooden shield.' },
-    coppershield: { name: 'Copper shield', icon: 'assets/svg/items/coppershield.svg', slot: 'shield', defence: 2, tier: 'copper', value: 28, buyPrice: 42, sellPrice: 10, examine: 'A copper square shield.' },
-    ironshield: { name: 'Iron square shield', icon: 'assets/svg/items/ironshield.svg', slot: 'shield', defence: 3, tier: 'iron', value: 48, buyPrice: 72, sellPrice: 18, examine: 'A square iron shield.' },
-    diamondshield: { name: 'Diamond square shield', icon: 'assets/svg/items/diamondshield.svg', slot: 'shield', defence: 5, tier: 'diamond', value: 110, buyPrice: 170, sellPrice: 44, examine: 'A sparkling diamond shield.' },
-    dragoniteshield: { name: 'Dragonite square shield', icon: 'assets/svg/items/dragoniteshield.svg', slot: 'shield', defence: 8, tier: 'dragonite', value: 200, buyPrice: 300, sellPrice: 80, examine: 'A dragonite square shield.' },
-    woodaxe: { name: 'Wood axe', icon: 'assets/svg/items/woodaxe.svg', tool: 'axe', tier: 'wood', toolTier: 1, value: 6, buyPrice: 8, sellPrice: 2, examine: 'A soft wooden chopping axe.' },
-    copperaxe: { name: 'Copper axe', icon: 'assets/svg/items/copperaxe.svg', tool: 'axe', tier: 'copper', toolTier: 2, value: 12, buyPrice: 18, sellPrice: 4, examine: 'A copper axe for light chopping.' },
-    ironaxe: { name: 'Iron axe', icon: 'assets/svg/items/ironaxe.svg', tool: 'axe', tier: 'iron', toolTier: 3, value: 32, buyPrice: 48, sellPrice: 12, examine: 'An iron axe that bites deep.' },
-    diamondaxe: { name: 'Diamond axe', icon: 'assets/svg/items/diamondaxe.svg', tool: 'axe', tier: 'diamond', toolTier: 4, value: 80, buyPrice: 120, sellPrice: 32, examine: 'A glittering diamond axe.' },
-    dragoniteaxe: { name: 'Dragonite axe', icon: 'assets/svg/items/dragoniteaxe.svg', tool: 'axe', tier: 'dragonite', toolTier: 5, value: 160, buyPrice: 240, sellPrice: 64, examine: 'A dragonite axe of legend.' },
-    woodpick: { name: 'Wood pickaxe', icon: 'assets/svg/items/woodpick.svg', tool: 'pickaxe', tier: 'wood', toolTier: 1, value: 6, buyPrice: 8, sellPrice: 2, examine: 'A soft wooden pick.' },
-    copperpick: { name: 'Copper pickaxe', icon: 'assets/svg/items/copperpick.svg', tool: 'pickaxe', tier: 'copper', toolTier: 2, value: 12, buyPrice: 18, sellPrice: 4, examine: 'A copper pickaxe.' },
-    ironpick: { name: 'Iron pickaxe', icon: 'assets/svg/items/ironpick.svg', tool: 'pickaxe', tier: 'iron', toolTier: 3, value: 32, buyPrice: 48, sellPrice: 12, examine: 'An iron pickaxe.' },
-    diamondpick: { name: 'Diamond pickaxe', icon: 'assets/svg/items/diamondpick.svg', tool: 'pickaxe', tier: 'diamond', toolTier: 4, value: 80, buyPrice: 120, sellPrice: 32, examine: 'A diamond-tipped pick.' },
-    dragonitepick: { name: 'Dragonite pickaxe', icon: 'assets/svg/items/dragonitepick.svg', tool: 'pickaxe', tier: 'dragonite', toolTier: 5, value: 160, buyPrice: 240, sellPrice: 64, examine: 'A dragonite pickaxe.' },
-    net: { name: 'Small fishing net', icon: 'assets/svg/items/net.svg', tool: 'net', toolTier: 1, value: 8, buyPrice: 12, sellPrice: 3, examine: 'A small fishing net for shrimp.' },
-    coppernet: { name: 'Copper fishing net', icon: 'assets/svg/items/coppernet.svg', tool: 'net', toolTier: 2, value: 16, buyPrice: 24, sellPrice: 6, examine: 'A copper-ringed net for trout.' },
-    ironnet: { name: 'Iron fishing net', icon: 'assets/svg/items/ironnet.svg', tool: 'net', toolTier: 3, value: 28, buyPrice: 42, sellPrice: 10, examine: 'An iron net for lobster.' },
-    diamondnet: { name: 'Diamond fishing net', icon: 'assets/svg/items/diamondnet.svg', tool: 'net', toolTier: 4, value: 60, buyPrice: 90, sellPrice: 22, examine: 'A diamond net for swordfish.' },
-    dragonitenet: { name: 'Dragonite fishing net', icon: 'assets/svg/items/dragonitenet.svg', tool: 'net', toolTier: 5, value: 120, buyPrice: 180, sellPrice: 45, examine: 'A dragonite net for shark.' },
-    logs: { name: 'Logs', icon: 'assets/svg/items/logs.svg', stack: true, firemake: true, firemakeXp: 40, value: 2, buyPrice: 4, sellPrice: 1, examine: 'A pile of chopped logs.' },
-    oaklogs: { name: 'Oak logs', icon: 'assets/svg/items/oaklogs.svg', stack: true, firemake: true, firemakeXp: 60, value: 6, buyPrice: 10, sellPrice: 2, examine: 'Sturdy oak logs.' },
-    ashlogs: { name: 'Ash logs', icon: 'assets/svg/items/ashlogs.svg', stack: true, firemake: true, firemakeXp: 75, value: 10, buyPrice: 16, sellPrice: 3, examine: 'Straight ash logs.' },
-    yewlogs: { name: 'Yew logs', icon: 'assets/svg/items/yewlogs.svg', stack: true, firemake: true, firemakeXp: 90, value: 14, buyPrice: 24, sellPrice: 5, examine: 'Dense yew logs.' },
-    magiclogs: { name: 'Magic logs', icon: 'assets/svg/items/magiclogs.svg', stack: true, firemake: true, firemakeXp: 120, value: 28, buyPrice: 48, sellPrice: 10, examine: 'Logs that hum with latent magic.' },
-    copper: { name: 'Copper ore', icon: 'assets/svg/items/copper.svg', stack: true, value: 3, buyPrice: 6, sellPrice: 1, examine: 'A chunk of copper ore.' },
-    iron: { name: 'Iron ore', icon: 'assets/svg/items/iron.svg', stack: true, value: 8, buyPrice: 14, sellPrice: 3, examine: 'A chunk of iron ore.' },
-    diamondore: { name: 'Diamond ore', icon: 'assets/svg/items/diamondore.svg', stack: true, value: 40, buyPrice: 70, sellPrice: 16, examine: 'Ore glittering with hard crystal.' },
-    dragoniteore: { name: 'Dragonite ore', icon: 'assets/svg/items/dragoniteore.svg', stack: true, value: 80, buyPrice: 140, sellPrice: 32, examine: 'Rare ore warm with dragonite veins.' },
-    runeessence: { name: 'Rune essence', icon: 'assets/svg/items/runeessence.svg', stack: true, value: 2, buyPrice: 4, sellPrice: 1, examine: 'Blank essence ready for an altar.' },
-    copperbar: { name: 'Copper bar', icon: 'assets/svg/items/copperbar.svg', stack: true, value: 8, buyPrice: 14, sellPrice: 3, examine: 'A soft copper bar.' },
-    ironbar: { name: 'Iron bar', icon: 'assets/svg/items/ironbar.svg', stack: true, value: 22, buyPrice: 36, sellPrice: 8, examine: 'A sturdy iron bar.' },
-    diamondbar: { name: 'Diamond bar', icon: 'assets/svg/items/diamondbar.svg', stack: true, value: 70, buyPrice: 120, sellPrice: 28, examine: 'A crystal-hardened bar.' },
-    dragonitebar: { name: 'Dragonite bar', icon: 'assets/svg/items/dragonitebar.svg', stack: true, value: 140, buyPrice: 240, sellPrice: 56, examine: 'A legendary dragonite bar.' },
-    tinderbox: { name: 'Tinderbox', icon: 'assets/svg/items/tinderbox.svg', value: 5, buyPrice: 8, sellPrice: 2, examine: 'A small box of flint and steel.' },
-    bones: { name: 'Bones', icon: 'assets/svg/items/bones.svg', stack: true, bury: true, buryXp: 4, shrineXp: 8, value: 1, sellPrice: 1, examine: 'Dry bones. Someone should bury them.' },
-    feather: { name: 'Feathers', icon: 'assets/svg/items/feather.svg', stack: true, value: 1, buyPrice: 2, sellPrice: 1, examine: 'Soft feathers from a bird.' },
-    rabbitfur: { name: 'Rabbit fur', icon: 'assets/svg/items/rabbitfur.svg', stack: true, value: 3, sellPrice: 1, examine: 'Soft fur from a rabbit. Useful for crafting.' },
-    airrune: { name: 'Air rune', icon: 'assets/svg/items/airrune.svg', stack: true, rune: true, value: 4, buyPrice: 6, sellPrice: 1, examine: 'A pale blue rune. It hums with air.' },
-    waterrune: { name: 'Water rune', icon: 'assets/svg/items/waterrune.svg', stack: true, rune: true, value: 4, buyPrice: 6, sellPrice: 1, examine: 'A rune beaded with cold water.' },
-    earthrune: { name: 'Earth rune', icon: 'assets/svg/items/earthrune.svg', stack: true, rune: true, value: 4, buyPrice: 6, sellPrice: 1, examine: 'A dusty brown rune.' },
-    firerune: { name: 'Fire rune', icon: 'assets/svg/items/firerune.svg', stack: true, rune: true, value: 4, buyPrice: 6, sellPrice: 1, examine: 'A rune warm to the touch.' },
-    key: { name: 'Iron key', icon: 'assets/svg/items/key.svg', value: 1, buyPrice: 500, sellPrice: 1, examine: 'A heavy iron key with a worn bit.' },
-    cowhide: { name: 'Cowhide', icon: 'assets/svg/items/cowhide.svg', stack: true, tan: 'leather', tanXp: 14, value: 2, sellPrice: 1, examine: 'A raw cowhide. It can be crafted into leather.' },
-    leather: { name: 'Leather', icon: 'assets/svg/items/leather.svg', stack: true, value: 4, sellPrice: 1, examine: 'Soft leather, ready to stitch.' },
-    string: { name: 'String', icon: 'assets/svg/items/string.svg', stack: true, value: 1, buyPrice: 2, sellPrice: 1, examine: 'A short length of string for stitching leather.' },
-    gloves: { name: 'Leather gloves', icon: 'assets/svg/items/gloves.svg', slot: 'hands', defence: 1, value: 10, buyPrice: 16, sellPrice: 4, examine: 'Stitched leather gloves for the road.' },
-    scalegloves: { name: 'Drake-scale gloves', icon: 'assets/svg/items/scalegloves.svg', slot: 'hands', defence: 3, value: 60, sellPrice: 20, examine: 'Gloves reinforced with warm drake scale.' },
-    drakescale: { name: 'Drake scale', icon: 'assets/svg/items/drakescale.svg', stack: true, value: 40, sellPrice: 16, examine: 'A warm scale shed by a drake.' },
-    cluescroll: { name: 'Clue scroll', icon: 'assets/svg/items/cluescroll.svg', stack: false, questItem: true, value: 0, examine: 'A clue written in fading ink.' },
-    guam: { name: 'Guam leaf', icon: 'assets/svg/items/guam.svg', stack: true, value: 2, buyPrice: 5, sellPrice: 1, examine: 'A bitter herb leaf.' },
-    attackpot: { name: 'Attack potion', icon: 'assets/svg/items/attackpot.svg', stack: true, drink: true, value: 12, examine: 'A vial boosting attack briefly.' },
-    oakplank: { name: 'Oak plank', icon: 'assets/svg/items/oakplank.svg', stack: true, value: 6, examine: 'A sawn oak plank.' },
-    shortbowunstrung: { name: 'Unstrung copper bow', icon: 'assets/svg/items/shortbowunstrung.svg', stack: true, value: 8, examine: 'An unstrung copper bow.' },
-    batfang: { name: 'Bat fang', icon: 'assets/svg/items/batfang.svg', questItem: true, value: 0, examine: 'Proof a Darkmine bat was cleared.' }
-};
+/* ITEM_DB / shops / recipes / gather maps from js/content/*-data.js */
+if (typeof ITEM_DB === 'undefined') { var ITEM_DB = {}; }
+if (typeof GENERAL_SHOP_KEY === 'undefined') { var GENERAL_SHOP_KEY = 'mira'; }
+if (typeof WEAPON_SHOP_KEY === 'undefined') { var WEAPON_SHOP_KEY = 'arms'; }
+if (typeof GENERAL_SHOP_STOCK === 'undefined') { var GENERAL_SHOP_STOCK = []; }
+if (typeof WEAPON_SHOP_STOCK === 'undefined') { var WEAPON_SHOP_STOCK = []; }
+if (typeof RESOURCE_LEVEL === 'undefined') { var RESOURCE_LEVEL = {}; }
+if (typeof RESOURCE_TOOL_TIER === 'undefined') { var RESOURCE_TOOL_TIER = {}; }
+if (typeof TREE_BY_ZONE === 'undefined') { var TREE_BY_ZONE = {}; }
+if (typeof FISH_BY_ZONE === 'undefined') { var FISH_BY_ZONE = {}; }
+if (typeof SMELT_RECIPES === 'undefined') { var SMELT_RECIPES = []; }
+if (typeof SMITH_RECIPES === 'undefined') { var SMITH_RECIPES = []; }
+if (typeof CRAFT_RECIPES === 'undefined') { var CRAFT_RECIPES = []; }
 
-var GENERAL_SHOP_KEY = 'mira';
-var WEAPON_SHOP_KEY = 'arms';
-var GENERAL_SHOP_STOCK = [
-    { id: 'shrimp', stock: 10, restockTo: 10, restockMs: 45000 },
-    { id: 'bread', stock: 5, restockTo: 5, restockMs: 60000 },
-    { id: 'tinderbox', stock: 3, restockTo: 3, restockMs: 90000 },
-    { id: 'net', stock: 2, restockTo: 2, restockMs: 90000 },
-    { id: 'copperaxe', stock: 1, restockTo: 1, restockMs: 120000 },
-    { id: 'copperpick', stock: 1, restockTo: 1, restockMs: 120000 },
-    { id: 'string', stock: 8, restockTo: 8, restockMs: 60000 },
-    { id: 'logs', stock: 12, restockTo: 12, restockMs: 45000 },
-    { id: 'oaklogs', stock: 6, restockTo: 6, restockMs: 60000 },
-    { id: 'ashlogs', stock: 4, restockTo: 4, restockMs: 90000 },
-    { id: 'copper', stock: 8, restockTo: 8, restockMs: 45000 },
-    { id: 'iron', stock: 4, restockTo: 4, restockMs: 90000 },
-    { id: 'copperbar', stock: 3, restockTo: 3, restockMs: 90000 },
-    { id: 'ironbar', stock: 2, restockTo: 2, restockMs: 120000 },
-    { id: 'yewlogs', stock: 3, restockTo: 3, restockMs: 120000 },
-    { id: 'magiclogs', stock: 2, restockTo: 2, restockMs: 180000 },
-    { id: 'diamondore', stock: 2, restockTo: 2, restockMs: 180000 },
-    { id: 'dragoniteore', stock: 1, restockTo: 1, restockMs: 300000 },
-    { id: 'runeessence', stock: 20, restockTo: 20, restockMs: 45000 },
-    { id: 'guam', stock: 6, restockTo: 6, restockMs: 60000 },
-    { id: 'feather', stock: 20, restockTo: 20, restockMs: 45000 },
-    { id: 'firerune', stock: 20, restockTo: 20, restockMs: 45000 },
-    { id: 'waterrune', stock: 20, restockTo: 20, restockMs: 45000 },
-    { id: 'earthrune', stock: 20, restockTo: 20, restockMs: 45000 },
-    { id: 'airrune', stock: 20, restockTo: 20, restockMs: 45000 },
-    { id: 'key', stock: 1, restockTo: 1, restockMs: 600000 }
-];
-var WEAPON_SHOP_STOCK = [
-    { id: 'copperdagger', stock: 3, restockTo: 3, restockMs: 90000 },
-    { id: 'woodclub', stock: 3, restockTo: 3, restockMs: 90000 },
-    { id: 'coppersword', stock: 2, restockTo: 2, restockMs: 120000 },
-    { id: 'ironsword', stock: 1, restockTo: 1, restockMs: 180000 },
-    { id: 'shield', stock: 2, restockTo: 2, restockMs: 120000 },
-    { id: 'coppershield', stock: 1, restockTo: 1, restockMs: 150000 },
-    { id: 'copperarmour', stock: 1, restockTo: 1, restockMs: 150000 },
-    { id: 'ironarmour', stock: 1, restockTo: 1, restockMs: 180000 },
-    { id: 'ironshield', stock: 1, restockTo: 1, restockMs: 180000 },
-    { id: 'diamondarmour', stock: 1, restockTo: 1, restockMs: 300000 },
-    { id: 'diamondshield', stock: 1, restockTo: 1, restockMs: 300000 },
-    { id: 'dragonitearmour', stock: 1, restockTo: 1, restockMs: 420000 },
-    { id: 'dragoniteshield', stock: 1, restockTo: 1, restockMs: 420000 },
-    { id: 'gloves', stock: 2, restockTo: 2, restockMs: 120000 },
-    { id: 'woodbow', stock: 2, restockTo: 2, restockMs: 90000 },
-    { id: 'copperbow', stock: 1, restockTo: 1, restockMs: 120000 },
-    { id: 'oakbow', stock: 1, restockTo: 1, restockMs: 150000 },
-    { id: 'woodarrow', stock: 40, restockTo: 40, restockMs: 45000 },
-    { id: 'copperarrow', stock: 40, restockTo: 40, restockMs: 45000 },
-    { id: 'ironarrow', stock: 20, restockTo: 20, restockMs: 60000 },
-    { id: 'staff', stock: 2, restockTo: 2, restockMs: 120000 },
-    { id: 'copperstaff', stock: 1, restockTo: 1, restockMs: 150000 },
-    { id: 'ironstaff', stock: 1, restockTo: 1, restockMs: 180000 },
-    { id: 'wizardrobe', stock: 1, restockTo: 1, restockMs: 120000 },
-    { id: 'airrune', stock: 40, restockTo: 40, restockMs: 45000 },
-    { id: 'waterrune', stock: 30, restockTo: 30, restockMs: 45000 },
-    { id: 'woodaxe', stock: 2, restockTo: 2, restockMs: 90000 },
-    { id: 'woodpick', stock: 2, restockTo: 2, restockMs: 90000 },
-    { id: 'copperaxe', stock: 1, restockTo: 1, restockMs: 120000 },
-    { id: 'copperpick', stock: 1, restockTo: 1, restockMs: 120000 },
-    { id: 'ironaxe', stock: 1, restockTo: 1, restockMs: 180000 },
-    { id: 'ironpick', stock: 1, restockTo: 1, restockMs: 180000 },
-    { id: 'diamondaxe', stock: 1, restockTo: 1, restockMs: 300000 },
-    { id: 'diamondpick', stock: 1, restockTo: 1, restockMs: 300000 },
-    { id: 'dragoniteaxe', stock: 1, restockTo: 1, restockMs: 420000 },
-    { id: 'dragonitepick', stock: 1, restockTo: 1, restockMs: 420000 },
-    { id: 'yewbow', stock: 1, restockTo: 1, restockMs: 240000 },
-    { id: 'magicbow', stock: 1, restockTo: 1, restockMs: 360000 },
-    { id: 'diamondstaff', stock: 1, restockTo: 1, restockMs: 240000 },
-    { id: 'dragonitestaff', stock: 1, restockTo: 1, restockMs: 360000 },
-    { id: 'diamondsword', stock: 1, restockTo: 1, restockMs: 300000 },
-    { id: 'dragonitesword', stock: 1, restockTo: 1, restockMs: 420000 }
-];
 var SHOP_CATALOG = {};
 SHOP_CATALOG[GENERAL_SHOP_KEY] = GENERAL_SHOP_STOCK;
 SHOP_CATALOG[WEAPON_SHOP_KEY] = WEAPON_SHOP_STOCK;
@@ -385,72 +208,9 @@ var WOODCUT_AXE_ID = 'copperaxe';
 var MINE_PICK_ID = 'copperpick';
 var COOK_BURN_BASE = 0.52;
 var COOK_BURN_PER_LEVEL = 0.045;
-var RESOURCE_LEVEL = {
-    logs: 1,
-    oaklogs: 15,
-    ashlogs: 28,
-    yewlogs: 40,
-    magiclogs: 60,
-    copper: 1,
-    iron: 15,
-    runeessence: 1,
-    diamondore: 40,
-    dragoniteore: 60,
-    rawshrimp: 1,
-    rawtrout: 15,
-    rawlobster: 28,
-    rawswordfish: 40,
-    rawshark: 60
-};
-
 /* Min toolTier for gather jobs (higher tiers always OK). */
-var RESOURCE_TOOL_TIER = {
-    logs: 1,
-    oaklogs: 2,
-    ashlogs: 3,
-    yewlogs: 4,
-    magiclogs: 4,
-    copper: 1,
-    runeessence: 1,
-    iron: 2,
-    diamondore: 3,
-    dragoniteore: 4,
-    rawshrimp: 1,
-    rawtrout: 2,
-    rawlobster: 3,
-    rawswordfish: 4,
-    rawshark: 5
-};
-
 /* Align woodcutting with zone difficulty bands. */
-var TREE_BY_ZONE = {
-    haven: { log: 'logs', level: 1 },
-    millfields: { log: 'logs', level: 1 },
-    southshore: { log: 'logs', level: 1 },
-    mire: { log: 'oaklogs', level: 15 },
-    northwood: { log: 'oaklogs', level: 15 },
-    graves: { log: 'ashlogs', level: 28 },
-    westmead: { log: 'ashlogs', level: 28 },
-    darkmine: { log: 'yewlogs', level: 40 },
-    highlands: { log: 'yewlogs', level: 40 },
-    dragonden: { log: 'magiclogs', level: 60 }
-};
-
 /* Primary fish catch per zone (spots added in MapGen/WorldScene). */
-var FISH_BY_ZONE = {
-    haven: 'rawshrimp',
-    millfields: 'rawshrimp',
-    southshore: 'rawshrimp',
-    mire: 'rawtrout',
-    northwood: 'rawtrout',
-    graves: 'rawtrout',
-    westmead: 'rawlobster',
-    darkmine: 'rawlobster',
-    highlands: 'rawswordfish',
-    dungeon: 'rawswordfish',
-    dragonden: 'rawshark'
-};
-
 function resourceNeedLevel(id) {
     var need = RESOURCE_LEVEL[id];
     if (typeof need === 'number') {
@@ -1445,73 +1205,6 @@ function listCookableIds(hero) {
 function cookAtStation(hero, id, kind) {
     return useItemOnScenery(hero, id, kind || 'range');
 }
-
-var SMELT_RECIPES = [
-    { id: 'copperbar', label: 'Smelt copper bar', inputs: [['copper', 1]], xp: 12, need: 1 },
-    { id: 'ironbar', label: 'Smelt iron bar', inputs: [['iron', 1]], xp: 25, need: 15 },
-    { id: 'diamondbar', label: 'Smelt diamond bar', inputs: [['diamondore', 1]], xp: 50, need: 40 },
-    { id: 'dragonitebar', label: 'Smelt dragonite bar', inputs: [['dragoniteore', 1]], xp: 70, need: 60 }
-];
-
-var SMITH_RECIPES = [
-    { id: 'copperdagger', label: 'Smith copper dagger (logs + copper)', bar: 'copperbar', bars: 1, extra: [['logs', 1]], xp: 14, need: 1 },
-    { id: 'coppersword', label: 'Smith copper sword (logs + copper)', bar: 'copperbar', bars: 2, extra: [['logs', 1]], xp: 28, need: 5 },
-    { id: 'copperaxe', label: 'Smith copper axe', bar: 'copperbar', bars: 1, xp: 16, need: 1 },
-    { id: 'copperpick', label: 'Smith copper pickaxe', bar: 'copperbar', bars: 1, xp: 16, need: 1 },
-    { id: 'coppershield', label: 'Smith copper shield', bar: 'copperbar', bars: 2, xp: 22, need: 6 },
-    { id: 'ironsword', label: 'Smith iron sword (ash + iron)', bar: 'ironbar', bars: 2, extra: [['ashlogs', 1]], xp: 40, need: 15 },
-    { id: 'ironaxe', label: 'Smith iron axe', bar: 'ironbar', bars: 1, xp: 36, need: 15 },
-    { id: 'ironpick', label: 'Smith iron pickaxe', bar: 'ironbar', bars: 1, xp: 36, need: 15 },
-    { id: 'ironshield', label: 'Smith iron square shield', bar: 'ironbar', bars: 3, xp: 50, need: 16 },
-    { id: 'diamondsword', label: 'Smith diamond blade (yew + diamond)', bar: 'diamondbar', bars: 2, extra: [['yewlogs', 1]], xp: 80, need: 42 },
-    { id: 'diamondaxe', label: 'Smith diamond axe', bar: 'diamondbar', bars: 1, xp: 70, need: 40 },
-    { id: 'diamondpick', label: 'Smith diamond pickaxe', bar: 'diamondbar', bars: 1, xp: 70, need: 40 },
-    { id: 'diamondshield', label: 'Smith diamond square shield', bar: 'diamondbar', bars: 3, xp: 95, need: 42 },
-    { id: 'dragonitesword', label: 'Smith dragonite blade (magic + dragonite)', bar: 'dragonitebar', bars: 2, extra: [['magiclogs', 1]], xp: 120, need: 62 },
-    { id: 'dragoniteaxe', label: 'Smith dragonite axe', bar: 'dragonitebar', bars: 1, xp: 100, need: 60 },
-    { id: 'dragonitepick', label: 'Smith dragonite pickaxe', bar: 'dragonitebar', bars: 1, xp: 100, need: 60 },
-    { id: 'dragoniteshield', label: 'Smith dragonite square shield', bar: 'dragonitebar', bars: 3, xp: 140, need: 62 }
-];
-
-var CRAFT_RECIPES = [
-    { id: 'tan:cowhide', label: 'Tan cowhide', kind: 'tan', xpSkill: 'crafting' },
-    { id: 'string:fur', label: 'Spin string from rabbit fur', inputs: [['rabbitfur', 1]], output: 'string', qty: 1, xp: 8, xpSkill: 'crafting', need: 1 },
-    { id: 'stitch:gloves', label: 'Stitch leather gloves', inputs: [['leather', 1], ['string', 1]], output: 'gloves', qty: 1, xp: CRAFT_LEATHER_XP, xpSkill: 'crafting', need: 1 },
-    { id: 'scalegloves', label: 'Craft drake-scale gloves', inputs: [['drakescale', 2], ['leather', 1], ['string', 1]], output: 'scalegloves', qty: 1, xp: 45, xpSkill: 'crafting', need: 40 },
-    { id: 'net', label: 'Weave fishing net', inputs: [['string', 3]], output: 'net', qty: 1, xp: 18, xpSkill: 'crafting', need: 1 },
-    { id: 'coppernet', label: 'Weave copper fishing net', inputs: [['string', 3], ['copperbar', 1]], output: 'coppernet', qty: 1, xp: 28, xpSkill: 'crafting', need: 15 },
-    { id: 'ironnet', label: 'Weave iron fishing net', inputs: [['string', 3], ['ironbar', 1]], output: 'ironnet', qty: 1, xp: 40, xpSkill: 'crafting', need: 28 },
-    { id: 'diamondnet', label: 'Weave diamond fishing net', inputs: [['string', 3], ['diamondbar', 1]], output: 'diamondnet', qty: 1, xp: 60, xpSkill: 'crafting', need: 40 },
-    { id: 'dragonitenet', label: 'Weave dragonite fishing net', inputs: [['string', 3], ['dragonitebar', 1]], output: 'dragonitenet', qty: 1, xp: 90, xpSkill: 'crafting', need: 60 },
-    { id: 'woodclub', label: 'Carve wood club', inputs: [['logs', 1]], output: 'woodclub', qty: 1, xp: 12, xpSkill: 'crafting', need: 1 },
-    { id: 'shield', label: 'Carve wooden shield', inputs: [['logs', 2]], output: 'shield', qty: 1, xp: 20, xpSkill: 'crafting', need: 1 },
-    { id: 'oakplankshield', label: 'Carve shield from oak planks', inputs: [['oakplank', 2]], output: 'shield', qty: 1, xp: 24, xpSkill: 'construction', need: 1 },
-    { id: 'woodaxe', label: 'Carve wood axe', inputs: [['logs', 2]], output: 'woodaxe', qty: 1, xp: 14, xpSkill: 'crafting', need: 1 },
-    { id: 'woodpick', label: 'Carve wood pickaxe', inputs: [['logs', 2]], output: 'woodpick', qty: 1, xp: 14, xpSkill: 'crafting', need: 1 },
-    { id: 'staff', label: 'Carve wood staff (logs + air)', inputs: [['logs', 2], ['airrune', 1]], output: 'staff', qty: 1, xp: 18, xpSkill: 'crafting', need: 1 },
-    { id: 'copperstaff', label: 'Craft copper staff (oak + air)', inputs: [['oaklogs', 1], ['airrune', 2]], output: 'copperstaff', qty: 1, xp: 30, xpSkill: 'crafting', need: 8 },
-    { id: 'ironstaff', label: 'Craft iron staff (ash + water)', inputs: [['ashlogs', 1], ['waterrune', 2]], output: 'ironstaff', qty: 1, xp: 44, xpSkill: 'crafting', need: 20 },
-    { id: 'diamondstaff', label: 'Craft diamond staff (yew + earth)', inputs: [['yewlogs', 1], ['earthrune', 2]], output: 'diamondstaff', qty: 1, xp: 80, xpSkill: 'crafting', need: 45 },
-    { id: 'dragonitestaff', label: 'Craft dragonite staff (magic + fire)', inputs: [['magiclogs', 1], ['firerune', 2]], output: 'dragonitestaff', qty: 1, xp: 120, xpSkill: 'crafting', need: 65 },
-    { id: 'wizardrobe', label: 'Sew wizard robe (string + leather + logs)', inputs: [['leather', 2], ['string', 1], ['logs', 1]], output: 'wizardrobe', qty: 1, xp: 28, xpSkill: 'crafting', need: 5 },
-    { id: 'copperarmour', label: 'Sew copper armour (string + leather + copper)', inputs: [['leather', 2], ['string', 1], ['copperbar', 3]], output: 'copperarmour', qty: 1, xp: 40, xpSkill: 'crafting', need: 8 },
-    { id: 'ironarmour', label: 'Sew iron armour (string + leather + iron)', inputs: [['leather', 2], ['string', 1], ['ironbar', 5]], output: 'ironarmour', qty: 1, xp: 70, xpSkill: 'crafting', need: 18 },
-    { id: 'diamondarmour', label: 'Sew diamond armour (string + leather + diamond)', inputs: [['leather', 2], ['string', 1], ['diamondbar', 5]], output: 'diamondarmour', qty: 1, xp: 140, xpSkill: 'crafting', need: 45 },
-    { id: 'dragonitearmour', label: 'Sew dragonite armour (string + leather + dragonite)', inputs: [['leather', 2], ['string', 1], ['dragonitebar', 5]], output: 'dragonitearmour', qty: 1, xp: 200, xpSkill: 'crafting', need: 65 },
-    { id: 'woodbow', label: 'Fletch wood bow', inputs: [['logs', 1], ['string', 1]], output: 'woodbow', qty: 1, xp: 16, xpSkill: 'fletching', need: 1 },
-    { id: 'copperbow', label: 'Fletch copper bow', inputs: [['oaklogs', 1], ['string', 1]], output: 'copperbow', qty: 1, xp: 22, xpSkill: 'fletching', need: 5 },
-    { id: 'oakbow', label: 'Fletch ash bow', inputs: [['ashlogs', 1], ['string', 1]], output: 'oakbow', qty: 1, xp: 36, xpSkill: 'fletching', need: 15 },
-    { id: 'yewbow', label: 'Fletch yew bow', inputs: [['yewlogs', 1], ['string', 1]], output: 'yewbow', qty: 1, xp: 60, xpSkill: 'fletching', need: 40 },
-    { id: 'magicbow', label: 'Fletch magic bow', inputs: [['magiclogs', 1], ['string', 1]], output: 'magicbow', qty: 1, xp: 90, xpSkill: 'fletching', need: 60 },
-    { id: 'woodarrow', label: 'Fletch wooden arrows (x10)', inputs: [['logs', 1], ['feather', 1]], output: 'woodarrow', qty: 10, xp: 10, xpSkill: 'fletching', need: 1 },
-    { id: 'copperarrow', label: 'Fletch copper arrows (x10)', inputs: [['oaklogs', 1], ['copperbar', 1], ['feather', 1]], output: 'copperarrow', qty: 10, xp: 18, xpSkill: 'fletching', need: 5 },
-    { id: 'ironarrow', label: 'Fletch iron arrows (x10)', inputs: [['ashlogs', 1], ['ironbar', 1], ['feather', 1]], output: 'ironarrow', qty: 10, xp: 30, xpSkill: 'fletching', need: 15 },
-    { id: 'diamondarrow', label: 'Fletch diamond arrows (x10)', inputs: [['yewlogs', 1], ['diamondbar', 1], ['feather', 1]], output: 'diamondarrow', qty: 10, xp: 50, xpSkill: 'fletching', need: 40 },
-    { id: 'dragonitearrow', label: 'Fletch dragonite arrows (x10)', inputs: [['magiclogs', 1], ['dragonitebar', 1], ['feather', 1]], output: 'dragonitearrow', qty: 10, xp: 80, xpSkill: 'fletching', need: 60 },
-    { id: 'shortbowunstrung', label: 'Fletch unstrung copper bow', inputs: [['oaklogs', 1]], output: 'shortbowunstrung', qty: 1, xp: 14, xpSkill: 'fletching', need: 1 },
-    { id: 'stringbow', label: 'String copper bow', inputs: [['shortbowunstrung', 1], ['string', 1]], output: 'copperbow', qty: 1, xp: 10, xpSkill: 'fletching', need: 5 },
-    { id: 'oakplank', label: 'Saw oak plank', inputs: [['oaklogs', 1]], output: 'oakplank', qty: 1, xp: 20, xpSkill: 'construction', need: 1 }
-];
 
 var RUNE_ALTAR_TYPES = {
     airrune: { label: 'Craft air runes', need: 1, xp: 10 },
@@ -3108,6 +2801,9 @@ function normalizeHeroCombat(hero) {
     }
     if (typeof hero.flags.dragonDenOpen !== 'boolean') {
         hero.flags.dragonDenOpen = !!hero.flags.dragonDenOpen;
+    }
+    if (typeof SettingsRegistry !== 'undefined' && SettingsRegistry.normalizeHero) {
+        SettingsRegistry.normalizeHero(hero);
     }
     if (typeof hero.showCombatVisuals !== 'boolean') {
         hero.showCombatVisuals = true;

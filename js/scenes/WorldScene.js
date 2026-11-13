@@ -150,8 +150,12 @@ var WorldScene = new Phaser.Class({
         if (resumeBoot && typeof resumeBoot.dungeonFloor === 'number') {
             resumeDungeon = resumeBoot.dungeonFloor;
         }
-        if (this.registry.get('worldSave') && typeof this.importWorldSave === 'function') {
-            this.importWorldSave(this.registry.get('worldSave'));
+        if (this.registry.get('worldSave')) {
+            if (typeof WorldPersist !== 'undefined' && WorldPersist.loadFromRegistry) {
+                WorldPersist.loadFromRegistry(this);
+            } else if (typeof this.importWorldSave === 'function') {
+                this.importWorldSave(this.registry.get('worldSave'));
+            }
             this.registry.set('worldSave', null);
         }
         if (facing === 'left' || facing === 'right' || facing === 'up' || facing === 'down') {
@@ -2656,25 +2660,44 @@ var WorldScene = new Phaser.Class({
     },
 
     clearFish: function () {
+        if (typeof GatherController !== 'undefined' && GatherController.clear) {
+            GatherController.clear(this, 'fish');
+            this.fishTarget = null;
+            return;
+        }
         this.fishAction = null;
         this.fishTarget = null;
         this.clearGatherFx();
     },
 
     clearGather: function () {
-        this.clearFish();
-        this.clearChop();
-        this.clearMine();
+        if (typeof GatherController !== 'undefined' && GatherController.clearAll) {
+            GatherController.clearAll(this);
+        } else {
+            this.clearFish();
+            this.clearChop();
+            this.clearMine();
+        }
         this.clearStationWalk();
     },
 
     clearChop: function () {
+        if (typeof GatherController !== 'undefined' && GatherController.clear) {
+            GatherController.clear(this, 'chop');
+            this.chopTarget = null;
+            return;
+        }
         this.chopAction = null;
         this.chopTarget = null;
         this.clearGatherFx();
     },
 
     clearMine: function () {
+        if (typeof GatherController !== 'undefined' && GatherController.clear) {
+            GatherController.clear(this, 'mine');
+            this.mineTarget = null;
+            return;
+        }
         this.mineAction = null;
         this.mineTarget = null;
         this.clearGatherFx();
@@ -3709,15 +3732,13 @@ var WorldScene = new Phaser.Class({
         }
         hero = this.registry.get('hero');
         if (typeof hasTool === 'function' && typeof FISH_NET_ID !== 'undefined' && !hasTool(hero, FISH_NET_ID)) {
+            if (typeof GatherController !== 'undefined' && GatherController.hardFail) {
+                return GatherController.hardFail(this, 'fish', 'You need a fishing net.');
+            }
             Hud.log('You need a fishing net.');
             this.clearFish();
             return false;
         }
-        this.player.body.setVelocity(0);
-        this.clearWalk();
-        this.clearChop();
-        this.clearMine();
-        this.fishTarget = hit;
         ms = typeof fishActionMs === 'function' ? fishActionMs() : 4000;
         if (ms < 3000) {
             ms = 3000;
@@ -3725,6 +3746,21 @@ var WorldScene = new Phaser.Class({
         if (ms > 5000) {
             ms = 5000;
         }
+        if (typeof GatherController !== 'undefined' && GatherController.startTimed) {
+            return GatherController.startTimed(this, 'fish', {
+                ms: ms,
+                target: hit,
+                onStart: function () {
+                    self.startFishFx(hit);
+                    Hud.log('You fish…');
+                }
+            });
+        }
+        this.player.body.setVelocity(0);
+        this.clearWalk();
+        this.clearChop();
+        this.clearMine();
+        this.fishTarget = hit;
         this.fishAction = {
             hit: hit,
             authoredSec: ms / 1000,
@@ -3864,21 +3900,44 @@ var WorldScene = new Phaser.Class({
         if (tree && typeof resourceLevelGate === 'function') {
             gate = resourceLevelGate(hero, 'woodcutting', tree.log);
             if (!gate.ok) {
-                Hud.log(typeof needLevelChat === 'function'
+                var needMsg = typeof needLevelChat === 'function'
                     ? needLevelChat(gate.need)
-                    : ('You need level ' + gate.need + '.'));
+                    : ('You need level ' + gate.need + '.');
+                if (typeof GatherController !== 'undefined' && GatherController.hardFail) {
+                    return GatherController.hardFail(this, 'chop', needMsg);
+                }
+                Hud.log(needMsg);
                 this.clearChop();
                 return false;
             }
         }
         if (typeof hasAnyToolKind === 'function' ? !hasAnyToolKind(hero, 'axe')
                 : (typeof hasTool === 'function' && typeof WOODCUT_AXE_ID !== 'undefined' && !hasTool(hero, WOODCUT_AXE_ID))) {
+            if (typeof GatherController !== 'undefined' && GatherController.hardFail) {
+                return GatherController.hardFail(this, 'chop', 'You need a stronger axe.');
+            }
             Hud.log('You need a stronger axe.');
             this.clearChop();
             return false;
         }
         if (this.chopAction) {
             return true;
+        }
+        if (tree) {
+            hit.log = tree.log;
+        }
+        ms = typeof skillActionMs === 'function'
+            ? skillActionMs(WOODCUT_ACTION_MS_MIN, WOODCUT_ACTION_MS_MAX)
+            : 4000;
+        if (typeof GatherController !== 'undefined' && GatherController.startTimed) {
+            return GatherController.startTimed(this, 'chop', {
+                ms: ms,
+                target: hit,
+                onStart: function () {
+                    self.startChopFx(hit);
+                    Hud.log('You swing your axe…');
+                }
+            });
         }
         this.player.body.setVelocity(0);
         this.clearWalk();
@@ -3887,12 +3946,6 @@ var WorldScene = new Phaser.Class({
             this.clearFish();
         }
         this.chopTarget = hit;
-        if (tree) {
-            this.chopTarget.log = tree.log;
-        }
-        ms = typeof skillActionMs === 'function'
-            ? skillActionMs(WOODCUT_ACTION_MS_MIN, WOODCUT_ACTION_MS_MAX)
-            : 4000;
         this.chopAction = {
             hit: hit,
             authoredSec: ms / 1000,
@@ -4001,12 +4054,29 @@ var WorldScene = new Phaser.Class({
         if (typeof hasDiamondPickOrBetter === 'function'
                 ? !hasDiamondPickOrBetter(hero)
                 : (typeof hasToolTierAtLeast === 'function' && !hasToolTierAtLeast(hero, 'pickaxe', needTier))) {
+            if (typeof GatherController !== 'undefined' && GatherController.hardFail) {
+                return GatherController.hardFail(this, 'mine', 'You need a diamond pickaxe to mine this boulder.');
+            }
             Hud.log('You need a diamond pickaxe to mine this boulder.');
             this.clearMine();
             return false;
         }
         if (this.mineAction) {
             return true;
+        }
+        hit.denBoulder = true;
+        ms = typeof skillActionMs === 'function'
+            ? skillActionMs(MINE_ACTION_MS_MIN, MINE_ACTION_MS_MAX)
+            : 4000;
+        if (typeof GatherController !== 'undefined' && GatherController.startTimed) {
+            return GatherController.startTimed(this, 'mine', {
+                ms: ms,
+                target: hit,
+                denBoulder: true,
+                onStart: function () {
+                    Hud.log('You chip at the sealing boulder…');
+                }
+            });
         }
         this.player.body.setVelocity(0);
         this.clearWalk();
@@ -4015,10 +4085,6 @@ var WorldScene = new Phaser.Class({
             this.clearFish();
         }
         this.mineTarget = hit;
-        this.mineTarget.denBoulder = true;
-        ms = typeof skillActionMs === 'function'
-            ? skillActionMs(MINE_ACTION_MS_MIN, MINE_ACTION_MS_MAX)
-            : 4000;
         this.mineAction = {
             hit: hit,
             denBoulder: true,
@@ -4152,20 +4218,42 @@ var WorldScene = new Phaser.Class({
         }
         gate = typeof resourceLevelGate === 'function' ? resourceLevelGate(hero, 'mining', ore) : { ok: true };
         if (gate && !gate.ok) {
-            Hud.log(typeof needLevelChat === 'function'
+            var mineNeed = typeof needLevelChat === 'function'
                 ? needLevelChat(gate.need)
-                : ('You need level ' + gate.need + '.'));
+                : ('You need level ' + gate.need + '.');
+            if (typeof GatherController !== 'undefined' && GatherController.hardFail) {
+                return GatherController.hardFail(this, 'mine', mineNeed);
+            }
+            Hud.log(mineNeed);
             this.clearMine();
             return false;
         }
         if (typeof hasAnyToolKind === 'function' ? !hasAnyToolKind(hero, 'pickaxe')
                 : (typeof hasTool === 'function' && typeof MINE_PICK_ID !== 'undefined' && !hasTool(hero, MINE_PICK_ID))) {
+            if (typeof GatherController !== 'undefined' && GatherController.hardFail) {
+                return GatherController.hardFail(this, 'mine', 'You need a stronger pickaxe.');
+            }
             Hud.log('You need a stronger pickaxe.');
             this.clearMine();
             return false;
         }
         if (this.mineAction) {
             return true;
+        }
+        hit.ore = ore;
+        ms = typeof skillActionMs === 'function'
+            ? skillActionMs(MINE_ACTION_MS_MIN, MINE_ACTION_MS_MAX)
+            : 4000;
+        label = typeof oreNodeLabel === 'function' ? oreNodeLabel(ore) : 'ore';
+        if (typeof GatherController !== 'undefined' && GatherController.startTimed) {
+            return GatherController.startTimed(this, 'mine', {
+                ms: ms,
+                target: hit,
+                onStart: function () {
+                    self.startMineFx(hit, ore);
+                    Hud.log('You swing your pickaxe at the ' + label + ' rock…');
+                }
+            });
         }
         this.player.body.setVelocity(0);
         this.clearWalk();
@@ -4174,10 +4262,6 @@ var WorldScene = new Phaser.Class({
             this.clearFish();
         }
         this.mineTarget = hit;
-        this.mineTarget.ore = ore;
-        ms = typeof skillActionMs === 'function'
-            ? skillActionMs(MINE_ACTION_MS_MIN, MINE_ACTION_MS_MAX)
-            : 4000;
         this.mineAction = {
             hit: hit,
             ore: ore,
@@ -4185,7 +4269,6 @@ var WorldScene = new Phaser.Class({
             ticksLeft: this.secondsToSimTicks(ms / 1000)
         };
         this.startMineFx(hit, ore);
-        label = typeof oreNodeLabel === 'function' ? oreNodeLabel(ore) : 'ore';
         Hud.log('You swing your pickaxe at the ' + label + ' rock…');
         return true;
     },
@@ -6559,7 +6642,9 @@ var WorldScene = new Phaser.Class({
         }
         if (!items.length) {
             Hud.log('You leave no belongings behind.');
-            if (typeof this.exportWorldSave === 'function') {
+            if (typeof WorldPersist !== 'undefined' && WorldPersist.stashOnRegistry) {
+                WorldPersist.stashOnRegistry(this);
+            } else if (typeof this.exportWorldSave === 'function') {
                 this.registry.set('worldSave', this.exportWorldSave());
             }
             if (typeof writeSave === 'function') {
@@ -6578,7 +6663,9 @@ var WorldScene = new Phaser.Class({
             grave = this.placeGravestone(zoneId, x, y, items);
         }
         Hud.log('Your items tumble into a gravestone.');
-        if (typeof this.exportWorldSave === 'function') {
+        if (typeof WorldPersist !== 'undefined' && WorldPersist.stashOnRegistry) {
+            WorldPersist.stashOnRegistry(this);
+        } else if (typeof this.exportWorldSave === 'function') {
             this.registry.set('worldSave', this.exportWorldSave());
         }
         this.registry.set('hero', hero);
@@ -7689,14 +7776,18 @@ var WorldScene = new Phaser.Class({
         recompute = function (ticks) {
             return clock.recomputeTicks(ticks, fromTps, fromSpeed);
         };
-        if (this.fishAction && this.fishAction.ticksLeft > 0) {
-            this.fishAction.ticksLeft = recompute(this.fishAction.ticksLeft);
-        }
-        if (this.chopAction && this.chopAction.ticksLeft > 0) {
-            this.chopAction.ticksLeft = recompute(this.chopAction.ticksLeft);
-        }
-        if (this.mineAction && this.mineAction.ticksLeft > 0) {
-            this.mineAction.ticksLeft = recompute(this.mineAction.ticksLeft);
+        if (typeof GatherController !== 'undefined' && GatherController.recomputeTicks) {
+            GatherController.recomputeTicks(this, recompute);
+        } else {
+            if (this.fishAction && this.fishAction.ticksLeft > 0) {
+                this.fishAction.ticksLeft = recompute(this.fishAction.ticksLeft);
+            }
+            if (this.chopAction && this.chopAction.ticksLeft > 0) {
+                this.chopAction.ticksLeft = recompute(this.chopAction.ticksLeft);
+            }
+            if (this.mineAction && this.mineAction.ticksLeft > 0) {
+                this.mineAction.ticksLeft = recompute(this.mineAction.ticksLeft);
+            }
         }
         if (this.overworldFight) {
             if (this.overworldFight.ticksLeft > 0) {
@@ -7737,25 +7828,34 @@ var WorldScene = new Phaser.Class({
         var tx;
         var ty;
 
-        if (this.fishAction && this.fishAction.ticksLeft > 0) {
-            this.fishAction.ticksLeft -= 1;
-            if (this.fishAction.ticksLeft <= 0) {
-                this.finishFishAction();
+        if (typeof GatherController !== 'undefined' && GatherController.tick) {
+            GatherController.tick(this, {
+                fish: function () { self.finishFishAction(); },
+                chop: function () { self.finishChopAction(); },
+                mine: function () { self.finishMineAction(); },
+                mineBoulder: function () { self.finishMineBoulder(); }
+            });
+        } else {
+            if (this.fishAction && this.fishAction.ticksLeft > 0) {
+                this.fishAction.ticksLeft -= 1;
+                if (this.fishAction.ticksLeft <= 0) {
+                    this.finishFishAction();
+                }
             }
-        }
-        if (this.chopAction && this.chopAction.ticksLeft > 0) {
-            this.chopAction.ticksLeft -= 1;
-            if (this.chopAction.ticksLeft <= 0) {
-                this.finishChopAction();
+            if (this.chopAction && this.chopAction.ticksLeft > 0) {
+                this.chopAction.ticksLeft -= 1;
+                if (this.chopAction.ticksLeft <= 0) {
+                    this.finishChopAction();
+                }
             }
-        }
-        if (this.mineAction && this.mineAction.ticksLeft > 0) {
-            this.mineAction.ticksLeft -= 1;
-            if (this.mineAction.ticksLeft <= 0) {
-                if (this.mineAction.denBoulder) {
-                    this.finishMineBoulder();
-                } else {
-                    this.finishMineAction();
+            if (this.mineAction && this.mineAction.ticksLeft > 0) {
+                this.mineAction.ticksLeft -= 1;
+                if (this.mineAction.ticksLeft <= 0) {
+                    if (this.mineAction.denBoulder) {
+                        this.finishMineBoulder();
+                    } else {
+                        this.finishMineAction();
+                    }
                 }
             }
         }

@@ -1,0 +1,62 @@
+{
+  "alwaysBones": true,
+  "clueChance": 0.015,
+  "byType": {
+    "Chicken": {
+      "always": [{ "id": "rawchicken", "qty": 1 }, { "id": "feather", "qty": 3 }]
+    },
+    "Cow": {
+      "always": [{ "id": "rawbeef", "qty": 1 }, { "id": "cowhide", "qty": 1 }]
+    },
+    "Crab": {
+      "always": [{ "id": "rawcrab", "qty": 1 }, { "id": "shell", "qty": 1 }],
+      "chance": [{ "id": "copper", "qty": 1, "p": 0.2 }]
+    },
+    "Rabbit": {
+      "always": [{ "id": "rawrabbit", "qty": 1 }, { "id": "rabbitfur", "qty": 1 }]
+    },
+    "Goblin": {
+      "always": [{ "id": "rawgoblin", "qty": 1 }, { "id": "copper", "qty": 1 }],
+      "chance": [
+        { "id": "airrune", "qty": 2, "p": 0.2 },
+        { "id": "logs", "qty": 1, "p": 0.08 }
+      ]
+    },
+    "Skeleton": {
+      "always": [{ "id": "rawrib", "qty": 1 }, { "id": "iron", "qty": 1 }],
+      "chance": [
+        { "id": "earthrune", "qty": 2, "p": 0.25 },
+        { "id": "key", "qty": 1, "p": 0.05 }
+      ]
+    },
+    "Bat": {
+      "always": [{ "id": "rawbat", "qty": 1 }, { "id": "runeessence", "qty": 2 }],
+      "chance": [
+        { "id": "airrune", "qty": 1, "p": 0.2 },
+        { "id": "batfang", "qty": 1, "p": 0.08 }
+      ]
+    },
+    "Slime": {
+      "always": [{ "id": "rawslime", "qty": 1 }, { "id": "waterrune", "qty": 1 }],
+      "chance": [{ "id": "earthrune", "qty": 2, "p": 0.3 }]
+    },
+    "Drake": {
+      "always": [{ "id": "rawdrake", "qty": 1 }, { "id": "drakescale", "qty": 1 }],
+      "chance": [
+        { "id": "diamondore", "qty": 1, "p": 0.2 },
+        { "id": "dragoniteore", "qty": 1, "p": 0.1 },
+        { "id": "firerune", "qty": 3, "p": 0.2 }
+      ]
+    },
+    "Dragon": {
+      "always": [{ "id": "rawdragon", "qty": 1 }],
+      "chance": [
+        { "id": "drakescale", "qty": 1, "p": 1 },
+        { "id": "drakescale", "qty": 1, "p": 0.5 },
+        { "id": "dragoniteore", "qty": 1, "p": 0.55 },
+        { "id": "diamondore", "qty": 1, "p": 0.35 },
+        { "id": "firerune", "qty": 5, "p": 0.4 }
+      ]
+    }
+  }
+}

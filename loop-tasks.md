@@ -33,6 +33,7 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 
 Active queue — implement top-down before returning to sections 1–14.
 
+- [done] Framework plan Phases 2–6: GatherController, content JSON splits, WorldScene peel, SettingsRegistry, docs/framework.md. — Conclusion: content `*-data.js` + JSON; GatherController wired; SettingsRegistry toggles; ZoneRuntime/EntitySpawner/InteractionRouter/WorldPersist peels; docs/framework.md.
 - [done] Framework plan Phase 0+1: folders/ContentRegistry + balance.json wired (no GatherController yet). — Conclusion: `js/core|content|game`; Boot loads `balance.json` → ContentRegistry; Balance syncs legacy globals; Phases 2+ waiting.
 - [done] Audit hardcoded content vs data-driven (rosters, ITEM_DB, recipes, WorldScene magic nums, gather dup, save, JSON). — Conclusion: Content already in JS tables (Items/Zones/MapGen); no runtime JSON/YAML; recommend incremental extract of tables + gather pipeline, not big-bang.
 - [done] Emberhaven herbalist shows black box — fix missing texture / Boot load / SVG. — Conclusion: key npc-herbalist had no SVG/Boot load; added herbalist.svg + BootScene load.

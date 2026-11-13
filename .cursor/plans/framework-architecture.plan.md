@@ -10,22 +10,22 @@ todos:
     status: completed
   - id: gather-controller
     content: Extract GatherController (click→walk→timed action→finish) mirroring CombatController
-    status: pending
+    status: completed
   - id: split-items
     content: Split Items.js into content tables (items/recipes/shops/gather-by-zone) + core inventory/skills APIs
-    status: pending
+    status: completed
   - id: split-zones
     content: Externalize zone/NPC/mob/loot tables; replace function extras (levelFor) with data rules
-    status: pending
+    status: completed
   - id: thin-worldscene
     content: Peel WorldScene into ZoneRuntime, EntitySpawner, InteractionRouter, WorldPersist
-    status: pending
+    status: completed
   - id: settings-registry
     content: Declarative SettingsRegistry driving Hud toggles + hero normalize/persist
-    status: pending
+    status: completed
   - id: framework-readme
     content: Document core vs content contract and how to ship a second game skin
-    status: pending
+    status: completed
 isProject: true
 ---
 
@@ -243,24 +243,24 @@ ContentRegistry.apply(this.cache.json);
 - Tunables in [js/content/balance.json](js/content/balance.json); [js/core/Balance.js](js/core/Balance.js) defaults + `get` / `apply` / `syncGlobals`.
 - WorldScene / Items / OverworldCombat no longer hardcode move/combat/regen/gather timings (globals synced from Balance).
 
-### Phase 2 — GatherController (highest reuse)
+### Phase 2 — DONE — GatherController (highest reuse)
 - Extract `js/core/GatherController.js` beside CombatController: `start` / `clear` / hard-fail once.
 - WorldScene keeps click picking; domain success stays in Items helpers.
 
-### Phase 3 — Split Items.js
+### Phase 3 — DONE — Split Items.js
 - Content: `items.json`, `recipes.json`, `shops.json`, `gather-by-zone.json`.
 - Core: `addItem`, equip, `gainSkillXp`, `combatLevel`, `normalizeHeroCombat`, shop buy/sell.
 - Adapter rebuilds globals at boot so Hud/WorldScene keep calling same names.
 
-### Phase 4 — Zones / mobs / NPCs / loot
+### Phase 4 — DONE — Zones / mobs / NPCs / loot
 - Externalize zone list, roster, NPCs/dialogue; `loot.json` replaces `lootForMob` if/else.
 - Replace `levelFor` / `attackRangeFor` with serialize-friendly rules.
 
-### Phase 5 — Thin WorldScene + SettingsRegistry
+### Phase 5 — DONE — Thin WorldScene + SettingsRegistry
 - Peel ZoneRuntime, EntitySpawner, InteractionRouter, WorldPersist, MobAgroAI.
 - SettingsRegistry: one declaration (`id`, default, heroKey, control, apply) drives Hud + normalize — kills duplicated click/render pairs.
 
-### Phase 6 — Framework README + content-pack checklist
+### Phase 6 — DONE — Framework README + content-pack checklist
 - `docs/framework.md`: core vs content contract; how to add item/zone/skill; second game = swap `js/content` + art, keep `js/core`.
 - Content-pack checklist: zone meta + NPC list + mob roster + MapGen biome/prop hooks + SVG manifest entries — without touching clock/pathfind/combat controller.
 
@@ -300,4 +300,4 @@ ContentRegistry.apply(this.cache.json);
 
 ## 14. First implementation slice
 
-**Phase 0 + Phase 1 completed.** Next when approved: **Phase 2 GatherController**.
+**Phases 0–6 completed** (2026-11-13). See [docs/framework.md](../../docs/framework.md).

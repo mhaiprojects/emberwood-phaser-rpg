@@ -1,17 +1,5 @@
-var ZONE_LIST = [
-    { id: 'graves', name: 'Restless Graves', gx: -1, gy: -1, biome: 'grave', seed: 11 },
-    { id: 'northwood', name: 'Northwood', gx: 0, gy: -1, biome: 'forest', seed: 22 },
-    { id: 'highlands', name: 'Windrock Highlands', gx: 1, gy: -1, biome: 'hills', seed: 33 },
-    { id: 'westmead', name: 'Westmead', gx: -1, gy: 0, biome: 'plains', seed: 44 },
-    { id: 'haven', name: 'Emberhaven', gx: 0, gy: 0, biome: 'town', seed: 55 },
-    { id: 'millfields', name: 'Millfields', gx: 1, gy: 0, biome: 'farm', seed: 66 },
-    { id: 'darkmine', name: 'Darkmine', gx: -1, gy: 1, biome: 'mine', seed: 77 },
-    { id: 'southshore', name: 'Southshore', gx: 0, gy: 1, biome: 'shore', seed: 88 },
-    { id: 'mire', name: 'Mirefen', gx: 1, gy: 1, biome: 'swamp', seed: 99 },
-    { id: 'dungeon', name: 'Deep Mine', gx: -99, gy: -99, biome: 'mine', seed: 9001, hidden: true },
-    { id: 'dragonden', name: 'Dragon Den', gx: 99, gy: 99, biome: 'den', seed: 4242, hidden: true }
-];
-
+/* ZONE_LIST from js/content/zones-data.js */
+if (typeof ZONE_LIST === 'undefined') { var ZONE_LIST = []; }
 var ZONES = {};
 ZONE_LIST.forEach(function (zone) {
     ZONES[zone.id] = zone;
@@ -201,211 +189,75 @@ function npcHasShop(def) {
     return !!(def.options && def.options.indexOf('trade') !== -1);
 }
 
-var NPC_DEFS = {
-    /* Haven — world px (tile*16+8). Keep ≥4 tiles apart in the courtyard. */
-    haven: [
-        /* Near guild post / south yard */
-        { key: 'guild', name: 'Guildmaster Bram', x: 168, y: 296, tint: 0xffffff, questGiver: true, options: ['talk', 'quest'], examine: 'A scarred militia captain. He still drills the courtyard.', lines: ['Welcome to Emberhaven, adventurer.', 'Goblins from Northwood raid our stores.', 'Slay 5 goblins and return. The militia will pay.'] },
-        /* Bank staff row (must stay behind counter) */
-        { key: 'banker', name: 'Banker Elise', x: 232, y: 168, tint: 0xffffff, options: ['talk', 'bank'], examine: 'The town banker. She stands behind the courtyard counter.', lines: ['Your coin is safe with me.', 'Deposit what you cannot carry.', 'Step up to the counter when you need the vault.'] },
-        /* East path toward Millfields */
-        { key: 'guard', name: 'Guard Rowan', x: 424, y: 248, tint: 0xffffff, options: ['talk'], examine: 'A watchful town guard. He knows every path from the gate.', lines: ['Keep to the paths.', 'North is woods. East is farms. South is the sea.'] },
-        /* South of shop stall */
-        { key: 'shopkeep', name: 'Shopkeeper Mira', x: 264, y: 216, tint: 0xffffff, texture: 'npc-shopkeeper', options: ['talk', 'trade'], shopKey: 'mira', examine: 'The town shopkeeper. She minds the courtyard stall.', lines: ['Take a look at the wares.', 'Bones and spare food fetch a price.'] },
-        /* SE training pad */
-        { key: 'dummy', name: 'Training dummy', x: 360, y: 296, tint: 0xffffff, texture: 'npc-dummy', options: ['talk', 'duel'], examine: 'A straw-filled training dummy for duels.', lines: ['Up for a practice duel?', 'No loot, just honour.'] },
-        /* By GE / arms stall */
-        { key: 'arms', name: 'Armsman Cole', x: 328, y: 200, tint: 0xffffff, texture: 'npc-arms', options: ['talk', 'trade'], shopKey: 'arms', examine: 'A weapons stall keeper. Oil stains his gloves.', lines: ['Blades, bows, and staves, if you have the coin.', 'Take a look at the wares.', 'A copper bow trains Ranged; a staff needs Air runes for Air Strike.'] },
-        /* South of courtyard house / near range approach */
-        { key: 'cook', name: 'Cook Pell', x: 296, y: 328, tint: 0xffffff, options: ['talk'], tutor: 'firemaking', examine: 'The town cook. Flour dusts her sleeves and a ladle never leaves her hand.', lines: ['Take this tinderbox.', 'Use it on logs to light a fire on open ground.', 'Cook raw food on that fire or the town range.', 'If you burn a meal it is ruined — nothing left to keep.'] },
-        /* West courtyard */
-        { key: 'herbalist', name: 'Herbalist Ivy', x: 168, y: 216, tint: 0xffffff, options: ['talk'], tutor: 'herblore', examine: 'Emberhaven\'s herbalist. Bundles of guam hang by her stall.', lines: ['Guam grows easily if you have a seed.', 'Mix a leaf into an attack potion here.', 'Bring guam and I will show you the craft.'] },
-        /* North courtyard between houses */
-        { key: 'priest', name: 'Priest Alden', x: 296, y: 152, tint: 0xffffff, options: ['talk'], examine: 'A quiet shrine priest. Ash marks the collar of his robe.', lines: ['The shrine still hears a prayer.', 'Bury the bones of the fallen, traveler.'] }
-    ],
-    northwood: [
-        { key: 'ranger', name: 'Ranger Kett', x: 240, y: 200, tint: 0xffffff, options: ['talk'], tutor: 'combat', examine: 'A Northwood ranger. Goblin tracks stain her boots.', lines: ['Goblins nest in these trees.', 'Click a goblin to fight it, like the old days.', 'Wield a bow from Armsman Cole — leave ammo empty for infinite wooden arrows, or equip copper arrows.', 'A wood staff plus an Air rune casts Air Strike.', 'Shared splits XP; Strength, Ranger, or Mage train from your weapon.'] }
-    ],
-    millfields: [
-        { key: 'farmer', name: 'Farmer Willa', x: 200, y: 180, tint: 0xffffff, options: ['talk'], tutor: 'cows', examine: 'A Millfields farmer. Cabbage stains her apron.', lines: ['Cows got into the cabbages again.', 'The mill road runs back to Emberhaven.', 'Click a cow when you need hide and beef.', 'They kick, so keep a combat style ready.'] }
-    ],
-    southshore: [
-        { key: 'fisher', name: 'Fisher Ned', x: 220, y: 160, tint: 0xffffff, options: ['talk', 'quest'], questGiver: true, sideQuest: 'shipment', tutor: 'fishing', examine: 'An old shore fisher. Salt and rope have worn his hands.', lines: ['Crabs pinch harder than they look.', 'Ships used to stop here. Not anymore.', 'Click the fishing spots along the shore and cast a net.', 'You will need a small fishing net first.'] }
-    ],
-    westmead: [
-        { key: 'wanderer', name: 'Wanderer Sila', x: 180, y: 190, tint: 0xffffff, options: ['talk'], examine: 'A plains wanderer. Her cloak is dusted with Westmead grass.', lines: ['Plains look empty until they are not.', 'Graves lie north-west. Do not linger.'] }
-    ],
-    graves: [
-        { key: 'ghost', name: 'Wisp', x: 200, y: 170, tint: 0xffffff, options: ['talk'], examine: 'A restless grave-wisp. Cold light pools where a face should be.', lines: ['The dead remember steel.', 'Turn back unless you seek bones.'] }
-    ],
-    darkmine: [
-        { key: 'miner', name: 'Miner Corb', x: 210, y: 200, tint: 0xffffff, options: ['talk', 'quest'], questGiver: true, sideQuest: 'bats', tutor: 'mining', examine: 'A Darkmine digger. He will not go down the Deep Mine.', lines: ['That shaft leads to the Deep Mine. Floor one starts at level 40 — each floor adds one.', 'Every twenty-first floor wakes a dragon. Escape marks the floor for next time.', 'Every fifth floor has a campfire. Ore still waits up here with a pickaxe.'] }
-    ],
-    highlands: [
-        { key: 'hermit', name: 'Hermit Ola', x: 240, y: 160, tint: 0xffffff, options: ['talk'], examine: 'A windrock hermit. Drake-scale grit is stuck in her cloak.', lines: ['Drakes nest on the windrock.', 'Bring a stout shield.', 'East of here a boulder seals a deeper den — only a diamond pickaxe cracks it.'] }
-    ],
-    mire: [
-        { key: 'witch', name: 'Fen Witch', x: 200, y: 180, tint: 0xffffff, options: ['talk'], examine: 'A fen healer. Marsh-light clings to her sleeves.', lines: ['The fen drinks the lost.', 'I can stitch wounds... for a price.'] }
-    ]
-};
+/* NPC_DEFS from js/content/npcs-data.js */
+if (typeof NPC_DEFS === 'undefined') { var NPC_DEFS = {}; }
+;
 
 /*
  * Single source of truth: zone ↔ level band ↔ mob spawn roster.
  * Labels (border / enter / shaft) and MOB_DEFS both derive from this.
  * `band` drives zoneBandLevel; extras.levelFor may pin specific spots (haven exits, den).
  */
-var ZONE_MOB_ROSTER = {
-    /* Haven — Chickens; Lv1 ring + Lv3 exit approaches. */
-    haven: {
-        band: [1, 3],
-        mobs: [{
-            type: 'Chicken',
-            texture: 'mob-chicken',
-            spots: [
-                /* Lv1 ring (cheb 6–7 from center 18,15) — first 6 kept at 1× with 4 exits */
-                [12, 15], [18, 9], [24, 15], [18, 21], [12, 11], [24, 19],
-                /* Lv3 near zone exits */
-                [18, 3], [18, 24], [3, 14], [33, 14],
-                /* Extra Lv1 for 2× pool */
-                [11, 13], [11, 17], [25, 13], [25, 17], [15, 9], [21, 9],
-                [15, 21], [21, 21], [12, 12], [24, 18]
-            ],
-            extras: {
-                levelFor: function (i) {
-                    return (i >= 6 && i <= 9) ? 3 : 1;
-                }
-            }
-        }]
-    },
-    millfields: {
-        band: [1, 5],
-        mobs: [{
-            type: 'Cow',
-            texture: 'mob-cow',
-            spots: [
-                [8, 12], [12, 8], [18, 7], [24, 9], [28, 12], [30, 16], [26, 18], [20, 20],
-                [14, 19], [9, 16], [11, 11], [16, 14], [22, 11], [27, 8], [31, 14], [19, 16],
-                [13, 17], [25, 15]
-            ],
-            extras: { tints: [0xffffff, 0xffffff, 0xeeddcc] }
-        }]
-    },
-    mire: {
-        band: [6, 10],
-        mobs: [{
-            type: 'Slime',
-            texture: 'mob-slime',
-            spots: [
-                [9, 9], [13, 11], [17, 8], [21, 12], [25, 10], [29, 13], [31, 17], [27, 19],
-                [23, 20], [19, 16], [15, 18], [11, 15]
-            ],
-            extras: { tints: [0xffffff, 0x88ffaa, 0xffffff] }
-        }]
-    },
-    southshore: {
-        band: [11, 15],
-        mobs: [{
-            type: 'Crab',
-            texture: 'mob-crab',
-            spots: [
-                [8, 14], [12, 12], [16, 10], [20, 11], [24, 9], [28, 12], [31, 15], [26, 17],
-                [22, 19], [18, 16], [14, 18], [10, 17], [27, 14], [19, 14]
-            ],
-            extras: { tints: [0xffffff, 0xffccaa, 0xffffff] }
-        }]
-    },
-    northwood: {
-        band: [16, 20],
-        mobs: [{
-            type: 'Goblin',
-            texture: 'mob-goblin',
-            spots: [
-                [8, 8], [12, 10], [16, 7], [20, 9], [24, 8], [28, 11], [31, 14], [26, 16],
-                [22, 18], [18, 20], [14, 17], [10, 19], [9, 13], [15, 14], [21, 13], [27, 19]
-            ],
-            extras: { tints: [0xffffff, 0xffffff, 0xbbffbb, 0xffffff] }
-        }]
-    },
-    graves: {
-        band: [21, 25],
-        mobs: [{
-            type: 'Skeleton',
-            texture: 'mob-skeleton',
-            spots: [
-                [9, 9], [13, 12], [17, 8], [21, 11], [25, 9], [29, 13], [31, 16], [26, 19],
-                [22, 20], [18, 17], [14, 15], [10, 18]
-            ],
-            extras: { tints: [0xffffff, 0xffffff, 0xeeeeff] }
-        }]
-    },
-    westmead: {
-        band: [26, 30],
-        mobs: [
-            {
-                type: 'Rabbit',
-                texture: 'mob-rabbit',
-                spots: [
-                    [10, 10], [14, 8], [18, 11], [22, 9], [26, 12], [30, 10], [28, 16], [24, 18],
-                    [20, 20], [16, 17], [12, 15], [8, 18], [11, 20], [15, 14], [19, 9], [23, 16],
-                    [27, 11], [29, 19]
-                ],
-                extras: { tints: [0xffffff, 0xffffff, 0xeeddcc] }
-            },
-            {
-                type: 'Goblin',
-                texture: 'mob-goblin',
-                spots: [
-                    [9, 13], [15, 12], [21, 14], [27, 13], [25, 20], [17, 8],
-                    [12, 19], [19, 16], [23, 10], [30, 17]
-                ]
-            }
-        ]
-    },
-    darkmine: {
-        band: [31, 35],
-        mobs: [{
-            type: 'Bat',
-            texture: 'mob-bat',
-            spots: [
-                [8, 8], [12, 11], [16, 9], [20, 12], [24, 10], [28, 13], [31, 16], [26, 18],
-                [22, 20], [18, 17], [14, 19], [10, 15], [17, 14], [25, 15]
-            ],
-            extras: { tints: [0xffffff, 0xffffff, 0xddbbff, 0xffffff] }
-        }]
-    },
-    highlands: {
-        band: [36, 40],
-        mobs: [{
-            type: 'Drake',
-            texture: 'mob-drake',
-            spots: [
-                [10, 10], [16, 9], [22, 12], [28, 11], [30, 16], [24, 18], [18, 20], [12, 17],
-                [20, 14], [26, 15]
-            ]
-        }]
-    },
-    /* Den — Dragons fixed Lv 60 (band matches spawn levels). */
-    dragonden: {
-        band: [60, 60],
-        mobs: [{
-            type: 'Dragon',
-            texture: 'mob-dragon',
-            spots: [
-                [12, 10], [20, 12], [28, 14], [18, 18]
-            ],
-            extras: {
-                alwaysAgro: true,
-                tints: [0xffffff, 0xffffff, 0xffffff, 0xffffff],
-                levelFor: function () {
-                    return 60;
-                },
-                attackRangeFor: function (i) {
-                    return i === 3 ? 120 : 110;
-                }
-            }
-        }]
+/* ZONE_MOB_ROSTER from zone-mobs-data.js + data-rule adapters */
+function buildZoneMobRoster(data) {
+    var out = {};
+    var zoneId;
+    var entry;
+    var mi;
+    var mob;
+    var extras;
+    var copy;
+    var levels;
+    var ranges;
+    if (!data) {
+        return out;
     }
-};
+    for (zoneId in data) {
+        if (!Object.prototype.hasOwnProperty.call(data, zoneId)) {
+            continue;
+        }
+        entry = data[zoneId];
+        copy = {
+            band: (entry.band || [1, 5]).slice(),
+            mobs: []
+        };
+        (entry.mobs || []).forEach(function (mob) {
+            extras = mob.extras ? Object.assign({}, mob.extras) : {};
+            levels = extras.spotLevels;
+            ranges = extras.attackRangeBySpot;
+            if (levels && levels.length) {
+                extras.levelFor = function (idx) {
+                    if (idx >= 0 && idx < levels.length) {
+                        return levels[idx];
+                    }
+                    return levels[levels.length - 1];
+                };
+                delete extras.spotLevels;
+            }
+            if (ranges && ranges.length) {
+                extras.attackRangeFor = function (idx) {
+                    if (idx >= 0 && idx < ranges.length) {
+                        return ranges[idx];
+                    }
+                    return ranges[ranges.length - 1];
+                };
+                delete extras.attackRangeBySpot;
+            }
+            copy.mobs.push({
+                type: mob.type,
+                texture: mob.texture,
+                spots: (mob.spots || []).map(function (s) { return s.slice(); }),
+                extras: extras
+            });
+        });
+        out[zoneId] = copy;
+    }
+    return out;
+}
+var ZONE_MOB_ROSTER = buildZoneMobRoster(
+    typeof ZONE_MOB_ROSTER_DATA !== 'undefined' ? ZONE_MOB_ROSTER_DATA : {}
+);
+
 
 /** Derived from ZONE_MOB_ROSTER.band — keep for older call sites / docs. */
 var ZONE_LEVEL_BAND = {};

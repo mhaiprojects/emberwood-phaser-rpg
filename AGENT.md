@@ -17,11 +17,11 @@ Plan: `.cursor/plans/framework-architecture.plan.md`. Folders:
 
 | Path | Role |
 |------|------|
-| `js/core/` | Reusable engine (`Balance.js`, `ContentRegistry.js`; later gather/combat services) |
-| `js/content/` | Data packs (`balance.json`; later items/zones/loot JSON) |
+| `js/core/` | Reusable engine (`Balance`, `ContentRegistry`, `GatherController`, `SettingsRegistry`) |
+| `js/content/` | Data packs (JSON + `*-data.js`: items, shops, recipes, gather, zones, NPCs, mobs, loot, balance) |
 | `js/game/` | Emberwood wiring (scenes still under `js/scenes/` until later phases) |
 
-**Load contract:** `Keys` → `Balance` → `ContentRegistry` → `Items` → … → scenes. BootScene `preload` loads `js/content/balance.json`; `create` calls `ContentRegistry.applyFromScene(this)` before Title so JSON overwrites Balance defaults into the same globals (`OW_COMBAT_TICK_SEC`, `FISH_ACTION_MS_*`, …). Prefer **code + GDD** over stale AGENT combat-default notes when they disagree.
+**Load contract:** `Keys` → `Balance` → `ContentRegistry` → `SettingsRegistry` → **content `*-data.js`** → `Items` → … → `GatherController` → zone peels → scenes. BootScene `preload` loads `js/content/balance.json`; `create` calls `ContentRegistry.applyFromScene(this)` before Title. Content tables are sync-filled before Boot so SVG preload can walk `ITEM_DB`. See `docs/framework.md`. Prefer **code + GDD** over stale AGENT combat-default notes when they disagree.
 
 ## How to run
 

@@ -1,0 +1,415 @@
+/* From shops.json */
+var GENERAL_SHOP_KEY = "mira";
+var WEAPON_SHOP_KEY = "arms";
+var GENERAL_SHOP_STOCK = [
+  {
+    "id": "shrimp",
+    "stock": 10,
+    "restockTo": 10,
+    "restockMs": 45000
+  },
+  {
+    "id": "bread",
+    "stock": 5,
+    "restockTo": 5,
+    "restockMs": 60000
+  },
+  {
+    "id": "tinderbox",
+    "stock": 3,
+    "restockTo": 3,
+    "restockMs": 90000
+  },
+  {
+    "id": "net",
+    "stock": 2,
+    "restockTo": 2,
+    "restockMs": 90000
+  },
+  {
+    "id": "copperaxe",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 120000
+  },
+  {
+    "id": "copperpick",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 120000
+  },
+  {
+    "id": "string",
+    "stock": 8,
+    "restockTo": 8,
+    "restockMs": 60000
+  },
+  {
+    "id": "logs",
+    "stock": 12,
+    "restockTo": 12,
+    "restockMs": 45000
+  },
+  {
+    "id": "oaklogs",
+    "stock": 6,
+    "restockTo": 6,
+    "restockMs": 60000
+  },
+  {
+    "id": "ashlogs",
+    "stock": 4,
+    "restockTo": 4,
+    "restockMs": 90000
+  },
+  {
+    "id": "copper",
+    "stock": 8,
+    "restockTo": 8,
+    "restockMs": 45000
+  },
+  {
+    "id": "iron",
+    "stock": 4,
+    "restockTo": 4,
+    "restockMs": 90000
+  },
+  {
+    "id": "copperbar",
+    "stock": 3,
+    "restockTo": 3,
+    "restockMs": 90000
+  },
+  {
+    "id": "ironbar",
+    "stock": 2,
+    "restockTo": 2,
+    "restockMs": 120000
+  },
+  {
+    "id": "yewlogs",
+    "stock": 3,
+    "restockTo": 3,
+    "restockMs": 120000
+  },
+  {
+    "id": "magiclogs",
+    "stock": 2,
+    "restockTo": 2,
+    "restockMs": 180000
+  },
+  {
+    "id": "diamondore",
+    "stock": 2,
+    "restockTo": 2,
+    "restockMs": 180000
+  },
+  {
+    "id": "dragoniteore",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 300000
+  },
+  {
+    "id": "runeessence",
+    "stock": 20,
+    "restockTo": 20,
+    "restockMs": 45000
+  },
+  {
+    "id": "guam",
+    "stock": 6,
+    "restockTo": 6,
+    "restockMs": 60000
+  },
+  {
+    "id": "feather",
+    "stock": 20,
+    "restockTo": 20,
+    "restockMs": 45000
+  },
+  {
+    "id": "firerune",
+    "stock": 20,
+    "restockTo": 20,
+    "restockMs": 45000
+  },
+  {
+    "id": "waterrune",
+    "stock": 20,
+    "restockTo": 20,
+    "restockMs": 45000
+  },
+  {
+    "id": "earthrune",
+    "stock": 20,
+    "restockTo": 20,
+    "restockMs": 45000
+  },
+  {
+    "id": "airrune",
+    "stock": 20,
+    "restockTo": 20,
+    "restockMs": 45000
+  },
+  {
+    "id": "key",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 600000
+  }
+];
+var WEAPON_SHOP_STOCK = [
+  {
+    "id": "copperdagger",
+    "stock": 3,
+    "restockTo": 3,
+    "restockMs": 90000
+  },
+  {
+    "id": "woodclub",
+    "stock": 3,
+    "restockTo": 3,
+    "restockMs": 90000
+  },
+  {
+    "id": "coppersword",
+    "stock": 2,
+    "restockTo": 2,
+    "restockMs": 120000
+  },
+  {
+    "id": "ironsword",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 180000
+  },
+  {
+    "id": "shield",
+    "stock": 2,
+    "restockTo": 2,
+    "restockMs": 120000
+  },
+  {
+    "id": "coppershield",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 150000
+  },
+  {
+    "id": "copperarmour",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 150000
+  },
+  {
+    "id": "ironarmour",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 180000
+  },
+  {
+    "id": "ironshield",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 180000
+  },
+  {
+    "id": "diamondarmour",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 300000
+  },
+  {
+    "id": "diamondshield",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 300000
+  },
+  {
+    "id": "dragonitearmour",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 420000
+  },
+  {
+    "id": "dragoniteshield",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 420000
+  },
+  {
+    "id": "gloves",
+    "stock": 2,
+    "restockTo": 2,
+    "restockMs": 120000
+  },
+  {
+    "id": "woodbow",
+    "stock": 2,
+    "restockTo": 2,
+    "restockMs": 90000
+  },
+  {
+    "id": "copperbow",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 120000
+  },
+  {
+    "id": "oakbow",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 150000
+  },
+  {
+    "id": "woodarrow",
+    "stock": 40,
+    "restockTo": 40,
+    "restockMs": 45000
+  },
+  {
+    "id": "copperarrow",
+    "stock": 40,
+    "restockTo": 40,
+    "restockMs": 45000
+  },
+  {
+    "id": "ironarrow",
+    "stock": 20,
+    "restockTo": 20,
+    "restockMs": 60000
+  },
+  {
+    "id": "staff",
+    "stock": 2,
+    "restockTo": 2,
+    "restockMs": 120000
+  },
+  {
+    "id": "copperstaff",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 150000
+  },
+  {
+    "id": "ironstaff",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 180000
+  },
+  {
+    "id": "wizardrobe",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 120000
+  },
+  {
+    "id": "airrune",
+    "stock": 40,
+    "restockTo": 40,
+    "restockMs": 45000
+  },
+  {
+    "id": "waterrune",
+    "stock": 30,
+    "restockTo": 30,
+    "restockMs": 45000
+  },
+  {
+    "id": "woodaxe",
+    "stock": 2,
+    "restockTo": 2,
+    "restockMs": 90000
+  },
+  {
+    "id": "woodpick",
+    "stock": 2,
+    "restockTo": 2,
+    "restockMs": 90000
+  },
+  {
+    "id": "copperaxe",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 120000
+  },
+  {
+    "id": "copperpick",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 120000
+  },
+  {
+    "id": "ironaxe",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 180000
+  },
+  {
+    "id": "ironpick",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 180000
+  },
+  {
+    "id": "diamondaxe",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 300000
+  },
+  {
+    "id": "diamondpick",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 300000
+  },
+  {
+    "id": "dragoniteaxe",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 420000
+  },
+  {
+    "id": "dragonitepick",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 420000
+  },
+  {
+    "id": "yewbow",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 240000
+  },
+  {
+    "id": "magicbow",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 360000
+  },
+  {
+    "id": "diamondstaff",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 240000
+  },
+  {
+    "id": "dragonitestaff",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 360000
+  },
+  {
+    "id": "diamondsword",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 300000
+  },
+  {
+    "id": "dragonitesword",
+    "stock": 1,
+    "restockTo": 1,
+    "restockMs": 420000
+  }
+];
