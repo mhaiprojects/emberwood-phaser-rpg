@@ -52,5 +52,13 @@
     "craftHideXp": 14,
     "craftLeatherXp": 25,
     "smithDaggerXp": 22
+  },
+  "caps": {
+    "inventory": 28,
+    "bank": 1000
+  },
+  "xp": {
+    "divisor": 50,
+    "hitpointsMinLevel": 10
   }
 }

@@ -33,6 +33,7 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 
 Active queue — implement top-down before returning to sections 1–14.
 
+- [done] Finish Game Engine Plan V1 todos (scaffold → pack-boot → world → economy → scenes → docs). — Conclusion: Content API complete; Boot loud-fail; balance caps/XP; quest stage machine; Title/Save/Hud pack defaults; framework.md checklist.
 - [done] Apply Game Engine Plan V1 on branch feat/game-engine-v1. — Conclusion: `GameWorld/emberwood`; Content API; mob-combat/specials/quests/biome-params; Pathfind/MapGen/Combat pack-driven; HUD data-pack-src; framework.md.
 - [done] Catalog ALL game content/data embedded in code vs data-driven (folder layout, pack vs engine, Boot graphics, hardcodes, plans, index load order). — Conclusion: Content lives under `game-data/game1/` JSON+assets; engine keeps TILE/MapGen/XP/safe-zone/tutor gifts; hotspots WorldScene/Items/MapGen/Zones; GameDataPack migration in progress.
 - [done] GameDataPack: move all content+assets under game-data/game1; Boot pack load; multi-pack ready. — Conclusion: `game-data/game1` JSON+assets; GameDataPack+two-wave Boot; ContentRegistry.applyPack; saves namespaced; `?pack=` switch.

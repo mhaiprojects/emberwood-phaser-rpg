@@ -4,17 +4,31 @@
     "npcKey": "guild",
     "goal": 5,
     "mobType": "Goblin",
+    "journal": [
+      "Talk to Guildmaster Bram",
+      "Kill goblins in Northwood ({progress}/{goal})",
+      "Return to Bram for your reward"
+    ],
     "stages": {
-      "0": { "lines": ["Goblins plague Northwood. Bring me 5 kills."] },
-      "1": { "progressLine": "{progress} of {goal} goblins down. Keep at it." },
+      "0": {
+        "advanceTo": 1,
+        "lines": ["Goblins plague Northwood. Bring me 5 kills."]
+      },
+      "1": {
+        "progressLine": "{progress} of {goal} goblins down. Keep at it."
+      },
       "2": {
         "complete": true,
+        "advanceTo": 3,
+        "questPoints": 1,
         "rewards": { "coins": 50, "skills": { "attack": 25, "defence": 15 } },
         "lines": ["The militia thanks you. 50 gold and combat training."],
         "toastTitle": "Quest complete",
         "toastBody": "Militia task — 1 QP, 50gp, Attack + Defence XP."
       },
-      "3": { "lines": ["Emberhaven stands because of you."] }
+      "3": {
+        "lines": ["Emberhaven stands because of you."]
+      }
     }
   },
   "shipment": {
@@ -23,7 +37,24 @@
     "sideKey": "shipment",
     "goal": 3,
     "mobType": "Crab",
-    "rewards": { "coins": 25, "skills": { "fishing": 20 } }
+    "stages": {
+      "0": {
+        "advanceTo": 1,
+        "lines": ["Crabs stole my lost shipment marks. Clear 3 crabs along the shore."]
+      },
+      "1": {
+        "progressLine": "{progress} of {goal} crabs cleared. Keep hunting."
+      },
+      "2": {
+        "complete": true,
+        "advanceTo": 3,
+        "questPoints": 1,
+        "rewards": { "coins": 25, "skills": { "fishing": 20 } },
+        "lines": ["That crate mark is enough. Take 25gp for your trouble."],
+        "toastTitle": "Quest complete",
+        "toastBody": "Lost Shipment — 1 QP, 25gp, Fishing XP."
+      }
+    }
   },
   "bats": {
     "id": "bats",
@@ -31,6 +62,23 @@
     "sideKey": "bats",
     "goal": 4,
     "mobType": "Bat",
-    "rewards": { "coins": 30, "skills": { "mining": 20 } }
+    "stages": {
+      "0": {
+        "advanceTo": 1,
+        "lines": ["Bats choke the lower shaft. Slay 4 bats and return."]
+      },
+      "1": {
+        "progressLine": "{progress} of {goal} bats down. Keep at it."
+      },
+      "2": {
+        "complete": true,
+        "advanceTo": 3,
+        "questPoints": 1,
+        "rewards": { "coins": 30, "skills": { "mining": 20 } },
+        "lines": ["The shaft is quieter. 30gp and a miner's thanks."],
+        "toastTitle": "Quest complete",
+        "toastBody": "Bat Clearance — 1 QP, 30gp, Mining XP."
+      }
+    }
   }
 }

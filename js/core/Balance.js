@@ -59,6 +59,14 @@ var Balance = {
             craftHideXp: 14,
             craftLeatherXp: 25,
             smithDaggerXp: 22
+        },
+        caps: {
+            inventory: 28,
+            bank: 1000
+        },
+        xp: {
+            divisor: 50,
+            hitpointsMinLevel: 10
         }
     },
 
@@ -210,6 +218,15 @@ var Balance = {
         CRAFT_HIDE_XP = this.get('craft.craftHideXp', 14);
         CRAFT_LEATHER_XP = this.get('craft.craftLeatherXp', 25);
         SMITH_DAGGER_XP = this.get('craft.smithDaggerXp', 22);
+
+        if (typeof INVENTORY_CAP !== 'undefined') {
+            INVENTORY_CAP = this.get('caps.inventory', 28);
+        }
+        if (typeof BANK_CAP !== 'undefined') {
+            BANK_CAP = this.get('caps.bank', 1000);
+        }
+        XP_CURVE_DIVISOR = this.get('xp.divisor', 50);
+        HITPOINTS_MIN_LEVEL = this.get('xp.hitpointsMinLevel', 10);
 
         MOB_CHASE_SPEED = MOB_MOVE_SPEED;
     }

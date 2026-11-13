@@ -61,6 +61,12 @@ var BootScene = new Phaser.Class({
         }
 
         if (this._packWave === 'json') {
+            var missing = this._missingPackFiles();
+            if (missing.length) {
+                this._bootBar.setText('Pack incomplete: missing ' + missing.join(', '));
+                console.error('[Boot] Pack missing required JSON:', missing);
+                return;
+            }
             if (typeof ContentRegistry !== 'undefined' && ContentRegistry.applyPack) {
                 ContentRegistry.applyPack(this.cache.json);
             }
@@ -84,8 +90,28 @@ var BootScene = new Phaser.Class({
         this.registry.set('autoContinueSave', true);
         this.registry.set('packId', typeof GameDataPack !== 'undefined'
             ? GameDataPack.getActive()
-            : 'game1');
+            : 'emberwood');
         this.scene.start('TitleScene');
+    },
+
+    _missingPackFiles: function () {
+        var meta = typeof GameDataPack !== 'undefined' ? GameDataPack.getMeta() : null;
+        var files = (meta && meta.files) || {};
+        var key;
+        var missing = [];
+        var cache = this.cache && this.cache.json;
+        for (key in files) {
+            if (!Object.prototype.hasOwnProperty.call(files, key)) {
+                continue;
+            }
+            if (!files[key]) {
+                continue;
+            }
+            if (!cache || typeof cache.has !== 'function' || !cache.has(key) || !cache.get(key)) {
+                missing.push(key + ' (' + files[key] + ')');
+            }
+        }
+        return missing;
     },
 
     _queueArtLoads: function () {

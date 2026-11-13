@@ -591,6 +591,42 @@ function shiftClickDropOn(hero) {
 
 var INVENTORY_CAP = 28;
 var BANK_CAP = 1000;
+var XP_CURVE_DIVISOR = 50;
+var HITPOINTS_MIN_LEVEL = 10;
+
+function inventoryCap() {
+    if (typeof Balance !== 'undefined' && Balance.get) {
+        return Balance.get('caps.inventory', INVENTORY_CAP);
+    }
+    return INVENTORY_CAP;
+}
+
+function bankCap() {
+    if (typeof Balance !== 'undefined' && Balance.get) {
+        return Balance.get('caps.bank', BANK_CAP);
+    }
+    return BANK_CAP;
+}
+
+function xpCurveDivisor() {
+    if (typeof XP_CURVE_DIVISOR === 'number' && XP_CURVE_DIVISOR > 0) {
+        return XP_CURVE_DIVISOR;
+    }
+    if (typeof Balance !== 'undefined' && Balance.get) {
+        return Balance.get('xp.divisor', 50);
+    }
+    return 50;
+}
+
+function hitpointsMinLevel() {
+    if (typeof HITPOINTS_MIN_LEVEL === 'number') {
+        return HITPOINTS_MIN_LEVEL;
+    }
+    if (typeof Balance !== 'undefined' && Balance.get) {
+        return Balance.get('xp.hitpointsMinLevel', 10);
+    }
+    return 10;
+}
 
 function canAddItem(hero, id) {
     if (!hero || !hero.inventory) {
@@ -602,7 +638,7 @@ function canAddItem(hero, id) {
     if (id === 'coins' && hero.gold > 0) {
         return true;
     }
-    return hero.inventory.length < INVENTORY_CAP;
+    return hero.inventory.length < inventoryCap();
 }
 
 function canAddToBank(hero, id) {
@@ -614,7 +650,7 @@ function canAddToBank(hero, id) {
     if (findStack(bank, id)) {
         return true;
     }
-    return bank.length < BANK_CAP;
+    return bank.length < bankCap();
 }
 
 function addItem(hero, id, qty) {
@@ -2280,7 +2316,7 @@ function syncCoins(hero) {
             break;
         }
     }
-    if (!found && hero.gold > 0 && hero.inventory.length < INVENTORY_CAP) {
+    if (!found && hero.gold > 0 && hero.inventory.length < inventoryCap()) {
         hero.inventory.unshift({ id: 'coins', qty: hero.gold });
     }
 }
@@ -2475,9 +2511,9 @@ function gainSkillXp(hero, skill, amount) {
         gain = Math.max(1, Math.round(gain * xpMultiplierFor(hero)));
     }
     s.xp += gain;
-    next = 1 + Math.floor(Math.sqrt(s.xp / 50));
+    next = 1 + Math.floor(Math.sqrt(s.xp / xpCurveDivisor()));
     if (skill === 'hitpoints') {
-        next = Math.max(10, next);
+        next = Math.max(hitpointsMinLevel(), next);
     }
     if (next > s.level) {
         s.level = next;

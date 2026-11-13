@@ -1760,7 +1760,20 @@ var WorldScene = new Phaser.Class({
         var zone = ZONES[this.zoneId];
         var interior = this.interiorId ? interiorById(this.interiorId) : null;
         var questText = 'Talk to Guildmaster Bram in Emberhaven.';
-        if (quest.stage === 1) {
+        if (typeof Content !== 'undefined' && Content.journalSteps) {
+            var jSteps = Content.journalSteps(quest);
+            var ji;
+            if (quest.stage >= 3) {
+                questText = 'Militia task complete. Explore the nine lands.';
+            } else {
+                for (ji = 0; ji < jSteps.length; ji++) {
+                    if (!jSteps[ji].done) {
+                        questText = jSteps[ji].label;
+                        break;
+                    }
+                }
+            }
+        } else if (quest.stage === 1) {
             questText = 'Kill goblins in Northwood (' + quest.progress + '/' + quest.goal + ').';
         } else if (quest.stage === 2) {
             questText = 'Return to Guildmaster Bram for your reward.';
@@ -5626,89 +5639,32 @@ var WorldScene = new Phaser.Class({
         if (!hero.tutorials) {
             hero.tutorials = {};
         }
-        if (def.key === 'guild') {
-            hero.diary.bram = true;
-            if (quest.stage === 0) {
-                quest.stage = 1;
-                quest.progress = 0;
-                this.registry.set('quest', quest);
-                pages = ['Goblins plague Northwood. Bring me 5 kills.'];
-            } else if (quest.stage === 1) {
-                pages = [quest.progress + ' of ' + quest.goal + ' goblins down. Keep at it.'];
-            } else if (quest.stage === 2) {
-                quest.stage = 3;
-                quest.points = (quest.points || 0) + 1;
-                addItem(hero, 'coins', 50);
-                if (typeof gainSkillXp === 'function') {
-                    gainSkillXp(hero, 'attack', 25);
-                    gainSkillXp(hero, 'defence', 15);
+        if (typeof Content !== 'undefined' && Content.findQuestByNpc
+                && Content.findQuestByNpc(def.key)) {
+            if (def.key === 'guild') {
+                hero.diary.bram = true;
+            }
+            var qTalk = Content.applyNpcQuestTalk(def.key, quest, hero);
+            if (qTalk) {
+                if (qTalk.useNpcLines) {
+                    pages = (def.lines || []).slice();
+                } else {
+                    pages = qTalk.pages || [];
                 }
                 this.registry.set('quest', quest);
                 this.registry.set('hero', hero);
-                pages = ['The militia thanks you. 50 gold and combat training.'];
-                afterTalk = function () {
-                    if (Hud.showQuestComplete) {
-                        Hud.showQuestComplete('Quest complete', 'Militia task — 1 QP, 50gp, Attack + Defence XP.');
-                    }
-                    this.levelHero(hero);
-                    this.checkDiaryComplete(hero);
-                }.bind(this);
-            } else {
-                pages = ['Emberhaven stands because of you.'];
-            }
-            this.registry.set('hero', hero);
-        } else if (def.key === 'fisher') {
-            var ship = hero.sideQuests.shipment;
-            if (ship.stage === 0) {
-                ship.stage = 1;
-                ship.progress = 0;
-                pages = ['Crabs stole my lost shipment marks. Clear 3 crabs along the shore.'];
-            } else if (ship.stage === 1) {
-                pages = [ship.progress + ' of ' + ship.goal + ' crabs cleared. Keep hunting.'];
-            } else if (ship.stage === 2) {
-                ship.stage = 3;
-                quest.points = (quest.points || 0) + 1;
-                addItem(hero, 'coins', 25);
-                if (typeof gainSkillXp === 'function') {
-                    gainSkillXp(hero, 'fishing', 20);
+                if (qTalk.toast || qTalk.leveled) {
+                    afterTalk = function () {
+                        if (qTalk.toast && Hud.showQuestComplete) {
+                            Hud.showQuestComplete(qTalk.toast.title, qTalk.toast.body);
+                        }
+                        if (qTalk.leveled) {
+                            this.levelHero(hero);
+                            this.checkDiaryComplete(hero);
+                        }
+                    }.bind(this);
                 }
-                this.registry.set('quest', quest);
-                pages = ['That crate mark is enough. Take 25gp for your trouble.'];
-                afterTalk = function () {
-                    if (Hud.showQuestComplete) {
-                        Hud.showQuestComplete('Quest complete', 'Lost Shipment — 1 QP, 25gp, Fishing XP.');
-                    }
-                };
-            } else {
-                pages = (def.lines || []).slice();
             }
-            this.registry.set('hero', hero);
-        } else if (def.key === 'miner') {
-            var bats = hero.sideQuests.bats;
-            if (bats.stage === 0) {
-                bats.stage = 1;
-                bats.progress = 0;
-                pages = ['Bats choke the lower shaft. Slay 4 bats and return.'];
-            } else if (bats.stage === 1) {
-                pages = [bats.progress + ' of ' + bats.goal + ' bats down. Keep at it.'];
-            } else if (bats.stage === 2) {
-                bats.stage = 3;
-                quest.points = (quest.points || 0) + 1;
-                addItem(hero, 'coins', 30);
-                if (typeof gainSkillXp === 'function') {
-                    gainSkillXp(hero, 'mining', 20);
-                }
-                this.registry.set('quest', quest);
-                pages = ['The shaft is quieter. 30gp and a miner\'s thanks.'];
-                afterTalk = function () {
-                    if (Hud.showQuestComplete) {
-                        Hud.showQuestComplete('Quest complete', 'Bat Clearance — 1 QP, 30gp, Mining XP.');
-                    }
-                };
-            } else {
-                pages = (def.lines || []).slice();
-            }
-            this.registry.set('hero', hero);
         } else if (def.key === 'witch') {
             var cost = 10;
             if (hero.gold < cost) {

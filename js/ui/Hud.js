@@ -1481,11 +1481,13 @@ var Hud = {
         var progress = quest && quest.progress != null ? quest.progress : 0;
         var goal = quest && quest.goal != null ? quest.goal : 5;
         var qp = quest && quest.points != null ? quest.points : 0;
-        var steps = [
-            { label: 'Talk to Guildmaster Bram', done: stage >= 1 },
-            { label: 'Kill goblins in Northwood (' + Math.min(progress, goal) + '/' + goal + ')', done: stage >= 2 || (stage === 1 && progress >= goal) },
-            { label: 'Return to Bram for your reward', done: stage >= 3 }
-        ];
+        var steps = (typeof Content !== 'undefined' && Content.journalSteps)
+            ? Content.journalSteps(quest)
+            : [
+                { label: 'Talk to Guildmaster Bram', done: stage >= 1 },
+                { label: 'Kill goblins in Northwood (' + Math.min(progress, goal) + '/' + goal + ')', done: stage >= 2 || (stage === 1 && progress >= goal) },
+                { label: 'Return to Bram for your reward', done: stage >= 3 }
+            ];
         var html = '';
         var i;
         if (this.el && this.el.questPoints) {
@@ -1749,8 +1751,12 @@ var Hud = {
             normalizeHeroCombat(data.hero);
         }
         registry.set('hero', data.hero);
-        registry.set('quest', data.quest || { id: 'goblins', stage: 0, progress: 0, goal: 5, points: 0 });
-        registry.set('zone', data.zone || 'haven');
+        registry.set('quest', data.quest || (typeof Content !== 'undefined' && Content.makeDefaultQuest
+            ? Content.makeDefaultQuest()
+            : { id: 'goblins', stage: 0, progress: 0, goal: 5, points: 0 }));
+        registry.set('zone', data.zone || (typeof Content !== 'undefined' && Content.defaultZoneId
+            ? Content.defaultZoneId()
+            : 'haven'));
         registry.set('dungeonFloor', typeof data.dungeonFloor === 'number' ? data.dungeonFloor : 0);
         registry.set('dungeonEscapeFloor', typeof data.dungeonEscapeFloor === 'number' ? data.dungeonEscapeFloor : 0);
         registry.set('facing', data.facing === 'left' || data.facing === 'right'
@@ -2835,7 +2841,8 @@ var Hud = {
         this.el.bankInv.innerHTML = this.bankGridHtml(hero && hero.inventory, 'inv');
         bank = hero && typeof ensureBank === 'function' ? ensureBank(hero) : (hero && hero.bank) || [];
         used = bank.length;
-        cap = typeof BANK_CAP === 'number' ? BANK_CAP : 1000;
+        cap = typeof bankCap === 'function' ? bankCap()
+            : (typeof BANK_CAP === 'number' ? BANK_CAP : 1000);
         vault = hero && typeof filterBankStacks === 'function'
             ? filterBankStacks(bank, this.bankTab || 'all', this.readBankSearch())
             : bank;
@@ -2878,7 +2885,8 @@ var Hud = {
             /* Show occupied stacks only (up to BANK_CAP); do not paint 1000 empty cells. */
             cap = list.length;
         } else {
-            cap = typeof INVENTORY_CAP === 'number' ? INVENTORY_CAP : 28;
+            cap = typeof inventoryCap === 'function' ? inventoryCap()
+                : (typeof INVENTORY_CAP === 'number' ? INVENTORY_CAP : 28);
         }
         for (i = 0; i < cap; i++) {
             stack = list[i];
@@ -2946,7 +2954,10 @@ var Hud = {
                 return;
             }
             if (typeof canAddToBank === 'function' && !canAddToBank(hero, id)) {
-                this.log('Your bank is full (' + (typeof BANK_CAP === 'number' ? BANK_CAP : 1000) + ' slots).');
+                this.log('Your bank is full ('
+                    + (typeof bankCap === 'function' ? bankCap()
+                        : (typeof BANK_CAP === 'number' ? BANK_CAP : 1000))
+                    + ' slots).');
                 return;
             }
             if (!depositItem(hero, id, depQty)) {
@@ -3614,7 +3625,7 @@ var Hud = {
         var i;
         var self = this;
         var stack;
-        for (i = 0; i < INVENTORY_CAP; i++) {
+        for (i = 0; i < (typeof inventoryCap === 'function' ? inventoryCap() : INVENTORY_CAP); i++) {
             stack = hero.inventory[i];
             if (stack) {
                 html += this.itemSlotHtml({

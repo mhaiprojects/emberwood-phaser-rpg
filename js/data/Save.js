@@ -44,7 +44,17 @@ function migrateLegacySaveIfNeeded(primaryKey) {
 }
 
 function defaultQuest() {
+    if (typeof Content !== 'undefined' && Content.makeDefaultQuest) {
+        return Content.makeDefaultQuest();
+    }
     return { id: 'goblins', stage: 0, progress: 0, goal: 5, points: 0 };
+}
+
+function defaultZoneId() {
+    if (typeof Content !== 'undefined' && Content.defaultZoneId) {
+        return Content.defaultZoneId();
+    }
+    return 'haven';
 }
 
 function cloneSaveJson(value) {
@@ -61,7 +71,7 @@ function cloneSaveJson(value) {
 function buildSavePayload(registry) {
     var hero = registry.get('hero');
     var quest = registry.get('quest');
-    var zone = registry.get('zone') || 'haven';
+    var zone = registry.get('zone') || defaultZoneId();
     var playerX = registry.get('playerX');
     var playerY = registry.get('playerY');
     var interiorId = registry.get('interiorId');

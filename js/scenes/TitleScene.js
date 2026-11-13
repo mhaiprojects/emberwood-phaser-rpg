@@ -24,7 +24,7 @@ var TitleScene = new Phaser.Class({
            clears the boot-time title from Hud.onVueMounted. */
         if (this.registry.get('autoContinueSave') && typeof hasSave === 'function' && hasSave()) {
             this.registry.set('autoContinueSave', false);
-            Hud.log('Continuing your Emberwood save…');
+            Hud.log('Continuing your ' + this._packTitle() + ' save…');
             if (Hud.onContinue) {
                 Hud.onContinue();
             }
@@ -35,16 +35,32 @@ var TitleScene = new Phaser.Class({
         Hud.log('Click “Click here to play”, then click the world to walk.');
     },
 
+    _packTitle: function () {
+        if (typeof Content !== 'undefined' && Content.getMeta) {
+            var meta = Content.getMeta();
+            if (meta && meta.title) {
+                return meta.title;
+            }
+        }
+        return 'Emberwood';
+    },
+
     startGame: function () {
         var hero = (window.Hud && Hud._ironmanNewGame && typeof makeIronmanHero === 'function')
             ? makeIronmanHero()
             : makeHero();
+        var startQuest = (typeof Content !== 'undefined' && Content.makeDefaultQuest)
+            ? Content.makeDefaultQuest()
+            : { id: 'goblins', stage: 0, progress: 0, goal: 5, points: 0 };
+        var startZone = (typeof Content !== 'undefined' && Content.defaultZoneId)
+            ? Content.defaultZoneId()
+            : 'haven';
         if (window.Hud) {
             Hud._ironmanNewGame = false;
         }
         this.registry.set('hero', hero);
-        this.registry.set('quest', { id: 'goblins', stage: 0, progress: 0, goal: 5, points: 0 });
-        this.registry.set('zone', 'haven');
+        this.registry.set('quest', startQuest);
+        this.registry.set('zone', startZone);
         this.registry.set('battleOutcome', null);
         if (Hud.applyPendingSave) {
             Hud.applyPendingSave(this.registry);
