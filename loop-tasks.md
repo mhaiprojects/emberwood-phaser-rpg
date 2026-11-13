@@ -33,6 +33,8 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 
 Active queue — implement top-down before returning to sections 1–14.
 
+- [done] Emberhaven herbalist shows black box — fix missing texture / Boot load / SVG. — Conclusion: key npc-herbalist had no SVG/Boot load; added herbalist.svg + BootScene load.
+- [done] Tree chop gather particles should be wood-chip brown (not green leaf sparks). — Conclusion: startChopFx flash 0x8b5a2b; chop sparks pick warm browns (not 0x6a9a40).
 - [done] Unify item grid (Inv/Bank/Shop): shared slot markup with name; shop price top-left; bank dblclick deposit/withdraw; keep Deposit/Withdraw vs Buy/Sell controls. — Conclusion: `itemSlotHtml` shared; shop 4-col grid + `.inv-price`; bank/shop dblclick move 1; Deposit/Withdraw & Buy/Sell buttons kept.
 - [done] Remove deleted-content items; unique SVG/texture per remaining live ITEM_DB id + distinct dummy/arms/dragon/goblin battle art. — Conclusion: Dropped shipcrate (+ burnt/tin/nature/mind/bronze* SVGs); 114 live ids each own SVG; dragon/dummy/arms textures; battle Goblin→mob-goblin.
 - [done] Add Settings XP multipliers 50× / 100× / 200× (extend existing XP rate options). — Conclusion: Options now 1/2/5/10/25/50/100/200× via `XP_MULTIPLIER_OPTIONS` + Settings buttons; still through `gainSkillXp`.

@@ -3130,6 +3130,10 @@ var WorldScene = new Phaser.Class({
         var dy = kind === 'fish'
             ? Phaser.Math.Between(-4, 4)
             : Phaser.Math.Between(-8, -2);
+        /* Chop sparks vary warm wood-chip browns; mine/fish keep the passed color. */
+        if (kind === 'chop') {
+            color = Phaser.Utils.Array.GetRandom([0x8b5a2b, 0xa0723a, 0xc4a35a, 0x6b4423]);
+        }
         spark = this.add.circle(x + dx * 0.2, y + (kind === 'fish' ? 1 : -2),
             Phaser.Math.Between(1, 2), color, 0.95);
         spark.setDepth(12);
@@ -3229,7 +3233,8 @@ var WorldScene = new Phaser.Class({
     },
 
     startChopFx: function (hit) {
-        this.startGatherFx(hit, 0x6a9a40, 'chop');
+        /* Wood-chip brown flash (sparks pick from warm browns in spawnGatherSpark). */
+        this.startGatherFx(hit, 0x8b5a2b, 'chop');
     },
 
     startFishFx: function (hit) {
