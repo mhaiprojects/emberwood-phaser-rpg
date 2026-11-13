@@ -10,6 +10,10 @@ var HudApp = {
     createState: function () {
         return {
             mode: 'title',
+            packId: 'emberwood',
+            packTitle: 'EMBERWOOD',
+            packBlurb: 'A free-roam adventure in the style of classic RuneScape.',
+            packOptions: [{ id: 'emberwood', title: 'Emberwood' }],
             zone: 'Emberhaven',
             zoneId: 'haven',
             hp: 100,
@@ -96,6 +100,17 @@ var HudApp = {
                     if (window.Hud && Hud.onContinue) {
                         Hud.onContinue();
                     }
+                },
+                onPackChange: function () {
+                    var id = this.packId;
+                    var cur = (typeof GameDataPack !== 'undefined' && GameDataPack.getActive)
+                        ? GameDataPack.getActive()
+                        : 'emberwood';
+                    if (!id || id === cur) {
+                        return;
+                    }
+                    var url = location.pathname + '?pack=' + encodeURIComponent(id);
+                    location.href = url;
                 },
                 onCredits: function () {
                     this.creditsOpen = !this.creditsOpen;

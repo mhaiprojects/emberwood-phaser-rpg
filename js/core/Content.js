@@ -402,13 +402,43 @@ var Content = {
      * Advance pack quests when a mob type is killed. Mutates quest / hero.sideQuests.
      * Returns chat lines to log (may be empty).
      */
+    _questStateFor: function (def, quest, hero) {
+        if (!def) {
+            return null;
+        }
+        if (def.sideKey) {
+            if (!hero || !hero.sideQuests || !hero.sideQuests[def.sideKey]) {
+                return null;
+            }
+            return hero.sideQuests[def.sideKey];
+        }
+        return quest;
+    },
+
+    _bumpQuestProgress: function (def, state, lines) {
+        if (!def || !state || state.stage !== 1) {
+            return;
+        }
+        state.progress = (state.progress || 0) + 1;
+        if (typeof state.goal !== 'number' && typeof def.goal === 'number') {
+            state.goal = def.goal;
+        }
+        if (state.progress >= (state.goal || def.goal || 1)) {
+            state.stage = 2;
+            if (def.completeHint) {
+                lines.push(def.completeHint);
+            } else {
+                lines.push('That should be enough. Return for your reward.');
+            }
+        }
+    },
+
     noteQuestKill: function (quest, hero, mobType) {
         var all = typeof QUESTS !== 'undefined' ? QUESTS : null;
         var lines = [];
         var id;
         var def;
         var state;
-        var returnNpc;
         if (!all || !mobType) {
             return lines;
         }
@@ -420,33 +450,46 @@ var Content = {
             if (!def || def.mobType !== mobType) {
                 continue;
             }
-            if (def.sideKey) {
-                if (!hero || !hero.sideQuests || !hero.sideQuests[def.sideKey]) {
-                    continue;
-                }
-                state = hero.sideQuests[def.sideKey];
-            } else {
-                state = quest;
-            }
-            if (!state || state.stage !== 1) {
-                continue;
-            }
-            state.progress = (state.progress || 0) + 1;
-            if (typeof state.goal !== 'number' && typeof def.goal === 'number') {
-                state.goal = def.goal;
-            }
-            if (state.progress >= (state.goal || def.goal || 1)) {
-                state.stage = 2;
-                returnNpc = def.returnHint
-                    || (def.npcKey ? ('Return to the quest giver.') : 'Return for your reward.');
-                if (def.completeHint) {
-                    lines.push(def.completeHint);
-                } else {
-                    lines.push('That should be enough. ' + returnNpc);
-                }
-            }
+            state = this._questStateFor(def, quest, hero);
+            this._bumpQuestProgress(def, state, lines);
         }
         return lines;
+    },
+
+    /** Advance gather-style quests keyed by gatherItem / gatherItems. */
+    noteQuestGather: function (quest, hero, itemId) {
+        var all = typeof QUESTS !== 'undefined' ? QUESTS : null;
+        var lines = [];
+        var id;
+        var def;
+        var state;
+        var match;
+        if (!all || !itemId) {
+            return lines;
+        }
+        for (id in all) {
+            if (!Object.prototype.hasOwnProperty.call(all, id)) {
+                continue;
+            }
+            def = all[id];
+            if (!def) {
+                continue;
+            }
+            match = def.gatherItem === itemId
+                || (def.gatherItems && def.gatherItems.indexOf(itemId) >= 0);
+            if (!match) {
+                continue;
+            }
+            state = this._questStateFor(def, quest, hero);
+            this._bumpQuestProgress(def, state, lines);
+        }
+        return lines;
+    },
+
+    listPacks: function () {
+        return (typeof PACK_CATALOG !== 'undefined' && PACK_CATALOG && PACK_CATALOG.packs)
+            ? PACK_CATALOG.packs
+            : [];
     },
 
     mapProps: function () {
@@ -475,6 +518,22 @@ var Content = {
 
     getSkills: function () {
         return typeof SKILL_NAMES !== 'undefined' ? SKILL_NAMES : [];
+    },
+
+    /** Skill ids that open a click action from the Skills tab (pack optional). */
+    getSkillsClickActions: function () {
+        var skills = typeof ContentRegistry !== 'undefined' ? null : null;
+        var raw = typeof window !== 'undefined' && window.SKILL_CLICK_ACTIONS
+            ? window.SKILL_CLICK_ACTIONS
+            : null;
+        if (raw && raw.length) {
+            return raw;
+        }
+        /* Emberwood default: runecraft via Skills tab / altar. */
+        if (this.getSkills().some(function (row) { return row && row[0] === 'runecraft'; })) {
+            return ['runecraft'];
+        }
+        return [];
     },
 
     getOnboarding: function () {

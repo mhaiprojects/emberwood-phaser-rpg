@@ -260,8 +260,8 @@
     "zoneId": "millfields",
     "tx": 25,
     "ty": 17,
-    "skill": "agility",
-    "level": 5,
+    "skill": null,
+    "level": 0,
     "verb": "squeeze"
   },
   "MINE_SHAFT_HOUSE": {

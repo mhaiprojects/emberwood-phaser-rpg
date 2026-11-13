@@ -1,0 +1,128 @@
+{
+  "starter": {
+    "id": "starter",
+    "npcKey": "guide",
+    "goal": 8,
+    "mobType": null,
+    "completeHint": "You have wood. Return to the Village Guide.",
+    "journal": [
+      "Talk to the Village Guide",
+      "Chop 8 oak logs",
+      "Return to the Guide"
+    ],
+    "stages": {
+      "0": {
+        "advanceTo": 1,
+        "lines": [
+          "Welcome to Blocklands! Punch\u2026 well, chop eight logs and return."
+        ]
+      },
+      "1": {
+        "progressLine": "{progress} of {goal} logs gathered. Keep chopping in the forest."
+      },
+      "2": {
+        "complete": true,
+        "advanceTo": 3,
+        "questPoints": 1,
+        "rewards": {
+          "coins": 10,
+          "skills": {
+            "woodcutting": 40,
+            "crafting": 20
+          }
+        },
+        "lines": [
+          "Good work. Craft tools at the table, then explore the Cave Mouth west-south."
+        ],
+        "toastTitle": "Quest complete",
+        "toastBody": "Gathering Wood \u2014 crafting XP."
+      },
+      "3": {
+        "lines": [
+          "The caves hold iron. The Nether waits beyond the peaks."
+        ]
+      }
+    },
+    "gatherItem": "logs",
+    "gatherItems": [
+      "logs",
+      "oaklogs"
+    ]
+  },
+  "stone": {
+    "id": "stone",
+    "npcKey": "miner",
+    "sideKey": "stone",
+    "goal": 8,
+    "mobType": null,
+    "completeHint": "Stone and coal gathered. Return to the Prospector.",
+    "stages": {
+      "0": {
+        "advanceTo": 1,
+        "lines": [
+          "Bring me 8 cobble from the Cave Mouth rocks."
+        ]
+      },
+      "1": {
+        "progressLine": "{progress}/{goal} cobble. Mining levels unlock better ore."
+      },
+      "2": {
+        "complete": true,
+        "advanceTo": 3,
+        "questPoints": 1,
+        "rewards": {
+          "coins": 15,
+          "skills": {
+            "mining": 40
+          }
+        },
+        "lines": [
+          "Solid stonework. Smelt iron when you find it."
+        ],
+        "toastTitle": "Quest complete",
+        "toastBody": "Stone Age \u2014 Mining XP."
+      }
+    },
+    "gatherItem": "copper",
+    "gatherItems": [
+      "copper",
+      "iron"
+    ]
+  },
+  "zombie": {
+    "id": "zombie",
+    "npcKey": "guard",
+    "sideKey": "zombie",
+    "goal": 5,
+    "mobType": "Zombie",
+    "completeHint": "That should be enough zombies. Return to the Guard.",
+    "stages": {
+      "0": {
+        "advanceTo": 1,
+        "lines": [
+          "Zombies roam the plains at dusk. Slay 5."
+        ]
+      },
+      "1": {
+        "progressLine": "{progress} of {goal} zombies down."
+      },
+      "2": {
+        "complete": true,
+        "advanceTo": 3,
+        "questPoints": 1,
+        "rewards": {
+          "coins": 25,
+          "skills": {
+            "attack": 30,
+            "defence": 20
+          }
+        },
+        "lines": [
+          "The village sleeps easier. Take this combat tip: shields help."
+        ],
+        "toastTitle": "Quest complete",
+        "toastBody": "Undead Patrol \u2014 combat XP."
+      }
+    }
+  }
+}

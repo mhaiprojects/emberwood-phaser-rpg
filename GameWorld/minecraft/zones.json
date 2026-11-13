@@ -1,0 +1,103 @@
+{
+  "list": [
+    {
+      "id": "mountains",
+      "name": "Snowy Peaks",
+      "gx": -1,
+      "gy": -1,
+      "biome": "hills",
+      "seed": 101,
+      "short": "Peaks"
+    },
+    {
+      "id": "forest",
+      "name": "Oak Forest",
+      "gx": 0,
+      "gy": -1,
+      "biome": "forest",
+      "seed": 102,
+      "short": "Forest"
+    },
+    {
+      "id": "mesa",
+      "name": "Badlands",
+      "gx": 1,
+      "gy": -1,
+      "biome": "hills",
+      "seed": 103,
+      "short": "Mesa"
+    },
+    {
+      "id": "plains",
+      "name": "Sunflower Plains",
+      "gx": -1,
+      "gy": 0,
+      "biome": "plains",
+      "seed": 104,
+      "short": "Plains"
+    },
+    {
+      "id": "spawn",
+      "name": "Spawn Village",
+      "gx": 0,
+      "gy": 0,
+      "biome": "town",
+      "seed": 105,
+      "short": "Spawn"
+    },
+    {
+      "id": "farm",
+      "name": "Village Farms",
+      "gx": 1,
+      "gy": 0,
+      "biome": "farm",
+      "seed": 106,
+      "short": "Farms"
+    },
+    {
+      "id": "caves",
+      "name": "Cave Mouth",
+      "gx": -1,
+      "gy": 1,
+      "biome": "mine",
+      "seed": 107,
+      "short": "Caves"
+    },
+    {
+      "id": "ocean",
+      "name": "Ocean Shore",
+      "gx": 0,
+      "gy": 1,
+      "biome": "shore",
+      "seed": 108,
+      "short": "Ocean"
+    },
+    {
+      "id": "swamp",
+      "name": "Mangrove Swamp",
+      "gx": 1,
+      "gy": 1,
+      "biome": "swamp",
+      "seed": 109,
+      "short": "Swamp"
+    },
+    {
+      "id": "nether",
+      "name": "The Nether",
+      "gx": 0,
+      "gy": 2,
+      "biome": "den",
+      "seed": 110,
+      "short": "Nether"
+    },
+    {
+      "id": "dungeon",
+      "name": "Deep Dark",
+      "gx": 0,
+      "gy": 3,
+      "biome": "dungeon",
+      "seed": 111,
+      "short": "Deep"
+    }
+  ]
+}

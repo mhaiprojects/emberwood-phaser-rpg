@@ -23,7 +23,8 @@ var BootScene = new Phaser.Class({
         this._bootBar = bar;
         this._packWave = 'meta';
 
-        /* Wave A1: pack.json only */
+        /* Shared catalog + Wave A1: pack.json */
+        this.load.json('packCatalog', 'GameWorld/catalog.json');
         this.load.json('packMeta', typeof GameDataPack !== 'undefined'
             ? GameDataPack.packJsonUrl()
             : 'GameWorld/emberwood/pack.json');
@@ -34,6 +35,9 @@ var BootScene = new Phaser.Class({
         var meta;
 
         if (this._packWave === 'meta') {
+            if (this.cache.json.has('packCatalog')) {
+                window.PACK_CATALOG = this.cache.json.get('packCatalog') || { packs: [] };
+            }
             meta = this.cache.json.get('packMeta');
             if (!meta) {
                 this._bootBar.setText('Missing pack.json');

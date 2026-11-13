@@ -1,0 +1,174 @@
+{
+  "safeZones": {
+    "spawn": {
+      "centerFrom": "TOWN_CENTER_TILE",
+      "radiusTiles": 5
+    }
+  },
+  "dungeon": {
+    "zoneId": "dungeon",
+    "surfaceZoneId": "caves",
+    "floorMobTemplates": [
+      {
+        "type": "Bat",
+        "texture": "mob-bat"
+      },
+      {
+        "type": "Goblin",
+        "texture": "mob-goblin"
+      },
+      {
+        "type": "Skeleton",
+        "texture": "mob-skeleton"
+      },
+      {
+        "type": "Slime",
+        "texture": "mob-slime"
+      }
+    ],
+    "floorMobSpots": [
+      {
+        "x": 200,
+        "y": 180
+      },
+      {
+        "x": 280,
+        "y": 200
+      },
+      {
+        "x": 340,
+        "y": 160
+      },
+      {
+        "x": 240,
+        "y": 240
+      },
+      {
+        "x": 300,
+        "y": 260
+      },
+      {
+        "x": 160,
+        "y": 220
+      },
+      {
+        "x": 220,
+        "y": 150
+      },
+      {
+        "x": 320,
+        "y": 230
+      },
+      {
+        "x": 180,
+        "y": 190
+      },
+      {
+        "x": 260,
+        "y": 170
+      },
+      {
+        "x": 310,
+        "y": 210
+      },
+      {
+        "x": 190,
+        "y": 250
+      }
+    ],
+    "floorBaseCount": 3,
+    "floorCountStep": 4,
+    "floorCountCap": 3,
+    "dragonFloorTemplate": {
+      "type": "Dragon",
+      "texture": "mob-dragon",
+      "tint": 16729122,
+      "alwaysAgro": true
+    }
+  },
+  "dragonDen": {
+    "zoneId": "nether",
+    "gateZoneId": "mountains"
+  },
+  "shoreFishZoneId": "ocean",
+  "features": {
+    "spawn": [
+      "safeZone",
+      "bank",
+      "townRegen",
+      "townStations",
+      "noRandomEvents"
+    ],
+    "caves": [
+      "mineShaft",
+      "dungeonEntrance"
+    ],
+    "nether": [
+      "dragonDen"
+    ],
+    "dungeon": [
+      "dungeonFloors"
+    ],
+    "ocean": [
+      "shoreFish"
+    ],
+    "swamp": [
+      "wildSkull"
+    ]
+  },
+  "shaftMarkers": {
+    "dungeon-enter": {
+      "color": 10165759,
+      "glyph": "\u25bc",
+      "labelColor": "#dcc8ff",
+      "bandZoneId": "dungeon",
+      "labelTemplate": "Deep Dark\n{band}",
+      "approachTemplate": "A dark shaft \u2014 the Deep Dark (mobs {band}). Click to delve."
+    },
+    "stairs-down": {
+      "color": 14704704,
+      "glyph": "\u25bc",
+      "labelColor": "#ffd0a8",
+      "labelTemplate": "Deeper",
+      "approachTemplate": "Stairs marked Deeper \u2014 click to descend another floor."
+    },
+    "stairs-up": {
+      "color": 15257680,
+      "glyph": "\u25b2",
+      "labelColor": "#ffe9a0",
+      "labelTemplate": "Climb",
+      "approachTemplate": "Stairs marked Climb \u2014 step on them to go up (floor 1 exits to Darkmine)."
+    },
+    "surface-portal": {
+      "color": 7260415,
+      "glyph": "\u25ce",
+      "labelColor": "#b8e8ff",
+      "labelTemplate": "Escape",
+      "approachTemplate": "Escape shaft \u2014 click to return to Darkmine; it remembers this floor."
+    },
+    "den-boulder": {
+      "color": 12607552,
+      "glyph": "\u25c6",
+      "labelColor": "#ffd0a8",
+      "bandZoneId": "nether",
+      "labelTemplate": "Nether Portal\n{summary}",
+      "approachTemplate": "A sealing boulder \u2014 mine it with a diamond pickaxe to open the The Nether ({summary})."
+    },
+    "dragon-den": {
+      "color": 15228106,
+      "glyph": "\u25bc",
+      "labelColor": "#ffb090",
+      "bandZoneId": "nether",
+      "labelTemplate": "{border}",
+      "approachTemplate": "Scorched cave mouth \u2014 The Nether ({summary}). Click or step in to enter."
+    },
+    "dragon-den-exit": {
+      "color": 7260415,
+      "glyph": "\u25b2",
+      "labelColor": "#b8e8ff",
+      "bandZoneId": "mountains",
+      "labelTemplate": "{border}",
+      "approachTemplate": "Tunnel back to Windrock Highlands ({summary}) \u2014 click or step on it to leave."
+    }
+  }
+}

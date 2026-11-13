@@ -1,0 +1,122 @@
+{
+  "hp": 100,
+  "maxHp": 100,
+  "damage": 16,
+  "gold": 8,
+  "level": 1,
+  "style": "shared",
+  "stance": "melee",
+  "autoAttack": false,
+  "autoAttackRange": 3,
+  "autoRetaliate": false,
+  "autoPickup": true,
+  "shiftClickDrop": true,
+  "hideBones": false,
+  "showCombatVisuals": true,
+  "showRangeRings": true,
+  "displayName": "Steve",
+  "ironman": false,
+  "prayerPoints": 1,
+  "maxPrayerPoints": 1,
+  "specialEnergy": 100,
+  "clanTag": "craft",
+  "prayers": {
+    "thickskin": false,
+    "burststrength": false
+  },
+  "hiscores": {
+    "kills": 0,
+    "quests": 0
+  },
+  "sideQuests": {
+    "stone": {
+      "stage": 0,
+      "progress": 0,
+      "goal": 8
+    },
+    "zombie": {
+      "stage": 0,
+      "progress": 0,
+      "goal": 5
+    }
+  },
+  "diary": {
+    "guide": false,
+    "eat": false,
+    "mine": false,
+    "complete": false
+  },
+  "flags": {
+    "dragonDenOpen": false
+  },
+  "running": false,
+  "runEnergy": 100,
+  "equipment": {
+    "weapon": null,
+    "shield": null
+  },
+  "inventory": [
+    {
+      "id": "coins",
+      "qty": 0
+    },
+    {
+      "id": "copperaxe",
+      "qty": 1
+    },
+    {
+      "id": "copperpick",
+      "qty": 1
+    },
+    {
+      "id": "bread",
+      "qty": 5
+    },
+    {
+      "id": "logs",
+      "qty": 4
+    }
+  ],
+  "skills": {
+    "attack": {
+      "level": 1,
+      "xp": 0
+    },
+    "strength": {
+      "level": 1,
+      "xp": 0
+    },
+    "defence": {
+      "level": 1,
+      "xp": 0
+    },
+    "hitpoints": {
+      "level": 10,
+      "xp": 1154
+    },
+    "cooking": {
+      "level": 1,
+      "xp": 0
+    },
+    "fishing": {
+      "level": 1,
+      "xp": 0
+    },
+    "woodcutting": {
+      "level": 1,
+      "xp": 0
+    },
+    "mining": {
+      "level": 1,
+      "xp": 0
+    },
+    "crafting": {
+      "level": 1,
+      "xp": 0
+    },
+    "smithing": {
+      "level": 1,
+      "xp": 0
+    }
+  }
+}

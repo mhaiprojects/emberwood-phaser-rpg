@@ -249,8 +249,13 @@
 
             <div id="title-overlay" :hidden="!titleVisible">
                 <div class="title-card">
-                    <h1>EMBERWOOD</h1>
-                    <p>A free-roam adventure in the style of classic RuneScape.</p>
+                    <h1>{{ packTitle }}</h1>
+                    <p>{{ packBlurb }}</p>
+                    <label id="pack-pick-label" style="display:block;margin:0.65rem 0 0.35rem;font-size:0.85rem">Game
+                        <select id="pack-select" v-model="packId" @change="onPackChange" style="display:block;width:100%;margin-top:0.25rem;padding:0.35rem">
+                            <option v-for="p in packOptions" :key="p.id" :value="p.id">{{ p.title }}</option>
+                        </select>
+                    </label>
                     <button type="button" id="btn-continue" class="ghost" :disabled="!continueEnabled" @click="onContinue" v-show="continueEnabled">Continue</button>
                     <label id="ironman-label" style="display:block;margin:0.5rem 0"><input type="checkbox" id="ironman-toggle"> Ironman (no trading)</label>
                     <button type="button" id="btn-start" :disabled="!startEnabled" @click="onStart">{{ continueEnabled ? 'New game' : 'Click here to play' }}</button>

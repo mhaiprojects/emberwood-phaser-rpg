@@ -196,6 +196,11 @@ var ContentRegistry = {
             if (skills.slayer) {
                 window.SLAYER_CONFIG = skills.slayer;
             }
+            if (skills.clickActions) {
+                window.SKILL_CLICK_ACTIONS = skills.clickActions;
+            } else {
+                window.SKILL_CLICK_ACTIONS = [];
+            }
         }
 
         mobScales = this._get(cache, 'mobScales');

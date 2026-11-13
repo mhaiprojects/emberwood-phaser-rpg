@@ -1,0 +1,15 @@
+{
+  "default": "emberwood",
+  "packs": [
+    {
+      "id": "emberwood",
+      "title": "Emberwood",
+      "blurb": "Militia quests, gathering, and nine lands."
+    },
+    {
+      "id": "minecraft",
+      "title": "Blocklands",
+      "blurb": "Minecraft-inspired gather, craft, mine, and survive."
+    }
+  ]
+}

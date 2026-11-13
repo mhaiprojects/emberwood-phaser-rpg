@@ -1382,7 +1382,10 @@ var Hud = {
         var line = typeof skillXpText === 'function' ? skillXpText(named[1], skill) : named[1];
         this.log(line);
         var world = window.game && window.game.scene.getScene('WorldScene');
-        var playable = ['slayer', 'runecraft', 'farming', 'herblore', 'fletching', 'construction'];
+        /* Pack-defined clickable skills (e.g. runecraft altar craft). */
+        var playable = (typeof Content !== 'undefined' && Content.getSkillsClickActions)
+            ? Content.getSkillsClickActions()
+            : ['runecraft'];
         if (world && world.tryStretchSkillAction && playable.indexOf(id) !== -1) {
             world.tryStretchSkillAction(id);
         }
@@ -1880,6 +1883,7 @@ var Hud = {
         this.alchArmed = false;
         this.setMode('title');
         this.refreshTitleSaveButtons();
+        this.syncPackPicker();
         if (this.el && this.el.title) {
             this.el.title.hidden = false;
         }
@@ -1889,6 +1893,40 @@ var Hud = {
         if (this.el && this.el.dead) {
             this.el.dead.hidden = true;
         }
+    },
+
+    syncPackPicker: function () {
+        var vue = this.vueState();
+        var meta = (typeof Content !== 'undefined' && Content.getMeta) ? Content.getMeta() : null;
+        var packs = (typeof Content !== 'undefined' && Content.listPacks)
+            ? Content.listPacks()
+            : [];
+        var active = (typeof GameDataPack !== 'undefined' && GameDataPack.getActive)
+            ? GameDataPack.getActive()
+            : 'emberwood';
+        var i;
+        var row;
+        var blurb = 'Choose a game pack to play.';
+        if (!vue) {
+            return;
+        }
+        if (!packs.length) {
+            packs = [{ id: active, title: (meta && meta.title) || active }];
+        }
+        vue.packOptions = packs;
+        vue.packId = active;
+        vue.packTitle = (meta && meta.title) ? String(meta.title).toUpperCase() : String(active).toUpperCase();
+        for (i = 0; i < packs.length; i++) {
+            row = packs[i];
+            if (row && row.id === active) {
+                blurb = row.blurb || blurb;
+                break;
+            }
+        }
+        if (meta && meta.blurb) {
+            blurb = meta.blurb;
+        }
+        vue.packBlurb = blurb;
     },
 
     hideTitle: function () {

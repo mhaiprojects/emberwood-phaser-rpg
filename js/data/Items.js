@@ -1040,6 +1040,16 @@ function chopAtTree(hero, opts) {
     }
     xp = WOODCUT_TREE_XP + Math.max(0, (resourceNeedLevel(logId) - 1));
     gainSkillXp(hero, 'woodcutting', xp);
+    if (typeof Content !== 'undefined' && Content.noteQuestGather
+            && typeof window !== 'undefined' && window.game && window.game.registry) {
+        var qWood = window.game.registry.get('quest');
+        var woodLines = Content.noteQuestGather(qWood, hero, logId);
+        window.game.registry.set('quest', qWood);
+        window.game.registry.set('hero', hero);
+        if (woodLines && woodLines.length && typeof Hud !== 'undefined' && Hud.log) {
+            Hud.log(woodLines[0]);
+        }
+    }
     return { ok: true, id: logId, xp: xp };
 }
 
@@ -1062,6 +1072,16 @@ function mineAtRock(hero, ore, opts) {
         }
     }
     gainSkillXp(hero, 'mining', MINE_ROCK_XP);
+    if (typeof Content !== 'undefined' && Content.noteQuestGather
+            && typeof window !== 'undefined' && window.game && window.game.registry) {
+        var qMine = window.game.registry.get('quest');
+        var mineLines = Content.noteQuestGather(qMine, hero, ore);
+        window.game.registry.set('quest', qMine);
+        window.game.registry.set('hero', hero);
+        if (mineLines && mineLines.length && typeof Hud !== 'undefined' && Hud.log) {
+            Hud.log(mineLines[0]);
+        }
+    }
     return { ok: true, xp: MINE_ROCK_XP, ore: ore, id: ore };
 }
 
@@ -1071,6 +1091,12 @@ function grantHunterXp(hero, amount) {
         return null;
     }
     if (!hero.skills.hunter) {
+        /* Only create if pack lists hunter. */
+        if (!(typeof SKILL_NAMES !== 'undefined' && SKILL_NAMES.some(function (n) {
+            return n && n[0] === 'hunter';
+        }))) {
+            return null;
+        }
         hero.skills.hunter = { level: 1, xp: 0 };
     }
     if (amount > 0) {
@@ -1691,7 +1717,6 @@ function pickpocketNpc(hero) {
         return false;
     }
     syncCoins(hero);
-    gainSkillXp(hero, 'thieving', 12);
     return gold;
 }
 
@@ -1794,8 +1819,7 @@ function plantGuamSeed(hero) {
         }
         return true;
     }
-    gainSkillXp(hero, 'farming', 14);
-    return !!addItem(hero, 'guam', 1);
+    return false;
 }
 
 function mixAttackPotion(hero) {
@@ -2407,10 +2431,20 @@ function xpMultiplierFor(hero) {
 }
 
 function gainSkillXp(hero, skill, amount) {
-    var s = ensureSkill(hero, skill);
+    var s;
     var gain;
     var next;
     var named;
+    var known;
+    if (!hero || !skill) {
+        return;
+    }
+    known = typeof SKILL_NAMES === 'undefined' || !SKILL_NAMES.length
+        || SKILL_NAMES.some(function (n) { return n && n[0] === skill; });
+    if (!known) {
+        return;
+    }
+    s = ensureSkill(hero, skill);
     if (!s) {
         return;
     }

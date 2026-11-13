@@ -18,7 +18,8 @@ Swapping `GameWorld/emberwood` for another valid pack boots a different game wit
 ## GameDataPack
 
 - Default pack: **`emberwood`** under `GameWorld/emberwood/`.
-- Override: `?pack=other` or `window.EMBERWOOD_PACK = 'other'`.
+- Other packs: listed in `GameWorld/catalog.json` (e.g. **`minecraft`** / Blocklands).
+- Override: title-screen Game picker, `?pack=other`, or `window.EMBERWOOD_PACK = 'other'` (reload required).
 - All art/JSON URLs: `GameDataPack.url(rel)` / `assetUrl(rel)` (pack-relative).
 - DOM icons: `data-pack-src="assets/…"` rewritten at Boot / main via `rewriteDomAssets`.
 - Saves: `pack.saveKey` (legacy keys listed in `pack.json`). Never share one localStorage key across packs.

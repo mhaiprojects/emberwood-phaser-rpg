@@ -1,0 +1,75 @@
+{
+  "arriveLines": [
+    "You spawn in the Village. WASD or click to walk.",
+    "Chop trees, mine stone, craft tools, cook food.",
+    "Talk to the Village Guide for your first quest."
+  ],
+  "welcomeBackLine": "Welcome back to Blocklands.",
+  "respawnLine": "You respawn at the village bed, barely standing.",
+  "deathTitle": "Level {level}. You were slain.",
+  "deathLog": "You died. Your items are in a gravestone \u2014 respawn at Spawn Village to reclaim them.",
+  "tutorials": {
+    "walk": "Tutorial: First steps in the Overworld.",
+    "talk": "Tutorial: You spoke with a villager.",
+    "fight": "Tutorial: You won a fight.",
+    "loot": "Tutorial: You picked up drops.",
+    "bury": "Tutorial: You buried bones.",
+    "shop": "Tutorial: You opened a shop."
+  },
+  "achievements": {
+    "nineLands": {
+      "needZones": 9,
+      "flag": "nineLands",
+      "line": "Achievement: Explored the Overworld map."
+    }
+  },
+  "diary": {
+    "needFlags": [
+      "guide",
+      "eat",
+      "mine"
+    ],
+    "needZones": 6,
+    "rewardCoins": 20,
+    "completeLine": "Village diary complete. +20 emeralds (coins).",
+    "achievementFlag": "easyDiary"
+  },
+  "battleDefaultEncounter": {
+    "enemies": [
+      {
+        "type": "Zombie",
+        "texture": "mob-goblin",
+        "frame": 0,
+        "tint": 16777215,
+        "hp": 28,
+        "damage": 6
+      }
+    ]
+  },
+  "questCompleteFallback": "Starter quest complete. Explore caves and farms.",
+  "questStartFallback": "Talk to the Village Guide in Spawn.",
+  "randomEvent": {
+    "chance": 0.0008,
+    "npc": {
+      "key": "wandering",
+      "name": "Wandering Trader",
+      "texture": "npc-shopkeeper",
+      "label": "Trader",
+      "options": [
+        "talk"
+      ],
+      "lines": [
+        "Trades from afar!",
+        "Emeralds open many doors."
+      ]
+    },
+    "appearLine": "A wandering trader appears!",
+    "gifts": [
+      {
+        "id": "coins",
+        "qty": 15,
+        "line": "The trader tips you 15 emeralds."
+      }
+    ]
+  }
+}

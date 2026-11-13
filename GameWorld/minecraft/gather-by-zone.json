@@ -1,0 +1,238 @@
+{
+  "resourceLevel": {
+    "logs": 1,
+    "oaklogs": 15,
+    "ashlogs": 28,
+    "yewlogs": 40,
+    "magiclogs": 60,
+    "copper": 1,
+    "iron": 15,
+    "runeessence": 1,
+    "diamondore": 40,
+    "dragoniteore": 60,
+    "rawshrimp": 1,
+    "rawtrout": 15,
+    "rawlobster": 28,
+    "rawswordfish": 40,
+    "rawshark": 60
+  },
+  "resourceToolTier": {
+    "logs": 1,
+    "oaklogs": 2,
+    "ashlogs": 3,
+    "yewlogs": 4,
+    "magiclogs": 4,
+    "copper": 1,
+    "runeessence": 1,
+    "iron": 2,
+    "diamondore": 3,
+    "dragoniteore": 4,
+    "rawshrimp": 1,
+    "rawtrout": 2,
+    "rawlobster": 3,
+    "rawswordfish": 4,
+    "rawshark": 5
+  },
+  "treeByZone": {
+    "spawn": {
+      "log": "logs",
+      "level": 1
+    },
+    "farm": {
+      "log": "logs",
+      "level": 1
+    },
+    "ocean": {
+      "log": "logs",
+      "level": 1
+    },
+    "swamp": {
+      "log": "ashlogs",
+      "level": 28
+    },
+    "forest": {
+      "log": "oaklogs",
+      "level": 15
+    },
+    "plains": {
+      "log": "ashlogs",
+      "level": 28
+    },
+    "caves": {
+      "log": "yewlogs",
+      "level": 40
+    },
+    "mountains": {
+      "log": "yewlogs",
+      "level": 40
+    },
+    "nether": {
+      "log": "magiclogs",
+      "level": 60
+    }
+  },
+  "fishByZone": {
+    "spawn": "rawshrimp",
+    "farm": "rawshrimp",
+    "ocean": "rawshrimp",
+    "swamp": "rawtrout",
+    "forest": "rawtrout",
+    "plains": "rawlobster",
+    "caves": "rawlobster",
+    "mountains": "rawswordfish",
+    "dungeon": "rawswordfish",
+    "nether": "rawshark"
+  },
+  "tileBindings": {
+    "treeByLog": {
+      "oaklogs": "TREE_OAK",
+      "ashlogs": "TREE_ASH",
+      "yewlogs": "TREE_YEW",
+      "magiclogs": "TREE_MAGIC",
+      "_default": "TREE"
+    },
+    "rockByOre": {
+      "copper": "ROCK_COPPER",
+      "iron": "ROCK_IRON",
+      "diamondore": "ROCK_DIAMOND",
+      "dragoniteore": "ROCK_DRAGONITE",
+      "runeessence": "ROCK_ESSENCE",
+      "_default": "ROCK"
+    },
+    "fishByCatch": {
+      "rawtrout": "FISHSPOT_TROUT",
+      "trout": "FISHSPOT_TROUT",
+      "rawlobster": "FISHSPOT_LOBSTER",
+      "lobster": "FISHSPOT_LOBSTER",
+      "rawswordfish": "FISHSPOT_SWORDFISH",
+      "swordfish": "FISHSPOT_SWORDFISH",
+      "rawshark": "FISHSPOT_SHARK",
+      "shark": "FISHSPOT_SHARK",
+      "_default": "FISHSPOT"
+    }
+  },
+  "fishSpotsByZone": {
+    "spawn": [
+      {
+        "x": 22,
+        "y": 18
+      },
+      {
+        "x": 24,
+        "y": 16
+      }
+    ],
+    "farm": [
+      {
+        "x": 10,
+        "y": 20
+      },
+      {
+        "x": 12,
+        "y": 22
+      }
+    ],
+    "swamp": [
+      {
+        "x": 26,
+        "y": 20
+      },
+      {
+        "x": 28,
+        "y": 18
+      }
+    ],
+    "ocean": null,
+    "forest": [
+      {
+        "x": 8,
+        "y": 22
+      },
+      {
+        "x": 10,
+        "y": 20
+      }
+    ],
+    "plains": [
+      {
+        "x": 12,
+        "y": 8
+      },
+      {
+        "x": 14,
+        "y": 10
+      }
+    ],
+    "caves": [
+      {
+        "x": 10,
+        "y": 22
+      },
+      {
+        "x": 12,
+        "y": 24
+      }
+    ],
+    "mountains": [
+      {
+        "x": 8,
+        "y": 16
+      },
+      {
+        "x": 10,
+        "y": 18
+      }
+    ],
+    "dungeon": [
+      {
+        "x": 16,
+        "y": 16
+      }
+    ],
+    "nether": [
+      {
+        "x": 20,
+        "y": 20
+      },
+      {
+        "x": 22,
+        "y": 18
+      }
+    ]
+  },
+  "oreByZone": {
+    "caves": {
+      "use": "mineOreAt"
+    },
+    "mountains": {
+      "use": "highlandsOreAt"
+    },
+    "plains": {
+      "rule": "mod",
+      "mod": 3,
+      "when0": "iron",
+      "else": "copper"
+    },
+    "swamp": {
+      "rule": "mod",
+      "mod": 4,
+      "when0": "iron",
+      "else": "copper"
+    },
+    "forest": {
+      "rule": "mod",
+      "mod": 4,
+      "when0": "iron",
+      "else": "copper"
+    },
+    "nether": {
+      "rule": "mod",
+      "mod": 3,
+      "when0": "dragoniteore",
+      "else": "diamondore"
+    },
+    "_default": {
+      "ore": "copper"
+    }
+  }
+}

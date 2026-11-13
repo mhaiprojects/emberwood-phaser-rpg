@@ -414,7 +414,7 @@
       "output": "shield",
       "qty": 1,
       "xp": 24,
-      "xpSkill": "construction",
+      "xpSkill": "crafting",
       "need": 1
     },
     {
@@ -673,7 +673,7 @@
       "output": "woodbow",
       "qty": 1,
       "xp": 16,
-      "xpSkill": "fletching",
+      "xpSkill": "crafting",
       "need": 1
     },
     {
@@ -692,7 +692,7 @@
       "output": "copperbow",
       "qty": 1,
       "xp": 22,
-      "xpSkill": "fletching",
+      "xpSkill": "crafting",
       "need": 5
     },
     {
@@ -711,7 +711,7 @@
       "output": "oakbow",
       "qty": 1,
       "xp": 36,
-      "xpSkill": "fletching",
+      "xpSkill": "crafting",
       "need": 15
     },
     {
@@ -730,7 +730,7 @@
       "output": "yewbow",
       "qty": 1,
       "xp": 60,
-      "xpSkill": "fletching",
+      "xpSkill": "crafting",
       "need": 40
     },
     {
@@ -749,7 +749,7 @@
       "output": "magicbow",
       "qty": 1,
       "xp": 90,
-      "xpSkill": "fletching",
+      "xpSkill": "crafting",
       "need": 60
     },
     {
@@ -768,7 +768,7 @@
       "output": "woodarrow",
       "qty": 10,
       "xp": 10,
-      "xpSkill": "fletching",
+      "xpSkill": "crafting",
       "need": 1
     },
     {
@@ -791,7 +791,7 @@
       "output": "copperarrow",
       "qty": 10,
       "xp": 18,
-      "xpSkill": "fletching",
+      "xpSkill": "crafting",
       "need": 5
     },
     {
@@ -814,7 +814,7 @@
       "output": "ironarrow",
       "qty": 10,
       "xp": 30,
-      "xpSkill": "fletching",
+      "xpSkill": "crafting",
       "need": 15
     },
     {
@@ -837,7 +837,7 @@
       "output": "diamondarrow",
       "qty": 10,
       "xp": 50,
-      "xpSkill": "fletching",
+      "xpSkill": "crafting",
       "need": 40
     },
     {
@@ -860,7 +860,7 @@
       "output": "dragonitearrow",
       "qty": 10,
       "xp": 80,
-      "xpSkill": "fletching",
+      "xpSkill": "crafting",
       "need": 60
     },
     {
@@ -875,7 +875,7 @@
       "output": "shortbowunstrung",
       "qty": 1,
       "xp": 14,
-      "xpSkill": "fletching",
+      "xpSkill": "crafting",
       "need": 1
     },
     {
@@ -894,7 +894,7 @@
       "output": "copperbow",
       "qty": 1,
       "xp": 10,
-      "xpSkill": "fletching",
+      "xpSkill": "crafting",
       "need": 5
     },
     {
@@ -909,55 +909,100 @@
       "output": "oakplank",
       "qty": 1,
       "xp": 20,
-      "xpSkill": "construction",
+      "xpSkill": "crafting",
       "need": 1
     }
   ],
   "altarRunes": {
-    "airrune": { "label": "Craft air runes", "need": 1, "xp": 10, "essence": "runeessence", "essenceQty": 1 },
-    "waterrune": { "label": "Craft water runes", "need": 5, "xp": 12, "essence": "runeessence", "essenceQty": 1 },
-    "earthrune": { "label": "Craft earth runes", "need": 15, "xp": 14, "essence": "runeessence", "essenceQty": 1 },
-    "firerune": { "label": "Craft fire runes", "need": 30, "xp": 20, "essence": "runeessence", "essenceQty": 1 }
+    "airrune": {
+      "label": "Craft air runes",
+      "need": 1,
+      "xp": 10,
+      "essence": "runeessence",
+      "essenceQty": 1
+    },
+    "waterrune": {
+      "label": "Craft water runes",
+      "need": 5,
+      "xp": 12,
+      "essence": "runeessence",
+      "essenceQty": 1
+    },
+    "earthrune": {
+      "label": "Craft earth runes",
+      "need": 15,
+      "xp": 14,
+      "essence": "runeessence",
+      "essenceQty": 1
+    },
+    "firerune": {
+      "label": "Craft fire runes",
+      "need": 30,
+      "xp": 20,
+      "essence": "runeessence",
+      "essenceQty": 1
+    }
   },
   "itemCombos": [
     {
-      "items": ["string", "leather"],
+      "items": [
+        "string",
+        "leather"
+      ],
       "action": "stitchLeather"
     },
     {
-      "items": ["tinderbox", "logs"],
+      "items": [
+        "tinderbox",
+        "logs"
+      ],
       "action": "lightGroundFire",
       "needsCanLight": true
     }
   ],
   "quickCraft": {
-    "plantGuam": { "xpSkill": "farming", "xp": 14, "output": "guam", "qty": 1 },
-    "mixAttackPotion": {
-      "inputs": [["guam", 1]],
-      "output": "attackpot",
-      "qty": 1,
-      "xpSkill": "herblore",
-      "xp": 18
-    },
     "fletchStringBow": {
-      "inputs": [["shortbowunstrung", 1], ["string", 1]],
+      "inputs": [
+        [
+          "shortbowunstrung",
+          1
+        ],
+        [
+          "string",
+          1
+        ]
+      ],
       "output": "copperbow",
       "qty": 1,
-      "xpSkill": "fletching",
+      "xpSkill": "crafting",
       "xp": 10
     },
     "fletchOakBow": {
-      "inputs": [["oaklogs", 1], ["string", 1]],
+      "inputs": [
+        [
+          "oaklogs",
+          1
+        ],
+        [
+          "string",
+          1
+        ]
+      ],
       "output": "copperbow",
       "qty": 1,
-      "xpSkill": "fletching",
+      "xpSkill": "crafting",
       "xp": 22
     },
     "buildOakBench": {
-      "inputs": [["logs", 3]],
+      "inputs": [
+        [
+          "logs",
+          3
+        ]
+      ],
       "output": "oakplank",
       "qty": 1,
-      "xpSkill": "construction",
+      "xpSkill": "crafting",
       "xp": 20
     }
   }

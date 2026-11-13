@@ -1,0 +1,14 @@
+{
+  "list": [
+    {
+      "id": "shaft",
+      "name": "Deep Dark",
+      "doorTx": 9,
+      "doorTy": 12,
+      "zoneId": "caves",
+      "stairs": "down",
+      "dungeon": true,
+      "enterChat": "You descend into the Deep Dark\u2026"
+    }
+  ]
+}

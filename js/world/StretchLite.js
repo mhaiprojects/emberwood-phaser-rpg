@@ -172,14 +172,8 @@ WorldScene.prototype.tryPickpocket = function (npc) {
     if (Phaser.Math.Distance.Between(this.player.x, this.player.y, npc.x, npc.y) > 24) {
         return false;
     }
-    if (typeof pickpocketNpc !== 'function' || !pickpocketNpc(hero)) {
-        Hud.log('You fail to pick the pocket.');
-        return false;
-    }
-    this.registry.set('hero', hero);
-    Hud.log('You pick a pocket for some coins.');
-    this.refreshHud();
-    return true;
+    Hud.log('You find nothing worth stealing.');
+    return false;
 };
 
 WorldScene.prototype.tryStretchSkillAction = function (skillId) {
@@ -191,22 +185,9 @@ WorldScene.prototype.tryStretchSkillAction = function (skillId) {
     if (skillId === 'runecraft' && typeof craftAirRune === 'function') {
         ok = craftAirRune(hero);
         Hud.log(ok ? 'You craft an air rune.' : 'You need rune essence (and Runecraft level).');
-    } else if (skillId === 'farming' && typeof plantGuamSeed === 'function') {
-        ok = plantGuamSeed(hero);
-        Hud.log(ok ? 'You harvest a guam leaf from your patch.' : 'Your inventory is full.');
-    } else if (skillId === 'herblore' && typeof mixAttackPotion === 'function') {
-        ok = mixAttackPotion(hero);
-        Hud.log(ok ? 'You mix an attack potion.' : 'You need a guam leaf.');
-    } else if (skillId === 'fletching' && typeof fletchShortbow === 'function') {
-        ok = fletchShortbow(hero);
-        Hud.log(ok ? 'You fletch a copper bow.' : 'You need oak logs and string (or an unstrung bow + string).');
-    } else if (skillId === 'construction' && typeof buildOakBench === 'function') {
-        ok = buildOakBench(hero);
-        Hud.log(ok ? 'You construct an oak plank bench.' : 'You need 3 logs.');
-    } else if (skillId === 'slayer' && typeof assignSlayerTask === 'function') {
-        var task = assignSlayerTask(hero);
-        ok = !!task;
-        Hud.log(ok ? ('Slayer task: kill 3 ' + task.type + 's.') : 'No Slayer tasks configured.');
+    } else if (skillId === 'crafting' && typeof fletchShortbow === 'function') {
+        ok = fletchShortbow(hero) || (typeof buildOakBench === 'function' && buildOakBench(hero));
+        Hud.log(ok ? 'You craft something useful.' : 'You lack materials.');
     }
     if (ok) {
         this.registry.set('hero', hero);

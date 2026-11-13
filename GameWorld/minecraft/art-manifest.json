@@ -1,0 +1,83 @@
+{
+  "tiles": {
+    "key": "tiles",
+    "path": "assets/tiles.png"
+  },
+  "player": {
+    "key": "player",
+    "path": "assets/player.png",
+    "frameWidth": 16,
+    "frameHeight": 16
+  },
+  "images": [
+    {
+      "key": "slime",
+      "path": "assets/slime.png"
+    },
+    {
+      "key": "bat",
+      "path": "assets/bat.png"
+    },
+    {
+      "key": "drake",
+      "path": "assets/drake.png"
+    },
+    {
+      "key": "sign",
+      "path": "assets/sign.png"
+    },
+    {
+      "key": "npc",
+      "path": "assets/npc.png"
+    }
+  ],
+  "mobSvgs": [
+    "chicken",
+    "goblin",
+    "cow",
+    "slime",
+    "crab",
+    "bat",
+    "skeleton",
+    "drake",
+    "dragon",
+    "rabbit"
+  ],
+  "npcSvgs": [
+    "guild",
+    "banker",
+    "guard",
+    "ranger",
+    "farmer",
+    "fisher",
+    "wanderer",
+    "ghost",
+    "miner",
+    "hermit",
+    "witch",
+    "cook",
+    "herbalist",
+    "priest",
+    "shopkeeper",
+    "dummy",
+    "arms"
+  ],
+  "hudUi": [
+    "combat",
+    "skills",
+    "gold",
+    "attack",
+    "heal",
+    "flee",
+    "accurate",
+    "aggressive",
+    "defensive",
+    "inv",
+    "quest",
+    "equip",
+    "prayer",
+    "magic",
+    "settings"
+  ],
+  "skillIcons": true
+}

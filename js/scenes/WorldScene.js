@@ -8266,16 +8266,11 @@ var WorldScene = new Phaser.Class({
         }
         if (skillId === 'runecraft' && typeof craftAirRune === 'function') {
             ok = craftAirRune(hero);
-        } else if (skillId === 'farming' && typeof plantGuamSeed === 'function') {
-            ok = plantGuamSeed(hero);
-        } else if (skillId === 'herblore' && typeof mixAttackPotion === 'function') {
-            ok = mixAttackPotion(hero);
-        } else if (skillId === 'fletching' && typeof fletchShortbow === 'function') {
-            ok = fletchShortbow(hero);
-        } else if (skillId === 'construction' && typeof buildOakBench === 'function') {
-            ok = buildOakBench(hero);
-        } else if (skillId === 'slayer' && typeof assignSlayerTask === 'function') {
-            ok = !!assignSlayerTask(hero);
+            Hud.log(ok ? 'You craft an air rune.' : 'You need rune essence.');
+        } else if (skillId === 'crafting') {
+            ok = (typeof fletchShortbow === 'function' && fletchShortbow(hero))
+                || (typeof buildOakBench === 'function' && buildOakBench(hero));
+            Hud.log(ok ? 'You craft something useful.' : 'You lack materials.');
         }
         if (ok) {
             this.registry.set('hero', hero);
@@ -8285,18 +8280,14 @@ var WorldScene = new Phaser.Class({
     },
 
     tryPickpocket: function (npc) {
-        var hero = this.registry.get('hero');
-        if (!npc || !hero || Phaser.Math.Distance.Between(this.player.x, this.player.y, npc.x, npc.y) > 24) {
+        if (!npc || !this.player) {
             return false;
         }
-        if (typeof pickpocketNpc !== 'function' || !pickpocketNpc(hero)) {
-            Hud.log('You fail to pick the pocket.');
+        if (Phaser.Math.Distance.Between(this.player.x, this.player.y, npc.x, npc.y) > 24) {
             return false;
         }
-        this.registry.set('hero', hero);
-        Hud.log('You pick a pocket for some coins.');
-        this.refreshHud();
-        return true;
+        Hud.log('You find nothing worth stealing.');
+        return false;
     },
 
     refreshWildernessFlag: function () {
@@ -8304,7 +8295,8 @@ var WorldScene = new Phaser.Class({
             this.wildSkull.destroy();
             this.wildSkull = null;
         }
-        if (this.zoneId !== 'graves') {
+        if (!(typeof Content !== 'undefined' && Content.zoneHasFeature
+                && Content.zoneHasFeature(this.zoneId, 'wildSkull'))) {
             return;
         }
         this.wildSkull = this.add.text(this.player.x + 12, this.player.y - 22, '☠', {

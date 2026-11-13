@@ -1,0 +1,33 @@
+{
+  "maxPathBlockRatio": 0.3,
+  "shoreWaterFromBottom": 6,
+  "swamp": {
+    "waterModulo": 44,
+    "waterThreshold": 3,
+    "scatter": { "water": 7, "tree": 22, "rock": 12 }
+  },
+  "shore": {
+    "scatter": { "rock": 4, "tree": 4 }
+  },
+  "mine": {
+    "scatter": { "rock": 18, "tree": 4 }
+  },
+  "town": {
+    "scatter": { "flower": 18 }
+  },
+  "forest": {
+    "scatter": { "tree": 70, "rock": 10, "flower": 12 }
+  },
+  "hills": {
+    "scatter": { "rock": 36, "tree": 16 }
+  },
+  "plain": {
+    "scatter": { "flower": 40, "tree": 10, "rock": 6 }
+  },
+  "grave": {
+    "scatter": { "rock": 22, "tree": 18 }
+  },
+  "default": {
+    "scatter": { "flower": 24, "tree": 14, "rock": 8 }
+  }
+}

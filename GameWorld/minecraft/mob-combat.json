@@ -1,0 +1,322 @@
+{
+  "POISON_MOB_TYPES": {
+    "Slime": true,
+    "Skeleton": true,
+    "Drake": true,
+    "Dragon": true,
+    "Spider": true
+  },
+  "MOB_BASE_LEVEL": {
+    "Chicken": 1,
+    "Rabbit": 1,
+    "Cow": 3,
+    "Crab": 8,
+    "Bat": 8,
+    "Goblin": 8,
+    "Slime": 13,
+    "Skeleton": 18,
+    "Drake": 28,
+    "Dragon": 53,
+    "Zombie": 8,
+    "Spider": 6,
+    "Pig": 1
+  },
+  "MOB_TYPE_ATTACK_RANGE": {
+    "Chicken": 22,
+    "Rabbit": 20,
+    "Cow": 26,
+    "Goblin": 24,
+    "Crab": 24,
+    "Skeleton": 26,
+    "Bat": 96,
+    "Slime": 72,
+    "Drake": 100,
+    "Dragon": 120,
+    "Zombie": 24,
+    "Spider": 28,
+    "Pig": 20
+  },
+  "MOB_MOVE_SPEED_FACTOR": {
+    "Dragon": 0.5,
+    "giantDefault": 0.58,
+    "Cow": 0.62,
+    "Slime": 0.62,
+    "Chicken": 0.82,
+    "Rabbit": 0.82,
+    "Crab": 0.82,
+    "Bat": 0.9,
+    "default": 1
+  },
+  "MOB_TIER_ORDER": [
+    "Dragon",
+    "Drake",
+    "Skeleton",
+    "Slime",
+    "Spider",
+    "Goblin",
+    "Zombie",
+    "Bat",
+    "Crab",
+    "Cow",
+    "Rabbit",
+    "Chicken"
+  ],
+  "MOB_SPAWN_MODIFIER": 1.0,
+  "MOB_SPAWN_MODIFIER_OPTIONS": [
+    0.5,
+    1,
+    1.5,
+    2
+  ],
+  "MOB_SPAWN_POOL_MODIFIER": 2,
+  "statsByType": {
+    "Chicken": {
+      "hp": {
+        "base": 10,
+        "mulLevel": 2
+      },
+      "damage": {
+        "base": 2,
+        "ceilDivLevel": 2
+      },
+      "gold": {
+        "flat": 1
+      },
+      "xp": {
+        "base": 3,
+        "mulLevel": 1
+      }
+    },
+    "Rabbit": {
+      "hp": {
+        "base": 8,
+        "mulLevel": 2
+      },
+      "damage": {
+        "base": 1,
+        "ceilDivLevel": 2
+      },
+      "gold": {
+        "flat": 1
+      },
+      "xp": {
+        "base": 4,
+        "mulLevel": 1
+      }
+    },
+    "Cow": {
+      "hp": {
+        "base": 16,
+        "mulLevel": 2
+      },
+      "damage": {
+        "base": 3,
+        "ceilDivLevel": 2
+      },
+      "gold": {
+        "base": 2,
+        "floorDivLevel": 3
+      },
+      "xp": {
+        "base": 5,
+        "mulLevel": 1
+      }
+    },
+    "Crab": {
+      "hp": {
+        "base": 14,
+        "mulLevel": 2
+      },
+      "damage": {
+        "base": 4,
+        "floorDivLevel": 2
+      },
+      "gold": {
+        "base": 3,
+        "floorDivLevel": 4
+      },
+      "xp": {
+        "base": 4,
+        "mulLevel": 1
+      }
+    },
+    "Bat": {
+      "hp": {
+        "base": 10,
+        "mulLevel": 2
+      },
+      "damage": {
+        "base": 4,
+        "floorDivLevel": 2
+      },
+      "gold": {
+        "base": 3,
+        "floorDivLevel": 4
+      },
+      "xp": {
+        "base": 4,
+        "mulLevel": 1
+      }
+    },
+    "Goblin": {
+      "hp": {
+        "base": 14,
+        "mulLevel": 2
+      },
+      "damage": {
+        "base": 4,
+        "floorDivLevel": 2
+      },
+      "gold": {
+        "base": 3,
+        "floorDivLevel": 3
+      },
+      "xp": {
+        "base": 5,
+        "mulLevel": 1
+      }
+    },
+    "Slime": {
+      "hp": {
+        "base": 12,
+        "mulLevel": 2
+      },
+      "damage": {
+        "base": 4,
+        "floorDivLevel": 2
+      },
+      "gold": {
+        "base": 3,
+        "floorDivLevel": 4
+      },
+      "xp": {
+        "base": 4,
+        "mulLevel": 1
+      }
+    },
+    "Skeleton": {
+      "hp": {
+        "base": 16,
+        "mulLevel": 2
+      },
+      "damage": {
+        "base": 5,
+        "floorDivLevel": 2
+      },
+      "gold": {
+        "base": 5,
+        "floorDivLevel": 3
+      },
+      "xp": {
+        "base": 6,
+        "mulLevel": 1
+      }
+    },
+    "Drake": {
+      "hp": {
+        "base": 20,
+        "mulLevel": 1
+      },
+      "damage": {
+        "base": 6,
+        "floorDivLevel": 3
+      },
+      "gold": {
+        "base": 10,
+        "floorDivLevel": 2
+      },
+      "xp": {
+        "base": 12,
+        "floorDivLevel": 2
+      }
+    },
+    "Dragon": {
+      "hp": {
+        "base": 40,
+        "mulLevel": 2
+      },
+      "damage": {
+        "base": 10,
+        "floorDivLevel": 3
+      },
+      "gold": {
+        "base": 40,
+        "mulLevel": 1
+      },
+      "xp": {
+        "base": 50,
+        "mulLevel": 1
+      }
+    },
+    "Zombie": {
+      "hp": {
+        "base": 14,
+        "mulLevel": 2
+      },
+      "damage": {
+        "base": 4,
+        "floorDivLevel": 2
+      },
+      "gold": {
+        "base": 3,
+        "floorDivLevel": 3
+      },
+      "xp": {
+        "base": 5,
+        "mulLevel": 1
+      }
+    },
+    "Spider": {
+      "hp": {
+        "base": 12,
+        "mulLevel": 2
+      },
+      "damage": {
+        "base": 4,
+        "floorDivLevel": 2
+      },
+      "gold": {
+        "base": 3,
+        "floorDivLevel": 4
+      },
+      "xp": {
+        "base": 4,
+        "mulLevel": 1
+      }
+    },
+    "Pig": {
+      "hp": {
+        "base": 10,
+        "mulLevel": 2
+      },
+      "damage": {
+        "base": 2,
+        "ceilDivLevel": 2
+      },
+      "gold": {
+        "flat": 1
+      },
+      "xp": {
+        "base": 3,
+        "mulLevel": 1
+      }
+    }
+  },
+  "statsDefault": {
+    "hp": {
+      "base": 12,
+      "mulLevel": 1
+    },
+    "damage": {
+      "base": 3,
+      "floorDivLevel": 2
+    },
+    "gold": {
+      "flat": 2
+    },
+    "xp": {
+      "base": 4,
+      "mulLevel": 1
+    }
+  }
+}

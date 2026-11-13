@@ -61,39 +61,12 @@
       "Hunter"
     ],
     [
-      "agility",
-      "Agility"
-    ],
-    [
-      "thieving",
-      "Thieving"
-    ],
-    [
-      "slayer",
-      "Slayer"
-    ],
-    [
       "runecraft",
       "Runecraft"
-    ],
-    [
-      "farming",
-      "Farming"
-    ],
-    [
-      "herblore",
-      "Herblore"
-    ],
-    [
-      "fletching",
-      "Fletching"
-    ],
-    [
-      "construction",
-      "Construction"
     ]
   ],
   "STRETCH_SKILL_NAMES": [],
+  "clickActions": ["runecraft"],
   "EQUIP_SLOTS": [
     [
       "cape",
@@ -131,11 +104,5 @@
       "ring",
       "Ring"
     ]
-  ],
-  "slayer": {
-    "taskTypes": ["Goblin", "Chicken", "Skeleton", "Bat"],
-    "taskCount": 3,
-    "killXp": 15,
-    "rewardCoins": 25
-  }
+  ]
 }

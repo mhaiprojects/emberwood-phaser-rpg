@@ -1,0 +1,252 @@
+{
+  "spawn": [
+    {
+      "key": "guide",
+      "name": "Village Guide",
+      "x": 168,
+      "y": 296,
+      "tint": 16777215,
+      "questGiver": true,
+      "options": [
+        "talk",
+        "quest"
+      ],
+      "examine": "A helpful villager who greets new players.",
+      "lines": [
+        "Welcome to Blocklands.",
+        "Chop wood. Mine stone. Survive."
+      ]
+    },
+    {
+      "key": "banker",
+      "name": "Chest Keeper",
+      "x": 232,
+      "y": 168,
+      "tint": 16777215,
+      "options": [
+        "talk",
+        "bank"
+      ],
+      "examine": "Guards the village storage chests.",
+      "lines": [
+        "Store what you cannot carry.",
+        "Chests are safe here."
+      ]
+    },
+    {
+      "key": "guard",
+      "name": "Iron Golem Guard",
+      "x": 424,
+      "y": 248,
+      "tint": 16777215,
+      "questGiver": true,
+      "sideQuest": "zombie",
+      "options": [
+        "talk",
+        "quest"
+      ],
+      "examine": "A golem watching the walls.",
+      "lines": [
+        "Zombies threaten the farms.",
+        "Keep your shield ready."
+      ]
+    },
+    {
+      "key": "shopkeep",
+      "name": "Emblem Trader",
+      "x": 264,
+      "y": 216,
+      "tint": 16777215,
+      "texture": "npc-shopkeeper",
+      "options": [
+        "talk",
+        "trade"
+      ],
+      "shopKey": "mira",
+      "examine": "Trades tools and food for emeralds.",
+      "lines": [
+        "Emeralds welcome.",
+        "Need a better pick?"
+      ]
+    },
+    {
+      "key": "cook",
+      "name": "Village Cook",
+      "x": 296,
+      "y": 328,
+      "tint": 16777215,
+      "options": [
+        "talk"
+      ],
+      "tutor": "firemaking",
+      "tutorGift": {
+        "id": "tinderbox",
+        "qty": 1
+      },
+      "examine": "Keeps the campfire lit.",
+      "lines": [
+        "Cook meat on the fire.",
+        "Burned food is wasted."
+      ]
+    },
+    {
+      "key": "smith",
+      "name": "Armorer Cole",
+      "x": 360,
+      "y": 200,
+      "tint": 16777215,
+      "texture": "npc-armsman",
+      "options": [
+        "talk",
+        "trade"
+      ],
+      "shopKey": "arms",
+      "examine": "Sells weapons and armor.",
+      "lines": [
+        "Stone, iron, then diamond.",
+        "Smelt bars at the furnace."
+      ]
+    }
+  ],
+  "forest": [
+    {
+      "key": "ranger",
+      "name": "Forester",
+      "x": 240,
+      "y": 200,
+      "tint": 16777215,
+      "options": [
+        "talk"
+      ],
+      "tutor": "combat",
+      "tutorGift": {
+        "id": "copperaxe",
+        "qty": 1
+      },
+      "examine": "Knows every oak in the woods.",
+      "lines": [
+        "Higher axes chop faster tiers.",
+        "Watch for spiders."
+      ]
+    }
+  ],
+  "ocean": [
+    {
+      "key": "fisher",
+      "name": "Fisher",
+      "x": 220,
+      "y": 160,
+      "tint": 16777215,
+      "options": [
+        "talk"
+      ],
+      "tutor": "fishing",
+      "tutorGift": {
+        "id": "net",
+        "qty": 1
+      },
+      "examine": "Casts lines from the dock.",
+      "lines": [
+        "Fish for food.",
+        "Cook before you eat."
+      ]
+    }
+  ],
+  "caves": [
+    {
+      "key": "miner",
+      "name": "Prospector",
+      "x": 210,
+      "y": 200,
+      "tint": 16777215,
+      "questGiver": true,
+      "sideQuest": "stone",
+      "options": [
+        "talk",
+        "quest"
+      ],
+      "tutor": "mining",
+      "tutorGift": {
+        "id": "copperpick",
+        "qty": 1
+      },
+      "examine": "Lives for the next ore vein.",
+      "lines": [
+        "Stone, coal, iron, diamond.",
+        "The Deep Dark is below."
+      ]
+    }
+  ],
+  "farm": [
+    {
+      "key": "farmer",
+      "name": "Farmer",
+      "x": 200,
+      "y": 180,
+      "tint": 16777215,
+      "options": [
+        "talk"
+      ],
+      "tutor": "cows",
+      "tutorGift": {
+        "id": "string",
+        "qty": 3
+      },
+      "examine": "Tends wheat and livestock.",
+      "lines": [
+        "Cows drop beef and leather.",
+        "Bread fills hunger."
+      ]
+    }
+  ],
+  "plains": [
+    {
+      "key": "wanderer",
+      "name": "Nomad",
+      "x": 180,
+      "y": 190,
+      "tint": 16777215,
+      "options": [
+        "talk"
+      ],
+      "examine": "Travels light.",
+      "lines": [
+        "Zombies wander these plains.",
+        "Mountains hold the Nether gate."
+      ]
+    }
+  ],
+  "swamp": [
+    {
+      "key": "ghost",
+      "name": "Bog Wisp",
+      "x": 200,
+      "y": 170,
+      "tint": 16777215,
+      "options": [
+        "talk"
+      ],
+      "examine": "Something wrong with this marsh.",
+      "lines": [
+        "Do not linger after dark."
+      ]
+    }
+  ],
+  "mountains": [
+    {
+      "key": "climber",
+      "name": "Climber",
+      "x": 200,
+      "y": 180,
+      "tint": 16777215,
+      "options": [
+        "talk"
+      ],
+      "examine": "Points toward a sealed portal.",
+      "lines": [
+        "Nether portal is sealed.",
+        "Need a diamond pick for the boulder."
+      ]
+    }
+  ]
+}

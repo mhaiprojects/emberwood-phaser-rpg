@@ -1,0 +1,9 @@
+{
+  "digSpots": [
+    { "zone": "haven", "x": 400, "y": 250 },
+    { "zone": "northwood", "x": 160, "y": 120 },
+    { "zone": "graves", "x": 300, "y": 210 }
+  ],
+  "rewardCoins": 50,
+  "reachPx": 28
+}
