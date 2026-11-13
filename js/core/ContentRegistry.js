@@ -66,6 +66,7 @@ var ContentRegistry = {
         window.FISH_BY_ZONE = data.fishByZone || data.FISH_BY_ZONE || {};
         window.GATHER_TILE_BINDINGS = data.tileBindings || data.GATHER_TILE_BINDINGS || {};
         window.ORE_BY_ZONE = data.oreByZone || data.ORE_BY_ZONE || {};
+        window.FISH_SPOTS_BY_ZONE = data.fishSpotsByZone || data.FISH_SPOTS_BY_ZONE || {};
     },
 
     _copyKeys: function (data) {
@@ -234,6 +235,9 @@ var ContentRegistry = {
             }
             if (mapSpecials.dungeon && mapSpecials.dungeon.zoneId) {
                 window.DUNGEON_ZONE_ID = mapSpecials.dungeon.zoneId;
+            }
+            if (mapSpecials.shaftMarkers) {
+                window.SHAFT_MARKER_STYLE = mapSpecials.shaftMarkers;
             }
         }
 

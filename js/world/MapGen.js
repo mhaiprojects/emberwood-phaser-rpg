@@ -1023,20 +1023,8 @@ function isHouseWallAt(grid, tx, ty, rects) {
     return false;
 }
 
-/* Default fishing tiles per zone (E8). Southshore also uses SHORE_PROPS.spots. */
-var FISH_SPOTS_BY_ZONE = {
-    haven: [{ x: 22, y: 18 }, { x: 24, y: 16 }],
-    millfields: [{ x: 10, y: 20 }, { x: 12, y: 22 }],
-    mire: [{ x: 14, y: 18 }, { x: 20, y: 20 }],
-    southshore: null,
-    northwood: [{ x: 8, y: 22 }, { x: 10, y: 20 }],
-    graves: [{ x: 26, y: 20 }, { x: 28, y: 18 }],
-    westmead: [{ x: 12, y: 8 }, { x: 14, y: 10 }],
-    darkmine: [{ x: 10, y: 22 }, { x: 12, y: 24 }],
-    highlands: [{ x: 8, y: 16 }, { x: 10, y: 18 }],
-    dungeon: [{ x: 16, y: 16 }],
-    dragonden: [{ x: 20, y: 20 }, { x: 22, y: 18 }]
-};
+/* Filled from GameWorld gather-by-zone.json fishSpotsByZone. */
+var FISH_SPOTS_BY_ZONE = {};
 
 function placeZoneFishSpots(grid, zoneId) {
     var spots;
@@ -1161,58 +1149,8 @@ function oreNodeColor(ore) {
     return (ORE_NODE_COLORS && ORE_NODE_COLORS[ore]) || 0x9a9088;
 }
 
-/* Shaft / stairs / escape cues — colors/glyphs local; zone labels from Zones.js roster. */
-var SHAFT_MARKER_STYLE = {
-    'dungeon-enter': {
-        color: 0x9b6cff,
-        label: 'Deep Mine\nLv 40+',
-        glyph: '▼',
-        labelColor: '#dcc8ff',
-        approach: 'A marked shaft mouth — the Deep Mine (mobs Lv 40+, +1 per floor). Click or step in to delve.'
-    },
-    'stairs-down': {
-        color: 0xe07030,
-        label: 'Deeper',
-        glyph: '▼',
-        labelColor: '#ffd0a8',
-        approach: 'Stairs marked Deeper — click to descend another floor.'
-    },
-    'stairs-up': {
-        color: 0xe8c050,
-        label: 'Climb',
-        glyph: '▲',
-        labelColor: '#ffe9a0',
-        approach: 'Stairs marked Climb — step on them to go up (floor 1 exits to Darkmine).'
-    },
-    'surface-portal': {
-        color: 0x6ec8ff,
-        label: 'Escape',
-        glyph: '◎',
-        labelColor: '#b8e8ff',
-        approach: 'Escape shaft — click to return to Darkmine; it remembers this floor.'
-    },
-    'den-boulder': {
-        color: 0xc07040,
-        label: 'Sealed Den\nDragons Lv 60',
-        glyph: '◆',
-        labelColor: '#ffd0a8',
-        approach: 'A sealing boulder — mine it with a diamond pickaxe to open the Dragon Den (Dragons Lv 60).'
-    },
-    'dragon-den': {
-        color: 0xe85d3a,
-        label: 'Dragon Den\nDragons Lv 60',
-        glyph: '▼',
-        labelColor: '#ffb090',
-        approach: 'Scorched cave mouth — Dragon Den (Dragons Lv 60). Click or step in to enter.'
-    },
-    'dragon-den-exit': {
-        color: 0x6ec8ff,
-        label: 'Windrock Highlands\nDrakes Lv 36–40',
-        glyph: '▲',
-        labelColor: '#b8e8ff',
-        approach: 'Tunnel back to Windrock Highlands (Drakes Lv 36–40) — click or step on it to leave.'
-    }
-};
+/* Filled from GameWorld map/specials.json shaftMarkers. */
+var SHAFT_MARKER_STYLE = {};
 
 function shaftMarkerStyle(kind) {
     var base = (SHAFT_MARKER_STYLE && SHAFT_MARKER_STYLE[kind]) || null;

@@ -413,40 +413,39 @@ function zoneEnterChat(zoneId) {
     return 'You enter ' + name + '.';
 }
 
-/** Shaft / den marker label + approach — MapGen colors stay local; text from roster. */
+/** Shaft / den marker label + approach from pack shaftMarkers templates + roster bands. */
 function zoneShaftMarkerOverlay(kind) {
+    var markers = (typeof MAP_SPECIALS !== 'undefined' && MAP_SPECIALS
+        && MAP_SPECIALS.shaftMarkers) ? MAP_SPECIALS.shaftMarkers
+        : (typeof SHAFT_MARKER_STYLE !== 'undefined' ? SHAFT_MARKER_STYLE : null);
+    var spec = markers && kind ? markers[kind] : null;
+    var bandZone;
+    var band;
     var summary;
-    if (kind === 'dungeon-enter') {
-        return {
-            label: 'Deep Mine\n' + zoneMobBandLabel('dungeon'),
-            approach: 'A marked shaft mouth — the Deep Mine (mobs ' + zoneMobBandLabel('dungeon') +
-                ', +1 per floor). Click or step in to delve.'
-        };
+    var border;
+    var fill;
+    if (!spec) {
+        return null;
     }
-    if (kind === 'den-boulder') {
-        summary = zoneMobSummaryLabel('dragonden');
-        return {
-            label: 'Sealed Den\n' + summary,
-            approach: 'A sealing boulder — mine it with a diamond pickaxe to open the Dragon Den (' +
-                summary + ').'
-        };
-    }
-    if (kind === 'dragon-den') {
-        summary = zoneMobSummaryLabel('dragonden');
-        return {
-            label: zoneBorderLabelText('dragonden'),
-            approach: 'Scorched cave mouth — Dragon Den (' + summary + '). Click or step in to enter.'
-        };
-    }
-    if (kind === 'dragon-den-exit') {
-        summary = zoneMobSummaryLabel('highlands');
-        return {
-            label: zoneBorderLabelText('highlands'),
-            approach: 'Tunnel back to Windrock Highlands (' + summary +
-                ') — click or step on it to leave.'
-        };
-    }
-    return null;
+    bandZone = spec.bandZoneId || null;
+    band = bandZone && typeof zoneMobBandLabel === 'function' ? zoneMobBandLabel(bandZone) : '';
+    summary = bandZone && typeof zoneMobSummaryLabel === 'function'
+        ? zoneMobSummaryLabel(bandZone) : band;
+    border = bandZone && typeof zoneBorderLabelText === 'function'
+        ? zoneBorderLabelText(bandZone) : summary;
+    fill = function (tpl) {
+        if (!tpl) {
+            return '';
+        }
+        return String(tpl)
+            .replace(/\{band\}/g, band || '')
+            .replace(/\{summary\}/g, summary || '')
+            .replace(/\{border\}/g, border || '');
+    };
+    return {
+        label: fill(spec.labelTemplate || spec.label),
+        approach: fill(spec.approachTemplate || spec.approach)
+    };
 }
 
 /** World-pixel center for a faint label just inside a map-edge exit. */

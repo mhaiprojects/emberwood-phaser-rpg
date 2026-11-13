@@ -21,5 +21,60 @@
     "dungeon": ["dungeonFloors"],
     "southshore": ["shoreFish"],
     "graves": ["wildSkull"]
+  },
+  "shaftMarkers": {
+    "dungeon-enter": {
+      "color": 10165759,
+      "glyph": "▼",
+      "labelColor": "#dcc8ff",
+      "bandZoneId": "dungeon",
+      "labelTemplate": "Deep Mine\n{band}",
+      "approachTemplate": "A marked shaft mouth — the Deep Mine (mobs {band}, +1 per floor). Click or step in to delve."
+    },
+    "stairs-down": {
+      "color": 14704704,
+      "glyph": "▼",
+      "labelColor": "#ffd0a8",
+      "labelTemplate": "Deeper",
+      "approachTemplate": "Stairs marked Deeper — click to descend another floor."
+    },
+    "stairs-up": {
+      "color": 15257680,
+      "glyph": "▲",
+      "labelColor": "#ffe9a0",
+      "labelTemplate": "Climb",
+      "approachTemplate": "Stairs marked Climb — step on them to go up (floor 1 exits to Darkmine)."
+    },
+    "surface-portal": {
+      "color": 7260415,
+      "glyph": "◎",
+      "labelColor": "#b8e8ff",
+      "labelTemplate": "Escape",
+      "approachTemplate": "Escape shaft — click to return to Darkmine; it remembers this floor."
+    },
+    "den-boulder": {
+      "color": 12607552,
+      "glyph": "◆",
+      "labelColor": "#ffd0a8",
+      "bandZoneId": "dragonden",
+      "labelTemplate": "Sealed Den\n{summary}",
+      "approachTemplate": "A sealing boulder — mine it with a diamond pickaxe to open the Dragon Den ({summary})."
+    },
+    "dragon-den": {
+      "color": 15228106,
+      "glyph": "▼",
+      "labelColor": "#ffb090",
+      "bandZoneId": "dragonden",
+      "labelTemplate": "{border}",
+      "approachTemplate": "Scorched cave mouth — Dragon Den ({summary}). Click or step in to enter."
+    },
+    "dragon-den-exit": {
+      "color": 7260415,
+      "glyph": "▲",
+      "labelColor": "#b8e8ff",
+      "bandZoneId": "highlands",
+      "labelTemplate": "{border}",
+      "approachTemplate": "Tunnel back to Windrock Highlands ({summary}) — click or step on it to leave."
+    }
   }
 }

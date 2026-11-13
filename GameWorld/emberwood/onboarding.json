@@ -43,5 +43,21 @@
     ]
   },
   "questCompleteFallback": "Militia task complete. Explore the nine lands.",
-  "questStartFallback": "Talk to Guildmaster Bram in Emberhaven."
+  "questStartFallback": "Talk to Guildmaster Bram in Emberhaven.",
+  "randomEvent": {
+    "chance": 0.0012,
+    "npc": {
+      "key": "genie",
+      "name": "Mysterious Genie",
+      "texture": "npc-guard",
+      "label": "Genie",
+      "options": ["talk"],
+      "lines": ["A gift for the weary adventurer!", "Take this and be on your way."]
+    },
+    "appearLine": "A genie appears nearby!",
+    "gifts": [
+      { "id": "cluescroll", "qty": 1, "onlyIfMissing": true, "line": "The genie presses a clue scroll into your hands." },
+      { "id": "coins", "qty": 20, "line": "The genie grants you 20 coins." }
+    ]
+  }
 }

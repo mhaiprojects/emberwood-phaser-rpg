@@ -116,6 +116,19 @@
       "_default": "FISHSPOT"
     }
   },
+  "fishSpotsByZone": {
+    "haven": [{ "x": 22, "y": 18 }, { "x": 24, "y": 16 }],
+    "millfields": [{ "x": 10, "y": 20 }, { "x": 12, "y": 22 }],
+    "mire": [{ "x": 14, "y": 18 }, { "x": 20, "y": 20 }],
+    "southshore": null,
+    "northwood": [{ "x": 8, "y": 22 }, { "x": 10, "y": 20 }],
+    "graves": [{ "x": 26, "y": 20 }, { "x": 28, "y": 18 }],
+    "westmead": [{ "x": 12, "y": 8 }, { "x": 14, "y": 10 }],
+    "darkmine": [{ "x": 10, "y": 22 }, { "x": 12, "y": 24 }],
+    "highlands": [{ "x": 8, "y": 16 }, { "x": 10, "y": 18 }],
+    "dungeon": [{ "x": 16, "y": 16 }],
+    "dragonden": [{ "x": 20, "y": 20 }, { "x": 22, "y": 18 }]
+  },
   "oreByZone": {
     "darkmine": { "use": "mineOreAt" },
     "highlands": { "use": "highlandsOreAt" },
