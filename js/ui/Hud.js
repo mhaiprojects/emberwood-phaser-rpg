@@ -2820,15 +2820,31 @@ var Hud = {
     renderBank: function () {
         var hero = this.hero();
         var vault;
+        var bank;
+        var used;
+        var cap;
+        var title;
+        var chestHead;
         if (!this.el || !this.el.bankInv || !this.el.bankVault) {
             return;
         }
         this.renderBankTabs();
         this.el.bankInv.innerHTML = this.bankGridHtml(hero && hero.inventory, 'inv');
+        bank = hero && typeof ensureBank === 'function' ? ensureBank(hero) : (hero && hero.bank) || [];
+        used = bank.length;
+        cap = typeof BANK_CAP === 'number' ? BANK_CAP : 1000;
         vault = hero && typeof filterBankStacks === 'function'
-            ? filterBankStacks(ensureBank(hero), this.bankTab || 'all', this.readBankSearch())
-            : (hero && ensureBank(hero));
+            ? filterBankStacks(bank, this.bankTab || 'all', this.readBankSearch())
+            : bank;
         this.el.bankVault.innerHTML = this.bankGridHtml(vault, 'vault');
+        title = document.getElementById('bank-title');
+        if (title) {
+            title.textContent = 'Bank (' + used + '/' + cap + ')';
+        }
+        chestHead = document.querySelector('#bank-chest > h3');
+        if (chestHead) {
+            chestHead.textContent = 'Chest (' + used + '/' + cap + ')';
+        }
     },
 
     renderBankTabs: function () {
@@ -2853,8 +2869,14 @@ var Hud = {
         var html = '';
         var i;
         var stack;
-        var cap = typeof INVENTORY_CAP === 'number' ? INVENTORY_CAP : 28;
+        var cap;
         list = list || [];
+        if (side === 'vault') {
+            /* Show occupied stacks only (up to BANK_CAP); do not paint 1000 empty cells. */
+            cap = list.length;
+        } else {
+            cap = typeof INVENTORY_CAP === 'number' ? INVENTORY_CAP : 28;
+        }
         for (i = 0; i < cap; i++) {
             stack = list[i];
             if (stack && stack.id) {
@@ -2915,7 +2937,16 @@ var Hud = {
                     depQty = invHeld;
                 }
             }
-            if (!invHeld || !depositItem(hero, id, depQty)) {
+            if (!invHeld) {
+                this.log('You have nothing to deposit.');
+                this.renderBank();
+                return;
+            }
+            if (typeof canAddToBank === 'function' && !canAddToBank(hero, id)) {
+                this.log('Your bank is full (' + (typeof BANK_CAP === 'number' ? BANK_CAP : 1000) + ' slots).');
+                return;
+            }
+            if (!depositItem(hero, id, depQty)) {
                 this.log('You have nothing to deposit.');
                 this.renderBank();
                 return;

@@ -556,6 +556,7 @@ function shiftClickDropOn(hero) {
 }
 
 var INVENTORY_CAP = 28;
+var BANK_CAP = 1000;
 
 function canAddItem(hero, id) {
     if (!hero || !hero.inventory) {
@@ -568,6 +569,18 @@ function canAddItem(hero, id) {
         return true;
     }
     return hero.inventory.length < INVENTORY_CAP;
+}
+
+function canAddToBank(hero, id) {
+    var bank;
+    if (!hero || !id) {
+        return false;
+    }
+    bank = ensureBank(hero);
+    if (findStack(bank, id)) {
+        return true;
+    }
+    return bank.length < BANK_CAP;
 }
 
 function addItem(hero, id, qty) {
@@ -2182,6 +2195,9 @@ function findStack(list, id) {
 function depositItem(hero, id, qty) {
     qty = qty || 1;
     if (!hero || !id || qty < 1) {
+        return false;
+    }
+    if (!canAddToBank(hero, id)) {
         return false;
     }
     if (!takeItem(hero, id, qty)) {
