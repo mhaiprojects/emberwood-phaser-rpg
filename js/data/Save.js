@@ -1,6 +1,48 @@
 var SAVE_KEY = 'emberwood-save-v1';
 var SAVE_SCHEMA = 1;
 
+function activeSaveKey() {
+    if (typeof GameDataPack !== 'undefined' && GameDataPack.saveKey) {
+        return GameDataPack.saveKey();
+    }
+    return SAVE_KEY;
+}
+
+function migrateLegacySaveIfNeeded(primaryKey) {
+    var legacy;
+    var keys;
+    var i;
+    var raw;
+    if (typeof localStorage === 'undefined') {
+        return;
+    }
+    try {
+        if (localStorage.getItem(primaryKey)) {
+            return;
+        }
+    } catch (err) {
+        return;
+    }
+    keys = (typeof GameDataPack !== 'undefined' && GameDataPack.legacySaveKeys)
+        ? GameDataPack.legacySaveKeys()
+        : ['emberwood-save-v1'];
+    for (i = 0; i < keys.length; i++) {
+        legacy = keys[i];
+        if (!legacy || legacy === primaryKey) {
+            continue;
+        }
+        try {
+            raw = localStorage.getItem(legacy);
+            if (raw) {
+                localStorage.setItem(primaryKey, raw);
+                return;
+            }
+        } catch (err2) {
+            /* ignore */
+        }
+    }
+}
+
 function defaultQuest() {
     return { id: 'goblins', stage: 0, progress: 0, goal: 5, points: 0 };
 }
@@ -56,7 +98,7 @@ function writeSave(registry) {
         return false;
     }
     try {
-        localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
+        localStorage.setItem(activeSaveKey(), JSON.stringify(payload));
         return true;
     } catch (err) {
         return false;
@@ -69,8 +111,9 @@ function readSave() {
     if (typeof localStorage === 'undefined') {
         return null;
     }
+    migrateLegacySaveIfNeeded(activeSaveKey());
     try {
-        raw = localStorage.getItem(SAVE_KEY);
+        raw = localStorage.getItem(activeSaveKey());
         if (!raw) {
             return null;
         }
@@ -95,7 +138,7 @@ function clearSave() {
         return;
     }
     try {
-        localStorage.removeItem(SAVE_KEY);
+        localStorage.removeItem(activeSaveKey());
     } catch (err) {
         /* ignore */
     }
@@ -126,7 +169,7 @@ function importSaveJson(text) {
     }
     data.schema = data.schema || SAVE_SCHEMA;
     try {
-        localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+        localStorage.setItem(activeSaveKey(), JSON.stringify(data));
     } catch (err) {
         return null;
     }

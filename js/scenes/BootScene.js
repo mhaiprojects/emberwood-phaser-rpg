@@ -6,50 +6,157 @@ var BootScene = new Phaser.Class({
     },
 
     preload: function () {
-        var bar = this.add.text(8, 8, 'Loading Emberwood…', {
+        var self = this;
+        var bar = this.add.text(8, 8, 'Loading…', {
             fontFamily: 'Alegreya Sans, Trebuchet MS, sans-serif',
             fontSize: '12px',
             color: '#c9a227'
         });
         this.load.on('progress', function (value) {
-            bar.setText('Loading Emberwood… ' + Math.floor(value * 100) + '%');
+            bar.setText('Loading… ' + Math.floor(value * 100) + '%');
         });
-        this.load.image('tiles', 'assets/tiles.png?v=gathervis1');
-        this.load.spritesheet('player', 'assets/player.png', { frameWidth: 16, frameHeight: 16 });
-        this.load.image('slime', 'assets/slime.png');
-        this.load.image('bat', 'assets/bat.png');
-        this.load.image('drake', 'assets/drake.png');
-        this.load.image('sign', 'assets/sign.png');
-        this.load.image('npc', 'assets/npc.png');
 
-        var self = this;
-        ['chicken', 'goblin', 'cow', 'slime', 'crab', 'bat', 'skeleton', 'drake', 'dragon', 'rabbit'].forEach(function (name) {
-            self.load.svg('mob-' + name, 'assets/svg/mobs/' + name + '.svg');
-        });
-        ['guild', 'banker', 'guard', 'ranger', 'farmer', 'fisher', 'wanderer', 'ghost', 'miner', 'hermit', 'witch', 'cook', 'herbalist', 'priest', 'shopkeeper', 'dummy', 'arms'].forEach(function (name) {
-            self.load.svg('npc-' + name, 'assets/svg/npcs/' + name + '.svg');
-        });
-        /* Ground loot textures: one Phaser key per inventory icon SVG (ITEM_DB.icon). */
-        var itemTex = {};
-        Object.keys(ITEM_DB).forEach(function (id) {
-            var key = typeof itemTextureKey === 'function' ? itemTextureKey(id) : ('item-' + id);
-            var path = typeof itemIcon === 'function' ? itemIcon(id) : null;
-            if (!path || itemTex[key]) {
-                return;
-            }
-            itemTex[key] = true;
-            self.load.svg(key, path);
-        });
-        /* Framework content pack (Phase 0/1): balance tunables. */
-        this.load.json('balance', 'js/content/balance.json?v=fw01');
+        if (typeof GameDataPack !== 'undefined' && GameDataPack.resolveFromQuery) {
+            GameDataPack.resolveFromQuery();
+        }
+
+        this._bootBar = bar;
+        this._packWave = 'meta';
+
+        /* Wave A1: pack.json only */
+        this.load.json('packMeta', typeof GameDataPack !== 'undefined'
+            ? GameDataPack.packJsonUrl()
+            : 'game-data/game1/pack.json');
     },
 
     create: function () {
-        if (typeof ContentRegistry !== 'undefined' && ContentRegistry.applyFromScene) {
-            ContentRegistry.applyFromScene(this, { balance: 'balance' });
-        } else if (typeof Balance !== 'undefined' && Balance.apply) {
-            Balance.apply(this.cache.json.get('balance'));
+        var self = this;
+        var meta;
+
+        if (this._packWave === 'meta') {
+            meta = this.cache.json.get('packMeta');
+            if (!meta) {
+                this._bootBar.setText('Missing pack.json');
+                return;
+            }
+            if (typeof GameDataPack !== 'undefined') {
+                GameDataPack.setMeta(meta);
+                if (meta.title && typeof document !== 'undefined') {
+                    document.title = meta.title;
+                }
+                this._bootBar.setText('Loading ' + (meta.title || 'pack') + '…');
+            }
+            this._packWave = 'json';
+            if (this.load && typeof this.load.reset === 'function') {
+                this.load.reset();
+            }
+            if (typeof GameDataPack !== 'undefined') {
+                GameDataPack.loadJsonWave(this, meta);
+            }
+            this.load.once('complete', function () {
+                self.create();
+            });
+            this.load.start();
+            return;
         }
+
+        if (this._packWave === 'json') {
+            if (typeof ContentRegistry !== 'undefined' && ContentRegistry.applyPack) {
+                ContentRegistry.applyPack(this.cache.json);
+            }
+            if (typeof GameDataPack !== 'undefined' && GameDataPack.rewriteDomAssets) {
+                GameDataPack.rewriteDomAssets(document);
+            }
+            this._packWave = 'art';
+            if (this.load && typeof this.load.reset === 'function') {
+                this.load.reset();
+            }
+            this._queueArtLoads();
+            this.load.once('complete', function () {
+                self.create();
+            });
+            this.load.start();
+            return;
+        }
+
+        /* Art ready → animations + title */
+        this._createAnims();
+        this.registry.set('autoContinueSave', true);
+        this.registry.set('packId', typeof GameDataPack !== 'undefined'
+            ? GameDataPack.getActive()
+            : 'game1');
+        this.scene.start('TitleScene');
+    },
+
+    _queueArtLoads: function () {
+        var self = this;
+        var art = typeof ART_MANIFEST !== 'undefined' ? ART_MANIFEST : null;
+        var gdp = typeof GameDataPack !== 'undefined' ? GameDataPack : null;
+        var url = function (rel) {
+            return gdp ? gdp.assetUrl(rel) : rel;
+        };
+        var i;
+        var row;
+        var name;
+        var itemTex;
+        var id;
+        var key;
+        var path;
+
+        if (art && art.tiles) {
+            this.load.image(art.tiles.key || 'tiles', url(art.tiles.path || 'assets/tiles.png'));
+        } else {
+            this.load.image('tiles', url('assets/tiles.png'));
+        }
+
+        if (art && art.player) {
+            this.load.spritesheet(
+                art.player.key || 'player',
+                url(art.player.path || 'assets/player.png'),
+                {
+                    frameWidth: art.player.frameWidth || 16,
+                    frameHeight: art.player.frameHeight || 16
+                }
+            );
+        } else {
+            this.load.spritesheet('player', url('assets/player.png'), {
+                frameWidth: 16,
+                frameHeight: 16
+            });
+        }
+
+        if (art && art.images) {
+            for (i = 0; i < art.images.length; i++) {
+                row = art.images[i];
+                if (row && row.key && row.path) {
+                    this.load.image(row.key, url(row.path));
+                }
+            }
+        }
+
+        (art && art.mobSvgs ? art.mobSvgs : []).forEach(function (n) {
+            self.load.svg('mob-' + n, url('assets/svg/mobs/' + n + '.svg'));
+        });
+        (art && art.npcSvgs ? art.npcSvgs : []).forEach(function (n) {
+            self.load.svg('npc-' + n, url('assets/svg/npcs/' + n + '.svg'));
+        });
+
+        itemTex = {};
+        if (typeof ITEM_DB !== 'undefined') {
+            Object.keys(ITEM_DB).forEach(function (itemId) {
+                key = typeof itemTextureKey === 'function' ? itemTextureKey(itemId) : ('item-' + itemId);
+                path = typeof itemIcon === 'function' ? itemIcon(itemId) : null;
+                if (!path || itemTex[key]) {
+                    return;
+                }
+                itemTex[key] = true;
+                /* itemIcon already returns pack-resolved URL */
+                self.load.svg(key, path);
+            });
+        }
+    },
+
+    _createAnims: function () {
         this.anims.create({
             key: 'left',
             frames: this.anims.generateFrameNumbers('player', { frames: [1, 7, 1, 13] }),
@@ -74,7 +181,5 @@ var BootScene = new Phaser.Class({
             frameRate: 8,
             repeat: -1
         });
-        this.registry.set('autoContinueSave', true);
-        this.scene.start('TitleScene');
     }
 });

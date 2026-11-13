@@ -191,14 +191,16 @@ function npcHasShop(def) {
 
 /* NPC_DEFS from js/content/npcs-data.js */
 if (typeof NPC_DEFS === 'undefined') { var NPC_DEFS = {}; }
-;
 
 /*
  * Single source of truth: zone ↔ level band ↔ mob spawn roster.
  * Labels (border / enter / shaft) and MOB_DEFS both derive from this.
  * `band` drives zoneBandLevel; extras.levelFor may pin specific spots (haven exits, den).
  */
-/* ZONE_MOB_ROSTER from zone-mobs-data.js + data-rule adapters */
+/* Filled by ContentRegistry from game-data pack zone-mobs.json */
+if (typeof ZONE_MOB_ROSTER_DATA === 'undefined') { var ZONE_MOB_ROSTER_DATA = {}; }
+
+/* ZONE_MOB_ROSTER from pack data + data-rule adapters */
 function buildZoneMobRoster(data) {
     var out = {};
     var zoneId;
@@ -681,12 +683,14 @@ function mobDefsForZone(zoneId, hero) {
 
 /** Built from ZONE_MOB_ROSTER — do not hand-author parallel spawn tables. */
 var MOB_DEFS = {};
-(function buildMobDefsFromRoster() {
+
+function rebuildMobDefsFromRoster() {
     var zoneId;
     var roster;
     var defs;
     var i;
     var mob;
+    MOB_DEFS = {};
     for (zoneId in ZONE_MOB_ROSTER) {
         if (!Object.prototype.hasOwnProperty.call(ZONE_MOB_ROSTER, zoneId)) {
             continue;
@@ -712,7 +716,53 @@ var MOB_DEFS = {};
         }
         MOB_DEFS[zoneId] = defs;
     }
-}());
+    if (typeof window !== 'undefined') {
+        window.MOB_DEFS = MOB_DEFS;
+    }
+}
+
+function rebuildZoneLevelBand() {
+    var id;
+    ZONE_LEVEL_BAND = {};
+    for (id in ZONE_MOB_ROSTER) {
+        if (!Object.prototype.hasOwnProperty.call(ZONE_MOB_ROSTER, id)) {
+            continue;
+        }
+        ZONE_LEVEL_BAND[id] = (ZONE_MOB_ROSTER[id].band || [1, 5]).slice();
+    }
+    if (typeof window !== 'undefined') {
+        window.ZONE_LEVEL_BAND = ZONE_LEVEL_BAND;
+    }
+}
+
+function rebuildInteriorDoors() {
+    var house = typeof MINE_SHAFT_HOUSE !== 'undefined' ? MINE_SHAFT_HOUSE : null;
+    var i;
+    if (!house || !INTERIOR_LIST) {
+        return;
+    }
+    for (i = 0; i < INTERIOR_LIST.length; i++) {
+        if (INTERIOR_LIST[i] && INTERIOR_LIST[i].id === 'shaft') {
+            INTERIOR_LIST[i].doorTx = house.x + Math.floor(house.w / 2);
+            INTERIOR_LIST[i].doorTy = house.y + house.h - 1;
+        }
+    }
+}
+
+/** Re-run after ContentRegistry loads zone-mobs + map props. */
+function rebuildZoneMobContent() {
+    ZONE_MOB_ROSTER = buildZoneMobRoster(
+        typeof ZONE_MOB_ROSTER_DATA !== 'undefined' ? ZONE_MOB_ROSTER_DATA : {}
+    );
+    if (typeof window !== 'undefined') {
+        window.ZONE_MOB_ROSTER = ZONE_MOB_ROSTER;
+    }
+    rebuildZoneLevelBand();
+    rebuildMobDefsFromRoster();
+    rebuildInteriorDoors();
+}
+
+rebuildMobDefsFromRoster();
 
 function defaultWorldSpawn() {
     return tileCenter(20, 15);

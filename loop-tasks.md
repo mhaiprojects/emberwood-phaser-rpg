@@ -33,6 +33,8 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 
 Active queue — implement top-down before returning to sections 1–14.
 
+- [done] Catalog ALL game content/data embedded in code vs data-driven (folder layout, pack vs engine, Boot graphics, hardcodes, plans, index load order). — Conclusion: Content lives under `game-data/game1/` JSON+assets; engine keeps TILE/MapGen/XP/safe-zone/tutor gifts; hotspots WorldScene/Items/MapGen/Zones; GameDataPack migration in progress.
+- [done] GameDataPack: move all content+assets under game-data/game1; Boot pack load; multi-pack ready. — Conclusion: `game-data/game1` JSON+assets; GameDataPack+two-wave Boot; ContentRegistry.applyPack; saves namespaced; `?pack=` switch.
 - [done] Bank accepts 1000 slots. — Conclusion: `BANK_CAP=1000`; `canAddToBank` gates deposit; vault UI shows used/1000 (no 28-slot paint).
 - [done] Framework plan Phases 2–6: GatherController, content JSON splits, WorldScene peel, SettingsRegistry, docs/framework.md. — Conclusion: content `*-data.js` + JSON; GatherController wired; SettingsRegistry toggles; ZoneRuntime/EntitySpawner/InteractionRouter/WorldPersist peels; docs/framework.md.
 - [done] Framework plan Phase 0+1: folders/ContentRegistry + balance.json wired (no GatherController yet). — Conclusion: `js/core|content|game`; Boot loads `balance.json` → ContentRegistry; Balance syncs legacy globals; Phases 2+ waiting.

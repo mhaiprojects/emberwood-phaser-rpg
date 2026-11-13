@@ -1,0 +1,497 @@
+{
+  "HAVEN_GATE_TILE": {
+    "x": 23,
+    "y": 15
+  },
+  "INTERIOR_EXIT_TILE": {
+    "x": 18,
+    "y": 20
+  },
+  "TOWN_PROPS": {
+    "stall": {
+      "x": 16,
+      "y": 11
+    },
+    "ge": {
+      "x": 19,
+      "y": 11
+    },
+    "range": {
+      "x": 16,
+      "y": 17
+    },
+    "anvil": {
+      "x": 21,
+      "y": 12
+    },
+    "furnace": {
+      "x": 22,
+      "y": 12
+    },
+    "booth": {
+      "x": 14,
+      "y": 11
+    },
+    "shopStall": {
+      "x": 16,
+      "y": 12
+    },
+    "guildPost": {
+      "x": 15,
+      "y": 18
+    },
+    "campfire": {
+      "x": 18,
+      "y": 15
+    }
+  },
+  "TOWN_CENTER_TILE": {
+    "x": 18,
+    "y": 15
+  },
+  "CAMPFIRE_SPOTS": {
+    "haven": [
+      {
+        "x": 18,
+        "y": 15
+      }
+    ],
+    "northwood": [
+      {
+        "x": 18,
+        "y": 16
+      }
+    ],
+    "westmead": [
+      {
+        "x": 20,
+        "y": 14
+      }
+    ],
+    "southshore": [
+      {
+        "x": 18,
+        "y": 18
+      }
+    ],
+    "highlands": [
+      {
+        "x": 16,
+        "y": 12
+      }
+    ],
+    "graves": [
+      {
+        "x": 18,
+        "y": 14
+      }
+    ],
+    "dragonden": [
+      {
+        "x": 14,
+        "y": 14
+      }
+    ]
+  },
+  "DUNGEON_STAIRS_UP": {
+    "x": 18,
+    "y": 20
+  },
+  "DUNGEON_STAIRS_DOWN": {
+    "x": 18,
+    "y": 8
+  },
+  "DUNGEON_SURFACE": {
+    "x": 16,
+    "y": 20
+  },
+  "DUNGEON_CAMPFIRE": {
+    "x": 18,
+    "y": 14
+  },
+  "BANK_COUNTER": {
+    "staff": [
+      {
+        "x": 13,
+        "y": 10
+      },
+      {
+        "x": 14,
+        "y": 10
+      },
+      {
+        "x": 15,
+        "y": 10
+      }
+    ],
+    "desk": [
+      {
+        "x": 13,
+        "y": 11
+      },
+      {
+        "x": 14,
+        "y": 11
+      },
+      {
+        "x": 15,
+        "y": 11
+      }
+    ],
+    "front": {
+      "x": 14,
+      "y": 12
+    },
+    "apron": [
+      {
+        "x": 13,
+        "y": 12
+      },
+      {
+        "x": 15,
+        "y": 12
+      },
+      {
+        "x": 13,
+        "y": 13
+      },
+      {
+        "x": 14,
+        "y": 13
+      },
+      {
+        "x": 15,
+        "y": 13
+      }
+    ]
+  },
+  "SHORE_PROPS": {
+    "dock": {
+      "x": 12,
+      "y": 22
+    },
+    "boat": {
+      "x": 11,
+      "y": 23
+    },
+    "planks": [
+      {
+        "x": 12,
+        "y": 21
+      },
+      {
+        "x": 12,
+        "y": 22
+      },
+      {
+        "x": 12,
+        "y": 23
+      }
+    ],
+    "spots": [
+      {
+        "x": 13,
+        "y": 22
+      },
+      {
+        "x": 15,
+        "y": 21
+      },
+      {
+        "x": 23,
+        "y": 21
+      }
+    ]
+  },
+  "GRAVE_PROPS": {
+    "tombs": [
+      {
+        "x": 8,
+        "y": 6
+      },
+      {
+        "x": 22,
+        "y": 6
+      },
+      {
+        "x": 8,
+        "y": 18
+      }
+    ]
+  },
+  "TOWN_HOUSES": [
+    {
+      "x": 8,
+      "y": 6,
+      "w": 6,
+      "h": 5
+    },
+    {
+      "x": 22,
+      "y": 7,
+      "w": 7,
+      "h": 5
+    },
+    {
+      "x": 12,
+      "y": 16,
+      "w": 6,
+      "h": 5
+    }
+  ],
+  "FARM_HOUSES": [
+    {
+      "x": 24,
+      "y": 14,
+      "w": 5,
+      "h": 4
+    }
+  ],
+  "LOCKED_DOOR": {
+    "zoneId": "millfields",
+    "tx": 26,
+    "ty": 17,
+    "keyId": "key"
+  },
+  "AGILITY_SHORTCUT": {
+    "zoneId": "millfields",
+    "tx": 25,
+    "ty": 17,
+    "skill": "agility",
+    "level": 5,
+    "verb": "squeeze"
+  },
+  "MINE_SHAFT_HOUSE": {
+    "x": 6,
+    "y": 8,
+    "w": 6,
+    "h": 5
+  },
+  "DRAGON_DEN_GATE": {
+    "zoneId": "highlands",
+    "boulder": {
+      "x": 30,
+      "y": 12
+    },
+    "seal": [
+      {
+        "x": 30,
+        "y": 11
+      },
+      {
+        "x": 30,
+        "y": 12
+      },
+      {
+        "x": 30,
+        "y": 13
+      }
+    ],
+    "cave": {
+      "x": 32,
+      "y": 12
+    },
+    "alcove": [
+      {
+        "x": 31,
+        "y": 11
+      },
+      {
+        "x": 31,
+        "y": 12
+      },
+      {
+        "x": 31,
+        "y": 13
+      },
+      {
+        "x": 32,
+        "y": 11
+      },
+      {
+        "x": 32,
+        "y": 12
+      },
+      {
+        "x": 32,
+        "y": 13
+      }
+    ],
+    "returnSpawn": {
+      "x": 28,
+      "y": 12
+    },
+    "denExit": {
+      "x": 18,
+      "y": 24
+    },
+    "denSpawn": {
+      "x": 18,
+      "y": 22
+    }
+  },
+  "MINE_PROPS": {
+    "copper": [
+      {
+        "x": 14,
+        "y": 16
+      },
+      {
+        "x": 15,
+        "y": 20
+      },
+      {
+        "x": 16,
+        "y": 16
+      },
+      {
+        "x": 17,
+        "y": 20
+      }
+    ],
+    "iron": [
+      {
+        "x": 22,
+        "y": 16
+      },
+      {
+        "x": 24,
+        "y": 20
+      }
+    ],
+    "diamondore": [
+      {
+        "x": 20,
+        "y": 18
+      },
+      {
+        "x": 26,
+        "y": 14
+      }
+    ],
+    "dragoniteore": [
+      {
+        "x": 28,
+        "y": 18
+      },
+      {
+        "x": 30,
+        "y": 16
+      }
+    ],
+    "runeessence": [
+      {
+        "x": 12,
+        "y": 18
+      },
+      {
+        "x": 13,
+        "y": 20
+      },
+      {
+        "x": 18,
+        "y": 22
+      }
+    ]
+  },
+  "HIGHLANDS_MINE_PROPS": {
+    "diamondore": [
+      {
+        "x": 26,
+        "y": 12
+      },
+      {
+        "x": 24,
+        "y": 10
+      }
+    ],
+    "iron": [
+      {
+        "x": 22,
+        "y": 14
+      }
+    ]
+  },
+  "RUNE_ALTARS": {
+    "haven": {
+      "x": 20,
+      "y": 8,
+      "rune": "airrune"
+    },
+    "millfields": {
+      "x": 18,
+      "y": 12,
+      "rune": "airrune"
+    },
+    "southshore": {
+      "x": 18,
+      "y": 20,
+      "rune": "waterrune"
+    },
+    "mire": {
+      "x": 16,
+      "y": 12,
+      "rune": "waterrune"
+    },
+    "graves": {
+      "x": 18,
+      "y": 10,
+      "rune": "earthrune"
+    },
+    "northwood": {
+      "x": 16,
+      "y": 12,
+      "rune": "earthrune"
+    },
+    "highlands": {
+      "x": 18,
+      "y": 10,
+      "rune": "firerune"
+    },
+    "darkmine": {
+      "x": 14,
+      "y": 14,
+      "rune": "firerune"
+    }
+  },
+  "INTERIOR_ROOM": {
+    "x": 12,
+    "y": 8,
+    "w": 12,
+    "h": 13
+  },
+  "SCENERY_EXAMINE": {
+    "tree": "It's a tree.",
+    "rock": "It's a rock.",
+    "shrine": "A weathered stone shrine.",
+    "water": "It's water.",
+    "wall": "It's a house wall.",
+    "stall": "A crafting stall. Leatherwork tools rest on the counter.",
+    "range": "A cooking range. Ready for raw food.",
+    "anvil": "A well-used smithing anvil.",
+    "furnace": "A brick furnace. Ore melts here into bars.",
+    "fire": "A crackling fire. Good for cooking.",
+    "booth": "A bank counter. Step to the front to bank.",
+    "ge": "A Grand Exchange booth. Offers are frozen — use Mira or Cole for trade.",
+    "shop-stall": "Mira's courtyard stall. Click to trade.",
+    "guild-post": "Bram's muster post. Talk to the Guildmaster nearby.",
+    "craft": "A crafting stall. Leatherwork tools rest on the counter.",
+    "dock": "A weathered wooden dock. The tide slaps the pilings.",
+    "boat": "A fishing boat, tied off and empty.",
+    "fishspot": "A fishing spot. Fish dart beneath the surface.",
+    "tomb": "A weathered tomb marker. The name is worn away.",
+    "shortcut": "A narrow gap beside the locked door. You might squeeze through.",
+    "gate": "A wooden courtyard gate. The hinges still work.",
+    "door-bank": "The old bank door. Use the courtyard counter to bank.",
+    "door-shop": "An old shop door. Mira sells from the courtyard stall.",
+    "door-guild": "The guild hall door. Bram drills in the courtyard.",
+    "stairs-down": "Marked stairs down — delve deeper into the Deep Mine.",
+    "stairs-up": "Marked stairs up — climb toward the surface (or the floor above).",
+    "surface-portal": "A rune-cut escape shaft. Escape here to remember this floor for next delve.",
+    "dungeon-enter": "The Deep Mine shaft mouth. Delve here; it drops you at your last escape floor.",
+    "campfire": "A warm campfire. Rest here to mend faster.",
+    "altar": "A rune altar. Essence pressed here becomes runes.",
+    "den-boulder": "A massive boulder seals a dark cave mouth. Only a diamond pickaxe could crack it.",
+    "dragon-den": "A scorched cave mouth. Heat and sulphur roll out from the Dragon Den."
+  }
+}

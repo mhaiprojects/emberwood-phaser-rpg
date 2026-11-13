@@ -1,5 +1,5 @@
-# js/content — data packs
+# js/content (legacy)
 
-Pure JSON (and future tables): `balance.json`, later items/recipes/zones/loot.
+Game content moved to **`game-data/game1/`** (JSON + `assets/`).
 
-Loaded in BootScene via Phaser `load.json` → `ContentRegistry.applyFromScene`.
+Load via `GameDataPack` + BootScene. See `docs/framework.md`.

@@ -435,102 +435,136 @@ var AUTO_ATTACK_RANGE_MIN = 1;
 var AUTO_ATTACK_RANGE_MAX = 5;
 
 function makeHero() {
-    var hero = {
-        hp: 100,
-        maxHp: 100,
-        damage: 16,
-        gold: 8,
-        level: 1,
-        style: 'shared',
-        stance: 'melee',
-        autoAttack: false,
-        autoAttackRange: DEFAULT_AUTO_ATTACK_RANGE_TILES,
-        autoRetaliate: false,
-        autoPickup: true,
-        shiftClickDrop: true,
-        hideBones: false,
-        showCombatVisuals: true,
-        showRangeRings: true,
-        mobSpawnModifier: typeof MOB_SPAWN_MODIFIER === 'number' ? MOB_SPAWN_MODIFIER : 1,
-        simTps: typeof normalizeTargetTps === 'function' ? normalizeTargetTps(60) : 60,
-        targetTps: typeof normalizeTargetTps === 'function' ? normalizeTargetTps(60) : 60,
-        gameSpeed: typeof normalizeGameSpeed === 'function' ? normalizeGameSpeed(1) : 1,
-        xpMultiplier: typeof normalizeXpMultiplier === 'function' ? normalizeXpMultiplier(1) : 1,
-        displayName: 'Adventurer',
-        ironman: false,
-        prayerPoints: 1,
-        maxPrayerPoints: 1,
-        specialEnergy: 100,
-        poison: null,
-        slayerTask: null,
-        clueStep: 0,
-        clanTag: 'ember',
-        prayers: { thickskin: false, burststrength: false },
-        hiscores: { kills: 0, quests: 0 },
-        sideQuests: {
-            shipment: { stage: 0, progress: 0, goal: 3 },
-            bats: { stage: 0, progress: 0, goal: 4 }
-        },
-        diary: { bram: false, eat: false, bury: false, complete: false },
-        flags: { dragonDenOpen: false },
-        tutorials: {},
-        running: false,
-        runEnergy: 100,
-        equipment: (function () {
-            var eq = emptyEquipment();
-            eq.weapon = 'coppersword';
-            eq.shield = 'shield';
-            return eq;
-        }()),
-        equipmentQty: {},
-        inventory: [
-            { id: 'coins', qty: 8 },
-            { id: 'coppersword', qty: 1 },
-            { id: 'shield', qty: 1 },
-            { id: 'copperbow', qty: 1 },
-            { id: 'staff', qty: 1 },
-            { id: 'copperaxe', qty: 1 },
-            { id: 'copperpick', qty: 1 },
-            { id: 'airrune', qty: 40 },
-            { id: 'shrimp', qty: 8 },
-            { id: 'bread', qty: 3 }
-        ],
-        bank: [],
-        tutors: {},
-        skills: {
-            attack: { level: 1, xp: 0 },
-            strength: { level: 1, xp: 0 },
-            defence: { level: 1, xp: 0 },
-            hitpoints: { level: 10, xp: 1154 },
-            ranged: { level: 1, xp: 0 },
-            prayer: { level: 1, xp: 0 },
-            magic: { level: 1, xp: 0 },
-            cooking: { level: 1, xp: 0 },
-            fishing: { level: 1, xp: 0 },
-            woodcutting: { level: 1, xp: 0 },
-            mining: { level: 1, xp: 0 },
-            crafting: { level: 1, xp: 0 },
-            firemaking: { level: 1, xp: 0 },
-            smithing: { level: 1, xp: 0 },
-            hunter: { level: 1, xp: 0 },
-            agility: { level: 1, xp: 0 },
-            thieving: { level: 1, xp: 0 },
-            slayer: { level: 1, xp: 0 },
-            runecraft: { level: 1, xp: 0 },
-            farming: { level: 1, xp: 0 },
-            herblore: { level: 1, xp: 0 },
-            fletching: { level: 1, xp: 0 },
-            construction: { level: 1, xp: 0 }
+    var defaults = typeof HERO_DEFAULTS !== 'undefined' && HERO_DEFAULTS ? HERO_DEFAULTS : null;
+    var hero;
+    var eq;
+    var k;
+    if (defaults) {
+        hero = JSON.parse(JSON.stringify(defaults));
+        eq = typeof emptyEquipment === 'function' ? emptyEquipment() : {};
+        if (defaults.equipment) {
+            for (k in defaults.equipment) {
+                if (Object.prototype.hasOwnProperty.call(defaults.equipment, k)) {
+                    eq[k] = defaults.equipment[k];
+                }
+            }
         }
-    };
+        hero.equipment = eq;
+        hero.equipmentQty = hero.equipmentQty || {};
+        hero.bank = hero.bank || [];
+        hero.tutors = hero.tutors || {};
+        hero.tutorials = hero.tutorials || {};
+        hero.poison = hero.poison || null;
+        hero.slayerTask = hero.slayerTask || null;
+        hero.clueStep = hero.clueStep || 0;
+        if (hero.mobSpawnModifier == null) {
+            hero.mobSpawnModifier = typeof MOB_SPAWN_MODIFIER === 'number' ? MOB_SPAWN_MODIFIER : 1;
+        }
+        if (hero.simTps == null) {
+            hero.simTps = typeof normalizeTargetTps === 'function' ? normalizeTargetTps(60) : 60;
+            hero.targetTps = hero.simTps;
+        }
+        if (hero.gameSpeed == null) {
+            hero.gameSpeed = typeof normalizeGameSpeed === 'function' ? normalizeGameSpeed(1) : 1;
+        }
+        if (hero.xpMultiplier == null) {
+            hero.xpMultiplier = typeof normalizeXpMultiplier === 'function' ? normalizeXpMultiplier(1) : 1;
+        }
+        if (hero.autoAttackRange == null) {
+            hero.autoAttackRange = DEFAULT_AUTO_ATTACK_RANGE_TILES;
+        }
+    } else {
+        hero = {
+            hp: 100,
+            maxHp: 100,
+            damage: 16,
+            gold: 8,
+            level: 1,
+            style: 'shared',
+            stance: 'melee',
+            autoAttack: false,
+            autoAttackRange: DEFAULT_AUTO_ATTACK_RANGE_TILES,
+            autoRetaliate: false,
+            autoPickup: true,
+            shiftClickDrop: true,
+            hideBones: false,
+            showCombatVisuals: true,
+            showRangeRings: true,
+            mobSpawnModifier: typeof MOB_SPAWN_MODIFIER === 'number' ? MOB_SPAWN_MODIFIER : 1,
+            simTps: typeof normalizeTargetTps === 'function' ? normalizeTargetTps(60) : 60,
+            targetTps: typeof normalizeTargetTps === 'function' ? normalizeTargetTps(60) : 60,
+            gameSpeed: typeof normalizeGameSpeed === 'function' ? normalizeGameSpeed(1) : 1,
+            xpMultiplier: typeof normalizeXpMultiplier === 'function' ? normalizeXpMultiplier(1) : 1,
+            displayName: 'Adventurer',
+            ironman: false,
+            prayerPoints: 1,
+            maxPrayerPoints: 1,
+            specialEnergy: 100,
+            poison: null,
+            slayerTask: null,
+            clueStep: 0,
+            clanTag: 'ember',
+            prayers: { thickskin: false, burststrength: false },
+            hiscores: { kills: 0, quests: 0 },
+            sideQuests: {
+                shipment: { stage: 0, progress: 0, goal: 3 },
+                bats: { stage: 0, progress: 0, goal: 4 }
+            },
+            diary: { bram: false, eat: false, bury: false, complete: false },
+            flags: { dragonDenOpen: false },
+            tutorials: {},
+            running: false,
+            runEnergy: 100,
+            equipment: (function () {
+                var e = emptyEquipment();
+                e.weapon = 'coppersword';
+                e.shield = 'shield';
+                return e;
+            }()),
+            equipmentQty: {},
+            inventory: [
+                { id: 'coins', qty: 8 },
+                { id: 'coppersword', qty: 1 },
+                { id: 'shield', qty: 1 },
+                { id: 'copperbow', qty: 1 },
+                { id: 'staff', qty: 1 },
+                { id: 'copperaxe', qty: 1 },
+                { id: 'copperpick', qty: 1 },
+                { id: 'airrune', qty: 40 },
+                { id: 'shrimp', qty: 8 },
+                { id: 'bread', qty: 3 }
+            ],
+            bank: [],
+            tutors: {},
+            skills: {
+                attack: { level: 1, xp: 0 },
+                strength: { level: 1, xp: 0 },
+                defence: { level: 1, xp: 0 },
+                hitpoints: { level: 10, xp: 1154 },
+                ranged: { level: 1, xp: 0 },
+                prayer: { level: 1, xp: 0 },
+                magic: { level: 1, xp: 0 },
+                cooking: { level: 1, xp: 0 },
+                fishing: { level: 1, xp: 0 },
+                woodcutting: { level: 1, xp: 0 },
+                mining: { level: 1, xp: 0 },
+                crafting: { level: 1, xp: 0 },
+                firemaking: { level: 1, xp: 0 },
+                smithing: { level: 1, xp: 0 },
+                hunter: { level: 1, xp: 0 },
+                agility: { level: 1, xp: 0 },
+                thieving: { level: 1, xp: 0 },
+                slayer: { level: 1, xp: 0 },
+                runecraft: { level: 1, xp: 0 },
+                farming: { level: 1, xp: 0 },
+                herblore: { level: 1, xp: 0 },
+                fletching: { level: 1, xp: 0 },
+                construction: { level: 1, xp: 0 }
+            }
+        };
+    }
     applyCombatLevel(hero, false);
     return normalizeHeroCombat(hero);
-}
-
-function makeIronmanHero() {
-    var hero = makeHero();
-    hero.ironman = true;
-    return hero;
 }
 
 function autoRetaliateOn(hero) {
@@ -2604,7 +2638,11 @@ function itemValue(id) {
 
 function itemIcon(id) {
     var def = ITEM_DB[id];
-    return (def && def.icon) || 'assets/svg/items/coins.svg';
+    var path = (def && def.icon) || 'assets/svg/items/coins.svg';
+    if (typeof GameDataPack !== 'undefined' && GameDataPack.resolvePath) {
+        return GameDataPack.resolvePath(path);
+    }
+    return path;
 }
 
 /** Phaser texture key for ground loot — same SVG basename as inventory `itemIcon`. */
@@ -2616,7 +2654,11 @@ function itemTextureKey(id) {
 }
 
 function skillIcon(id) {
-    return 'assets/svg/skills/' + id + '.svg';
+    var path = 'assets/svg/skills/' + id + '.svg';
+    if (typeof GameDataPack !== 'undefined' && GameDataPack.resolvePath) {
+        return GameDataPack.resolvePath(path);
+    }
+    return path;
 }
 
 function eatItem(hero, id) {

@@ -1,0 +1,194 @@
+{
+  "hp": 100,
+  "maxHp": 100,
+  "damage": 16,
+  "gold": 8,
+  "level": 1,
+  "style": "shared",
+  "stance": "melee",
+  "autoAttack": false,
+  "autoAttackRange": 3,
+  "autoRetaliate": false,
+  "autoPickup": true,
+  "shiftClickDrop": true,
+  "hideBones": false,
+  "showCombatVisuals": true,
+  "showRangeRings": true,
+  "displayName": "Adventurer",
+  "ironman": false,
+  "prayerPoints": 1,
+  "maxPrayerPoints": 1,
+  "specialEnergy": 100,
+  "clanTag": "ember",
+  "prayers": {
+    "thickskin": false,
+    "burststrength": false
+  },
+  "hiscores": {
+    "kills": 0,
+    "quests": 0
+  },
+  "sideQuests": {
+    "shipment": {
+      "stage": 0,
+      "progress": 0,
+      "goal": 3
+    },
+    "bats": {
+      "stage": 0,
+      "progress": 0,
+      "goal": 4
+    }
+  },
+  "diary": {
+    "bram": false,
+    "eat": false,
+    "bury": false,
+    "complete": false
+  },
+  "flags": {
+    "dragonDenOpen": false
+  },
+  "running": false,
+  "runEnergy": 100,
+  "equipment": {
+    "weapon": "coppersword",
+    "shield": "shield"
+  },
+  "inventory": [
+    {
+      "id": "coins",
+      "qty": 8
+    },
+    {
+      "id": "coppersword",
+      "qty": 1
+    },
+    {
+      "id": "shield",
+      "qty": 1
+    },
+    {
+      "id": "copperbow",
+      "qty": 1
+    },
+    {
+      "id": "staff",
+      "qty": 1
+    },
+    {
+      "id": "copperaxe",
+      "qty": 1
+    },
+    {
+      "id": "copperpick",
+      "qty": 1
+    },
+    {
+      "id": "airrune",
+      "qty": 40
+    },
+    {
+      "id": "shrimp",
+      "qty": 8
+    },
+    {
+      "id": "bread",
+      "qty": 3
+    }
+  ],
+  "skills": {
+    "attack": {
+      "level": 1,
+      "xp": 0
+    },
+    "strength": {
+      "level": 1,
+      "xp": 0
+    },
+    "defence": {
+      "level": 1,
+      "xp": 0
+    },
+    "hitpoints": {
+      "level": 10,
+      "xp": 1154
+    },
+    "ranged": {
+      "level": 1,
+      "xp": 0
+    },
+    "prayer": {
+      "level": 1,
+      "xp": 0
+    },
+    "magic": {
+      "level": 1,
+      "xp": 0
+    },
+    "cooking": {
+      "level": 1,
+      "xp": 0
+    },
+    "fishing": {
+      "level": 1,
+      "xp": 0
+    },
+    "woodcutting": {
+      "level": 1,
+      "xp": 0
+    },
+    "mining": {
+      "level": 1,
+      "xp": 0
+    },
+    "crafting": {
+      "level": 1,
+      "xp": 0
+    },
+    "firemaking": {
+      "level": 1,
+      "xp": 0
+    },
+    "smithing": {
+      "level": 1,
+      "xp": 0
+    },
+    "hunter": {
+      "level": 1,
+      "xp": 0
+    },
+    "agility": {
+      "level": 1,
+      "xp": 0
+    },
+    "thieving": {
+      "level": 1,
+      "xp": 0
+    },
+    "slayer": {
+      "level": 1,
+      "xp": 0
+    },
+    "runecraft": {
+      "level": 1,
+      "xp": 0
+    },
+    "farming": {
+      "level": 1,
+      "xp": 0
+    },
+    "herblore": {
+      "level": 1,
+      "xp": 0
+    },
+    "fletching": {
+      "level": 1,
+      "xp": 0
+    },
+    "construction": {
+      "level": 1,
+      "xp": 0
+    }
+  }
+}

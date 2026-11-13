@@ -7,7 +7,7 @@ import zlib
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ASSETS = os.path.join(ROOT, "assets")
+ASSETS = os.path.join(ROOT, "game-data", "game1", "assets")
 
 
 def write_png(path, width, height, pixels):

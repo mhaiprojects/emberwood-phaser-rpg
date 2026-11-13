@@ -1,0 +1,27 @@
+{
+  "id": "game1",
+  "title": "Emberwood",
+  "version": "gdp1",
+  "assetRoot": "assets",
+  "saveKey": "emberwood-save-game1",
+  "legacySaveKeys": [
+    "emberwood-save-v1"
+  ],
+  "files": {
+    "balance": "balance.json",
+    "items": "items.json",
+    "shops": "shops.json",
+    "recipes": "recipes.json",
+    "gather": "gather-by-zone.json",
+    "loot": "loot.json",
+    "zones": "zones.json",
+    "npcs": "npcs.json",
+    "zoneMobs": "zone-mobs.json",
+    "skills": "skills.json",
+    "mobScales": "mob-scales.json",
+    "heroDefaults": "hero-defaults.json",
+    "artManifest": "art-manifest.json",
+    "mapDimensions": "map/dimensions.json",
+    "mapProps": "map/props.json"
+  }
+}

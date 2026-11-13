@@ -17,11 +17,11 @@ Plan: `.cursor/plans/framework-architecture.plan.md`. Folders:
 
 | Path | Role |
 |------|------|
-| `js/core/` | Reusable engine (`Balance`, `ContentRegistry`, `GatherController`, `SettingsRegistry`) |
-| `js/content/` | Data packs (JSON + `*-data.js`: items, shops, recipes, gather, zones, NPCs, mobs, loot, balance) |
-| `js/game/` | Emberwood wiring (scenes still under `js/scenes/` until later phases) |
+| `js/core/` | Engine (`Balance`, `GameDataPack`, `ContentRegistry`, `GatherController`, `SettingsRegistry`) |
+| `game-data/game1/` | Emberwood pack (JSON + `assets/`). Swap pack with `?pack=` / `EMBERWOOD_PACK` |
+| `js/game/` | Reserved; scenes stay under `js/scenes/` |
 
-**Load contract:** `Keys` → `Balance` → `ContentRegistry` → `SettingsRegistry` → **content `*-data.js`** → `Items` → … → `GatherController` → zone peels → scenes. BootScene `preload` loads `js/content/balance.json`; `create` calls `ContentRegistry.applyFromScene(this)` before Title. Content tables are sync-filled before Boot so SVG preload can walk `ITEM_DB`. See `docs/framework.md`. Prefer **code + GDD** over stale AGENT combat-default notes when they disagree.
+**Load contract:** `Keys` → `Balance` → `GameDataPack` → `ContentRegistry` → … → Boot two-wave (pack JSON → apply → art). See `docs/framework.md`. Prefer **code + GDD** over stale AGENT combat-default notes when they disagree.
 
 ## How to run
 

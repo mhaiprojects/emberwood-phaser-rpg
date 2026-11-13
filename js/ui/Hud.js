@@ -109,6 +109,9 @@ var Hud = {
         this.shopSelInv = null;
         this._showFps = true;
         this._vueReady = false;
+        if (typeof GameDataPack !== 'undefined' && GameDataPack.rewriteDomAssets) {
+            GameDataPack.rewriteDomAssets(document);
+        }
         if (window.HudApp && typeof HudApp.mount === 'function') {
             HudApp.mount();
         }

@@ -1,3 +1,7 @@
+if (typeof GameDataPack !== 'undefined') {
+    GameDataPack.resolveFromQuery();
+    GameDataPack.rewriteDomAssets(document);
+}
 Keys.init();
 Hud.init();
 Hud.bindActions();
