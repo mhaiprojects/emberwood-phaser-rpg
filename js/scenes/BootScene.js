@@ -40,9 +40,16 @@ var BootScene = new Phaser.Class({
             itemTex[key] = true;
             self.load.svg(key, path);
         });
+        /* Framework content pack (Phase 0/1): balance tunables. */
+        this.load.json('balance', 'js/content/balance.json?v=fw01');
     },
 
     create: function () {
+        if (typeof ContentRegistry !== 'undefined' && ContentRegistry.applyFromScene) {
+            ContentRegistry.applyFromScene(this, { balance: 'balance' });
+        } else if (typeof Balance !== 'undefined' && Balance.apply) {
+            Balance.apply(this.cache.json.get('balance'));
+        }
         this.anims.create({
             key: 'left',
             frames: this.anims.generateFrameNumbers('player', { frames: [1, 7, 1, 13] }),

@@ -1,0 +1,56 @@
+{
+  "move": {
+    "walkPxPerSec": 90,
+    "runPxPerSec": 180,
+    "runEnergyMax": 100,
+    "runDrainPerSec": 25,
+    "runRestorePerSec": 15
+  },
+  "combat": {
+    "tickSec": 0.6,
+    "meleeEngagePx": 24,
+    "mobAggroRangePx": 112,
+    "mobLeashTiles": 4,
+    "mobRespawnSec": 18,
+    "fleePushPx": 32,
+    "fleeGraceMs": 1100,
+    "poisonChance": 35
+  },
+  "regen": {
+    "baseSec": 4.5,
+    "townSec": 1.8,
+    "campSec": 1.1,
+    "campfireRangeTiles": 5
+  },
+  "interact": {
+    "fishRangePx": 28,
+    "stationRangePx": 28,
+    "lootPickupPx": 12,
+    "graveRangePx": 28,
+    "talkAwayPx": 40,
+    "talkWallPx": 48,
+    "longPressMs": 2000,
+    "longPressSlop": 8,
+    "doorAnimMs": 220,
+    "groundFireMs": 45000
+  },
+  "npc": {
+    "wanderChance": 80,
+    "wanderSpeed": 12,
+    "leashPx": 16,
+    "busyPx": 32
+  },
+  "gather": {
+    "fish": { "xp": 10, "msMin": 3000, "msMax": 5000 },
+    "woodcut": { "xp": 10, "msMin": 3000, "msMax": 5000, "respawnMs": 12000 },
+    "mine": { "xp": 10, "msMin": 3000, "msMax": 5000, "respawnMs": 10000 }
+  },
+  "craft": {
+    "fireDurationMs": 45000,
+    "firemakeXp": 40,
+    "hunterKillXp": 12,
+    "craftHideXp": 14,
+    "craftLeatherXp": 25,
+    "smithDaggerXp": 22
+  }
+}

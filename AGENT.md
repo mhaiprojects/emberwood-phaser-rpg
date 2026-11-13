@@ -11,6 +11,18 @@ Standing rules for agents working in this repo. Update this file when a durable 
 - **No Phaser 4** APIs (`createLayer` + arcade, not Phaser 4 tilemap). Vanilla JS `<script>` tags; cache-bust with `?v=` when you change a loaded file.
 - Game config is in `js/main.js`: 512×320, `pixelArt`, `roundPixels`, `Phaser.Scale.FIT`, arcade gravity 0, `input.keyboard: false`, `audio: { noAudio: true }`.
 
+## Framework layout (incremental)
+
+Plan: `.cursor/plans/framework-architecture.plan.md`. Folders:
+
+| Path | Role |
+|------|------|
+| `js/core/` | Reusable engine (`Balance.js`, `ContentRegistry.js`; later gather/combat services) |
+| `js/content/` | Data packs (`balance.json`; later items/zones/loot JSON) |
+| `js/game/` | Emberwood wiring (scenes still under `js/scenes/` until later phases) |
+
+**Load contract:** `Keys` → `Balance` → `ContentRegistry` → `Items` → … → scenes. BootScene `preload` loads `js/content/balance.json`; `create` calls `ContentRegistry.applyFromScene(this)` before Title so JSON overwrites Balance defaults into the same globals (`OW_COMBAT_TICK_SEC`, `FISH_ACTION_MS_*`, …). Prefer **code + GDD** over stale AGENT combat-default notes when they disagree.
+
 ## How to run
 
 - Serve the folder with a static HTTP server (`file://` fails CORS): `python3 -m http.server 8765` (or another free port), then open `http://127.0.0.1:<port>/` (or `http://localhost:<port>/`).

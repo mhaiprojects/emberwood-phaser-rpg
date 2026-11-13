@@ -1,13 +1,5 @@
-var OW_COMBAT_TICK_MS = 600;
-var OW_COMBAT_TICK_SEC = 0.6;
+/* OW_COMBAT_TICK_*, COMBAT_POISON_CHANCE, MOB_AGGRO_RANGE_PX, MOB_CHASE_SPEED: Balance.syncGlobals. */
 var POISON_MOB_TYPES = { Slime: true, Skeleton: true, Drake: true, Dragon: true };
-var COMBAT_POISON_CHANCE = 35;
-/* Cap alias (half player walk px @ speed 1); prefer mobMoveSpeed / mobMovePxPerSec. */
-var MOB_CHASE_SPEED = typeof MOB_MOVE_SPEED === 'number'
-    ? MOB_MOVE_SPEED
-    : ((typeof WALK_SPEED === 'number' ? WALK_SPEED : 90) / 2);
-/* Detection radius for mob-initiated agro (chase / open fight). */
-var MOB_AGGRO_RANGE_PX = 112;
 
 /* Fraction of (WALK_TILES_PER_SEC / 2) by type/size — all stay ≤ half player walk. */
 function mobMoveSpeedFactor(type) {

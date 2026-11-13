@@ -377,28 +377,12 @@ function sellToShop(hero, key, id, qty) {
 
 var WIND_STRIKE_XP = 5;
 var WIND_STRIKE_DAMAGE = 2;
-var FISH_SPOT_XP = 10;
+/* Gather/craft timings + XP amounts: Balance syncs FISH_* / WOODCUT_* / MINE_* / FIRE_* globals. */
 var FISH_CATCH_ID = 'rawshrimp';
 var FISH_NET_ID = 'net';
-var FISH_ACTION_MS_MIN = 3000;
-var FISH_ACTION_MS_MAX = 5000;
-var WOODCUT_TREE_XP = 10;
 var WOODCUT_LOG_ID = 'logs';
 var WOODCUT_AXE_ID = 'copperaxe';
-var WOODCUT_ACTION_MS_MIN = 3000;
-var WOODCUT_ACTION_MS_MAX = 5000;
-var WOODCUT_RESPAWN_MS = 12000;
-var MINE_ROCK_XP = 10;
 var MINE_PICK_ID = 'copperpick';
-var MINE_ACTION_MS_MIN = 3000;
-var MINE_ACTION_MS_MAX = 5000;
-var MINE_RESPAWN_MS = 10000;
-var HUNTER_KILL_XP = 12;
-var CRAFT_HIDE_XP = 14;
-var CRAFT_LEATHER_XP = 25;
-var SMITH_DAGGER_XP = 22;
-var FIREMAKE_XP = 40;
-var FIRE_DURATION_MS = 45000;
 var COOK_BURN_BASE = 0.52;
 var COOK_BURN_PER_LEVEL = 0.045;
 var RESOURCE_LEVEL = {

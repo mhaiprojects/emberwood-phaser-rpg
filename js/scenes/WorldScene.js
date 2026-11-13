@@ -1,39 +1,12 @@
-/* Author movement as tiles/sec at gameSpeed 1; GameClock converts to px/sec. */
-var WALK_TILES_PER_SEC = 90 / 16;
-var RUN_TILES_PER_SEC = 180 / 16;
-/* Legacy px aliases (gameSpeed 1, TILE_SIZE 16) for any remaining callers. */
-var WALK_SPEED = WALK_TILES_PER_SEC * 16;
-var RUN_SPEED = RUN_TILES_PER_SEC * 16;
-/* Cap for mob move (wander + chase); actual speeds via mobMoveSpeed(def) in tiles/sec. */
-var MOB_MOVE_TILES_PER_SEC = WALK_TILES_PER_SEC / 2;
-var MOB_MOVE_SPEED = MOB_MOVE_TILES_PER_SEC * 16;
-var RUN_ENERGY_MAX = 100;
-var RUN_DRAIN_PER_SEC = 25;
-var RUN_RESTORE_PER_SEC = 15;
-var OW_COMBAT_TICK_SEC = 0.6;
-var HP_REGEN_BASE_SEC = 4.5;
-var HP_REGEN_TOWN_SEC = 1.8;
-var HP_REGEN_CAMP_SEC = 1.1;
-var MOB_RESPAWN_SEC = 18;
+/*
+ * Movement / combat / regen / interact / gather timings live in Balance
+ * (js/core/Balance.js + js/content/balance.json). Globals are synced there.
+ * Scene-only visuals / tile collision lists stay here.
+ */
 var DEST_X_COLOR = 0xf8ff38;
 var DEST_X_ARM = 8;
-var LONG_PRESS_MS = 2000;
-var LONG_PRESS_SLOP = 8;
-var MOB_RESPAWN_MS = MOB_RESPAWN_SEC * 1000;
-var DOOR_ANIM_MS = 220;
 var DOOR_OPEN_SCALE_X = 0.18;
-var TALK_AWAY_PX = 40;
-var TALK_WALL_PX = 48;
-var FISH_RANGE = 28;
-var NPC_WANDER_CHANCE = 80;
-var NPC_WANDER_SPEED = 12;
-var NPC_LEASH_PX = 16;
-/* Chebyshev (king-move) tiles from spawn; wander / agro / fight chase share this leash. */
-var MOB_LEASH_TILES = 4;
-var NPC_BUSY_PX = 32;
 var NPC_FACE_ORDER = ['down', 'left', 'right', 'up'];
-var FLEE_PUSH_PX = 32;
-var FLEE_GRACE_MS = 1100;
 var COLLIDE_TILES = [
     TILE.WATER, TILE.TREE, TILE.ROCK, TILE.SHRINE,
     TILE.STALL, TILE.RANGE, TILE.ANVIL, TILE.BOOTH, TILE.FURNACE,
@@ -42,16 +15,6 @@ var COLLIDE_TILES = [
     TILE.ROCK_COPPER, TILE.ROCK_IRON, TILE.ROCK_DIAMOND, TILE.ROCK_DRAGONITE, TILE.ROCK_ESSENCE,
     TILE.FISHSPOT, TILE.FISHSPOT_TROUT, TILE.FISHSPOT_LOBSTER, TILE.FISHSPOT_SWORDFISH, TILE.FISHSPOT_SHARK
 ];
-var GROUND_FIRE_MS = 45000;
-var STATION_RANGE = 28;
-var MELEE_ENGAGE_PX = 24;
-var LOOT_PICKUP_PX = 12;
-var GRAVE_RANGE_PX = 28;
-var HP_REGEN_BASE_MS = HP_REGEN_BASE_SEC * 1000;
-var HP_REGEN_TOWN_MS = HP_REGEN_TOWN_SEC * 1000;
-var HP_REGEN_CAMP_MS = HP_REGEN_CAMP_SEC * 1000;
-/* 5 tiles at TILE_SIZE 16 (Euclidean px, same style as weapon ranges). */
-var CAMPFIRE_REGEN_RANGE = (typeof TILE_SIZE === 'number' ? TILE_SIZE : 16) * 5;
 var COLLISION_DEBUG_FILL = 0xf38630;
 var COLLISION_DEBUG_FACE = 0xffff66;
 
