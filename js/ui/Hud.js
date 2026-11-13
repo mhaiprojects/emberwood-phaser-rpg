@@ -758,6 +758,28 @@ var Hud = {
                     self.shopSell(qtyAttr);
                 }
             });
+            this.el.shop.addEventListener('dblclick', function (event) {
+                var stockSlot = event.target && event.target.closest && event.target.closest('[data-shop-stock]');
+                var invSlot = event.target && event.target.closest && event.target.closest('[data-shop-inv]');
+                if (!self.shopOpen()) {
+                    return;
+                }
+                if (stockSlot && !stockSlot.disabled) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    self.shopSelStock = stockSlot.getAttribute('data-shop-stock');
+                    self.shopSelInv = null;
+                    self.shopBuy('1');
+                    return;
+                }
+                if (invSlot) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    self.shopSelInv = invSlot.getAttribute('data-shop-inv');
+                    self.shopSelStock = null;
+                    self.shopSell('1');
+                }
+            });
         }
         if (this.el.bank) {
             this.el.bank.addEventListener('click', function (event) {
@@ -787,6 +809,25 @@ var Hud = {
                 event.stopPropagation();
                 btn.blur();
                 self.chooseBankAction(btn.getAttribute('data-bank-action'));
+            });
+            this.el.bank.addEventListener('dblclick', function (event) {
+                var slot = event.target && event.target.closest && event.target.closest('[data-bank-item]');
+                var side;
+                if (!slot || !self.bankOpen()) {
+                    return;
+                }
+                event.preventDefault();
+                event.stopPropagation();
+                slot.blur();
+                self.bankSel = slot.getAttribute('data-bank-item');
+                side = slot.getAttribute('data-bank-side');
+                if (side === 'inv') {
+                    self.chooseBankAction('deposit');
+                } else if (side === 'vault') {
+                    self.chooseBankAction('withdraw');
+                } else {
+                    self.renderBank();
+                }
             });
         }
         if (this.el.station) {
@@ -2393,6 +2434,7 @@ var Hud = {
         var inv;
         var stack;
         var sell;
+        var filled;
         var now = (window.game && window.game.scene.getScene('WorldScene') && window.game.scene.getScene('WorldScene').time)
             ? window.game.scene.getScene('WorldScene').time.now
             : Date.now();
@@ -2403,16 +2445,22 @@ var Hud = {
         html = '';
         for (i = 0; i < rows.length; i++) {
             row = rows[i];
-            html += '<button type="button" data-shop-stock="' + row.id + '"'
-                + (this.shopSelStock === row.id ? ' class="is-on"' : '')
-                + (row.stock < 1 ? ' disabled' : '') + '>'
-                + '<img class="pix" src="' + itemIcon(row.id) + '" alt="">'
-                + '<span>' + itemName(row.id) + '</span>'
-                + '<span class="shop-meta">' + row.stock + ' · ' + row.buyPrice + 'gp</span>'
-                + '</button>';
+            html += this.itemSlotHtml({
+                id: row.id,
+                qty: row.stock > 1 ? row.stock : 1,
+                selected: this.shopSelStock === row.id,
+                disabled: row.stock < 1,
+                price: row.buyPrice + 'gp',
+                tipExtra: row.buyPrice + 'gp buy · stock ' + row.stock,
+                attrs: {
+                    'data-shop-stock': row.id,
+                    'data-item': row.id
+                }
+            });
         }
         this.el.shopStock.innerHTML = html || '<p class="shop-empty">No stock.</p>';
         html = '';
+        filled = 0;
         inv = hero && hero.inventory ? hero.inventory : [];
         for (i = 0; i < inv.length; i++) {
             stack = inv[i];
@@ -2423,14 +2471,20 @@ var Hud = {
             if (!(sell > 0)) {
                 continue;
             }
-            html += '<button type="button" data-shop-inv="' + stack.id + '"'
-                + (this.shopSelInv === stack.id ? ' class="is-on"' : '') + '>'
-                + '<img class="pix" src="' + itemIcon(stack.id) + '" alt="">'
-                + '<span>' + itemName(stack.id) + (stack.qty > 1 ? ' ×' + stack.qty : '') + '</span>'
-                + '<span class="shop-meta">' + sell + 'gp</span>'
-                + '</button>';
+            filled += 1;
+            html += this.itemSlotHtml({
+                id: stack.id,
+                qty: stack.qty,
+                selected: this.shopSelInv === stack.id,
+                price: sell + 'gp',
+                tipExtra: sell + 'gp sell',
+                attrs: {
+                    'data-shop-inv': stack.id,
+                    'data-item': stack.id
+                }
+            });
         }
-        this.el.shopInv.innerHTML = html || '<p class="shop-empty">Nothing to sell.</p>';
+        this.el.shopInv.innerHTML = filled ? html : '<p class="shop-empty">Nothing to sell.</p>';
         this.renderHero(hero);
     },
 
@@ -2898,19 +2952,24 @@ var Hud = {
     bankGridHtml: function (list, side) {
         var html = '';
         var i;
+        var stack;
+        var cap = typeof INVENTORY_CAP === 'number' ? INVENTORY_CAP : 28;
         list = list || [];
-        for (i = 0; i < 28; i++) {
-            var stack = list[i];
-            if (stack) {
-                var def = ITEM_DB[stack.id] || { name: stack.id };
-                var on = this.bankSel === stack.id ? ' is-on' : '';
-                html += '<button type="button" class="inv-slot' + on + '" data-bank-side="' + side +
-                    '" data-bank-item="' + stack.id + '" title="' + def.name + '">' +
-                    '<img class="pix" src="' + itemIcon(stack.id) + '" alt="">' +
-                    (stack.qty > 1 ? '<span class="qty">' + stack.qty + '</span>' : '') +
-                    '</button>';
+        for (i = 0; i < cap; i++) {
+            stack = list[i];
+            if (stack && stack.id) {
+                html += this.itemSlotHtml({
+                    id: stack.id,
+                    qty: stack.qty,
+                    selected: this.bankSel === stack.id,
+                    attrs: {
+                        'data-bank-side': side,
+                        'data-bank-item': stack.id,
+                        'data-item': stack.id
+                    }
+                });
             } else {
-                html += '<div class="inv-slot"></div>';
+                html += this.itemSlotHtml({ empty: true });
             }
         }
         return html;
@@ -2958,10 +3017,16 @@ var Hud = {
             }
             if (!invHeld || !depositItem(hero, id, depQty)) {
                 this.log('You have nothing to deposit.');
+                this.renderBank();
                 return;
             }
             this.saveHero(hero);
             this.log('You deposit ' + depQty + ' x ' + itemName(id) + '.');
+            if (typeof itemQty === 'function' && itemQty(hero, id) < 1) {
+                this.bankSel = null;
+            }
+            this.renderBank();
+            this.renderHero(hero);
             return;
         }
         if (action === 'withdraw' || action === 'withdraw-x' || action === 'withdraw-all') {
@@ -2990,10 +3055,17 @@ var Hud = {
             }
             if (!held || !withdrawItem(hero, id, qty)) {
                 this.log('The bank is empty.');
+                this.renderBank();
                 return;
             }
             this.saveHero(hero);
             this.log('You withdraw ' + qty + ' x ' + itemName(id) + '.');
+            stack = typeof findStack === 'function' ? findStack(ensureBank(hero), id) : null;
+            if (!stack || !(stack.qty > 0)) {
+                this.bankSel = null;
+            }
+            this.renderBank();
+            this.renderHero(hero);
         }
     },
 
@@ -3524,7 +3596,7 @@ var Hud = {
         this.paintRunEnergy(energy, 100, on);
     },
 
-    invTooltip: function (id, qty) {
+    invTooltip: function (id, qty, extra) {
         var def = ITEM_DB[id] || {};
         var name = typeof itemName === 'function' ? itemName(id) : (def.name || id);
         var bits = [name];
@@ -3537,26 +3609,90 @@ var Hud = {
         if (typeof def.value === 'number') {
             bits.push(def.value + 'gp');
         }
+        if (extra) {
+            bits.push(String(extra));
+        }
         return bits.join(' · ');
+    },
+
+    /**
+     * Shared item grid cell (Inv / Bank / Shop).
+     * opts: { id, qty, attrs, selected, disabled, draggable, price, emptyAttrs, empty }
+     */
+    itemSlotHtml: function (opts) {
+        var id;
+        var qty;
+        var name;
+        var tip;
+        var attrs;
+        var key;
+        var html;
+        var classes;
+        opts = opts || {};
+        if (opts.empty) {
+            attrs = opts.emptyAttrs || {};
+            html = '<div class="inv-slot"';
+            for (key in attrs) {
+                if (Object.prototype.hasOwnProperty.call(attrs, key) && attrs[key] != null) {
+                    html += ' ' + key + '="' + attrs[key] + '"';
+                }
+            }
+            return html + '></div>';
+        }
+        id = opts.id;
+        qty = opts.qty > 0 ? opts.qty : 1;
+        name = typeof itemName === 'function' ? itemName(id) : ((ITEM_DB[id] && ITEM_DB[id].name) || id);
+        tip = opts.title != null ? opts.title : this.invTooltip(id, qty, opts.tipExtra);
+        classes = 'inv-slot' + (opts.selected ? ' is-on' : '');
+        html = '<button type="button" class="' + classes + '"';
+        if (opts.draggable) {
+            html += ' draggable="true"';
+        }
+        if (opts.disabled) {
+            html += ' disabled';
+        }
+        html += ' title="' + String(tip).replace(/"/g, '&quot;') + '"';
+        attrs = opts.attrs || {};
+        for (key in attrs) {
+            if (Object.prototype.hasOwnProperty.call(attrs, key) && attrs[key] != null) {
+                html += ' ' + key + '="' + attrs[key] + '"';
+            }
+        }
+        html += '>';
+        if (opts.price != null && opts.price !== '') {
+            html += '<span class="inv-price">' + opts.price + '</span>';
+        }
+        html += '<img class="pix" src="' + itemIcon(id) + '" alt="">';
+        html += '<span class="inv-name">' + name + '</span>';
+        if (qty > 1) {
+            html += '<span class="qty">' + qty + '</span>';
+        }
+        html += '</button>';
+        return html;
     },
 
     renderInventory: function (hero) {
         var html = '';
         var i;
         var self = this;
+        var stack;
         for (i = 0; i < INVENTORY_CAP; i++) {
-            var stack = hero.inventory[i];
+            stack = hero.inventory[i];
             if (stack) {
-                var name = typeof itemName === 'function' ? itemName(stack.id) : ((ITEM_DB[stack.id] && ITEM_DB[stack.id].name) || stack.id);
-                var tip = this.invTooltip(stack.id, stack.qty);
-                html += '<button type="button" class="inv-slot" draggable="true" data-item="' + stack.id +
-                    '" data-inv-index="' + i + '" title="' + tip + '">' +
-                    '<img class="pix" src="' + itemIcon(stack.id) + '" alt="">' +
-                    '<span class="inv-name">' + name + '</span>' +
-                    (stack.qty > 1 ? '<span class="qty">' + stack.qty + '</span>' : '') +
-                    '</button>';
+                html += this.itemSlotHtml({
+                    id: stack.id,
+                    qty: stack.qty,
+                    draggable: true,
+                    attrs: {
+                        'data-item': stack.id,
+                        'data-inv-index': i
+                    }
+                });
             } else {
-                html += '<div class="inv-slot" data-inv-index="' + i + '"></div>';
+                html += this.itemSlotHtml({
+                    empty: true,
+                    emptyAttrs: { 'data-inv-index': i }
+                });
             }
         }
         this.el.inv.innerHTML = html;

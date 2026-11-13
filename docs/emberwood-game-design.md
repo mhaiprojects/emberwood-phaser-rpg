@@ -306,8 +306,9 @@ Quest head icons: bang (available) → grey quest → green (ready to turn in).
 
 ### 5.5 Bank / shop
 
-- **Bank:** Elise or booth; deposit/withdraw 1/X/all; search; All/Food/Gear tabs; free Heal
-- **Shops:** Mira (general), Cole (arms); buy 1/5/10, sell 1/5/all; timed restock; ironman blocks trading
+- **Shared item grid:** Inv / Bank / Shop use the same `.inv-slot` cell (icon + name + qty) via `Hud.itemSlotHtml`
+- **Bank:** Elise or booth; Deposit / Withdraw 1/X/all controls; double-click moves 1 to the other side; search; All/Food/Gear tabs; free Heal
+- **Shops:** Mira (general), Cole (arms); Buy / Sell 1/5/10(all) controls; price badge top-left on slots; double-click buys/sells 1; timed restock; ironman blocks trading
 - Inventory cap **28**
 
 ### 5.6 Death

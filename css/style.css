@@ -258,6 +258,20 @@ img.pix {
     color: #ffe08a;
 }
 
+.inv-slot .inv-price {
+    position: absolute;
+    left: 2px;
+    top: 1px;
+    font-size: 9px;
+    color: #c9a227;
+    line-height: 1;
+    max-width: 55%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
 .skill-row img.pix,
 .equip-row img.pix,
 .enemy-btn img.pix {
@@ -828,38 +842,28 @@ button.ghost {
 
 #shop-stock,
 #shop-inv {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    max-height: 220px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3px;
+    max-height: 260px;
     overflow: auto;
 }
 
-#shop-stock button,
-#shop-inv button {
-    display: grid;
-    grid-template-columns: 20px 1fr auto;
-    gap: 6px;
-    align-items: center;
-    text-align: left;
-    padding: 4px 6px;
-    font-size: 12px;
-}
-
-#shop-stock button.is-on,
-#shop-inv button.is-on {
+#shop-stock .inv-slot.is-on,
+#shop-inv .inv-slot.is-on {
     outline: 1px solid #c9a227;
 }
 
-.shop-meta {
-    color: #c9a227;
-    font-size: 11px;
+#shop-stock .inv-slot:disabled {
+    opacity: 0.45;
+    cursor: default;
 }
 
 .shop-empty {
     margin: 0;
     color: #a89878;
     font-size: 12px;
+    grid-column: 1 / -1;
 }
 
 #fps-readout {
