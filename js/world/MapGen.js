@@ -905,27 +905,14 @@ function dungeonMobDefsForFloor(floor) {
     var dragonFloor = typeof dungeonIsDragonFloor === 'function'
         ? dungeonIsDragonFloor(n)
         : (n % 21 === 0);
-    var templates = [
-        { type: 'Bat', texture: 'mob-bat' },
-        { type: 'Goblin', texture: 'mob-goblin' },
-        { type: 'Skeleton', texture: 'mob-skeleton' },
-        { type: 'Slime', texture: 'mob-slime' }
-    ];
-    var spots = [
-        { x: 200, y: 180 },
-        { x: 280, y: 200 },
-        { x: 340, y: 160 },
-        { x: 240, y: 240 },
-        { x: 300, y: 260 },
-        { x: 160, y: 220 },
-        { x: 220, y: 150 },
-        { x: 320, y: 230 },
-        { x: 180, y: 190 },
-        { x: 260, y: 170 },
-        { x: 310, y: 210 },
-        { x: 190, y: 250 }
-    ];
-    var floorCount = 3 + Math.min(3, Math.floor((n - 1) / 4));
+    var dungeon = (typeof MAP_SPECIALS !== 'undefined' && MAP_SPECIALS
+        && MAP_SPECIALS.dungeon) ? MAP_SPECIALS.dungeon : {};
+    var templates = dungeon.floorMobTemplates || [];
+    var spots = dungeon.floorMobSpots || [];
+    var baseCount = typeof dungeon.floorBaseCount === 'number' ? dungeon.floorBaseCount : 3;
+    var step = typeof dungeon.floorCountStep === 'number' ? dungeon.floorCountStep : 4;
+    var cap = typeof dungeon.floorCountCap === 'number' ? dungeon.floorCountCap : 3;
+    var floorCount = baseCount + Math.min(cap, Math.floor((n - 1) / step));
     var hero = (typeof Hud !== 'undefined' && Hud.hero) ? Hud.hero() : null;
     var mod = typeof mobSpawnModifierValue === 'function'
         ? mobSpawnModifierValue(hero)
@@ -941,11 +928,14 @@ function dungeonMobDefsForFloor(floor) {
         templates.push({ type: 'Drake', texture: 'mob-drake' });
     }
     for (i = 0; i < count; i++) {
+        if (!templates.length || !spots.length) {
+            break;
+        }
         base = templates[(n + i * 3) % templates.length];
         type = base.type;
-        if (dragonFloor && i === 0) {
-            type = 'Dragon';
-            base = { type: 'Dragon', texture: 'mob-dragon' };
+        if (dragonFloor && i === 0 && dungeon.dragonFloorTemplate) {
+            base = dungeon.dragonFloorTemplate;
+            type = base.type || 'Dragon';
         }
         stats = typeof mobStatsFor === 'function'
             ? mobStatsFor(type, level)
@@ -953,7 +943,7 @@ function dungeonMobDefsForFloor(floor) {
         def = {
             type: type,
             texture: base.texture,
-            tint: type === 'Dragon' ? 0xff4422 : 0xffffff,
+            tint: typeof base.tint === 'number' ? base.tint : 0xffffff,
             level: level,
             hp: stats.hp,
             damage: stats.damage,
@@ -961,11 +951,12 @@ function dungeonMobDefsForFloor(floor) {
             xp: stats.xp,
             x: spots[i].x,
             y: spots[i].y,
-            attackRange: type === 'Bat' ? 96
-                : (type === 'Dragon' ? 120
-                    : (type === 'Drake' || type === 'Slime' ? 80 : 24))
+            attackRange: (typeof MOB_TYPE_ATTACK_RANGE !== 'undefined'
+                && MOB_TYPE_ATTACK_RANGE && MOB_TYPE_ATTACK_RANGE[type] != null)
+                ? MOB_TYPE_ATTACK_RANGE[type]
+                : 24
         };
-        if (type === 'Dragon') {
+        if (base.alwaysAgro) {
             def.alwaysAgro = true;
         }
         out.push(def);

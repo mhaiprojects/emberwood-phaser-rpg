@@ -7,7 +7,23 @@
   },
   "dungeon": {
     "zoneId": "dungeon",
-    "surfaceZoneId": "darkmine"
+    "surfaceZoneId": "darkmine",
+    "floorMobTemplates": [
+      { "type": "Bat", "texture": "mob-bat" },
+      { "type": "Goblin", "texture": "mob-goblin" },
+      { "type": "Skeleton", "texture": "mob-skeleton" },
+      { "type": "Slime", "texture": "mob-slime" }
+    ],
+    "floorMobSpots": [
+      { "x": 200, "y": 180 }, { "x": 280, "y": 200 }, { "x": 340, "y": 160 },
+      { "x": 240, "y": 240 }, { "x": 300, "y": 260 }, { "x": 160, "y": 220 },
+      { "x": 220, "y": 150 }, { "x": 320, "y": 230 }, { "x": 180, "y": 190 },
+      { "x": 260, "y": 170 }, { "x": 310, "y": 210 }, { "x": 190, "y": 250 }
+    ],
+    "floorBaseCount": 3,
+    "floorCountStep": 4,
+    "floorCountCap": 3,
+    "dragonFloorTemplate": { "type": "Dragon", "texture": "mob-dragon", "tint": 16729122, "alwaysAgro": true }
   },
   "dragonDen": {
     "zoneId": "dragonden",
