@@ -1,0 +1,25 @@
+{
+  "safeZones": {
+    "haven": {
+      "centerFrom": "TOWN_CENTER_TILE",
+      "radiusTiles": 5
+    }
+  },
+  "dungeon": {
+    "zoneId": "dungeon",
+    "surfaceZoneId": "darkmine"
+  },
+  "dragonDen": {
+    "zoneId": "dragonden",
+    "gateZoneId": "highlands"
+  },
+  "shoreFishZoneId": "southshore",
+  "features": {
+    "haven": ["safeZone", "bank", "townRegen"],
+    "darkmine": ["mineShaft", "dungeonEntrance"],
+    "dragonden": ["dragonDen"],
+    "dungeon": ["dungeonFloors"],
+    "southshore": ["shoreFish"],
+    "graves": ["wildSkull"]
+  }
+}

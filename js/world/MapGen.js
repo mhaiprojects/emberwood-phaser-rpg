@@ -570,20 +570,48 @@ function paintCampfireSpots(grid, zoneId) {
     }
 }
 
+function biomeParamBlock(biome) {
+    var params = typeof BIOME_PARAMS !== 'undefined' ? BIOME_PARAMS : null;
+    var key = biome;
+    if (!params) {
+        return null;
+    }
+    if (biome === 'plains') {
+        key = 'default';
+    }
+    if (biome === 'farm') {
+        key = 'plain';
+    }
+    return params[key] || params.default || null;
+}
+
+function biomeScatterCount(biome, kind, fallback) {
+    var block = biomeParamBlock(biome);
+    if (block && block.scatter && typeof block.scatter[kind] === 'number') {
+        return block.scatter[kind];
+    }
+    return fallback;
+}
+
 function generateMap(seed, biome, neighbors, zoneId) {
     var grid = makeGrid(TILE.GRASS);
     var x;
     var y;
+    var swampParams = biomeParamBlock('swamp');
+    var swampMod = swampParams && swampParams.waterModulo ? swampParams.waterModulo : 44;
+    var swampThr = swampParams && swampParams.waterThreshold != null ? swampParams.waterThreshold : 3;
+    var shoreFromBottom = (typeof BIOME_PARAMS !== 'undefined' && BIOME_PARAMS
+        && typeof BIOME_PARAMS.shoreWaterFromBottom === 'number')
+        ? BIOME_PARAMS.shoreWaterFromBottom
+        : 6;
     for (y = 0; y < MAP_H; y++) {
         for (x = 0; x < MAP_W; x++) {
             var n = hash2(x, y, seed) % 11;
             if (biome === 'swamp') {
-                /* Former n%11<3 (~27% water). Keep ~1/4: n%44<3 (~6.8%). */
-                var swampN = hash2(x, y, seed) % 44;
-                grid[y][x] = swampN < 3 ? TILE.WATER : ((swampN % 11) === 3 ? TILE.FLOWER : TILE.GRASS2);
+                var swampN = hash2(x, y, seed) % swampMod;
+                grid[y][x] = swampN < swampThr ? TILE.WATER : ((swampN % 11) === 3 ? TILE.FLOWER : TILE.GRASS2);
             } else if (biome === 'shore') {
-                /* Thinner coast band so interior path-block stays under 30%. */
-                grid[y][x] = y > MAP_H - 6 ? TILE.WATER : (n === 0 ? TILE.FLOWER : TILE.GRASS);
+                grid[y][x] = y > MAP_H - shoreFromBottom ? TILE.WATER : (n === 0 ? TILE.FLOWER : TILE.GRASS);
             } else if (biome === 'hills') {
                 grid[y][x] = n === 0 ? TILE.GRASS2 : TILE.GRASS;
             } else if (biome === 'grave') {
@@ -624,7 +652,7 @@ function generateMap(seed, biome, neighbors, zoneId) {
             }
         }
         setCell(grid, 18, 8, TILE.SHRINE);
-        scatter(grid, TILE.FLOWER, 18, seed, true);
+        scatter(grid, TILE.FLOWER, biomeScatterCount('town', 'flower', 18), seed, true);
         setCell(grid, HAVEN_GATE_TILE.x, HAVEN_GATE_TILE.y - 2, TILE.ROCK);
         setCell(grid, HAVEN_GATE_TILE.x, HAVEN_GATE_TILE.y - 1, TILE.ROCK);
         setCell(grid, HAVEN_GATE_TILE.x, HAVEN_GATE_TILE.y, TILE.PATH);
@@ -658,27 +686,26 @@ function generateMap(seed, biome, neighbors, zoneId) {
         setTileInteract(townZoneId, TOWN_PROPS.anvil.x, TOWN_PROPS.anvil.y, { kind: 'anvil', verb: 'smith' });
         setTileInteract(townZoneId, TOWN_PROPS.furnace.x, TOWN_PROPS.furnace.y, { kind: 'furnace', verb: 'smelt' });
     } else if (biome === 'forest') {
-        scatter(grid, TILE.TREE, 70, seed, true);
-        scatter(grid, TILE.ROCK, 10, seed + 11, true);
-        scatter(grid, TILE.FLOWER, 12, seed + 1, true);
+        scatter(grid, TILE.TREE, biomeScatterCount('forest', 'tree', 70), seed, true);
+        scatter(grid, TILE.ROCK, biomeScatterCount('forest', 'rock', 10), seed + 11, true);
+        scatter(grid, TILE.FLOWER, biomeScatterCount('forest', 'flower', 12), seed + 1, true);
     } else if (biome === 'hills') {
-        scatter(grid, TILE.ROCK, 36, seed, true);
-        scatter(grid, TILE.TREE, 16, seed + 2, true);
+        scatter(grid, TILE.ROCK, biomeScatterCount('hills', 'rock', 36), seed, true);
+        scatter(grid, TILE.TREE, biomeScatterCount('hills', 'tree', 16), seed + 2, true);
         placeHighlandsMineOres(grid);
         placeDragonDenGate(grid, zoneId || 'highlands', false);
     } else if (biome === 'den') {
         generateDragonDenMap(grid, seed, zoneId || 'dragonden');
     } else if (biome === 'farm') {
-        scatter(grid, TILE.FLOWER, 40, seed, true);
-        scatter(grid, TILE.TREE, 10, seed + 3, true);
-        scatter(grid, TILE.ROCK, 6, seed + 12, true);
+        scatter(grid, TILE.FLOWER, biomeScatterCount('farm', 'flower', 40), seed, true);
+        scatter(grid, TILE.TREE, biomeScatterCount('farm', 'tree', 10), seed + 3, true);
+        scatter(grid, TILE.ROCK, biomeScatterCount('farm', 'rock', 6), seed + 12, true);
         house(grid, FARM_HOUSES[0].x, FARM_HOUSES[0].y, FARM_HOUSES[0].w, FARM_HOUSES[0].h);
         setCell(grid, LOCKED_DOOR.tx, LOCKED_DOOR.ty, TILE.DOOR);
     } else if (biome === 'swamp') {
-        /* Was 28; keep ~1/4 of water-scatter presence (mire pathing). */
-        scatter(grid, TILE.WATER, 7, seed, true);
-        scatter(grid, TILE.TREE, 22, seed + 4, true);
-        scatter(grid, TILE.ROCK, 12, seed + 13, true);
+        scatter(grid, TILE.WATER, biomeScatterCount('swamp', 'water', 7), seed, true);
+        scatter(grid, TILE.TREE, biomeScatterCount('swamp', 'tree', 22), seed + 4, true);
+        scatter(grid, TILE.ROCK, biomeScatterCount('swamp', 'rock', 12), seed + 13, true);
     } else if (biome === 'shore') {
         for (x = 1; x < MAP_W - 1; x++) {
             if (x > 14 && x < 22) {
@@ -686,9 +713,8 @@ function generateMap(seed, biome, neighbors, zoneId) {
             }
             setCell(grid, x, MAP_H - 7, TILE.PATH);
         }
-        /* Low TREE/ROCK scatter — keep dock / boat / fish spots; cap enforces ≤30%. */
-        scatter(grid, TILE.ROCK, 4, seed, true);
-        scatter(grid, TILE.TREE, 4, seed + 14, true);
+        scatter(grid, TILE.ROCK, biomeScatterCount('shore', 'rock', 4), seed, true);
+        scatter(grid, TILE.TREE, biomeScatterCount('shore', 'tree', 4), seed + 14, true);
         var di;
         for (di = 0; di < SHORE_PROPS.planks.length; di++) {
             setCell(grid, SHORE_PROPS.planks[di].x, SHORE_PROPS.planks[di].y, TILE.DOCK);
@@ -702,9 +728,8 @@ function generateMap(seed, biome, neighbors, zoneId) {
                     : 'rawshrimp'));
         }
     } else if (biome === 'mine') {
-        /* Sparse rocks so corridors stay open; ore nodes + shaft house placed after. */
-        scatter(grid, TILE.ROCK, 18, seed, true);
-        scatter(grid, TILE.TREE, 4, seed + 5, true);
+        scatter(grid, TILE.ROCK, biomeScatterCount('mine', 'rock', 18), seed, true);
+        scatter(grid, TILE.TREE, biomeScatterCount('mine', 'tree', 4), seed + 5, true);
         house(grid, MINE_SHAFT_HOUSE.x, MINE_SHAFT_HOUSE.y, MINE_SHAFT_HOUSE.w, MINE_SHAFT_HOUSE.h);
         placeMineOres(grid);
         clearZoneTags('darkmine');
@@ -720,12 +745,12 @@ function generateMap(seed, biome, neighbors, zoneId) {
         });
         /* Keep doorway walkable; WorldScene paints a shaft marker + label on top. */
     } else if (biome === 'plains') {
-        scatter(grid, TILE.FLOWER, 24, seed, true);
-        scatter(grid, TILE.TREE, 14, seed + 6, true);
-        scatter(grid, TILE.ROCK, 8, seed + 15, true);
+        scatter(grid, TILE.FLOWER, biomeScatterCount('plains', 'flower', 24), seed, true);
+        scatter(grid, TILE.TREE, biomeScatterCount('plains', 'tree', 14), seed + 6, true);
+        scatter(grid, TILE.ROCK, biomeScatterCount('plains', 'rock', 8), seed + 15, true);
     } else if (biome === 'grave') {
-        scatter(grid, TILE.ROCK, 22, seed, true);
-        scatter(grid, TILE.TREE, 18, seed + 7, true);
+        scatter(grid, TILE.ROCK, biomeScatterCount('grave', 'rock', 22), seed, true);
+        scatter(grid, TILE.TREE, biomeScatterCount('grave', 'tree', 18), seed + 7, true);
         var ti;
         for (ti = 0; ti < GRAVE_PROPS.tombs.length; ti++) {
             setCell(grid, GRAVE_PROPS.tombs[ti].x, GRAVE_PROPS.tombs[ti].y, TILE.TOMB);

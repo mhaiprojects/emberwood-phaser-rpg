@@ -18,7 +18,7 @@ Plan: `.cursor/plans/framework-architecture.plan.md`. Folders:
 | Path | Role |
 |------|------|
 | `js/core/` | Engine (`Balance`, `GameDataPack`, `ContentRegistry`, `GatherController`, `SettingsRegistry`) |
-| `game-data/game1/` | Emberwood pack (JSON + `assets/`). Swap pack with `?pack=` / `EMBERWOOD_PACK` |
+| `GameWorld/emberwood/` | Emberwood pack (JSON + `assets/`). Swap pack with `?pack=` / `EMBERWOOD_PACK` |
 | `js/game/` | Reserved; scenes stay under `js/scenes/` |
 
 **Load contract:** `Keys` → `Balance` → `GameDataPack` → `ContentRegistry` → … → Boot two-wave (pack JSON → apply → art). See `docs/framework.md`. Prefer **code + GDD** over stale AGENT combat-default notes when they disagree.

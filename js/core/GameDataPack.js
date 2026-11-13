@@ -1,11 +1,11 @@
 /**
- * Active game content pack (JSON + assets under game-data/{id}/).
+ * Active game content pack (JSON + assets under GameWorld/{id}/).
  * Engine code resolves all content URLs through this module.
  */
 var GameDataPack = {
-    DEFAULT_ID: 'game1',
-    BASE: 'game-data',
-    _id: 'game1',
+    DEFAULT_ID: 'emberwood',
+    BASE: 'GameWorld',
+    _id: 'emberwood',
     _meta: null,
     _version: '1',
 
@@ -86,7 +86,9 @@ var GameDataPack = {
         if (!clean) {
             return this.rootUrl() + '?v=' + encodeURIComponent(this.version());
         }
-        if (/^https?:\/\//i.test(clean) || clean.indexOf('game-data/') === 0) {
+        if (/^https?:\/\//i.test(clean)
+                || clean.indexOf('GameWorld/') === 0
+                || clean.indexOf('game-data/') === 0) {
             return clean.indexOf('?') >= 0
                 ? clean
                 : (clean + '?v=' + encodeURIComponent(this.version()));
@@ -111,7 +113,7 @@ var GameDataPack = {
         if (/^https?:\/\//i.test(path)) {
             return path;
         }
-        if (path.indexOf('game-data/') === 0) {
+        if (path.indexOf('GameWorld/') === 0 || path.indexOf('game-data/') === 0) {
             return path.indexOf('?') >= 0 ? path : (path + '?v=' + encodeURIComponent(this.version()));
         }
         return this.assetUrl(path.replace(/^\/+/, ''));
@@ -148,7 +150,7 @@ var GameDataPack = {
         return true;
     },
 
-    /** Rewrite DOM imgs that still point at legacy root assets/… */
+    /** Rewrite DOM imgs: data-pack-src preferred, else legacy assets/… prefix. */
     rewriteDomAssets: function (root) {
         var scope = root || (typeof document !== 'undefined' ? document : null);
         var nodes;
@@ -156,18 +158,29 @@ var GameDataPack = {
         var el;
         var src;
         var href;
+        var packSrc;
         if (!scope || !scope.querySelectorAll) {
             return;
         }
-        nodes = scope.querySelectorAll('img[src], link[rel="icon"]');
+        nodes = scope.querySelectorAll('img[src], img[data-pack-src], link[rel="icon"]');
         for (i = 0; i < nodes.length; i++) {
             el = nodes[i];
             if (el.tagName === 'IMG') {
+                packSrc = el.getAttribute('data-pack-src');
+                if (packSrc) {
+                    el.setAttribute('src', this.assetUrl(packSrc));
+                    continue;
+                }
                 src = el.getAttribute('src');
                 if (src && src.indexOf('assets/') === 0) {
                     el.setAttribute('src', this.assetUrl(src));
                 }
             } else if (el.tagName === 'LINK') {
+                packSrc = el.getAttribute('data-pack-src');
+                if (packSrc) {
+                    el.setAttribute('href', this.assetUrl(packSrc));
+                    continue;
+                }
                 href = el.getAttribute('href');
                 if (href && href.indexOf('assets/') === 0) {
                     el.setAttribute('href', this.assetUrl(href));

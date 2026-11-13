@@ -26,7 +26,7 @@ var BootScene = new Phaser.Class({
         /* Wave A1: pack.json only */
         this.load.json('packMeta', typeof GameDataPack !== 'undefined'
             ? GameDataPack.packJsonUrl()
-            : 'game-data/game1/pack.json');
+            : 'GameWorld/emberwood/pack.json');
     },
 
     create: function () {

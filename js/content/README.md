@@ -1,5 +1,5 @@
 # js/content (legacy)
 
-Game content moved to **`game-data/game1/`** (JSON + `assets/`).
+Game content lives in **`GameWorld/emberwood/`** (JSON + `assets/`). See `docs/framework.md`.
 
 Load via `GameDataPack` + BootScene. See `docs/framework.md`.

@@ -8,6 +8,12 @@ var MOB_EDGE_MARGIN_TILES = 2;
 var HAVEN_SAFE_RADIUS_TILES = 5;
 
 function havenSafeCenterTile() {
+    var policy = typeof Content !== 'undefined' && Content.safeZonePolicy
+        ? Content.safeZonePolicy('haven')
+        : null;
+    if (policy && policy.center) {
+        return policy.center;
+    }
     if (typeof TOWN_CENTER_TILE !== 'undefined' && TOWN_CENTER_TILE) {
         return TOWN_CENTER_TILE;
     }
@@ -18,12 +24,37 @@ function havenSafeCenterTile() {
 }
 
 function havenSafeRadiusTiles() {
+    var policy = typeof Content !== 'undefined' && Content.safeZonePolicy
+        ? Content.safeZonePolicy('haven')
+        : null;
+    if (policy && typeof policy.radiusTiles === 'number') {
+        return policy.radiusTiles;
+    }
     return typeof HAVEN_SAFE_RADIUS_TILES === 'number' ? HAVEN_SAFE_RADIUS_TILES : 5;
 }
 
 function havenSafeForbiddenTile(tx, ty) {
     var c = havenSafeCenterTile();
     var r = havenSafeRadiusTiles();
+    return Math.max(Math.abs(tx - c.x), Math.abs(ty - c.y)) <= r;
+}
+
+/** Pack-driven: any zone with a safeZones entry in MAP_SPECIALS. */
+function zoneSafeForbiddenTile(tx, ty, zoneId) {
+    var policy;
+    var c;
+    var r;
+    if (!zoneId) {
+        return false;
+    }
+    if (typeof Content !== 'undefined' && Content.safeZonePolicy) {
+        policy = Content.safeZonePolicy(zoneId);
+    }
+    if (!policy) {
+        return zoneId === 'haven' && havenSafeForbiddenTile(tx, ty);
+    }
+    c = policy.center || havenSafeCenterTile();
+    r = typeof policy.radiusTiles === 'number' ? policy.radiusTiles : 5;
     return Math.max(Math.abs(tx - c.x), Math.abs(ty - c.y)) <= r;
 }
 
@@ -47,12 +78,12 @@ function mobEdgeForbiddenAt(wx, wy) {
     return mobEdgeForbiddenTile(tile.tx, tile.ty);
 }
 
-/** Edge inset + Emberhaven safe courtyard (when zoneId is haven). */
+/** Edge inset + pack safe-zone policy (when zone has a safeZones entry). */
 function mobForbiddenTile(tx, ty, zoneId) {
     if (mobEdgeForbiddenTile(tx, ty)) {
         return true;
     }
-    if (zoneId === 'haven' && havenSafeForbiddenTile(tx, ty)) {
+    if (zoneSafeForbiddenTile(tx, ty, zoneId)) {
         return true;
     }
     return false;

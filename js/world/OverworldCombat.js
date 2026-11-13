@@ -1,22 +1,20 @@
 /* OW_COMBAT_TICK_*, COMBAT_POISON_CHANCE, MOB_AGGRO_RANGE_PX, MOB_CHASE_SPEED: Balance.syncGlobals. */
 var POISON_MOB_TYPES = { Slime: true, Skeleton: true, Drake: true, Dragon: true };
 
-/* Fraction of (WALK_TILES_PER_SEC / 2) by type/size — all stay ≤ half player walk. */
+/* Fraction of (WALK_TILES_PER_SEC / 2) by type/size — all stay ≤ half player walk.
+ * Factors come from GameWorld mob-combat.json when applied. */
 function mobMoveSpeedFactor(type) {
+    var factors = typeof MOB_MOVE_SPEED_FACTOR !== 'undefined' ? MOB_MOVE_SPEED_FACTOR : null;
     if (typeof isGiantMob === 'function' && isGiantMob(type)) {
-        return type === 'Dragon' ? 0.5 : 0.58;
+        if (factors && type && factors[type] != null) {
+            return factors[type];
+        }
+        return factors && factors.giantDefault != null ? factors.giantDefault : 0.58;
     }
-    if (type === 'Cow' || type === 'Slime') {
-        return 0.62;
+    if (factors && type && factors[type] != null) {
+        return factors[type];
     }
-    if (type === 'Chicken' || type === 'Rabbit' || type === 'Crab') {
-        return 0.82;
-    }
-    if (type === 'Bat') {
-        return 0.9;
-    }
-    /* Goblin, Skeleton, and unknown typical foes: near half walk. */
-    return 1;
+    return factors && factors.default != null ? factors.default : 1;
 }
 
 /* Wander, agro chase, and fight chase share this speed in tiles/sec at gameSpeed 1. */

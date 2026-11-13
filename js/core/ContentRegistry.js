@@ -99,6 +99,10 @@ var ContentRegistry = {
         var art;
         var mapDim;
         var mapProps;
+        var mapSpecials;
+        var mobCombat;
+        var quests;
+        var biomeParams;
         var bal;
 
         if (!cache) {
@@ -189,6 +193,51 @@ var ContentRegistry = {
         mapProps = this._get(cache, 'mapProps');
         if (mapProps) {
             this._copyKeys(mapProps);
+        }
+
+        mapSpecials = this._get(cache, 'mapSpecials');
+        if (mapSpecials) {
+            window.MAP_SPECIALS = mapSpecials;
+            if (mapSpecials.safeZones && mapSpecials.safeZones.haven
+                    && typeof mapSpecials.safeZones.haven.radiusTiles === 'number') {
+                window.HAVEN_SAFE_RADIUS_TILES = mapSpecials.safeZones.haven.radiusTiles;
+            }
+            if (mapSpecials.dungeon && mapSpecials.dungeon.surfaceZoneId) {
+                window.DUNGEON_SURFACE_ZONE = mapSpecials.dungeon.surfaceZoneId;
+            }
+            if (mapSpecials.dungeon && mapSpecials.dungeon.zoneId) {
+                window.DUNGEON_ZONE_ID = mapSpecials.dungeon.zoneId;
+            }
+        }
+
+        mobCombat = this._get(cache, 'mobCombat');
+        if (mobCombat) {
+            window.MOB_COMBAT = mobCombat;
+            if (mobCombat.MOB_BASE_LEVEL) {
+                window.MOB_BASE_LEVEL = mobCombat.MOB_BASE_LEVEL;
+            }
+            if (mobCombat.MOB_TYPE_ATTACK_RANGE) {
+                window.MOB_TYPE_ATTACK_RANGE = mobCombat.MOB_TYPE_ATTACK_RANGE;
+            }
+            if (mobCombat.POISON_MOB_TYPES) {
+                window.POISON_MOB_TYPES = mobCombat.POISON_MOB_TYPES;
+            }
+            if (mobCombat.MOB_MOVE_SPEED_FACTOR) {
+                window.MOB_MOVE_SPEED_FACTOR = mobCombat.MOB_MOVE_SPEED_FACTOR;
+            }
+        }
+
+        quests = this._get(cache, 'quests');
+        if (quests) {
+            window.QUESTS = quests;
+        }
+
+        biomeParams = this._get(cache, 'biomeParams');
+        if (biomeParams) {
+            window.BIOME_PARAMS = biomeParams;
+            if (typeof biomeParams.maxPathBlockRatio === 'number') {
+                window.MAX_PATH_BLOCK_RATIO = biomeParams.maxPathBlockRatio;
+            }
         }
 
         this.ready = true;

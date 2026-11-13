@@ -4,7 +4,7 @@ import json
 import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SVG = os.path.join(ROOT, "game-data", "game1", "assets", "svg")
+SVG = os.path.join(ROOT, "GameWorld", "emberwood", "assets", "svg")
 
 PAL = {
     ".": None,

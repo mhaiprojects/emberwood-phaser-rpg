@@ -1,0 +1,43 @@
+{
+  "POISON_MOB_TYPES": {
+    "Slime": true,
+    "Skeleton": true,
+    "Drake": true,
+    "Dragon": true
+  },
+  "MOB_BASE_LEVEL": {
+    "Chicken": 1,
+    "Rabbit": 1,
+    "Cow": 3,
+    "Crab": 8,
+    "Bat": 8,
+    "Goblin": 8,
+    "Slime": 13,
+    "Skeleton": 18,
+    "Drake": 28,
+    "Dragon": 53
+  },
+  "MOB_TYPE_ATTACK_RANGE": {
+    "Chicken": 22,
+    "Rabbit": 20,
+    "Cow": 26,
+    "Goblin": 24,
+    "Crab": 24,
+    "Skeleton": 26,
+    "Bat": 96,
+    "Slime": 72,
+    "Drake": 100,
+    "Dragon": 120
+  },
+  "MOB_MOVE_SPEED_FACTOR": {
+    "Dragon": 0.5,
+    "giantDefault": 0.58,
+    "Cow": 0.62,
+    "Slime": 0.62,
+    "Chicken": 0.82,
+    "Rabbit": 0.82,
+    "Crab": 0.82,
+    "Bat": 0.9,
+    "default": 1
+  }
+}

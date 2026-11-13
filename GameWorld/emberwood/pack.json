@@ -1,12 +1,15 @@
 {
-  "id": "game1",
+  "id": "emberwood",
   "title": "Emberwood",
-  "version": "gdp1",
+  "version": "gev1",
   "assetRoot": "assets",
-  "saveKey": "emberwood-save-game1",
+  "saveKey": "emberwood-save-emberwood",
   "legacySaveKeys": [
+    "emberwood-save-game1",
     "emberwood-save-v1"
   ],
+  "defaultZoneId": "haven",
+  "defaultQuestId": "goblins",
   "files": {
     "balance": "balance.json",
     "items": "items.json",
@@ -19,9 +22,13 @@
     "zoneMobs": "zone-mobs.json",
     "skills": "skills.json",
     "mobScales": "mob-scales.json",
+    "mobCombat": "mob-combat.json",
     "heroDefaults": "hero-defaults.json",
     "artManifest": "art-manifest.json",
+    "quests": "quests.json",
+    "biomeParams": "biome-params.json",
     "mapDimensions": "map/dimensions.json",
-    "mapProps": "map/props.json"
+    "mapProps": "map/props.json",
+    "mapSpecials": "map/specials.json"
   }
 }

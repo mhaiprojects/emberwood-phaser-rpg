@@ -1,0 +1,36 @@
+{
+  "goblins": {
+    "id": "goblins",
+    "npcKey": "guild",
+    "goal": 5,
+    "mobType": "Goblin",
+    "stages": {
+      "0": { "lines": ["Goblins plague Northwood. Bring me 5 kills."] },
+      "1": { "progressLine": "{progress} of {goal} goblins down. Keep at it." },
+      "2": {
+        "complete": true,
+        "rewards": { "coins": 50, "skills": { "attack": 25, "defence": 15 } },
+        "lines": ["The militia thanks you. 50 gold and combat training."],
+        "toastTitle": "Quest complete",
+        "toastBody": "Militia task — 1 QP, 50gp, Attack + Defence XP."
+      },
+      "3": { "lines": ["Emberhaven stands because of you."] }
+    }
+  },
+  "shipment": {
+    "id": "shipment",
+    "npcKey": "fisher",
+    "sideKey": "shipment",
+    "goal": 3,
+    "mobType": "Crab",
+    "rewards": { "coins": 25, "skills": { "fishing": 20 } }
+  },
+  "bats": {
+    "id": "bats",
+    "npcKey": "miner",
+    "sideKey": "bats",
+    "goal": 4,
+    "mobType": "Bat",
+    "rewards": { "coins": 30, "skills": { "mining": 20 } }
+  }
+}
