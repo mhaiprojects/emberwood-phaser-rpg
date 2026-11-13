@@ -1,7 +1,7 @@
 {
   "id": "emberwood",
   "title": "Emberwood",
-  "version": "gev1",
+  "version": "gev1c",
   "assetRoot": "assets",
   "saveKey": "emberwood-save-emberwood",
   "legacySaveKeys": [
@@ -27,8 +27,12 @@
     "artManifest": "art-manifest.json",
     "quests": "quests.json",
     "biomeParams": "biome-params.json",
+    "spells": "spells.json",
+    "clues": "clues.json",
+    "legacyMigrations": "legacy-migrations.json",
     "mapDimensions": "map/dimensions.json",
     "mapProps": "map/props.json",
-    "mapSpecials": "map/specials.json"
+    "mapSpecials": "map/specials.json",
+    "mapInteriors": "map/interiors.json"
   }
 }

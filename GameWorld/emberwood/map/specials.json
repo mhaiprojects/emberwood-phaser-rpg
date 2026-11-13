@@ -15,7 +15,7 @@
   },
   "shoreFishZoneId": "southshore",
   "features": {
-    "haven": ["safeZone", "bank", "townRegen"],
+    "haven": ["safeZone", "bank", "townRegen", "townStations", "noRandomEvents"],
     "darkmine": ["mineShaft", "dungeonEntrance"],
     "dragonden": ["dragonDen"],
     "dungeon": ["dungeonFloors"],

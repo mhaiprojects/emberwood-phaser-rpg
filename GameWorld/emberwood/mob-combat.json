@@ -39,5 +39,80 @@
     "Crab": 0.82,
     "Bat": 0.9,
     "default": 1
+  },
+  "MOB_TIER_ORDER": [
+    "Dragon", "Drake", "Skeleton", "Slime", "Goblin",
+    "Bat", "Crab", "Cow", "Rabbit", "Chicken"
+  ],
+  "MOB_SPAWN_MODIFIER": 1.0,
+  "MOB_SPAWN_MODIFIER_OPTIONS": [0.5, 1, 1.5, 2],
+  "MOB_SPAWN_POOL_MODIFIER": 2,
+  "statsByType": {
+    "Chicken": {
+      "hp": { "base": 10, "mulLevel": 2 },
+      "damage": { "base": 2, "ceilDivLevel": 2 },
+      "gold": { "flat": 1 },
+      "xp": { "base": 3, "mulLevel": 1 }
+    },
+    "Rabbit": {
+      "hp": { "base": 8, "mulLevel": 2 },
+      "damage": { "base": 1, "ceilDivLevel": 2 },
+      "gold": { "flat": 1 },
+      "xp": { "base": 4, "mulLevel": 1 }
+    },
+    "Cow": {
+      "hp": { "base": 16, "mulLevel": 2 },
+      "damage": { "base": 3, "ceilDivLevel": 2 },
+      "gold": { "base": 2, "floorDivLevel": 3 },
+      "xp": { "base": 5, "mulLevel": 1 }
+    },
+    "Crab": {
+      "hp": { "base": 14, "mulLevel": 2 },
+      "damage": { "base": 4, "floorDivLevel": 2 },
+      "gold": { "base": 3, "floorDivLevel": 4 },
+      "xp": { "base": 4, "mulLevel": 1 }
+    },
+    "Bat": {
+      "hp": { "base": 10, "mulLevel": 2 },
+      "damage": { "base": 4, "floorDivLevel": 2 },
+      "gold": { "base": 3, "floorDivLevel": 4 },
+      "xp": { "base": 4, "mulLevel": 1 }
+    },
+    "Goblin": {
+      "hp": { "base": 14, "mulLevel": 2 },
+      "damage": { "base": 4, "floorDivLevel": 2 },
+      "gold": { "base": 3, "floorDivLevel": 3 },
+      "xp": { "base": 5, "mulLevel": 1 }
+    },
+    "Slime": {
+      "hp": { "base": 12, "mulLevel": 2 },
+      "damage": { "base": 4, "floorDivLevel": 2 },
+      "gold": { "base": 3, "floorDivLevel": 4 },
+      "xp": { "base": 4, "mulLevel": 1 }
+    },
+    "Skeleton": {
+      "hp": { "base": 16, "mulLevel": 2 },
+      "damage": { "base": 5, "floorDivLevel": 2 },
+      "gold": { "base": 5, "floorDivLevel": 3 },
+      "xp": { "base": 6, "mulLevel": 1 }
+    },
+    "Drake": {
+      "hp": { "base": 20, "mulLevel": 1 },
+      "damage": { "base": 6, "floorDivLevel": 3 },
+      "gold": { "base": 10, "floorDivLevel": 2 },
+      "xp": { "base": 12, "floorDivLevel": 2 }
+    },
+    "Dragon": {
+      "hp": { "base": 40, "mulLevel": 2 },
+      "damage": { "base": 10, "floorDivLevel": 3 },
+      "gold": { "base": 40, "mulLevel": 1 },
+      "xp": { "base": 50, "mulLevel": 1 }
+    }
+  },
+  "statsDefault": {
+    "hp": { "base": 12, "mulLevel": 1 },
+    "damage": { "base": 3, "floorDivLevel": 2 },
+    "gold": { "flat": 2 },
+    "xp": { "base": 4, "mulLevel": 1 }
   }
 }

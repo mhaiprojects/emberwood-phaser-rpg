@@ -5,20 +5,10 @@ var PLAYER_BATTLE_SCALE = 3;
 var PLAYER_BODY_W = 10;
 var PLAYER_BODY_H = 11;
 
-var MOB_SCALES = {
-    Chicken: { world: 0.75, battle: 2 },
-    Crab: { world: 0.75, battle: 2 },
-    Bat: { world: 0.75, battle: 2 },
-    Rabbit: { world: 0.7, battle: 2 },
-    Goblin: { world: 1, battle: 2 },
-    Skeleton: { world: 1, battle: 2 },
-    Slime: { world: 1, battle: 2 },
-    Cow: { world: 1.25, battle: 3 },
-    Drake: { world: 2, battle: 3 },
-    Dragon: { world: 2.35, battle: 3.4 }
-};
+/* Filled from GameWorld mob-scales.json / map/dimensions.json via ContentRegistry. */
+var MOB_SCALES = {};
 
-/* Deep Mine: floor 1 = level 40, then +1 per floor; Dragon every 21st floor. */
+/* Deep Mine defaults until pack map/dimensions.json applies. */
 var DUNGEON_MOB_BASE_LEVEL = 40;
 var DUNGEON_DRAGON_FLOOR_EVERY = 21;
 

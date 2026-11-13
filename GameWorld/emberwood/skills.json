@@ -131,5 +131,11 @@
       "ring",
       "Ring"
     ]
-  ]
+  ],
+  "slayer": {
+    "taskTypes": ["Goblin", "Chicken", "Skeleton", "Bat"],
+    "taskCount": 3,
+    "killXp": 15,
+    "rewardCoins": 25
+  }
 }

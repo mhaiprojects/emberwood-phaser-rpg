@@ -319,6 +319,136 @@ var Content = {
         };
     },
 
+    getSpell: function (id) {
+        var spells = typeof SPELLS !== 'undefined' ? SPELLS : null;
+        return spells && id ? spells[id] || null : null;
+    },
+
+    allSpells: function () {
+        return typeof SPELLS !== 'undefined' ? SPELLS : {};
+    },
+
+    highAlchXp: function () {
+        if (typeof HIGH_ALCH_XP === 'number') {
+            return HIGH_ALCH_XP;
+        }
+        return 12;
+    },
+
+    altarRuneSpec: function (runeId) {
+        var table = typeof RUNE_ALTAR_TYPES !== 'undefined' ? RUNE_ALTAR_TYPES : null;
+        return table && runeId ? table[runeId] || null : null;
+    },
+
+    itemCombos: function () {
+        return typeof ITEM_COMBOS !== 'undefined' ? ITEM_COMBOS : [];
+    },
+
+    findItemCombo: function (fromId, onId) {
+        var list = this.itemCombos();
+        var i;
+        var items;
+        for (i = 0; i < list.length; i++) {
+            items = list[i] && list[i].items ? list[i].items : [];
+            if (items.length === 2
+                    && ((items[0] === fromId && items[1] === onId)
+                        || (items[0] === onId && items[1] === fromId))) {
+                return list[i];
+            }
+        }
+        return null;
+    },
+
+    _evalStatSpec: function (spec, lv) {
+        if (typeof spec === 'number') {
+            return spec;
+        }
+        if (!spec || typeof spec !== 'object') {
+            return 0;
+        }
+        if (typeof spec.flat === 'number') {
+            return spec.flat;
+        }
+        var v = typeof spec.base === 'number' ? spec.base : 0;
+        if (typeof spec.mulLevel === 'number') {
+            v += spec.mulLevel * lv;
+        }
+        if (typeof spec.floorDivLevel === 'number' && spec.floorDivLevel > 0) {
+            v += Math.floor(lv / spec.floorDivLevel);
+        }
+        if (typeof spec.ceilDivLevel === 'number' && spec.ceilDivLevel > 0) {
+            v += Math.ceil(lv / spec.ceilDivLevel);
+        }
+        return v;
+    },
+
+    mobStatsFor: function (type, level) {
+        var lv = Math.max(1, level | 0);
+        var byType = typeof MOB_STATS_BY_TYPE !== 'undefined' ? MOB_STATS_BY_TYPE : null;
+        var fallback = typeof MOB_STATS_DEFAULT !== 'undefined' ? MOB_STATS_DEFAULT : null;
+        var row = (byType && type && byType[type]) || fallback;
+        if (!row) {
+            return { hp: 12 + lv, damage: 3 + Math.floor(lv / 2), gold: 2, xp: 4 + lv };
+        }
+        return {
+            hp: this._evalStatSpec(row.hp, lv),
+            damage: this._evalStatSpec(row.damage, lv),
+            gold: this._evalStatSpec(row.gold, lv),
+            xp: this._evalStatSpec(row.xp, lv)
+        };
+    },
+
+    /**
+     * Advance pack quests when a mob type is killed. Mutates quest / hero.sideQuests.
+     * Returns chat lines to log (may be empty).
+     */
+    noteQuestKill: function (quest, hero, mobType) {
+        var all = typeof QUESTS !== 'undefined' ? QUESTS : null;
+        var lines = [];
+        var id;
+        var def;
+        var state;
+        var returnNpc;
+        if (!all || !mobType) {
+            return lines;
+        }
+        for (id in all) {
+            if (!Object.prototype.hasOwnProperty.call(all, id)) {
+                continue;
+            }
+            def = all[id];
+            if (!def || def.mobType !== mobType) {
+                continue;
+            }
+            if (def.sideKey) {
+                if (!hero || !hero.sideQuests || !hero.sideQuests[def.sideKey]) {
+                    continue;
+                }
+                state = hero.sideQuests[def.sideKey];
+            } else {
+                state = quest;
+            }
+            if (!state || state.stage !== 1) {
+                continue;
+            }
+            state.progress = (state.progress || 0) + 1;
+            if (typeof state.goal !== 'number' && typeof def.goal === 'number') {
+                state.goal = def.goal;
+            }
+            if (state.progress >= (state.goal || def.goal || 1)) {
+                state.stage = 2;
+                returnNpc = def.returnHint
+                    || (def.npcKey ? ('Return to the quest giver.') : 'Return for your reward.');
+                if (def.completeHint) {
+                    lines.push(def.completeHint);
+                } else {
+                    lines.push('That should be enough. ' + returnNpc);
+                }
+            }
+        }
+        return lines;
+    },
+
     mapProps: function () {
         return {
             campfires: typeof CAMPFIRE_SPOTS !== 'undefined' ? CAMPFIRE_SPOTS : null,

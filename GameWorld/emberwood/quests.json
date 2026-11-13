@@ -4,6 +4,7 @@
     "npcKey": "guild",
     "goal": 5,
     "mobType": "Goblin",
+    "completeHint": "That should be enough goblins. Return to Bram.",
     "journal": [
       "Talk to Guildmaster Bram",
       "Kill goblins in Northwood ({progress}/{goal})",
@@ -37,6 +38,7 @@
     "sideKey": "shipment",
     "goal": 3,
     "mobType": "Crab",
+    "completeHint": "That should be enough crabs. Return to Ned.",
     "stages": {
       "0": {
         "advanceTo": 1,
@@ -62,6 +64,7 @@
     "sideKey": "bats",
     "goal": 4,
     "mobType": "Bat",
+    "completeHint": "That should be enough bats. Return to Corb.",
     "stages": {
       "0": {
         "advanceTo": 1,

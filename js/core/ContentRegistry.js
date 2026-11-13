@@ -32,6 +32,28 @@ var ContentRegistry = {
         window.SMELT_RECIPES = data.smelt || data.SMELT_RECIPES || [];
         window.SMITH_RECIPES = data.smith || data.SMITH_RECIPES || [];
         window.CRAFT_RECIPES = data.craft || data.CRAFT_RECIPES || [];
+        window.RUNE_ALTAR_TYPES = data.altarRunes || data.RUNE_ALTAR_TYPES || {};
+        window.ITEM_COMBOS = data.itemCombos || data.ITEM_COMBOS || [];
+        window.QUICK_CRAFT = data.quickCraft || data.QUICK_CRAFT || {};
+    },
+
+    _applySpells: function (data) {
+        if (!data) {
+            return;
+        }
+        window.SPELLS = data.spells || data.SPELLS || {};
+        if (typeof data.highAlchXp === 'number') {
+            window.HIGH_ALCH_XP = data.highAlchXp;
+        }
+    },
+
+    _applyInteriors: function (data) {
+        var list;
+        if (!data) {
+            return;
+        }
+        list = Array.isArray(data) ? data : (data.list || data.INTERIOR_LIST || []);
+        window.INTERIOR_LIST = list;
     },
 
     _applyGather: function (data) {
@@ -42,6 +64,8 @@ var ContentRegistry = {
         window.RESOURCE_TOOL_TIER = data.resourceToolTier || data.RESOURCE_TOOL_TIER || {};
         window.TREE_BY_ZONE = data.treeByZone || data.TREE_BY_ZONE || {};
         window.FISH_BY_ZONE = data.fishByZone || data.FISH_BY_ZONE || {};
+        window.GATHER_TILE_BINDINGS = data.tileBindings || data.GATHER_TILE_BINDINGS || {};
+        window.ORE_BY_ZONE = data.oreByZone || data.ORE_BY_ZONE || {};
     },
 
     _copyKeys: function (data) {
@@ -168,6 +192,9 @@ var ContentRegistry = {
             if (skills.EQUIP_SLOTS) {
                 window.EQUIP_SLOTS = skills.EQUIP_SLOTS;
             }
+            if (skills.slayer) {
+                window.SLAYER_CONFIG = skills.slayer;
+            }
         }
 
         mobScales = this._get(cache, 'mobScales');
@@ -225,6 +252,24 @@ var ContentRegistry = {
             if (mobCombat.MOB_MOVE_SPEED_FACTOR) {
                 window.MOB_MOVE_SPEED_FACTOR = mobCombat.MOB_MOVE_SPEED_FACTOR;
             }
+            if (mobCombat.MOB_TIER_ORDER) {
+                window.MOB_TIER_ORDER = mobCombat.MOB_TIER_ORDER;
+            }
+            if (typeof mobCombat.MOB_SPAWN_MODIFIER === 'number') {
+                window.MOB_SPAWN_MODIFIER = mobCombat.MOB_SPAWN_MODIFIER;
+            }
+            if (mobCombat.MOB_SPAWN_MODIFIER_OPTIONS) {
+                window.MOB_SPAWN_MODIFIER_OPTIONS = mobCombat.MOB_SPAWN_MODIFIER_OPTIONS;
+            }
+            if (typeof mobCombat.MOB_SPAWN_POOL_MODIFIER === 'number') {
+                window.MOB_SPAWN_POOL_MODIFIER = mobCombat.MOB_SPAWN_POOL_MODIFIER;
+            }
+            if (mobCombat.statsByType) {
+                window.MOB_STATS_BY_TYPE = mobCombat.statsByType;
+            }
+            if (mobCombat.statsDefault) {
+                window.MOB_STATS_DEFAULT = mobCombat.statsDefault;
+            }
         }
 
         quests = this._get(cache, 'quests');
@@ -238,6 +283,20 @@ var ContentRegistry = {
             if (typeof biomeParams.maxPathBlockRatio === 'number') {
                 window.MAX_PATH_BLOCK_RATIO = biomeParams.maxPathBlockRatio;
             }
+        }
+
+        this._applySpells(this._get(cache, 'spells'));
+        this._applyInteriors(this._get(cache, 'mapInteriors'));
+
+        var clues = this._get(cache, 'clues');
+        if (clues) {
+            window.CLUE_CONFIG = clues;
+            window.CLUE_DIG_SPOTS = clues.digSpots || clues.CLUE_DIG_SPOTS || [];
+        }
+
+        var legacy = this._get(cache, 'legacyMigrations');
+        if (legacy) {
+            window.LEGACY_ITEM_ID_MAP = legacy.itemIds || legacy.LEGACY_ITEM_ID_MAP || legacy || {};
         }
 
         this.ready = true;

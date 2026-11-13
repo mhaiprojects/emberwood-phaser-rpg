@@ -34,11 +34,14 @@
     },
     "shopStall": {
       "x": 16,
-      "y": 12
+      "y": 12,
+      "npcKey": "shopkeep",
+      "shopKey": "mira"
     },
     "guildPost": {
       "x": 15,
-      "y": 18
+      "y": 18,
+      "npcKey": "guild"
     },
     "campfire": {
       "x": 18,

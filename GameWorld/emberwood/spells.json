@@ -1,0 +1,33 @@
+{
+  "highAlchXp": 12,
+  "spells": {
+    "windstrike": {
+      "label": "Wind Strike",
+      "damage": 2,
+      "xp": 5,
+      "runes": [["airrune", 1]],
+      "needMsg": "You do not have the runes for Wind Strike."
+    },
+    "waterstrike": {
+      "label": "Water Strike",
+      "damage": 4,
+      "xp": 6,
+      "runes": [["airrune", 1], ["waterrune", 1]],
+      "needMsg": "You need Air and Water runes."
+    },
+    "earthstrike": {
+      "label": "Earth Strike",
+      "damage": 5,
+      "xp": 7,
+      "runes": [["airrune", 1], ["earthrune", 1]],
+      "needMsg": "You need Air and Earth runes."
+    },
+    "firestrike": {
+      "label": "Fire Strike",
+      "damage": 6,
+      "xp": 8,
+      "runes": [["airrune", 1], ["firerune", 1]],
+      "needMsg": "You need Air and Fire runes."
+    }
+  }
+}

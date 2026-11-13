@@ -3663,12 +3663,16 @@ var WorldScene = new Phaser.Class({
         }
         if (typeof BANK_COUNTER !== 'undefined' && BANK_COUNTER.front) {
             booth = { tx: BANK_COUNTER.front.x, ty: BANK_COUNTER.front.y, kind: 'booth' };
-            if (this.zoneId === 'haven' && this.stationInRange(booth)) {
+            if ((typeof Content !== 'undefined' && Content.zoneHasFeature
+                    ? Content.zoneHasFeature(this.zoneId, 'townStations')
+                    : this.zoneId === 'haven') && this.stationInRange(booth)) {
                 return;
             }
         } else if (typeof TOWN_PROPS !== 'undefined' && TOWN_PROPS.booth) {
             booth = { tx: TOWN_PROPS.booth.x, ty: TOWN_PROPS.booth.y, kind: 'booth' };
-            if (this.zoneId === 'haven' && this.stationInRange(booth)) {
+            if ((typeof Content !== 'undefined' && Content.zoneHasFeature
+                    ? Content.zoneHasFeature(this.zoneId, 'townStations')
+                    : this.zoneId === 'haven') && this.stationInRange(booth)) {
                 return;
             }
         }
@@ -3704,7 +3708,10 @@ var WorldScene = new Phaser.Class({
             }
             return;
         }
-        if (props && props[kind] && this.zoneId === 'haven') {
+        if (props && props[kind]
+                && (typeof Content !== 'undefined' && Content.zoneHasFeature
+                    ? Content.zoneHasFeature(this.zoneId, 'townStations')
+                    : this.zoneId === 'haven')) {
             hit = { tx: props[kind].x, ty: props[kind].y, kind: kind };
             if (this.stationInRange(hit)) {
                 return;
@@ -6793,33 +6800,14 @@ var WorldScene = new Phaser.Class({
             this.levelHero(hero);
             this.registry.set('hero', hero);
             Hud.log('The ' + def.type + ' collapses. Loot drops to the ground.');
-            if (def.type === 'Goblin') {
+            if (typeof Content !== 'undefined' && Content.noteQuestKill) {
                 var quest = this.registry.get('quest');
-                if (quest.stage === 1) {
-                    quest.progress += 1;
-                    if (quest.progress >= quest.goal) {
-                        quest.stage = 2;
-                        Hud.log('That should be enough goblins. Return to Bram.');
-                    }
-                    this.registry.set('quest', quest);
-                }
-            }
-            if (hero.sideQuests) {
-                if (def.type === 'Crab' && hero.sideQuests.shipment && hero.sideQuests.shipment.stage === 1) {
-                    hero.sideQuests.shipment.progress += 1;
-                    if (hero.sideQuests.shipment.progress >= hero.sideQuests.shipment.goal) {
-                        hero.sideQuests.shipment.stage = 2;
-                        Hud.log('That should be enough crabs. Return to Ned.');
-                    }
-                    this.registry.set('hero', hero);
-                }
-                if (def.type === 'Bat' && hero.sideQuests.bats && hero.sideQuests.bats.stage === 1) {
-                    hero.sideQuests.bats.progress += 1;
-                    if (hero.sideQuests.bats.progress >= hero.sideQuests.bats.goal) {
-                        hero.sideQuests.bats.stage = 2;
-                        Hud.log('That should be enough bats. Return to Corb.');
-                    }
-                    this.registry.set('hero', hero);
+                var killLines = Content.noteQuestKill(quest, hero, def.type);
+                var kli;
+                this.registry.set('quest', quest);
+                this.registry.set('hero', hero);
+                for (kli = 0; kli < killLines.length; kli++) {
+                    Hud.log(killLines[kli]);
                 }
             }
             this.noteTutorial('fight');
@@ -7446,8 +7434,10 @@ var WorldScene = new Phaser.Class({
                 gfx.strokeCircle(pos.x, pos.y, Math.max(8, CAMPFIRE_REGEN_RANGE));
             }
         }
-        /* Faint haven safe-zone cue (Chebyshev radius drawn as circle). */
-        if (this.zoneId === 'haven' && typeof havenSafeCenterTile === 'function') {
+        /* Faint pack safe-zone cue (Chebyshev radius drawn as circle). */
+        if (typeof Content !== 'undefined' && Content.safeZonePolicy
+                && Content.safeZonePolicy(this.zoneId)
+                && typeof havenSafeCenterTile === 'function') {
             center = tileCenter(havenSafeCenterTile().x, havenSafeCenterTile().y);
             safeR = typeof havenSafeRadiusPx === 'function'
                 ? havenSafeRadiusPx()

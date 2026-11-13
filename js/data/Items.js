@@ -232,76 +232,23 @@ function resourceLevelGate(hero, skill, id) {
     return { ok: true, need: need, have: have };
 }
 
-var SKILL_NAMES = [
-    ['attack', 'Attack'],
-    ['strength', 'Strength'],
-    ['defence', 'Defence'],
-    ['hitpoints', 'Hitpoints'],
-    ['ranged', 'Ranged'],
-    ['prayer', 'Prayer'],
-    ['magic', 'Magic'],
-    ['cooking', 'Cooking'],
-    ['fishing', 'Fishing'],
-    ['woodcutting', 'Woodcutting'],
-    ['mining', 'Mining'],
-    ['crafting', 'Crafting'],
-    ['firemaking', 'Firemaking'],
-    ['smithing', 'Smithing'],
-    ['hunter', 'Hunter'],
-    ['agility', 'Agility'],
-    ['thieving', 'Thieving'],
-    ['slayer', 'Slayer'],
-    ['runecraft', 'Runecraft'],
-    ['farming', 'Farming'],
-    ['herblore', 'Herblore'],
-    ['fletching', 'Fletching'],
-    ['construction', 'Construction']
-];
-
+/* Filled from GameWorld skills.json via ContentRegistry.applyPack. */
+var SKILL_NAMES = [];
 var STRETCH_SKILL_NAMES = [];
+var EQUIP_SLOTS = [];
 
 function isStretchSkill(id) {
+    var i;
+    for (i = 0; i < STRETCH_SKILL_NAMES.length; i++) {
+        if (STRETCH_SKILL_NAMES[i] && STRETCH_SKILL_NAMES[i][0] === id) {
+            return true;
+        }
+    }
     return false;
 }
 
-var EQUIP_SLOTS = [
-    ['cape', 'Cape'],
-    ['neck', 'Neck'],
-    ['ammo', 'Ammo'],
-    ['weapon', 'Weapon'],
-    ['armour', 'Armour'],
-    ['shield', 'Shield'],
-    ['hands', 'Hands'],
-    ['feet', 'Feet'],
-    ['ring', 'Ring']
-];
-
-var LEGACY_ITEM_ID_MAP = {
-    sword: 'coppersword',
-    bronzedagger: 'copperdagger',
-    bronzeaxe: 'copperaxe',
-    bronzepick: 'copperpick',
-    bronzestaff: 'copperstaff',
-    bronzebar: 'copperbar',
-    shortbow: 'copperbow',
-    arrow: 'copperarrow',
-    tin: 'copper',
-    mindrune: 'airrune',
-    naturerune: 'firerune',
-    wizardhat: 'wizardrobe',
-    ironhelm: 'ironarmour',
-    ironbody: 'ironarmour',
-    ironlegs: 'ironarmour',
-    diamondhelm: 'diamondarmour',
-    diamondbody: 'diamondarmour',
-    diamondlegs: 'diamondarmour',
-    dragonitehelm: 'dragonitearmour',
-    dragonitebody: 'dragonitearmour',
-    dragonitelegs: 'dragonitearmour',
-    burntshrimp: null,
-    burntbeef: null,
-    shipcrate: null
-};
+/* Filled from GameWorld legacy-migrations.json via ContentRegistry. */
+var LEGACY_ITEM_ID_MAP = {};
 
 function emptyEquipment() {
     var equipment = {};
@@ -474,93 +421,18 @@ function makeHero() {
             hero.autoAttackRange = DEFAULT_AUTO_ATTACK_RANGE_TILES;
         }
     } else {
+        console.error('[makeHero] HERO_DEFAULTS missing — pack hero-defaults.json required after Boot');
         hero = {
-            hp: 100,
-            maxHp: 100,
-            damage: 16,
-            gold: 8,
+            hp: 10,
+            maxHp: 10,
+            gold: 0,
             level: 1,
-            style: 'shared',
-            stance: 'melee',
-            autoAttack: false,
-            autoAttackRange: DEFAULT_AUTO_ATTACK_RANGE_TILES,
-            autoRetaliate: false,
-            autoPickup: true,
-            shiftClickDrop: true,
-            hideBones: false,
-            showCombatVisuals: true,
-            showRangeRings: true,
-            mobSpawnModifier: typeof MOB_SPAWN_MODIFIER === 'number' ? MOB_SPAWN_MODIFIER : 1,
-            simTps: typeof normalizeTargetTps === 'function' ? normalizeTargetTps(60) : 60,
-            targetTps: typeof normalizeTargetTps === 'function' ? normalizeTargetTps(60) : 60,
-            gameSpeed: typeof normalizeGameSpeed === 'function' ? normalizeGameSpeed(1) : 1,
-            xpMultiplier: typeof normalizeXpMultiplier === 'function' ? normalizeXpMultiplier(1) : 1,
-            displayName: 'Adventurer',
-            ironman: false,
-            prayerPoints: 1,
-            maxPrayerPoints: 1,
-            specialEnergy: 100,
-            poison: null,
-            slayerTask: null,
-            clueStep: 0,
-            clanTag: 'ember',
-            prayers: { thickskin: false, burststrength: false },
-            hiscores: { kills: 0, quests: 0 },
-            sideQuests: {
-                shipment: { stage: 0, progress: 0, goal: 3 },
-                bats: { stage: 0, progress: 0, goal: 4 }
-            },
-            diary: { bram: false, eat: false, bury: false, complete: false },
-            flags: { dragonDenOpen: false },
-            tutorials: {},
-            running: false,
-            runEnergy: 100,
-            equipment: (function () {
-                var e = emptyEquipment();
-                e.weapon = 'coppersword';
-                e.shield = 'shield';
-                return e;
-            }()),
-            equipmentQty: {},
-            inventory: [
-                { id: 'coins', qty: 8 },
-                { id: 'coppersword', qty: 1 },
-                { id: 'shield', qty: 1 },
-                { id: 'copperbow', qty: 1 },
-                { id: 'staff', qty: 1 },
-                { id: 'copperaxe', qty: 1 },
-                { id: 'copperpick', qty: 1 },
-                { id: 'airrune', qty: 40 },
-                { id: 'shrimp', qty: 8 },
-                { id: 'bread', qty: 3 }
-            ],
+            inventory: [],
             bank: [],
-            tutors: {},
-            skills: {
-                attack: { level: 1, xp: 0 },
-                strength: { level: 1, xp: 0 },
-                defence: { level: 1, xp: 0 },
-                hitpoints: { level: 10, xp: 1154 },
-                ranged: { level: 1, xp: 0 },
-                prayer: { level: 1, xp: 0 },
-                magic: { level: 1, xp: 0 },
-                cooking: { level: 1, xp: 0 },
-                fishing: { level: 1, xp: 0 },
-                woodcutting: { level: 1, xp: 0 },
-                mining: { level: 1, xp: 0 },
-                crafting: { level: 1, xp: 0 },
-                firemaking: { level: 1, xp: 0 },
-                smithing: { level: 1, xp: 0 },
-                hunter: { level: 1, xp: 0 },
-                agility: { level: 1, xp: 0 },
-                thieving: { level: 1, xp: 0 },
-                slayer: { level: 1, xp: 0 },
-                runecraft: { level: 1, xp: 0 },
-                farming: { level: 1, xp: 0 },
-                herblore: { level: 1, xp: 0 },
-                fletching: { level: 1, xp: 0 },
-                construction: { level: 1, xp: 0 }
-            }
+            skills: {},
+            equipment: emptyEquipment(),
+            equipmentQty: {},
+            autoAttackRange: DEFAULT_AUTO_ATTACK_RANGE_TILES
         };
     }
     applyCombatLevel(hero, false);
@@ -1251,14 +1123,33 @@ function stitchLeather(hero) {
 }
 
 function useItemOnItem(hero, fromId, onId, opts) {
+    var combo;
+    var action;
     if (!hero || !fromId || !onId || fromId === onId) {
         return null;
     }
-    if ((fromId === 'string' && onId === 'leather') || (fromId === 'leather' && onId === 'string')) {
+    combo = (typeof Content !== 'undefined' && Content.findItemCombo)
+        ? Content.findItemCombo(fromId, onId)
+        : null;
+    if (!combo) {
+        /* Legacy fallback until pack applied */
+        if ((fromId === 'string' && onId === 'leather') || (fromId === 'leather' && onId === 'string')) {
+            return stitchLeather(hero);
+        }
+        if ((fromId === 'tinderbox' && onId === 'logs') || (fromId === 'logs' && onId === 'tinderbox')) {
+            if (opts && opts.canLightFire === false) {
+                return { ok: false, blocked: true };
+            }
+            return lightGroundFire(hero);
+        }
+        return null;
+    }
+    action = combo.action;
+    if (action === 'stitchLeather') {
         return stitchLeather(hero);
     }
-    if ((fromId === 'tinderbox' && onId === 'logs') || (fromId === 'logs' && onId === 'tinderbox')) {
-        if (opts && opts.canLightFire === false) {
+    if (action === 'lightGroundFire') {
+        if (combo.needsCanLight && opts && opts.canLightFire === false) {
             return { ok: false, blocked: true };
         }
         return lightGroundFire(hero);
@@ -1289,12 +1180,8 @@ function cookAtStation(hero, id, kind) {
     return useItemOnScenery(hero, id, kind || 'range');
 }
 
-var RUNE_ALTAR_TYPES = {
-    airrune: { label: 'Craft air runes', need: 1, xp: 10 },
-    waterrune: { label: 'Craft water runes', need: 5, xp: 12 },
-    earthrune: { label: 'Craft earth runes', need: 15, xp: 14 },
-    firerune: { label: 'Craft fire runes', need: 30, xp: 20 }
-};
+/* Filled from GameWorld recipes.json altarRunes via ContentRegistry. */
+var RUNE_ALTAR_TYPES = {};
 
 function recipeHasInputs(hero, inputs) {
     var i;
@@ -1465,8 +1352,12 @@ function craftStationRecipe(hero, recipe) {
 }
 
 function craftRuneAtAltar(hero, runeId) {
-    var spec = RUNE_ALTAR_TYPES[runeId];
+    var spec = (typeof Content !== 'undefined' && Content.altarRuneSpec)
+        ? Content.altarRuneSpec(runeId)
+        : (RUNE_ALTAR_TYPES[runeId] || null);
     var level;
+    var essence;
+    var essenceQty;
     if (!hero || !spec) {
         return null;
     }
@@ -1474,14 +1365,16 @@ function craftRuneAtAltar(hero, runeId) {
     if (level < (spec.need || 1)) {
         return { ok: false, need: spec.need || 1 };
     }
-    if (itemQty(hero, 'runeessence') < 1) {
+    essence = spec.essence || 'runeessence';
+    essenceQty = typeof spec.essenceQty === 'number' ? spec.essenceQty : 1;
+    if (itemQty(hero, essence) < essenceQty) {
         return { ok: false, need: 'materials' };
     }
-    if (!takeItem(hero, 'runeessence', 1)) {
+    if (!takeItem(hero, essence, essenceQty)) {
         return null;
     }
     if (!addItem(hero, runeId, 1)) {
-        addItem(hero, 'runeessence', 1);
+        addItem(hero, essence, essenceQty);
         return { ok: false, full: true };
     }
     gainSkillXp(hero, 'runecraft', spec.xp || 10);
@@ -1697,119 +1590,92 @@ function highAlchItem(hero, id) {
     return { ok: true, id: id, coins: coins, xp: HIGH_ALCH_XP };
 }
 
-function hasWindStrikeRunes(hero) {
-    return itemQty(hero, 'airrune') >= 1;
-}
-
-function consumeAirStrikeRunes(hero) {
-    if (!hero || !hasWindStrikeRunes(hero)) {
+function hasSpellRunes(hero, spellId) {
+    var def = (typeof Content !== 'undefined' && Content.getSpell)
+        ? Content.getSpell(spellId)
+        : null;
+    var runes;
+    var i;
+    if (!hero || !def || !def.runes) {
         return false;
     }
-    return !!takeItem(hero, 'airrune', 1);
+    runes = def.runes;
+    for (i = 0; i < runes.length; i++) {
+        if (itemQty(hero, runes[i][0]) < runes[i][1]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function castSpellFromPack(hero, spellId) {
+    var def = (typeof Content !== 'undefined' && Content.getSpell)
+        ? Content.getSpell(spellId)
+        : null;
+    var runes;
+    var taken;
+    var i;
+    if (!hero || !def) {
+        return false;
+    }
+    if (!hasSpellRunes(hero, spellId)) {
+        return false;
+    }
+    runes = def.runes || [];
+    taken = [];
+    for (i = 0; i < runes.length; i++) {
+        if (!takeItem(hero, runes[i][0], runes[i][1])) {
+            while (taken.length) {
+                var back = taken.pop();
+                addItem(hero, back[0], back[1]);
+            }
+            return false;
+        }
+        taken.push(runes[i]);
+    }
+    if (def.xp > 0) {
+        gainSkillXp(hero, 'magic', def.xp);
+    }
+    return true;
+}
+
+function hasWindStrikeRunes(hero) {
+    return hasSpellRunes(hero, 'windstrike');
 }
 
 function windStrike(hero) {
-    if (!consumeAirStrikeRunes(hero)) {
-        return false;
-    }
-    if (WIND_STRIKE_XP > 0) {
-        gainSkillXp(hero, 'magic', WIND_STRIKE_XP);
-    }
-    return true;
-}
-
-var WATER_STRIKE_XP = 6;
-var EARTH_STRIKE_XP = 7;
-var FIRE_STRIKE_XP = 8;
-var WATER_STRIKE_DAMAGE = 4;
-var EARTH_STRIKE_DAMAGE = 5;
-var FIRE_STRIKE_DAMAGE = 6;
-
-function hasWaterStrikeRunes(hero) {
-    return itemQty(hero, 'airrune') >= 1 && itemQty(hero, 'waterrune') >= 1;
+    return castSpellFromPack(hero, 'windstrike');
 }
 
 function waterStrike(hero) {
-    if (!hero || !hasWaterStrikeRunes(hero)) {
-        return false;
-    }
-    if (!takeItem(hero, 'airrune', 1) || !takeItem(hero, 'waterrune', 1)) {
-        return false;
-    }
-    gainSkillXp(hero, 'magic', WATER_STRIKE_XP);
-    return true;
-}
-
-function hasEarthStrikeRunes(hero) {
-    return itemQty(hero, 'airrune') >= 1 && itemQty(hero, 'earthrune') >= 1;
+    return castSpellFromPack(hero, 'waterstrike');
 }
 
 function earthStrike(hero) {
-    if (!hero || !hasEarthStrikeRunes(hero)) {
-        return false;
-    }
-    if (!takeItem(hero, 'airrune', 1) || !takeItem(hero, 'earthrune', 1)) {
-        return false;
-    }
-    gainSkillXp(hero, 'magic', EARTH_STRIKE_XP);
-    return true;
-}
-
-function hasFireStrikeRunes(hero) {
-    return itemQty(hero, 'airrune') >= 1 && itemQty(hero, 'firerune') >= 1;
+    return castSpellFromPack(hero, 'earthstrike');
 }
 
 function fireStrike(hero) {
-    if (!hero || !hasFireStrikeRunes(hero)) {
-        return false;
-    }
-    if (!takeItem(hero, 'airrune', 1) || !takeItem(hero, 'firerune', 1)) {
-        return false;
-    }
-    gainSkillXp(hero, 'magic', FIRE_STRIKE_XP);
-    return true;
+    return castSpellFromPack(hero, 'firestrike');
 }
 
 function spellCastFn(spellId) {
-    var map = {
-        windstrike: {
-            label: 'Wind Strike',
-            damage: typeof WIND_STRIKE_DAMAGE === 'number' ? WIND_STRIKE_DAMAGE : 2,
-            xp: typeof WIND_STRIKE_XP === 'number' ? WIND_STRIKE_XP : 0,
-            needMsg: 'You do not have the runes for Wind Strike.',
-            fn: windStrike
-        },
-        waterstrike: {
-            label: 'Water Strike',
-            damage: WATER_STRIKE_DAMAGE,
-            xp: WATER_STRIKE_XP,
-            needMsg: 'You need Air and Water runes.',
-            fn: waterStrike
-        },
-        earthstrike: {
-            label: 'Earth Strike',
-            damage: EARTH_STRIKE_DAMAGE,
-            xp: EARTH_STRIKE_XP,
-            needMsg: 'You need Air and Earth runes.',
-            fn: earthStrike
-        },
-        firestrike: {
-            label: 'Fire Strike',
-            damage: FIRE_STRIKE_DAMAGE,
-            xp: FIRE_STRIKE_XP,
-            needMsg: 'You need Air and Fire runes.',
-            fn: fireStrike
-        }
-    };
-    var spec = map[spellId];
-    if (!spec) {
+    var def = (typeof Content !== 'undefined' && Content.getSpell)
+        ? Content.getSpell(spellId)
+        : null;
+    if (!def) {
         return null;
     }
     return function (hero) {
-        if (!spec.fn(hero)) {
+        if (!castSpellFromPack(hero, spellId)) {
             return null;
         }
-        return spec;
+        return {
+            label: def.label || spellId,
+            damage: typeof def.damage === 'number' ? def.damage : 2,
+            xp: typeof def.xp === 'number' ? def.xp : 0,
+            needMsg: def.needMsg || 'You do not have the runes.'
+        };
     };
 }
 
@@ -1829,24 +1695,42 @@ function pickpocketNpc(hero) {
     return gold;
 }
 
+function slayerConfig() {
+    if (typeof SLAYER_CONFIG !== 'undefined' && SLAYER_CONFIG) {
+        return SLAYER_CONFIG;
+    }
+    return { taskTypes: [], taskCount: 3, killXp: 15, rewardCoins: 25 };
+}
+
 function assignSlayerTask(hero) {
+    var cfg;
+    var types;
+    var pick;
+    var count;
     if (!hero) {
         return null;
     }
-    var types = ['Goblin', 'Chicken', 'Skeleton', 'Bat'];
-    var pick = types[Phaser.Math.Between(0, types.length - 1)];
-    hero.slayerTask = { type: pick, left: 3, total: 3 };
+    cfg = slayerConfig();
+    types = cfg.taskTypes || [];
+    if (!types.length) {
+        return null;
+    }
+    pick = types[Phaser.Math.Between(0, types.length - 1)];
+    count = typeof cfg.taskCount === 'number' ? cfg.taskCount : 3;
+    hero.slayerTask = { type: pick, left: count, total: count };
     return hero.slayerTask;
 }
 
 function noteSlayerKill(hero, mobType) {
+    var cfg;
     if (!hero || !hero.slayerTask || hero.slayerTask.type !== mobType) {
         return false;
     }
+    cfg = slayerConfig();
     hero.slayerTask.left = Math.max(0, hero.slayerTask.left - 1);
-    gainSkillXp(hero, 'slayer', 15);
+    gainSkillXp(hero, 'slayer', typeof cfg.killXp === 'number' ? cfg.killXp : 15);
     if (hero.slayerTask.left === 0) {
-        addItem(hero, 'coins', 25);
+        addItem(hero, 'coins', typeof cfg.rewardCoins === 'number' ? cfg.rewardCoins : 25);
         syncCoins(hero);
         hero.slayerTask = null;
         return true;
@@ -1859,99 +1743,123 @@ function craftAirRune(hero) {
     return !!(result && result.ok);
 }
 
+function quickCraftSpec(id) {
+    var table = typeof QUICK_CRAFT !== 'undefined' ? QUICK_CRAFT : null;
+    return table && id ? table[id] || null : null;
+}
+
+function runQuickCraft(hero, specId) {
+    var spec = quickCraftSpec(specId);
+    var inputs;
+    var i;
+    var outId;
+    var qty;
+    if (!hero || !spec) {
+        return false;
+    }
+    inputs = spec.inputs || [];
+    for (i = 0; i < inputs.length; i++) {
+        if (itemQty(hero, inputs[i][0]) < inputs[i][1]) {
+            return false;
+        }
+    }
+    for (i = 0; i < inputs.length; i++) {
+        takeItem(hero, inputs[i][0], inputs[i][1]);
+    }
+    outId = spec.output;
+    qty = typeof spec.qty === 'number' ? spec.qty : 1;
+    if (outId && !addItem(hero, outId, qty)) {
+        for (i = 0; i < inputs.length; i++) {
+            addItem(hero, inputs[i][0], inputs[i][1]);
+        }
+        return false;
+    }
+    if (spec.xp > 0 && spec.xpSkill) {
+        gainSkillXp(hero, spec.xpSkill, spec.xp);
+    }
+    return true;
+}
+
 function plantGuamSeed(hero) {
+    var spec = quickCraftSpec('plantGuam');
     if (!hero) {
         return false;
     }
-    gainSkillXp(hero, 'farming', 14);
-    if (!addItem(hero, 'guam', 1)) {
-        return false;
+    if (spec) {
+        if (spec.xp > 0 && spec.xpSkill) {
+            gainSkillXp(hero, spec.xpSkill, spec.xp);
+        }
+        if (spec.output && !addItem(hero, spec.output, spec.qty || 1)) {
+            return false;
+        }
+        return true;
     }
-    return true;
+    gainSkillXp(hero, 'farming', 14);
+    return !!addItem(hero, 'guam', 1);
 }
 
 function mixAttackPotion(hero) {
-    if (!hero || itemQty(hero, 'guam') < 1) {
-        return false;
-    }
-    takeItem(hero, 'guam', 1);
-    if (!addItem(hero, 'attackpot', 1)) {
-        addItem(hero, 'guam', 1);
-        return false;
-    }
-    gainSkillXp(hero, 'herblore', 18);
-    return true;
+    return runQuickCraft(hero, 'mixAttackPotion');
 }
 
 function fletchShortbow(hero) {
-    /* L2: string an unstrung bow, or fletch oak+string into copper bow. */
     if (!hero) {
         return false;
     }
-    if (itemQty(hero, 'shortbowunstrung') >= 1 && itemQty(hero, 'string') >= 1) {
-        takeItem(hero, 'shortbowunstrung', 1);
-        takeItem(hero, 'string', 1);
-        if (!addItem(hero, 'copperbow', 1)) {
-            addItem(hero, 'shortbowunstrung', 1);
-            addItem(hero, 'string', 1);
-            return false;
-        }
-        gainSkillXp(hero, 'fletching', 10);
+    if (runQuickCraft(hero, 'fletchStringBow')) {
         return true;
     }
-    if (itemQty(hero, 'oaklogs') >= 1 && itemQty(hero, 'string') >= 1) {
-        takeItem(hero, 'oaklogs', 1);
-        takeItem(hero, 'string', 1);
-        if (!addItem(hero, 'copperbow', 1)) {
-            addItem(hero, 'oaklogs', 1);
-            addItem(hero, 'string', 1);
-            return false;
-        }
-        gainSkillXp(hero, 'fletching', 22);
-        return true;
-    }
-    return false;
+    return runQuickCraft(hero, 'fletchOakBow');
 }
 
 function buildOakBench(hero) {
-    if (!hero || itemQty(hero, 'logs') < 3) {
-        return false;
-    }
-    takeItem(hero, 'logs', 3);
-    if (!addItem(hero, 'oakplank', 1)) {
-        addItem(hero, 'logs', 3);
-        return false;
-    }
-    gainSkillXp(hero, 'construction', 20);
-    return true;
+    return runQuickCraft(hero, 'buildOakBench');
 }
 
-var CLUE_DIG_SPOTS = [
-    { zone: 'haven', x: 400, y: 250 },
-    { zone: 'northwood', x: 160, y: 120 },
-    { zone: 'graves', x: 300, y: 210 }
-];
+var CLUE_DIG_SPOTS = [];
+
+function clueDigSpots() {
+    if (typeof CLUE_DIG_SPOTS !== 'undefined' && CLUE_DIG_SPOTS && CLUE_DIG_SPOTS.length) {
+        return CLUE_DIG_SPOTS;
+    }
+    if (typeof CLUE_CONFIG !== 'undefined' && CLUE_CONFIG && CLUE_CONFIG.digSpots) {
+        return CLUE_CONFIG.digSpots;
+    }
+    return [];
+}
 
 function clueDigSpot(hero) {
+    var spots = clueDigSpots();
     var step = hero && typeof hero.clueStep === 'number' ? hero.clueStep : 0;
-    return CLUE_DIG_SPOTS[step % CLUE_DIG_SPOTS.length];
+    if (!spots.length) {
+        return null;
+    }
+    return spots[step % spots.length];
 }
 
 function advanceClueDig(hero, world) {
-    if (!hero || !world || itemQty(hero, 'cluescroll') < 1) {
+    var spots = clueDigSpots();
+    var spot;
+    var reach;
+    var reward;
+    if (!hero || !world || itemQty(hero, 'cluescroll') < 1 || !spots.length) {
         return false;
     }
-    var spot = clueDigSpot(hero);
-    if (world.zoneId !== spot.zone) {
+    spot = clueDigSpot(hero);
+    if (!spot || world.zoneId !== spot.zone) {
         return false;
     }
-    if (Phaser.Math.Distance.Between(world.player.x, world.player.y, spot.x, spot.y) > 28) {
+    reach = (typeof CLUE_CONFIG !== 'undefined' && CLUE_CONFIG
+        && typeof CLUE_CONFIG.reachPx === 'number') ? CLUE_CONFIG.reachPx : 28;
+    if (Phaser.Math.Distance.Between(world.player.x, world.player.y, spot.x, spot.y) > reach) {
         return false;
     }
     hero.clueStep += 1;
-    if (hero.clueStep >= CLUE_DIG_SPOTS.length) {
+    if (hero.clueStep >= spots.length) {
         takeItem(hero, 'cluescroll', 1);
-        addItem(hero, 'coins', 50);
+        reward = (typeof CLUE_CONFIG !== 'undefined' && CLUE_CONFIG
+            && typeof CLUE_CONFIG.rewardCoins === 'number') ? CLUE_CONFIG.rewardCoins : 50;
+        addItem(hero, 'coins', reward);
         syncCoins(hero);
         hero.clueStep = 0;
         return 'casket';

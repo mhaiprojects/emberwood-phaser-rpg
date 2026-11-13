@@ -87,5 +87,43 @@
     "highlands": "rawswordfish",
     "dungeon": "rawswordfish",
     "dragonden": "rawshark"
+  },
+  "tileBindings": {
+    "treeByLog": {
+      "oaklogs": "TREE_OAK",
+      "ashlogs": "TREE_ASH",
+      "yewlogs": "TREE_YEW",
+      "magiclogs": "TREE_MAGIC",
+      "_default": "TREE"
+    },
+    "rockByOre": {
+      "copper": "ROCK_COPPER",
+      "iron": "ROCK_IRON",
+      "diamondore": "ROCK_DIAMOND",
+      "dragoniteore": "ROCK_DRAGONITE",
+      "runeessence": "ROCK_ESSENCE",
+      "_default": "ROCK"
+    },
+    "fishByCatch": {
+      "rawtrout": "FISHSPOT_TROUT",
+      "trout": "FISHSPOT_TROUT",
+      "rawlobster": "FISHSPOT_LOBSTER",
+      "lobster": "FISHSPOT_LOBSTER",
+      "rawswordfish": "FISHSPOT_SWORDFISH",
+      "swordfish": "FISHSPOT_SWORDFISH",
+      "rawshark": "FISHSPOT_SHARK",
+      "shark": "FISHSPOT_SHARK",
+      "_default": "FISHSPOT"
+    }
+  },
+  "oreByZone": {
+    "darkmine": { "use": "mineOreAt" },
+    "highlands": { "use": "highlandsOreAt" },
+    "westmead": { "rule": "mod", "mod": 3, "when0": "iron", "else": "copper" },
+    "graves": { "rule": "mod", "mod": 3, "when0": "iron", "else": "copper" },
+    "mire": { "rule": "mod", "mod": 4, "when0": "iron", "else": "copper" },
+    "northwood": { "rule": "mod", "mod": 4, "when0": "iron", "else": "copper" },
+    "dragonden": { "rule": "mod", "mod": 3, "when0": "dragoniteore", "else": "diamondore" },
+    "_default": { "ore": "copper" }
   }
 }

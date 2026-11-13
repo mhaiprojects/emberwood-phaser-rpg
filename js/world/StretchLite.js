@@ -46,7 +46,9 @@ WorldScene.prototype.refreshWildernessFlag = function () {
 };
 
 WorldScene.prototype.maybeRandomEvent = function () {
-    if (this.encounterLock || this.randomEventNpc || this.zoneId === 'haven') {
+    if (this.encounterLock || this.randomEventNpc
+            || (typeof Content !== 'undefined' && Content.zoneHasFeature
+                && Content.zoneHasFeature(this.zoneId, 'noRandomEvents'))) {
         return;
     }
     if (Math.random() > RANDOM_EVENT_CHANCE) {

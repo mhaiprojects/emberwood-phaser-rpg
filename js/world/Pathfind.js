@@ -7,9 +7,29 @@ var MOB_EDGE_MARGIN_TILES = 2;
  */
 var HAVEN_SAFE_RADIUS_TILES = 5;
 
+function _primarySafeZoneId() {
+    var specials = typeof MAP_SPECIALS !== 'undefined' ? MAP_SPECIALS : null;
+    var id;
+    if (typeof Content !== 'undefined' && Content.defaultZoneId) {
+        id = Content.defaultZoneId();
+        if (Content.safeZonePolicy && Content.safeZonePolicy(id)) {
+            return id;
+        }
+    }
+    if (specials && specials.safeZones) {
+        for (id in specials.safeZones) {
+            if (Object.prototype.hasOwnProperty.call(specials.safeZones, id)) {
+                return id;
+            }
+        }
+    }
+    return null;
+}
+
 function havenSafeCenterTile() {
-    var policy = typeof Content !== 'undefined' && Content.safeZonePolicy
-        ? Content.safeZonePolicy('haven')
+    var zoneId = _primarySafeZoneId();
+    var policy = (zoneId && typeof Content !== 'undefined' && Content.safeZonePolicy)
+        ? Content.safeZonePolicy(zoneId)
         : null;
     if (policy && policy.center) {
         return policy.center;
@@ -24,8 +44,9 @@ function havenSafeCenterTile() {
 }
 
 function havenSafeRadiusTiles() {
-    var policy = typeof Content !== 'undefined' && Content.safeZonePolicy
-        ? Content.safeZonePolicy('haven')
+    var zoneId = _primarySafeZoneId();
+    var policy = (zoneId && typeof Content !== 'undefined' && Content.safeZonePolicy)
+        ? Content.safeZonePolicy(zoneId)
         : null;
     if (policy && typeof policy.radiusTiles === 'number') {
         return policy.radiusTiles;
@@ -51,7 +72,7 @@ function zoneSafeForbiddenTile(tx, ty, zoneId) {
         policy = Content.safeZonePolicy(zoneId);
     }
     if (!policy) {
-        return zoneId === 'haven' && havenSafeForbiddenTile(tx, ty);
+        return false;
     }
     c = policy.center || havenSafeCenterTile();
     r = typeof policy.radiusTiles === 'number' ? policy.radiusTiles : 5;

@@ -1,0 +1,14 @@
+{
+  "list": [
+    {
+      "id": "shaft",
+      "name": "Deep Mine",
+      "doorTx": 9,
+      "doorTy": 12,
+      "zoneId": "darkmine",
+      "stairs": "down",
+      "dungeon": true,
+      "enterChat": "You delve into the Deep Mine…"
+    }
+  ]
+}

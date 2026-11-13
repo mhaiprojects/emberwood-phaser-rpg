@@ -1,0 +1,28 @@
+{
+  "itemIds": {
+    "sword": "coppersword",
+    "bronzedagger": "copperdagger",
+    "bronzeaxe": "copperaxe",
+    "bronzepick": "copperpick",
+    "bronzestaff": "copperstaff",
+    "bronzebar": "copperbar",
+    "shortbow": "copperbow",
+    "arrow": "copperarrow",
+    "tin": "copper",
+    "mindrune": "airrune",
+    "naturerune": "firerune",
+    "wizardhat": "wizardrobe",
+    "ironhelm": "ironarmour",
+    "ironbody": "ironarmour",
+    "ironlegs": "ironarmour",
+    "diamondhelm": "diamondarmour",
+    "diamondbody": "diamondarmour",
+    "diamondlegs": "diamondarmour",
+    "dragonitehelm": "dragonitearmour",
+    "dragonitebody": "dragonitearmour",
+    "dragonitelegs": "dragonitearmour",
+    "burntshrimp": null,
+    "burntbeef": null,
+    "shipcrate": null
+  }
+}

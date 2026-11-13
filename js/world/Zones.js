@@ -7,18 +7,8 @@ ZONE_LIST.forEach(function (zone) {
 
 var DUNGEON_SURFACE_ZONE = 'darkmine';
 
-var INTERIOR_LIST = [
-    {
-        id: 'shaft',
-        name: 'Deep Mine',
-        doorTx: MINE_SHAFT_HOUSE.x + Math.floor(MINE_SHAFT_HOUSE.w / 2),
-        doorTy: MINE_SHAFT_HOUSE.y + MINE_SHAFT_HOUSE.h - 1,
-        zoneId: 'darkmine',
-        stairs: 'down',
-        dungeon: true,
-        enterChat: 'You delve into the Deep Mine…'
-    }
-];
+/* Filled from GameWorld map/interiors.json via ContentRegistry. */
+var INTERIOR_LIST = [];
 
 function interiorById(id) {
     for (var i = 0; i < INTERIOR_LIST.length; i++) {
@@ -117,6 +107,8 @@ function examineNpcText(def) {
 
 function applyNpcTutor(hero, def) {
     var gift;
+    var giftId;
+    var qty;
     if (!hero || !def || !def.tutor) {
         return false;
     }
@@ -125,22 +117,11 @@ function applyNpcTutor(hero, def) {
         return false;
     }
     hero.tutors[def.tutor] = true;
-    gift = null;
-    if (def.tutor === 'fishing') {
-        gift = 'net';
-    } else if (def.tutor === 'mining') {
-        gift = 'copperpick';
-    } else if (def.tutor === 'combat') {
-        gift = 'copperaxe';
-    } else if (def.tutor === 'cows') {
-        gift = 'string';
-    } else if (def.tutor === 'firemaking') {
-        gift = 'tinderbox';
-    } else if (def.tutor === 'herblore') {
-        gift = 'guam';
-    }
-    if (gift && typeof addItem === 'function' && typeof itemQty === 'function' && itemQty(hero, gift) < 1) {
-        addItem(hero, gift, gift === 'string' ? 3 : 1);
+    gift = def.tutorGift || null;
+    giftId = gift && gift.id ? gift.id : null;
+    qty = gift && typeof gift.qty === 'number' ? gift.qty : 1;
+    if (giftId && typeof addItem === 'function' && typeof itemQty === 'function' && itemQty(hero, giftId) < 1) {
+        addItem(hero, giftId, qty);
     }
     return true;
 }
@@ -488,53 +469,20 @@ function zoneExitLabelPos(dir) {
 }
 
 function mobStatsFor(type, level) {
+    if (typeof Content !== 'undefined' && Content.mobStatsFor) {
+        return Content.mobStatsFor(type, level);
+    }
     var lv = Math.max(1, level | 0);
-    if (type === 'Chicken') {
-        return { hp: 10 + lv * 2, damage: 2 + Math.ceil(lv / 2), gold: 1, xp: 3 + lv };
-    }
-    if (type === 'Rabbit') {
-        return { hp: 8 + lv * 2, damage: 1 + Math.ceil(lv / 2), gold: 1, xp: 4 + lv };
-    }
-    if (type === 'Cow') {
-        return { hp: 16 + lv * 2, damage: 3 + Math.ceil(lv / 2), gold: 2 + Math.floor(lv / 3), xp: 5 + lv };
-    }
-    if (type === 'Crab') {
-        return { hp: 14 + lv * 2, damage: 4 + Math.floor(lv / 2), gold: 3 + Math.floor(lv / 4), xp: 4 + lv };
-    }
-    if (type === 'Bat') {
-        return { hp: 10 + lv * 2, damage: 4 + Math.floor(lv / 2), gold: 3 + Math.floor(lv / 4), xp: 4 + lv };
-    }
-    if (type === 'Goblin') {
-        return { hp: 14 + lv * 2, damage: 4 + Math.floor(lv / 2), gold: 3 + Math.floor(lv / 3), xp: 5 + lv };
-    }
-    if (type === 'Slime') {
-        return { hp: 12 + lv * 2, damage: 4 + Math.floor(lv / 2), gold: 3 + Math.floor(lv / 4), xp: 4 + lv };
-    }
-    if (type === 'Skeleton') {
-        return { hp: 16 + lv * 2, damage: 5 + Math.floor(lv / 2), gold: 5 + Math.floor(lv / 3), xp: 6 + lv };
-    }
-    if (type === 'Drake') {
-        return { hp: 20 + lv, damage: 6 + Math.floor(lv / 3), gold: 10 + Math.floor(lv / 2), xp: 12 + Math.floor(lv / 2) };
-    }
-    if (type === 'Dragon') {
-        return { hp: 40 + lv * 2, damage: 10 + Math.floor(lv / 3), gold: 40 + lv, xp: 50 + lv };
-    }
     return { hp: 12 + lv, damage: 3 + Math.floor(lv / 2), gold: 2, xp: 4 + lv };
 }
 
 /*
- * Combat-tier spawn pyramid (highest → lowest).
- * Base count per type = 1 + stepsBelowDragon (Dragon=1, Drake=2, … Chicken=10).
- * Final overworld count ≈ max(1, round(pyramidBase * mobSpawnModifier)).
+ * Combat-tier spawn pyramid — order/modifiers from GameWorld mob-combat.json.
+ * Base count per type = 1 + index in MOB_TIER_ORDER.
  */
-var MOB_TIER_ORDER = [
-    'Dragon', 'Drake', 'Skeleton', 'Slime', 'Goblin',
-    'Bat', 'Crab', 'Cow', 'Rabbit', 'Chicken'
-];
-/** Default global multiplier; hero.mobSpawnModifier overrides when set. */
+var MOB_TIER_ORDER = [];
 var MOB_SPAWN_MODIFIER = 1.0;
 var MOB_SPAWN_MODIFIER_OPTIONS = [0.5, 1, 1.5, 2];
-/** Pool capacity for Settings max (2×) so runtime can slice without regenerating tiles. */
 var MOB_SPAWN_POOL_MODIFIER = 2;
 
 function pyramidBaseCount(type) {

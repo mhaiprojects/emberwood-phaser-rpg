@@ -1,5 +1,6 @@
-/* OW_COMBAT_TICK_*, COMBAT_POISON_CHANCE, MOB_AGGRO_RANGE_PX, MOB_CHASE_SPEED: Balance.syncGlobals. */
-var POISON_MOB_TYPES = { Slime: true, Skeleton: true, Drake: true, Dragon: true };
+/* OW_COMBAT_TICK_*, COMBAT_POISON_CHANCE, MOB_AGGRO_RANGE_PX, MOB_CHASE_SPEED: Balance.syncGlobals.
+ * Mob combat tables filled from GameWorld mob-combat.json via ContentRegistry. */
+var POISON_MOB_TYPES = {};
 
 /* Fraction of (WALK_TILES_PER_SEC / 2) by type/size — all stay ≤ half player walk.
  * Factors come from GameWorld mob-combat.json when applied. */
@@ -36,30 +37,8 @@ function mobMovePxPerSec(mobOrDef) {
     var tile = typeof TILE_SIZE === 'number' ? TILE_SIZE : 16;
     return tiles * tile;
 }
-var MOB_BASE_LEVEL = {
-    Chicken: 1,
-    Rabbit: 1,
-    Cow: 3,
-    Crab: 8,
-    Bat: 8,
-    Goblin: 8,
-    Slime: 13,
-    Skeleton: 18,
-    Drake: 28,
-    Dragon: 53
-};
-var MOB_TYPE_ATTACK_RANGE = {
-    Chicken: 22,
-    Rabbit: 20,
-    Cow: 26,
-    Goblin: 24,
-    Crab: 24,
-    Skeleton: 26,
-    Bat: 96,
-    Slime: 72,
-    Drake: 100,
-    Dragon: 120
-};
+var MOB_BASE_LEVEL = {};
+var MOB_TYPE_ATTACK_RANGE = {};
 
 function mobLevel(def) {
     var type;

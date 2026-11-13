@@ -4055,23 +4055,55 @@ var Hud = {
     },
 
     buildMinimap: function () {
+        var list = (typeof Content !== 'undefined' && Content.listZones)
+            ? Content.listZones()
+            : (typeof ZONE_LIST !== 'undefined' ? ZONE_LIST : []);
+        var grid = {};
+        var minGx = 0;
+        var minGy = 0;
+        var maxGx = 0;
+        var maxGy = 0;
+        var i;
+        var z;
+        var r;
+        var c;
+        var key;
+        var cell;
+        var shortLabel;
         this.el.minimap.innerHTML = '';
-        var order = [
-            ['graves', 'northwood', 'highlands'],
-            ['westmead', 'haven', 'millfields'],
-            ['darkmine', 'southshore', 'mire']
-        ];
-        var labels = {
-            graves: 'Graves', northwood: 'Woods', highlands: 'High',
-            westmead: 'Mead', haven: 'Haven', millfields: 'Farm',
-            darkmine: 'Mine', southshore: 'Shore', mire: 'Mire'
-        };
-        for (var r = 0; r < 3; r++) {
-            for (var c = 0; c < 3; c++) {
-                var cell = document.createElement('div');
+        if (!list || !list.length) {
+            return;
+        }
+        for (i = 0; i < list.length; i++) {
+            z = list[i];
+            if (!z || typeof z.gx !== 'number' || typeof z.gy !== 'number') {
+                continue;
+            }
+            if (i === 0) {
+                minGx = maxGx = z.gx;
+                minGy = maxGy = z.gy;
+            } else {
+                minGx = Math.min(minGx, z.gx);
+                maxGx = Math.max(maxGx, z.gx);
+                minGy = Math.min(minGy, z.gy);
+                maxGy = Math.max(maxGy, z.gy);
+            }
+            grid[z.gx + ',' + z.gy] = z;
+        }
+        for (r = minGy; r <= maxGy; r++) {
+            for (c = minGx; c <= maxGx; c++) {
+                key = c + ',' + r;
+                z = grid[key];
+                cell = document.createElement('div');
                 cell.className = 'mm-cell';
-                cell.dataset.zone = order[r][c];
-                cell.textContent = labels[order[r][c]];
+                if (z) {
+                    cell.dataset.zone = z.id;
+                    shortLabel = z.short || z.abbrev || (z.name ? String(z.name).slice(0, 5) : z.id);
+                    cell.textContent = shortLabel;
+                } else {
+                    cell.classList.add('mm-empty');
+                    cell.textContent = '';
+                }
                 this.el.minimap.appendChild(cell);
             }
         }

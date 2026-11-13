@@ -78,18 +78,22 @@ One declaration drives UI control, hero field, normalize, and persist. Avoid pai
 A new pack must provide:
 
 - [ ] `pack.json` with unique `id`, `saveKey`, `defaultZoneId`, `defaultQuestId`, and complete `files` map
-- [ ] `balance.json` (move/combat/regen/interact/gather/craft/**caps**/**xp**)
-- [ ] `items.json` / `shops.json` / `recipes.json` / `gather-by-zone.json` / `loot.json`
-- [ ] `zones.json` / `npcs.json` / `zone-mobs.json` (serialize-friendly level rules — **no functions**)
-- [ ] `skills.json` / `mob-scales.json` / `mob-combat.json` / `hero-defaults.json`
-- [ ] `quests.json` (stages, lines, rewards, journal)
-- [ ] `biome-params.json`
-- [ ] `art-manifest.json` (tiles/player/images + mob/npc SVG lists)
-- [ ] `map/dimensions.json` + `map/props.json` + `map/specials.json` (safe zones, dungeon, den, features)
-- [ ] `assets/` tilesheet matching engine `TILE` indices + SVG/png trees under `assets/svg/`
+- [ ] `balance.json` (move/combat/regen/interact/gather/craft/**caps**/**xp** curve)
+- [ ] `items.json` / `shops.json` / `recipes.json` (smelt/smith/craft + **altarRunes** + **itemCombos**)
+- [ ] `gather-by-zone.json` (levels, tools, trees/fish, **tileBindings**, **oreByZone**)
+- [ ] `loot.json` / `zones.json` (include `gx`/`gy`/`short` for minimap) / `npcs.json` (**tutorGift** per tutor)
+- [ ] `zone-mobs.json` (serialize-friendly level rules — **no functions**)
+- [ ] `skills.json` (SKILL_NAMES, EQUIP_SLOTS, **slayer** config)
+- [ ] `mob-scales.json` / `mob-combat.json` (ranges, poison, **statsByType**, **MOB_TIER_ORDER**)
+- [ ] `hero-defaults.json` / `spells.json` / `clues.json` / `quests.json` (stages, `mobType`, `completeHint`, journal)
+- [ ] `biome-params.json` / `art-manifest.json`
+- [ ] `map/dimensions.json` + `map/props.json` (station/`shopStall` keys) + `map/specials.json` (features) + `map/interiors.json`
+- [ ] `assets/` tilesheet matching engine `TILE` indices + SVG/png under `assets/svg/`
 - [ ] Same **system kinds** the engine implements (or accept missing features)
 
 Clone `GameWorld/emberwood/` as a starting point; change `id`/`saveKey`/tables/art.
+
+Engine JS may keep **empty stubs** and algorithms; **definitions** belong in the pack. Boot fails loudly if any `pack.files` entry is missing.
 
 ## Non-goals (V1)
 

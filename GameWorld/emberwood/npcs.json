@@ -114,6 +114,7 @@
         "talk"
       ],
       "tutor": "firemaking",
+      "tutorGift": { "id": "tinderbox", "qty": 1 },
       "examine": "The town cook. Flour dusts her sleeves and a ladle never leaves her hand.",
       "lines": [
         "Take this tinderbox.",
@@ -132,6 +133,7 @@
         "talk"
       ],
       "tutor": "herblore",
+      "tutorGift": { "id": "guam", "qty": 1 },
       "examine": "Emberhaven's herbalist. Bundles of guam hang by her stall.",
       "lines": [
         "Guam grows easily if you have a seed.",
@@ -166,6 +168,7 @@
         "talk"
       ],
       "tutor": "combat",
+      "tutorGift": { "id": "copperaxe", "qty": 1 },
       "examine": "A Northwood ranger. Goblin tracks stain her boots.",
       "lines": [
         "Goblins nest in these trees.",
@@ -187,6 +190,7 @@
         "talk"
       ],
       "tutor": "cows",
+      "tutorGift": { "id": "string", "qty": 3 },
       "examine": "A Millfields farmer. Cabbage stains her apron.",
       "lines": [
         "Cows got into the cabbages again.",
@@ -210,6 +214,7 @@
       "questGiver": true,
       "sideQuest": "shipment",
       "tutor": "fishing",
+      "tutorGift": { "id": "net", "qty": 1 },
       "examine": "An old shore fisher. Salt and rope have worn his hands.",
       "lines": [
         "Crabs pinch harder than they look.",
@@ -267,6 +272,7 @@
       "questGiver": true,
       "sideQuest": "bats",
       "tutor": "mining",
+      "tutorGift": { "id": "copperpick", "qty": 1 },
       "examine": "A Darkmine digger. He will not go down the Deep Mine.",
       "lines": [
         "That shaft leads to the Deep Mine. Floor one starts at level 40 — each floor adds one.",

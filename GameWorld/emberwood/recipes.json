@@ -912,5 +912,53 @@
       "xpSkill": "construction",
       "need": 1
     }
-  ]
+  ],
+  "altarRunes": {
+    "airrune": { "label": "Craft air runes", "need": 1, "xp": 10, "essence": "runeessence", "essenceQty": 1 },
+    "waterrune": { "label": "Craft water runes", "need": 5, "xp": 12, "essence": "runeessence", "essenceQty": 1 },
+    "earthrune": { "label": "Craft earth runes", "need": 15, "xp": 14, "essence": "runeessence", "essenceQty": 1 },
+    "firerune": { "label": "Craft fire runes", "need": 30, "xp": 20, "essence": "runeessence", "essenceQty": 1 }
+  },
+  "itemCombos": [
+    {
+      "items": ["string", "leather"],
+      "action": "stitchLeather"
+    },
+    {
+      "items": ["tinderbox", "logs"],
+      "action": "lightGroundFire",
+      "needsCanLight": true
+    }
+  ],
+  "quickCraft": {
+    "plantGuam": { "xpSkill": "farming", "xp": 14, "output": "guam", "qty": 1 },
+    "mixAttackPotion": {
+      "inputs": [["guam", 1]],
+      "output": "attackpot",
+      "qty": 1,
+      "xpSkill": "herblore",
+      "xp": 18
+    },
+    "fletchStringBow": {
+      "inputs": [["shortbowunstrung", 1], ["string", 1]],
+      "output": "copperbow",
+      "qty": 1,
+      "xpSkill": "fletching",
+      "xp": 10
+    },
+    "fletchOakBow": {
+      "inputs": [["oaklogs", 1], ["string", 1]],
+      "output": "copperbow",
+      "qty": 1,
+      "xpSkill": "fletching",
+      "xp": 22
+    },
+    "buildOakBench": {
+      "inputs": [["logs", 3]],
+      "output": "oakplank",
+      "qty": 1,
+      "xpSkill": "construction",
+      "xp": 20
+    }
+  }
 }

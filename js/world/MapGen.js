@@ -59,20 +59,23 @@ function isFishSpotTile(index) {
         || index === TILE.FISHSPOT_SHARK;
 }
 
+function _tileFromBinding(map, key, fallbackName) {
+    var name;
+    var bindings = typeof GATHER_TILE_BINDINGS !== 'undefined' ? GATHER_TILE_BINDINGS : null;
+    var table = bindings && bindings[map] ? bindings[map] : null;
+    if (table) {
+        name = (key && table[key]) || table._default || fallbackName;
+    } else {
+        name = fallbackName;
+    }
+    if (name && typeof TILE !== 'undefined' && TILE[name] != null) {
+        return TILE[name];
+    }
+    return typeof TILE !== 'undefined' ? TILE[fallbackName] : 0;
+}
+
 function treeTileForLog(logId) {
-    if (logId === 'oaklogs') {
-        return TILE.TREE_OAK;
-    }
-    if (logId === 'ashlogs') {
-        return TILE.TREE_ASH;
-    }
-    if (logId === 'yewlogs') {
-        return TILE.TREE_YEW;
-    }
-    if (logId === 'magiclogs') {
-        return TILE.TREE_MAGIC;
-    }
-    return TILE.TREE;
+    return _tileFromBinding('treeByLog', logId, 'TREE');
 }
 
 function treeTileForZone(zoneId) {
@@ -81,38 +84,11 @@ function treeTileForZone(zoneId) {
 }
 
 function rockTileForOre(ore) {
-    if (ore === 'copper') {
-        return TILE.ROCK_COPPER;
-    }
-    if (ore === 'iron') {
-        return TILE.ROCK_IRON;
-    }
-    if (ore === 'diamondore') {
-        return TILE.ROCK_DIAMOND;
-    }
-    if (ore === 'dragoniteore') {
-        return TILE.ROCK_DRAGONITE;
-    }
-    if (ore === 'runeessence') {
-        return TILE.ROCK_ESSENCE;
-    }
-    return TILE.ROCK;
+    return _tileFromBinding('rockByOre', ore, 'ROCK');
 }
 
 function fishTileForCatch(catchId) {
-    if (catchId === 'rawtrout' || catchId === 'trout') {
-        return TILE.FISHSPOT_TROUT;
-    }
-    if (catchId === 'rawlobster' || catchId === 'lobster') {
-        return TILE.FISHSPOT_LOBSTER;
-    }
-    if (catchId === 'rawswordfish' || catchId === 'swordfish') {
-        return TILE.FISHSPOT_SWORDFISH;
-    }
-    if (catchId === 'rawshark' || catchId === 'shark') {
-        return TILE.FISHSPOT_SHARK;
-    }
-    return TILE.FISHSPOT;
+    return _tileFromBinding('fishByCatch', catchId, 'FISHSPOT');
 }
 
 /* Map dimensions + world props: defaults until GameDataPack / ContentRegistry.applyPack. */
@@ -668,8 +644,9 @@ function generateMap(seed, biome, neighbors, zoneId) {
             setTileInteract(townZoneId, TOWN_PROPS.shopStall.x, TOWN_PROPS.shopStall.y, {
                 kind: 'shop-stall',
                 verb: 'trade',
-                npcKey: 'shopkeep',
-                shopKey: 'mira'
+                npcKey: TOWN_PROPS.shopStall.npcKey || 'shopkeep',
+                shopKey: TOWN_PROPS.shopStall.shopKey
+                    || (typeof GENERAL_SHOP_KEY !== 'undefined' ? GENERAL_SHOP_KEY : 'mira')
             });
         }
         if (TOWN_PROPS.guildPost) {
@@ -677,7 +654,7 @@ function generateMap(seed, biome, neighbors, zoneId) {
             setTileInteract(townZoneId, TOWN_PROPS.guildPost.x, TOWN_PROPS.guildPost.y, {
                 kind: 'guild-post',
                 verb: 'talk',
-                npcKey: 'guild'
+                npcKey: TOWN_PROPS.guildPost.npcKey || 'guild'
             });
         }
         paintBankCounter(grid, townZoneId);
@@ -1464,22 +1441,30 @@ function mineRockAt(tx, ty, zoneId, grid, opts) {
             return null;
         }
     }
-    if (zoneId === 'darkmine') {
-        ore = mineOreAt(tx, ty);
-    } else if (zoneId === 'highlands') {
-        ore = highlandsOreAt(tx, ty);
-    } else if (zoneId === 'westmead' || zoneId === 'graves') {
-        ore = (tx + ty) % 3 === 0 ? 'iron' : 'copper';
-    } else if (zoneId === 'mire' || zoneId === 'northwood') {
-        ore = (tx + ty) % 4 === 0 ? 'iron' : 'copper';
-    } else if (zoneId === 'dragonden') {
-        ore = (tx + ty) % 3 === 0 ? 'dragoniteore' : 'diamondore';
-    } else {
-        /* Early wilds / shore / farm / plains: copper. */
-        ore = 'copper';
-    }
+    ore = oreForZoneTile(zoneId, tx, ty);
     level = typeof resourceNeedLevel === 'function' ? resourceNeedLevel(ore) : (ore === 'iron' ? 15 : 1);
     return { x: tx, y: ty, ore: ore, level: level };
+}
+
+function oreForZoneTile(zoneId, tx, ty) {
+    var table = typeof ORE_BY_ZONE !== 'undefined' ? ORE_BY_ZONE : null;
+    var spec = table && zoneId && table[zoneId] ? table[zoneId] : (table && table._default ? table._default : null);
+    if (!spec) {
+        return 'copper';
+    }
+    if (spec.use === 'mineOreAt' && typeof mineOreAt === 'function') {
+        return mineOreAt(tx, ty);
+    }
+    if (spec.use === 'highlandsOreAt' && typeof highlandsOreAt === 'function') {
+        return highlandsOreAt(tx, ty);
+    }
+    if (spec.rule === 'mod' && typeof spec.mod === 'number' && spec.mod > 0) {
+        return ((tx + ty) % spec.mod === 0) ? (spec.when0 || 'iron') : (spec.else || 'copper');
+    }
+    if (spec.ore) {
+        return spec.ore;
+    }
+    return 'copper';
 }
 
 function agilityShortcutAt(tx, ty, zoneId) {
