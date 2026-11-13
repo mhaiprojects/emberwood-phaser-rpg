@@ -3,8 +3,8 @@
     {
       "key": "guide",
       "name": "Village Guide",
-      "x": 168,
-      "y": 296,
+      "x": 176,
+      "y": 224,
       "tint": 16777215,
       "questGiver": true,
       "options": [
@@ -20,8 +20,8 @@
     {
       "key": "banker",
       "name": "Chest Keeper",
-      "x": 232,
-      "y": 168,
+      "x": 128,
+      "y": 144,
       "tint": 16777215,
       "options": [
         "talk",
@@ -36,8 +36,8 @@
     {
       "key": "guard",
       "name": "Iron Golem Guard",
-      "x": 424,
-      "y": 248,
+      "x": 448,
+      "y": 224,
       "tint": 16777215,
       "questGiver": true,
       "sideQuest": "zombie",
@@ -54,8 +54,8 @@
     {
       "key": "shopkeep",
       "name": "Emblem Trader",
-      "x": 264,
-      "y": 216,
+      "x": 160,
+      "y": 160,
       "tint": 16777215,
       "texture": "npc-shopkeeper",
       "options": [
@@ -72,8 +72,8 @@
     {
       "key": "cook",
       "name": "Village Cook",
-      "x": 296,
-      "y": 328,
+      "x": 160,
+      "y": 240,
       "tint": 16777215,
       "options": [
         "talk"
@@ -92,8 +92,8 @@
     {
       "key": "smith",
       "name": "Armorer Cole",
-      "x": 360,
-      "y": 200,
+      "x": 240,
+      "y": 160,
       "tint": 16777215,
       "texture": "npc-armsman",
       "options": [

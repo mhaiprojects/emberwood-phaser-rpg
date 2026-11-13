@@ -33,6 +33,7 @@ Feature code only. Human playtests. Re-enable only when the human says so. Also 
 
 Active queue — implement top-down before returning to sections 1–14.
 
+- [done] Goal: audit Blocklands completeness; fix similar maps; write+run Playwright/pack tests. — Conclusion: Pack JSON complete + distinct zones/skills/quests; maps differed via biome-params/seeds/town layout (tiles.png still shared); pack-content-node + playwright-pack-minecraft/picker PASS.
 - [done] Goal: slim Emberwood skills; add Minecraft GameWorld pack; start-screen pack picker. — Conclusion: Emberwood 16 story skills; GameWorld/minecraft (Blocklands); catalog + title Game select reloads ?pack=.
 - [done] Goal: engine general-use — all content defs in GameWorld (skills, XP, recipes/combos, NPCs, stations, …). — Conclusion: Pack owns skills/XP/recipes/combos/spells/NPCs/tutors/stations/mob stats/quests/onboarding/fish spots/shaft markers; engine stubs + ContentRegistry; framework checklist updated.
 - [done] Finish Game Engine Plan V1 todos (scaffold → pack-boot → world → economy → scenes → docs). — Conclusion: Content API complete; Boot loud-fail; balance caps/XP; quest stage machine; Title/Save/Hud pack defaults; framework.md checklist.

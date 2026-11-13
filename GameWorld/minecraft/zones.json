@@ -6,7 +6,7 @@
       "gx": -1,
       "gy": -1,
       "biome": "hills",
-      "seed": 101,
+      "seed": 7000,
       "short": "Peaks"
     },
     {
@@ -15,7 +15,7 @@
       "gx": 0,
       "gy": -1,
       "biome": "forest",
-      "seed": 102,
+      "seed": 7137,
       "short": "Forest"
     },
     {
@@ -24,7 +24,7 @@
       "gx": 1,
       "gy": -1,
       "biome": "hills",
-      "seed": 103,
+      "seed": 7274,
       "short": "Mesa"
     },
     {
@@ -33,7 +33,7 @@
       "gx": -1,
       "gy": 0,
       "biome": "plains",
-      "seed": 104,
+      "seed": 7411,
       "short": "Plains"
     },
     {
@@ -42,7 +42,7 @@
       "gx": 0,
       "gy": 0,
       "biome": "town",
-      "seed": 105,
+      "seed": 7548,
       "short": "Spawn"
     },
     {
@@ -51,7 +51,7 @@
       "gx": 1,
       "gy": 0,
       "biome": "farm",
-      "seed": 106,
+      "seed": 7685,
       "short": "Farms"
     },
     {
@@ -60,7 +60,7 @@
       "gx": -1,
       "gy": 1,
       "biome": "mine",
-      "seed": 107,
+      "seed": 7822,
       "short": "Caves"
     },
     {
@@ -69,7 +69,7 @@
       "gx": 0,
       "gy": 1,
       "biome": "shore",
-      "seed": 108,
+      "seed": 7959,
       "short": "Ocean"
     },
     {
@@ -78,7 +78,7 @@
       "gx": 1,
       "gy": 1,
       "biome": "swamp",
-      "seed": 109,
+      "seed": 8096,
       "short": "Swamp"
     },
     {
@@ -87,7 +87,7 @@
       "gx": 0,
       "gy": 2,
       "biome": "den",
-      "seed": 110,
+      "seed": 8233,
       "short": "Nether"
     },
     {
@@ -96,7 +96,7 @@
       "gx": 0,
       "gy": 3,
       "biome": "dungeon",
-      "seed": 111,
+      "seed": 8370,
       "short": "Deep"
     }
   ]

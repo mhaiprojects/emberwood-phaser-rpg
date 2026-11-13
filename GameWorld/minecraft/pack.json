@@ -1,7 +1,7 @@
 {
   "id": "minecraft",
   "title": "Blocklands",
-  "version": "mc1",
+  "version": "mc2",
   "assetRoot": "assets",
   "saveKey": "blocklands-save-minecraft",
   "legacySaveKeys": [],
@@ -32,5 +32,6 @@
     "mapProps": "map/props.json",
     "mapSpecials": "map/specials.json",
     "mapInteriors": "map/interiors.json"
-  }
+  },
+  "blurb": "Minecraft-inspired gather, craft, mine, and survive. Distinct Overworld biomes from Emberwood."
 }
