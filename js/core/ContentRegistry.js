@@ -299,6 +299,11 @@ var ContentRegistry = {
             window.LEGACY_ITEM_ID_MAP = legacy.itemIds || legacy.LEGACY_ITEM_ID_MAP || legacy || {};
         }
 
+        var onboarding = this._get(cache, 'onboarding');
+        if (onboarding) {
+            window.ONBOARDING = onboarding;
+        }
+
         this.ready = true;
         return true;
     },

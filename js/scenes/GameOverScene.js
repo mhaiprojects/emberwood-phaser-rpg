@@ -9,8 +9,16 @@ var GameOverScene = new Phaser.Class({
         this.cameras.main.setBackgroundColor('#14080c');
         var hero = this.registry.get('hero') || { level: 1 };
         var level = typeof combatLevel === 'function' ? combatLevel(hero) : (hero.level || 1);
+        var title;
+        var logLine;
         Hud.hideBattle();
-        Hud.showDead('Level ' + level + '. Emberwood claimed another traveller.');
-        Hud.log('You died. Your items lie in a gravestone — respawn in Emberhaven, then click it to reclaim them. Return to title abandons the run.');
+        title = (typeof Content !== 'undefined' && Content.onboardingLine)
+            ? Content.onboardingLine('deathTitle', { level: level })
+            : '';
+        logLine = (typeof Content !== 'undefined' && Content.onboardingLine)
+            ? Content.onboardingLine('deathLog')
+            : '';
+        Hud.showDead(title || ('Level ' + level + '. You have fallen.'));
+        Hud.log(logLine || 'You died. Respawn to reclaim your gravestone.');
     }
 });

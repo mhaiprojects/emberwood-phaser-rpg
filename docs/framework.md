@@ -85,7 +85,8 @@ A new pack must provide:
 - [ ] `zone-mobs.json` (serialize-friendly level rules — **no functions**)
 - [ ] `skills.json` (SKILL_NAMES, EQUIP_SLOTS, **slayer** config)
 - [ ] `mob-scales.json` / `mob-combat.json` (ranges, poison, **statsByType**, **MOB_TIER_ORDER**)
-- [ ] `hero-defaults.json` / `spells.json` / `clues.json` / `quests.json` (stages, `mobType`, `completeHint`, journal)
+- [ ] `hero-defaults.json` / `spells.json` / `clues.json` / `onboarding.json` / `legacy-migrations.json`
+- [ ] `quests.json` (stages, `mobType`, `completeHint`, journal)
 - [ ] `biome-params.json` / `art-manifest.json`
 - [ ] `map/dimensions.json` + `map/props.json` (station/`shopStall` keys) + `map/specials.json` (features) + `map/interiors.json`
 - [ ] `assets/` tilesheet matching engine `TILE` indices + SVG/png under `assets/svg/`

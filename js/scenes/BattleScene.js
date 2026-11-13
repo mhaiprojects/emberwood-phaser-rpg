@@ -49,7 +49,13 @@ var BattleScene = new Phaser.Class({
         this.add.existing(warrior);
         this.heroes = [warrior];
 
-        var pending = this.registry.get('pendingEncounter') || { enemies: [{ type: 'Goblin', texture: 'mob-goblin', frame: 0, tint: 0xffffff, hp: 28, damage: 8 }] };
+        var pending = this.registry.get('pendingEncounter');
+        if (!pending) {
+            pending = (typeof Content !== 'undefined' && Content.getOnboarding
+                && Content.getOnboarding() && Content.getOnboarding().battleDefaultEncounter)
+                ? Content.getOnboarding().battleDefaultEncounter
+                : { enemies: [] };
+        }
         this.enemies = [];
         var slots = [{ x: 110, y: 80 }, { x: 150, y: 150 }];
         for (var i = 0; i < pending.enemies.length; i++) {

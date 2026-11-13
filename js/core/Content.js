@@ -477,6 +477,28 @@ var Content = {
         return typeof SKILL_NAMES !== 'undefined' ? SKILL_NAMES : [];
     },
 
+    getOnboarding: function () {
+        return typeof ONBOARDING !== 'undefined' ? ONBOARDING : null;
+    },
+
+    onboardingLine: function (key, vars) {
+        var ob = this.getOnboarding();
+        var text;
+        if (!ob || !key) {
+            return '';
+        }
+        text = ob[key];
+        if (typeof text !== 'string') {
+            return '';
+        }
+        if (vars) {
+            Object.keys(vars).forEach(function (k) {
+                text = text.replace(new RegExp('\\{' + k + '\\}', 'g'), String(vars[k]));
+            });
+        }
+        return text;
+    },
+
     zoneHasFeature: function (zoneId, feature) {
         var specials = this.mapSpecials();
         var list;

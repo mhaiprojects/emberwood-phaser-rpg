@@ -1,0 +1,47 @@
+{
+  "arriveLines": [
+    "You arrive in Emberhaven. WASD or arrows to walk, Ctrl to run, or click the ground.",
+    "Open Inventory (F1) for food. Bury bones, Trade with Mira, Fish/Chop/Mine, or Bank at Elise.",
+    "The Guildmaster by the courtyard has work."
+  ],
+  "welcomeBackLine": "Welcome back. Progress restored.",
+  "respawnLine": "You wake in Emberhaven, barely standing.",
+  "deathTitle": "Level {level}. Emberwood claimed another traveller.",
+  "deathLog": "You died. Your items lie in a gravestone — respawn in Emberhaven, then click it to reclaim them. Return to title abandons the run.",
+  "tutorials": {
+    "walk": "Tutorial: You took your first steps.",
+    "talk": "Tutorial: You spoke with a townsfolk.",
+    "fight": "Tutorial: You won your first fight.",
+    "loot": "Tutorial: You picked up loot.",
+    "bury": "Tutorial: You buried bones for Prayer.",
+    "shop": "Tutorial: You opened a shop."
+  },
+  "achievements": {
+    "nineLands": {
+      "needZones": 9,
+      "flag": "nineLands",
+      "line": "Achievement: Visit all nine lands."
+    }
+  },
+  "diary": {
+    "needFlags": ["bram", "eat", "bury"],
+    "needZones": 9,
+    "rewardCoins": 20,
+    "completeLine": "Emberhaven diary complete. +20gp.",
+    "achievementFlag": "easyDiary"
+  },
+  "battleDefaultEncounter": {
+    "enemies": [
+      {
+        "type": "Goblin",
+        "texture": "mob-goblin",
+        "frame": 0,
+        "tint": 16777215,
+        "hp": 28,
+        "damage": 8
+      }
+    ]
+  },
+  "questCompleteFallback": "Militia task complete. Explore the nine lands.",
+  "questStartFallback": "Talk to Guildmaster Bram in Emberhaven."
+}

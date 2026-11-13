@@ -201,13 +201,25 @@ var WorldScene = new Phaser.Class({
         this.engageGrace = this.time.now + 800;
         if (this.registry.get('respawnAfterDeath')) {
             this.registry.set('respawnAfterDeath', false);
-            Hud.log('You wake in Emberhaven, barely standing.');
+            Hud.log((typeof Content !== 'undefined' && Content.onboardingLine
+                ? Content.onboardingLine('respawnLine')
+                : '') || 'You wake up, barely standing.');
         } else if (fromSave) {
-            Hud.log('Welcome back. Progress restored.');
+            Hud.log((typeof Content !== 'undefined' && Content.onboardingLine
+                ? Content.onboardingLine('welcomeBackLine')
+                : '') || 'Welcome back. Progress restored.');
         } else {
-            Hud.log('You arrive in Emberhaven. WASD or arrows to walk, Ctrl to run, or click the ground.');
-            Hud.log('Open Inventory (F1) for food. Bury bones, Trade with Mira, Fish/Chop/Mine, or Bank at Elise.');
-            Hud.log('The Guildmaster by the courtyard has work.');
+            var arrive = (typeof Content !== 'undefined' && Content.getOnboarding
+                ? Content.getOnboarding() : null);
+            var lines = arrive && arrive.arriveLines ? arrive.arriveLines : [];
+            var ai;
+            if (lines.length) {
+                for (ai = 0; ai < lines.length; ai++) {
+                    Hud.log(lines[ai]);
+                }
+            } else {
+                Hud.log('You arrive. Walk, talk, and explore.');
+            }
         }
         if (window.Hud && Hud.saveGame) {
             Hud.saveGame();
@@ -1699,11 +1711,16 @@ var WorldScene = new Phaser.Class({
         }
         hero.visitedZones[zoneId] = true;
         keys = Object.keys(hero.visitedZones);
-        if (keys.length >= 9) {
+        var ob = typeof Content !== 'undefined' && Content.getOnboarding
+            ? Content.getOnboarding() : null;
+        var nine = ob && ob.achievements && ob.achievements.nineLands
+            ? ob.achievements.nineLands
+            : { needZones: 9, flag: 'nineLands', line: 'Achievement: Visit all nine lands.' };
+        if (keys.length >= (nine.needZones || 9)) {
             hero.achievements = hero.achievements || {};
-            if (!hero.achievements.nineLands) {
-                hero.achievements.nineLands = true;
-                Hud.log('Achievement: Visit all nine lands.');
+            if (!hero.achievements[nine.flag || 'nineLands']) {
+                hero.achievements[nine.flag || 'nineLands'] = true;
+                Hud.log(nine.line || 'Achievement: Visit all lands.');
             }
             this.checkDiaryComplete(hero);
         }
@@ -1712,6 +1729,8 @@ var WorldScene = new Phaser.Class({
 
     noteTutorial: function (beat) {
         var hero = this.registry.get('hero');
+        var ob;
+        var line;
         if (!hero) {
             return;
         }
@@ -1723,34 +1742,50 @@ var WorldScene = new Phaser.Class({
         }
         hero.tutorials[beat] = true;
         this.registry.set('hero', hero);
-        if (beat === 'walk') {
-            Hud.log('Tutorial: You took your first steps.');
-        } else if (beat === 'talk') {
-            Hud.log('Tutorial: You spoke with a townsfolk.');
-        } else if (beat === 'fight') {
-            Hud.log('Tutorial: You won your first fight.');
-        } else if (beat === 'loot') {
-            Hud.log('Tutorial: You picked up loot.');
-        } else if (beat === 'bury') {
-            Hud.log('Tutorial: You buried bones for Prayer.');
-        } else if (beat === 'shop') {
-            Hud.log('Tutorial: You opened a shop.');
+        ob = typeof Content !== 'undefined' && Content.getOnboarding
+            ? Content.getOnboarding() : null;
+        line = ob && ob.tutorials ? ob.tutorials[beat] : null;
+        if (line) {
+            Hud.log(line);
         }
     },
 
     checkDiaryComplete: function (hero) {
         var zones;
+        var diary;
+        var i;
+        var ok;
+        var ob;
         if (!hero || !hero.diary || hero.diary.complete) {
             return;
         }
+        ob = typeof Content !== 'undefined' && Content.getOnboarding
+            ? Content.getOnboarding() : null;
+        diary = ob && ob.diary ? ob.diary : {
+            needFlags: ['bram', 'eat', 'bury'],
+            needZones: 9,
+            rewardCoins: 20,
+            completeLine: 'Diary complete.',
+            achievementFlag: 'easyDiary'
+        };
         zones = hero.visitedZones ? Object.keys(hero.visitedZones).length : 0;
-        if (hero.diary.bram && hero.diary.eat && hero.diary.bury && zones >= 9) {
+        ok = zones >= (diary.needZones || 0);
+        for (i = 0; ok && diary.needFlags && i < diary.needFlags.length; i++) {
+            if (!hero.diary[diary.needFlags[i]]) {
+                ok = false;
+            }
+        }
+        if (ok) {
             hero.diary.complete = true;
             hero.achievements = hero.achievements || {};
-            hero.achievements.easyDiary = true;
-            addItem(hero, 'coins', 20);
+            if (diary.achievementFlag) {
+                hero.achievements[diary.achievementFlag] = true;
+            }
+            if (diary.rewardCoins && typeof addItem === 'function') {
+                addItem(hero, 'coins', diary.rewardCoins);
+            }
             this.registry.set('hero', hero);
-            Hud.log('Emberhaven diary complete. +20gp.');
+            Hud.log(diary.completeLine || 'Diary complete.');
         }
     },
 
@@ -1759,12 +1794,16 @@ var WorldScene = new Phaser.Class({
         var quest = this.registry.get('quest');
         var zone = ZONES[this.zoneId];
         var interior = this.interiorId ? interiorById(this.interiorId) : null;
-        var questText = 'Talk to Guildmaster Bram in Emberhaven.';
+        var obHud = typeof Content !== 'undefined' && Content.getOnboarding
+            ? Content.getOnboarding() : null;
+        var questText = (obHud && obHud.questStartFallback)
+            || 'Talk to the quest giver.';
         if (typeof Content !== 'undefined' && Content.journalSteps) {
             var jSteps = Content.journalSteps(quest);
             var ji;
             if (quest.stage >= 3) {
-                questText = 'Militia task complete. Explore the nine lands.';
+                questText = (obHud && obHud.questCompleteFallback)
+                    || 'Quest complete. Explore the lands.';
             } else {
                 for (ji = 0; ji < jSteps.length; ji++) {
                     if (!jSteps[ji].done) {
@@ -1773,12 +1812,6 @@ var WorldScene = new Phaser.Class({
                     }
                 }
             }
-        } else if (quest.stage === 1) {
-            questText = 'Kill goblins in Northwood (' + quest.progress + '/' + quest.goal + ').';
-        } else if (quest.stage === 2) {
-            questText = 'Return to Guildmaster Bram for your reward.';
-        } else if (quest.stage >= 3) {
-            questText = 'Militia task complete. Explore the nine lands.';
         }
         if (typeof applyCombatLevel === 'function') {
             applyCombatLevel(hero, false);

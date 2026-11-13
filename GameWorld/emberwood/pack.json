@@ -29,6 +29,7 @@
     "biomeParams": "biome-params.json",
     "spells": "spells.json",
     "clues": "clues.json",
+    "onboarding": "onboarding.json",
     "legacyMigrations": "legacy-migrations.json",
     "mapDimensions": "map/dimensions.json",
     "mapProps": "map/props.json",
