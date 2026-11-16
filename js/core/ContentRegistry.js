@@ -178,8 +178,9 @@ var ContentRegistry = {
 
         zoneMobs = this._get(cache, 'zoneMobs');
         if (zoneMobs) {
+            /* Data only here — rebuild after mobCombat / map dims so pyramid
+             * tier order and tile helpers exist (else spawn counts collapse to 0). */
             window.ZONE_MOB_ROSTER_DATA = zoneMobs.ZONE_MOB_ROSTER_DATA || zoneMobs;
-            this._rebuildRoster();
         }
 
         skills = this._get(cache, 'skills');
@@ -311,6 +312,10 @@ var ContentRegistry = {
         var onboarding = this._get(cache, 'onboarding');
         if (onboarding) {
             window.ONBOARDING = onboarding;
+        }
+
+        if (window.ZONE_MOB_ROSTER_DATA) {
+            this._rebuildRoster();
         }
 
         this.ready = true;

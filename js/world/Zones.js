@@ -205,24 +205,30 @@ function buildZoneMobRoster(data) {
             mobs: []
         };
         (entry.mobs || []).forEach(function (mob) {
+            /* Capture per-mob arrays — shared `var levels/ranges` leaked the last zone
+             * (Dragon Lv 60) into every spotLevels levelFor closure. */
+            var spotLevels = null;
+            var attackRanges = null;
             extras = mob.extras ? Object.assign({}, mob.extras) : {};
             levels = extras.spotLevels;
             ranges = extras.attackRangeBySpot;
             if (levels && levels.length) {
+                spotLevels = levels.slice();
                 extras.levelFor = function (idx) {
-                    if (idx >= 0 && idx < levels.length) {
-                        return levels[idx];
+                    if (idx >= 0 && idx < spotLevels.length) {
+                        return spotLevels[idx];
                     }
-                    return levels[levels.length - 1];
+                    return spotLevels[spotLevels.length - 1];
                 };
                 delete extras.spotLevels;
             }
             if (ranges && ranges.length) {
+                attackRanges = ranges.slice();
                 extras.attackRangeFor = function (idx) {
-                    if (idx >= 0 && idx < ranges.length) {
-                        return ranges[idx];
+                    if (idx >= 0 && idx < attackRanges.length) {
+                        return attackRanges[idx];
                     }
-                    return ranges[ranges.length - 1];
+                    return attackRanges[attackRanges.length - 1];
                 };
                 delete extras.attackRangeBySpot;
             }
@@ -485,11 +491,15 @@ var MOB_SPAWN_MODIFIER_OPTIONS = [0.5, 1, 1.5, 2];
 var MOB_SPAWN_POOL_MODIFIER = 2;
 
 function pyramidBaseCount(type) {
-    var idx = MOB_TIER_ORDER.indexOf(type);
+    var idx;
+    if (!MOB_TIER_ORDER || !MOB_TIER_ORDER.length) {
+        return 1;
+    }
+    idx = MOB_TIER_ORDER.indexOf(type);
     if (idx < 0) {
         idx = MOB_TIER_ORDER.length - 1;
     }
-    return 1 + idx;
+    return 1 + Math.max(0, idx);
 }
 
 function mobSpawnModifierValue(hero) {
