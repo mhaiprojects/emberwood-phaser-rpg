@@ -162,7 +162,7 @@ Drag handles: `#resize-side`, `#resize-bottom`, `#resize-iface`. Sizes persist i
 | Key | Tab | Notes |
 |-----|-----|-------|
 | F1 | Inventory | 28 slots; click food to eat in world |
-| F2 | Combat | Styles; **Auto-attack** + **Auto-retaliate** (both default Off — **Combat tab only**); run; special |
+| F2 | Combat | Styles; **Auto-attack** (default Off) + **Auto-retaliate** (default On — **Combat tab only**); run; special |
 | F3 | Skills | Full skill list + XP tooltips |
 | F4 | Quest | Journal + checklist |
 | F5 | Worn | Equipment grid + stats |
@@ -267,7 +267,7 @@ Architecture (combat-intent redesign): **PlayerIntent** (`world.playerIntent`) i
 **Ranges:** weapon/mob attack = Euclidean px; auto-attack acquire = Chebyshev tiles (do not mix). Attack paths use `standInRangeWorld` (never onto unwalkable mob tiles).
 
 **Auto-attack (default Off, Combat tab only):** walking near a living mob can engage (with grace after zone/battle). Paused during player click-walk (`intent.pauseAutos` / `playerClickWalkActive`).
-**Auto-retaliate (default Off, Combat tab only, separate):** only when a foe **agros you first** — walk into weapon range and fight back; does **not** pick passive nearby mobs. Chase also pauses during player click-walk.
+**Auto-retaliate (default On, Combat tab only, separate):** only when a foe **agros you first** — walk into weapon range and fight back; does **not** pick passive nearby mobs. Chase also pauses during player click-walk.
 
 **In-fight chase gate:** while already fighting, player auto-close toward the mob if **inside the mob’s attack range** but outside weapon range (does **not** require auto-retaliate — that only gates *starting* retaliate engages). Safe ranging outside mob attack range does **not** auto-walk into the foe. Click-walk still pauses close-in. `startOverworldFight` restores attack intent (beginFight had cleared it). Mob fight-chase runs **once** per update (after player move). `encounterLock` stays true during the fight but must not block in-fight engage chase.
 
@@ -430,7 +430,7 @@ While mining: flash + spark FX tinted to ore; cleared on finish/cancel. Item ico
 | Toggle | Default | Where | Meaning |
 |--------|---------|-------|---------|
 | Auto-attack | **Off** | **Combat only** | Engage nearby foes when walking close (paused during click-walk) |
-| Auto-retaliate | **Off** | **Combat only** | Only after **mob agros first**; walk into range (chase paused during click-walk) |
+| Auto-retaliate | **On** | **Combat only** | Only after **mob agros first**; walk into range (chase paused during click-walk) |
 | Auto-pickup | On | Combat, Settings | Walk-over loot vs click-only |
 | Shift-click drop | On | Settings | Shift+LMB drops inv item |
 | Hide bones | Off | Settings | Hide ground bones |
@@ -525,7 +525,7 @@ Actionable pitfalls from project rules and recent combat/gather/save work:
 | Speed up mobs during chase/fight | Wander/agro/fight share `mobMoveSpeed` ≤ ½ walk |
 | Auto-chase player into a mob while **safe ranging** | In-fight close only if already inside **mob attack range** |
 | Treat auto-retaliate like auto-attack | Retaliate = agro-first only; no passive nearby pull |
-| Default auto-attack or auto-retaliate **on** for new heroes | Both default **Off**; Combat tab only |
+| Default auto-attack **on** for new heroes | Auto-attack defaults **Off**; auto-retaliate defaults **On**; Combat tab only |
 | Keep auto-engaging during player click-walk | `playerIntent.pauseAutos` / `playerClickWalkActive` pauses auto-attack / retaliate chase |
 | Gate active-fight swings on autos | Autos only **acquire**; `tickOverworldFight` always swings in weapon range |
 | Path attack onto unwalkable mob tiles | Use `standInRangeWorld` / `walkToEngage` |

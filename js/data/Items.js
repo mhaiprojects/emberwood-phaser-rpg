@@ -2892,7 +2892,7 @@ function normalizeHeroCombat(hero) {
         hero.autoAttackRange = Math.floor(hero.autoAttackRange);
     }
     if (hero.autoRetaliate == null) {
-        hero.autoRetaliate = false;
+        hero.autoRetaliate = true;
     }
     if (!hero.style) {
         hero.style = 'shared';

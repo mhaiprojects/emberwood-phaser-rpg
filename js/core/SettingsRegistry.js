@@ -9,7 +9,7 @@ var SettingsRegistry = {
             heroKey: 'autoRetaliate',
             control: 'toggle',
             dataAttr: 'data-auto-retaliate',
-            defaultValue: false,
+            defaultValue: true,
             label: function (on) {
                 return 'Auto-retaliate: ' + (on ? 'On' : 'Off');
             },

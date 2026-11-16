@@ -8,7 +8,7 @@
   "stance": "melee",
   "autoAttack": false,
   "autoAttackRange": 3,
-  "autoRetaliate": false,
+  "autoRetaliate": true,
   "autoPickup": true,
   "shiftClickDrop": true,
   "hideBones": false,
