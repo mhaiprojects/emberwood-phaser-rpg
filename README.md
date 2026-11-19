@@ -13,7 +13,7 @@ There is no build step. Serve the folder with any static HTTP server. The canvas
 A local static server is required (`file://` will fail CORS).
 
 ```bash
-cd /path/to/CursorWS4-PhaserIO-RPG
+cd /home/systemadmin/_WS/DevWS/Emberwood-Phaser-RPG
 python3 -m http.server 8765
 ```
 
